@@ -733,8 +733,9 @@ class MCPTab(QWidget):
         autofix_btn = QPushButton("🔧 Auto-Fix")
         autofix_btn.setToolTip("Auto-fix MCP configuration for Windows (adds cmd /c wrapper)")
 
-        for btn in [add_btn, edit_btn, remove_btn, refresh_btn, library_btn, tools_btn, validate_btn, autofix_btn]:
+        for btn in [add_btn, edit_btn, refresh_btn, library_btn, tools_btn, validate_btn, autofix_btn]:
             btn.setStyleSheet(theme.get_button_style())
+        remove_btn.setStyleSheet(theme.get_button_danger_style())
 
         add_btn.clicked.connect(self.add_server)
         edit_btn.clicked.connect(self.edit_server)

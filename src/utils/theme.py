@@ -54,6 +54,15 @@ FONT_SIZE_LARGE = 16
 FONT_SIZE_NORMAL = 14
 FONT_SIZE_SMALL = 12
 FONT_SIZE_TINY = 11
+FONT_SIZE_TAB = 13
+
+# UI spacing constants (consistent across all widgets)
+MARGIN_SM = 3
+MARGIN_MD = 6
+MARGIN_LG = 10
+PADDING_SM = 4
+PADDING_MD = 8
+BORDER_RADIUS = 4
 
 
 def apply_theme(theme_name, font_size=14):
@@ -66,7 +75,7 @@ def apply_theme(theme_name, font_size=14):
     """
     global GRUVBOX, BG_DARK, BG_MEDIUM, BG_LIGHT, FG_PRIMARY, FG_SECONDARY, FG_DIM
     global ACCENT_PRIMARY, ACCENT_SECONDARY, ERROR_COLOR, WARNING_COLOR, SUCCESS_COLOR
-    global FONT_SIZE_LARGE, FONT_SIZE_NORMAL, FONT_SIZE_SMALL, FONT_SIZE_TINY
+    global FONT_SIZE_LARGE, FONT_SIZE_NORMAL, FONT_SIZE_SMALL, FONT_SIZE_TINY, FONT_SIZE_TAB
     global _current_theme
 
     if theme_name not in AVAILABLE_THEMES:
@@ -96,6 +105,7 @@ def apply_theme(theme_name, font_size=14):
     FONT_SIZE_LARGE = font_size + 2
     FONT_SIZE_SMALL = max(10, font_size - 2)
     FONT_SIZE_TINY = max(9, font_size - 3)
+    FONT_SIZE_TAB = max(11, font_size - 1)
 
 
 def lighten_color(hex_color, factor=0.1):
@@ -113,7 +123,7 @@ def lighten_color(hex_color, factor=0.1):
         b = min(255, int(b + (255 - b) * factor))
         # Convert back to hex
         return f"#{r:02x}{g:02x}{b:02x}"
-    except:
+    except Exception:
         return hex_color
 
 
@@ -147,6 +157,54 @@ def get_button_style():
             background-color: {BG_LIGHT};
         }}
     """
+
+def get_button_danger_style():
+    """Destructive button style (Delete, Remove, Reset — red accent)."""
+    return f"""
+        QPushButton {{
+            padding: 6px 12px;
+            background-color: {ERROR_COLOR};
+            color: {BG_DARK};
+            border-radius: {BORDER_RADIUS}px;
+            font-size: {FONT_SIZE_NORMAL}px;
+            font-weight: bold;
+            border: none;
+        }}
+        QPushButton:hover {{
+            background-color: #cc241d;
+        }}
+        QPushButton:pressed {{
+            background-color: {BG_LIGHT};
+        }}
+        QPushButton:disabled {{
+            background-color: {BG_MEDIUM};
+            color: {FG_DIM};
+        }}
+    """
+
+
+def get_button_neutral_style():
+    """Neutral / secondary button style (Cancel, Refresh — muted)."""
+    return f"""
+        QPushButton {{
+            padding: 6px 12px;
+            background-color: {BG_MEDIUM};
+            color: {FG_PRIMARY};
+            border-radius: {BORDER_RADIUS}px;
+            font-size: {FONT_SIZE_NORMAL}px;
+            border: 1px solid {BG_LIGHT};
+        }}
+        QPushButton:hover {{
+            background-color: {BG_LIGHT};
+        }}
+        QPushButton:pressed {{
+            background-color: {BG_DARK};
+        }}
+        QPushButton:disabled {{
+            color: {FG_DIM};
+        }}
+    """
+
 
 def get_text_edit_style():
     """Get text editor stylesheet"""
@@ -262,7 +320,7 @@ def get_label_style(size="normal", color="primary"):
     return f"color: {text_color}; font-size: {font_size}px;"
 
 def get_tab_widget_style():
-    """Get tab widget stylesheet"""
+    """Get tab widget stylesheet — accent-colour underline on selected tab."""
     return f"""
         QTabWidget::pane {{
             border: 1px solid {BG_LIGHT};
@@ -270,19 +328,22 @@ def get_tab_widget_style():
         }}
         QTabBar::tab {{
             background: {BG_MEDIUM};
-            color: {FG_PRIMARY};
-            padding: 8px 16px;
+            color: {FG_SECONDARY};
+            padding: 6px 14px;
             margin-right: 2px;
             border: 1px solid {BG_LIGHT};
-            font-size: {FONT_SIZE_NORMAL}px;
+            border-bottom: none;
+            font-size: {FONT_SIZE_TAB}px;
         }}
         QTabBar::tab:selected {{
-            background: {ACCENT_PRIMARY};
-            color: {BG_DARK};
+            background: {BG_DARK};
+            color: {FG_PRIMARY};
+            border-bottom: 2px solid {ACCENT_PRIMARY};
             font-weight: bold;
         }}
-        QTabBar::tab:hover {{
+        QTabBar::tab:hover:!selected {{
             background: {BG_LIGHT};
+            color: {FG_PRIMARY};
         }}
     """
 
@@ -499,26 +560,29 @@ def generate_app_stylesheet():
             font-size: {FONT_SIZE_NORMAL}px;
         }}
 
-        /* Tab Widget */
+        /* Tab Widget — accent-colour underline on selected tab */
         QTabWidget::pane {{
             border: 1px solid {BG_LIGHT};
             background: {BG_DARK};
         }}
         QTabBar::tab {{
             background: {BG_MEDIUM};
-            color: {FG_PRIMARY};
-            padding: 8px 16px;
+            color: {FG_SECONDARY};
+            padding: 6px 14px;
             margin-right: 2px;
             border: 1px solid {BG_LIGHT};
-            font-size: {FONT_SIZE_NORMAL}px;
+            border-bottom: none;
+            font-size: {FONT_SIZE_TAB}px;
         }}
         QTabBar::tab:selected {{
-            background: {ACCENT_PRIMARY};
-            color: {BG_DARK};
+            background: {BG_DARK};
+            color: {FG_PRIMARY};
+            border-bottom: 2px solid {ACCENT_PRIMARY};
             font-weight: bold;
         }}
-        QTabBar::tab:hover {{
+        QTabBar::tab:hover:!selected {{
             background: {BG_LIGHT};
+            color: {FG_PRIMARY};
         }}
 
         /* Group Box */

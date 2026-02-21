@@ -310,8 +310,9 @@ class SkillsTab(QWidget):
         library_btn = QPushButton("📚 Skill Library")
         library_btn.setToolTip("Browse and add skills from library templates")
 
-        for btn in [new_btn, edit_btn, del_btn, refresh_btn, library_btn]:
+        for btn in [new_btn, edit_btn, refresh_btn, library_btn]:
             btn.setStyleSheet(theme.get_button_style())
+        del_btn.setStyleSheet(theme.get_button_danger_style())
 
         new_btn.clicked.connect(self.create_new_skill)
         edit_btn.clicked.connect(self.edit_skill)
