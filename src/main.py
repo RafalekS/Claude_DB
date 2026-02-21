@@ -26,11 +26,9 @@ from tabs.skills_tab import SkillsTab  # Used by User/Project Config tabs
 from tabs.prompts_tab import PromptsTab
 from tabs.mcp_tab import MCPTab  # Used by User/Project Config tabs
 from tabs.plugins_tab import PluginsTab
-# from tabs.env_vars_tab import EnvVarsTab  # REMOVED - now integrated into Settings tab
 from tabs.hooks_tab import HooksTab
 from tabs.statusline_tab import StatuslineTab
 from tabs.memory_tab import MemoryTab
-# from tabs.permissions_tab import PermissionsTab  # DEPRECATED - Use User/Project Config tabs
 from tabs.usage_tab import UsageTab
 from tabs.cli_reference_tab import CLIReferenceTab
 from tabs.model_config_tab import ModelConfigTab
@@ -140,24 +138,17 @@ class ClaudeDBApp(QMainWindow):
             # OLD TABS - DEPRECATED (moved to src/tabs/old/)
             "settings": ("⚙️ Settings", SettingsTab(self.config_manager, self.backup_manager)),
             "claudemd": ("📝 CLAUDE.md", ClaudeMDTab(self.config_manager, self.backup_manager)),
-            # "agents": ("🤖 Agents [OLD]", AgentsTab(self.config_manager, self.backup_manager, "user", None)),  # DEPRECATED - Use User Config > Agents
-            # "commands": ("⌨️ Commands [OLD]", CommandsTab(self.config_manager, self.backup_manager, "user", None)),  # DEPRECATED - Use User Config > Commands
-            # "skills": ("💡 Skills [OLD]", SkillsTab(self.config_manager, self.backup_manager, "user", None)),  # DEPRECATED - Use User Config > Skills
             "prompts": ("💬 Prompts", PromptsTab(self.config_manager, self.backup_manager)),
-            # "mcp": ("🔌 MCP [OLD]", MCPTab(self.config_manager, self.backup_manager, "user", None)),  # DEPRECATED - Use User Config > MCP
             "plugins": ("🧩 Plugins", PluginsTab(self.config_manager, self.backup_manager)),
-            # "envvars" REMOVED - now integrated into Settings tab
             "hooks": ("🪝 Hooks", HooksTab(self.config_manager, self.backup_manager)),
             "statusline": ("📊 Statusline", StatuslineTab(self.config_manager, self.backup_manager)),
             "memory": ("💾 Memory", MemoryTab(self.config_manager, self.backup_manager)),
-            # "permissions": ("🔐 Permissions", PermissionsTab(self.config_manager, self.backup_manager)),  # DEPRECATED - Use User/Project Config tabs
             "usage": ("📈 Usage & Analytics", UsageTab(self.config_manager, self.backup_manager)),
             "modelconfig": ("🧠 Model Config", ModelConfigTab(self.config_manager, self.backup_manager)),
             "clireference": ("📖 CLI Reference", CLIReferenceTab()),
             "styles": ("🔄 Workflows", StylesWorkflowsTab(self.config_manager, self.backup_manager)),
             "claudekit": ("🛠️ ClaudeKit", ClaudeKitTab()),
             "tools": ("🔧 Tools", ToolsTab()),
-            # "configsync": Removed - now integrated into Preferences > Backup subtab
             "projects": ("📂 Projects", ProjectsTab(self.config_manager, self.backup_manager)),
             "about": ("ℹ️ About", AboutTab()),
             "preferences": ("🎨 Preferences", PreferencesTab(self.config_manager, self.backup_manager, self.app)),

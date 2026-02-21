@@ -21,14 +21,22 @@ from utils import theme
 from utils.template_manager import get_template_manager
 from dialogs.skill_library_dialog import SkillLibraryDialog
 
-# Available Claude Code tools
-AVAILABLE_TOOLS = [
-    "Read", "Write", "Edit", "MultiEdit",
-    "Grep", "Glob", "Bash",
-    "WebFetch", "WebSearch",
-    "Task", "TodoWrite", "NotebookEdit",
-    "AskUserQuestion", "Skill", "SlashCommand"
-]
+# Load AVAILABLE_TOOLS from config, fall back to defaults
+_config_file = Path(__file__).parent.parent.parent / "config" / "config.json"
+try:
+    with open(_config_file) as f:
+        _app_config = json.load(f)
+    AVAILABLE_TOOLS = _app_config.get("claude_tools", {}).get("available_tools", [
+        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
+        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
+        "AskUserQuestion", "Skill", "SlashCommand"
+    ])
+except Exception:
+    AVAILABLE_TOOLS = [
+        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
+        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
+        "AskUserQuestion", "Skill", "SlashCommand"
+    ]
 
 
 class SkillsTab(QWidget):

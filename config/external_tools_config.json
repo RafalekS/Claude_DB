@@ -105,14 +105,6 @@
         "button_text": "Claude Code Chats",
         "command": "npx claude-code-templates@latest --chats",
         "tooltip": "Claude Code Chats Dashboard"
-      },
-      {
-        "button_text": "TEST_2",
-        "command": "TEST_2",
-        "tooltip": "TEST_2",
-        "requires_input": true,
-        "input_prompt": "TEST_2",
-        "input_label": "TEST_2"
       }
     ],
     "plugins": [
@@ -125,16 +117,6 @@
         "button_text": "Claude Powerline",
         "command": "npm i @owloops/claude-powerline",
         "tooltip": "Install Claude Powerline plugin"
-      }
-    ],
-    "test": [
-      {
-        "button_text": "test",
-        "command": "echo",
-        "tooltip": "test",
-        "requires_input": true,
-        "input_prompt": "{project_folder}",
-        "input_label": "Folder"
       }
     ]
   }

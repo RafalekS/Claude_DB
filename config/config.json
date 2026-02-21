@@ -327,13 +327,6 @@
         "command": "claude"
       }
     ],
-    "---------------------------raf------------------------": [
-      {
-        "button_text": "Project Manager",
-        "command": "c:\\Scripts\\project_mgr\\start.cmd",
-        "tooltip": "Project Manager"
-      }
-    ],
     "tools": [
       {
         "button_text": "Install claude-docs",
@@ -362,6 +355,36 @@
         "tooltip": "Installs docs-architect"
       }
     ]
+  },
+  "ui": {
+    "window_x": 100,
+    "window_y": 100,
+    "window_width": 1200,
+    "window_height": 800
+  },
+  "theme": {
+    "default_name": "Gruvbox Dark",
+    "default_font_size": 14
+  },
+  "paths": {
+    "claude_dir": "",
+    "user_skills_dir": "",
+    "project_skills_dir": "",
+    "default_project_folder": ""
+  },
+  "github": {
+    "token": "",
+    "cache_hours": 24,
+    "request_timeout": 30
+  },
+  "claude_tools": {
+    "available_tools": [
+      "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
+      "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
+      "AskUserQuestion", "Skill", "SlashCommand"
+    ],
+    "agent_models": ["sonnet", "opus", "haiku"],
+    "agent_colors": ["blue", "green", "red", "yellow", "purple", "cyan", "magenta", "orange"]
   },
   "working_directory": {
     "default": "global",

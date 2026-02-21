@@ -13,7 +13,13 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
+from utils.theme import (
+    BG_DARK, BG_MEDIUM, BG_LIGHT,
+    FG_PRIMARY, FG_SECONDARY, FG_DIM,
+    ACCENT_PRIMARY, ERROR_COLOR, SUCCESS_COLOR,
+    FONT_SIZE_SMALL, FONT_SIZE_NORMAL,
+    get_button_style, get_tab_widget_style, get_text_edit_style, get_line_edit_style
+)
 
 
 class SettingsTab(QWidget):
@@ -23,7 +29,7 @@ class SettingsTab(QWidget):
         super().__init__()
         self.config_manager = config_manager
         self.backup_manager = backup_manager
-        self.project_folder = Path.cwd()  # Default to current directory
+        self.project_folder = Path.home()  # Default to home directory
         self.init_ui()
 
     def init_ui(self):
@@ -174,7 +180,7 @@ class SettingsTab(QWidget):
         folder_label.setStyleSheet("color: #ddd; font-weight: bold;")
 
         self.project_folder_edit = QLineEdit()
-        self.project_folder_edit.setText("C:\Scripts")
+        self.project_folder_edit.setText(str(Path.home()))
         self.project_folder_edit.setReadOnly(True)
         self.project_folder_edit.setStyleSheet(get_line_edit_style())
 
@@ -300,11 +306,11 @@ class SettingsTab(QWidget):
         folder = QFileDialog.getExistingDirectory(
             self,
             "Select Project Folder",
-            "C:\Scripts"
+            str(Path.home())
         )
         if folder:
             self.project_folder = Path(folder)
-            self.project_folder_edit.setText("C:\Scripts")
+            self.project_folder_edit.setText(str(folder))
             # Update path labels
             self.project_shared_path_label.setText(str(self.project_folder / ".claude" / "settings.json"))
             self.project_local_path_label.setText(str(self.project_folder / ".claude" / "settings.local.json"))

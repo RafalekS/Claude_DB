@@ -15,17 +15,31 @@ from PyQt6.QtGui import QColor
 import sys
 import json
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
+from utils.theme import (
+    BG_DARK, BG_MEDIUM, BG_LIGHT,
+    FG_PRIMARY, FG_SECONDARY,
+    ACCENT_PRIMARY,
+    FONT_SIZE_SMALL, FONT_SIZE_LARGE,
+    get_button_style, get_text_edit_style, get_line_edit_style
+)
 from utils.template_manager import get_template_manager
 
-# Available Claude Code tools
-AVAILABLE_TOOLS = [
-    "Read", "Write", "Edit", "MultiEdit",
-    "Grep", "Glob", "Bash",
-    "WebFetch", "WebSearch",
-    "Task", "TodoWrite", "NotebookEdit",
-    "AskUserQuestion", "Skill", "SlashCommand"
-]
+# Load AVAILABLE_TOOLS from config, fall back to defaults
+_config_file = Path(__file__).parent.parent.parent / "config" / "config.json"
+try:
+    with open(_config_file) as f:
+        _app_config = json.load(f)
+    AVAILABLE_TOOLS = _app_config.get("claude_tools", {}).get("available_tools", [
+        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
+        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
+        "AskUserQuestion", "Skill", "SlashCommand"
+    ])
+except Exception:
+    AVAILABLE_TOOLS = [
+        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
+        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
+        "AskUserQuestion", "Skill", "SlashCommand"
+    ]
 
 
 class NewAgentDialog(QDialog):
