@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QSpinBox, QPushButton, QMessageBox, QGroupBox, QFormLayout,
     QDialog, QListWidget, QLineEdit, QTextEdit, QListWidgetItem, QInputDialog,
-    QApplication, QTabWidget
+    QApplication, QTabWidget, QCheckBox
 )
 from PyQt6.QtCore import pyqtSignal, QProcess, Qt
 import sys
@@ -364,10 +364,11 @@ class PreferencesTab(QWidget):
         self.subtabs = QTabWidget()
         self.subtabs.setStyleSheet(theme.get_tab_widget_style())
 
-        # Create the three subtabs
+        # Create subtabs
         self.create_tab_settings_subtab()
         self.create_appearance_subtab()
         self.create_backup_subtab()
+        self.create_search_subtab()
 
         layout.addWidget(self.subtabs)
 
@@ -729,6 +730,213 @@ class PreferencesTab(QWidget):
 
         layout.addStretch()
         self.subtabs.addTab(backup_widget, "💾 Backup")
+
+    def create_search_subtab(self):
+        """Create Search Settings subtab (GitHub token, MCP sources, cache)."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
+
+        group_style = f"""
+            QGroupBox {{
+                font-size: {theme.FONT_SIZE_NORMAL}px; font-weight: bold;
+                color: {theme.ACCENT_PRIMARY};
+                border: 2px solid {theme.ACCENT_PRIMARY};
+                border-radius: 5px;
+                margin-top: 10px; padding-top: 10px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin; left: 10px; padding: 0 5px;
+            }}
+        """
+
+        # ── GitHub ──────────────────────────────────────────────────────
+        github_group = QGroupBox("GitHub API")
+        github_group.setStyleSheet(group_style)
+        github_layout = QFormLayout(github_group)
+        github_layout.setSpacing(8)
+
+        token_row = QHBoxLayout()
+        self._github_token_input = QLineEdit()
+        self._github_token_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self._github_token_input.setPlaceholderText("ghp_xxxxxxxxxxxxxxxxxxxx (optional)")
+        self._github_token_input.setStyleSheet(theme.get_line_edit_style())
+        token_row.addWidget(self._github_token_input)
+
+        show_btn = QPushButton("👁")
+        show_btn.setFixedWidth(32)
+        show_btn.setCheckable(True)
+        show_btn.setStyleSheet(theme.get_button_style())
+        show_btn.toggled.connect(
+            lambda on: self._github_token_input.setEchoMode(
+                QLineEdit.EchoMode.Normal if on else QLineEdit.EchoMode.Password
+            )
+        )
+        token_row.addWidget(show_btn)
+
+        test_btn = QPushButton("Test")
+        test_btn.setStyleSheet(theme.get_button_style())
+        test_btn.clicked.connect(self._test_github_token)
+        token_row.addWidget(test_btn)
+        github_layout.addRow("Token:", token_row)
+
+        timeout_row = QHBoxLayout()
+        self._github_timeout_spin = QSpinBox()
+        self._github_timeout_spin.setRange(5, 120)
+        self._github_timeout_spin.setValue(30)
+        self._github_timeout_spin.setSuffix(" s")
+        timeout_row.addWidget(self._github_timeout_spin)
+        timeout_row.addStretch()
+        github_layout.addRow("Timeout:", timeout_row)
+
+        cache_row = QHBoxLayout()
+        self._github_cache_spin = QSpinBox()
+        self._github_cache_spin.setRange(0, 168)
+        self._github_cache_spin.setValue(24)
+        self._github_cache_spin.setSuffix(" h")
+        cache_row.addWidget(self._github_cache_spin)
+        cache_row.addStretch()
+        github_layout.addRow("Cache TTL:", cache_row)
+        layout.addWidget(github_group)
+
+        # ── MCP Search sources ───────────────────────────────────────────
+        mcp_group = QGroupBox("MCP Server Search")
+        mcp_group.setStyleSheet(group_style)
+        mcp_layout = QVBoxLayout(mcp_group)
+        mcp_layout.setSpacing(6)
+
+        src_label = QLabel("Enabled sources:")
+        src_label.setStyleSheet(f"color: {theme.FG_SECONDARY};")
+        mcp_layout.addWidget(src_label)
+
+        self._mcp_source_checks = {}
+        for key, label in [
+            ("mcp.so", "mcp.so"),
+            ("mcpservers.org", "mcpservers.org"),
+            ("pulsemcp.com", "PulseMCP"),
+            ("github", "GitHub"),
+        ]:
+            cb = QCheckBox(label)
+            cb.setChecked(True)
+            cb.setStyleSheet(f"color: {theme.FG_PRIMARY};")
+            self._mcp_source_checks[key] = cb
+            mcp_layout.addWidget(cb)
+
+        mcp_cache_row = QHBoxLayout()
+        mcp_cache_label = QLabel("MCP cache TTL:")
+        mcp_cache_label.setStyleSheet(f"color: {theme.FG_SECONDARY};")
+        mcp_cache_row.addWidget(mcp_cache_label)
+        self._mcp_cache_spin = QSpinBox()
+        self._mcp_cache_spin.setRange(0, 168)
+        self._mcp_cache_spin.setValue(24)
+        self._mcp_cache_spin.setSuffix(" h")
+        mcp_cache_row.addWidget(self._mcp_cache_spin)
+        clear_btn = QPushButton("Clear MCP Cache")
+        clear_btn.setStyleSheet(theme.get_button_style())
+        clear_btn.clicked.connect(self._clear_mcp_cache)
+        mcp_cache_row.addWidget(clear_btn)
+        mcp_cache_row.addStretch()
+        mcp_layout.addLayout(mcp_cache_row)
+        layout.addWidget(mcp_group)
+
+        # Save button
+        save_btn = QPushButton("Save Search Settings")
+        save_btn.setStyleSheet(theme.get_button_style())
+        save_btn.clicked.connect(self._save_search_settings)
+        layout.addWidget(save_btn)
+        layout.addStretch()
+
+        self.subtabs.addTab(widget, "🔍 Search")
+
+    def _test_github_token(self):
+        """Test the GitHub token by fetching rate limit."""
+        token = self._github_token_input.text().strip()
+        try:
+            from utils.github_client import GitHubClient
+            # Temporarily patch the token
+            client = GitHubClient.__new__(GitHubClient)
+            client._token = token
+            client._timeout = self._github_timeout_spin.value()
+            client._cache_hours = 0
+            client._db_path = None
+
+            import urllib.request, json as _json
+            req = urllib.request.Request("https://api.github.com/rate_limit")
+            req.add_header("User-Agent", "Claude_DB/2.0")
+            req.add_header("Accept", "application/vnd.github+json")
+            if token:
+                req.add_header("Authorization", f"Bearer {token}")
+            with urllib.request.urlopen(req, timeout=self._github_timeout_spin.value()) as resp:
+                data = _json.loads(resp.read().decode())
+            remaining = data.get("rate", {}).get("remaining", "?")
+            limit = data.get("rate", {}).get("limit", "?")
+            QMessageBox.information(
+                self, "GitHub Token OK",
+                f"Rate limit: {remaining} / {limit} requests remaining."
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "GitHub Token Error", f"Failed: {e}")
+
+    def _clear_mcp_cache(self):
+        """Clear the MCP search cache."""
+        try:
+            from utils.mcp_search_client import MCPSearchClient
+            n = MCPSearchClient().clear_cache()
+            QMessageBox.information(self, "Cache Cleared", f"Cleared {n} cached MCP search entries.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to clear cache:\n{e}")
+
+    def _save_search_settings(self):
+        """Save GitHub + MCP search settings to config.json."""
+        try:
+            config_data = {}
+            if self.config_file.exists():
+                with open(self.config_file, "r") as f:
+                    config_data = json.load(f)
+
+            config_data.setdefault("github", {})
+            config_data["github"]["token"] = self._github_token_input.text().strip()
+            config_data["github"]["request_timeout"] = self._github_timeout_spin.value()
+            config_data["github"]["cache_hours"] = self._github_cache_spin.value()
+
+            config_data.setdefault("mcp_search", {})
+            config_data["mcp_search"]["enabled_sources"] = [
+                k for k, cb in self._mcp_source_checks.items() if cb.isChecked()
+            ]
+            config_data["mcp_search"]["cache_hours"] = self._mcp_cache_spin.value()
+
+            with open(self.config_file, "w") as f:
+                json.dump(config_data, f, indent=2)
+
+            win = self.window()
+            if hasattr(win, "set_status"):
+                win.set_status("Search settings saved.")
+            else:
+                QMessageBox.information(self, "Saved", "Search settings saved.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save settings:\n{e}")
+
+    def _load_search_settings(self):
+        """Load GitHub + MCP search settings into the Search subtab."""
+        try:
+            if not self.config_file.exists():
+                return
+            with open(self.config_file, "r") as f:
+                config_data = json.load(f)
+
+            gh = config_data.get("github", {})
+            self._github_token_input.setText(gh.get("token", ""))
+            self._github_timeout_spin.setValue(gh.get("request_timeout", 30))
+            self._github_cache_spin.setValue(gh.get("cache_hours", 24))
+
+            mcp = config_data.get("mcp_search", {})
+            enabled = mcp.get("enabled_sources", list(self._mcp_source_checks.keys()))
+            for key, cb in self._mcp_source_checks.items():
+                cb.setChecked(key in enabled)
+            self._mcp_cache_spin.setValue(mcp.get("cache_hours", 24))
+        except Exception:
+            pass
 
     def open_tab_editor_dialog(self):
         """Open unified dialog for editing tabs (reorder and rename)"""
@@ -1151,6 +1359,8 @@ class {class_name}Tab(QWidget):
             # Use defaults on error
             self.theme_combo.setCurrentText("Gruvbox Dark")
             self.font_size_spin.setValue(14)
+
+        self._load_search_settings()
 
     def reset_to_default(self):
         """Reset to default Gruvbox Dark theme"""

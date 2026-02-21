@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QFileDialog, QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView,
     QAbstractItemView, QCheckBox
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon, QColor
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -554,6 +554,27 @@ class CustomRenameDialog(QDialog):
         return self.rename_map
 
 
+class MCPSearchWorker(QThread):
+    """Background worker for MCP server search."""
+
+    results_ready = pyqtSignal(list)
+    error = pyqtSignal(str)
+
+    def __init__(self, query: str, sources: list, parent=None):
+        super().__init__(parent)
+        self._query = query
+        self._sources = sources
+
+    def run(self):
+        try:
+            from utils.mcp_search_client import MCPSearchClient
+            client = MCPSearchClient()
+            results = client.search(self._query, self._sources)
+            self.results_ready.emit(results)
+        except Exception as e:
+            self.error.emit(str(e))
+
+
 class MCPTab(QWidget):
     """Tab for managing MCP servers"""
 
@@ -594,9 +615,19 @@ class MCPTab(QWidget):
 
         layout.addLayout(header_layout)
 
-        # Single MCP editor for current scope
+        # Sub-tabs: Configure | Discover
+        self._sub_tabs = QTabWidget()
+        self._sub_tabs.setStyleSheet(f"""
+            QTabWidget::pane {{ border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; }}
+            QTabBar::tab {{ padding: 5px 14px; background: {theme.BG_MEDIUM}; color: {theme.FG_SECONDARY}; }}
+            QTabBar::tab:selected {{ background: {theme.BG_DARK}; color: {theme.FG_PRIMARY}; border-bottom: 2px solid {theme.ACCENT_PRIMARY}; }}
+        """)
+
         editor_widget = self.create_mcp_editor()
-        layout.addWidget(editor_widget, 1)
+        self._sub_tabs.addTab(editor_widget, "Configure")
+        self._sub_tabs.addTab(self.create_discover_tab(), "Discover")
+
+        layout.addWidget(self._sub_tabs, 1)
 
         # Info section with recommended servers
         info_label = QLabel(
@@ -791,6 +822,209 @@ class MCPTab(QWidget):
 
         return widget
 
+    # ── Discover sub-tab ────────────────────────────────────────────────────
+
+    def create_discover_tab(self) -> QWidget:
+        """Build the Discover sub-tab UI."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
+
+        # Search bar
+        search_layout = QHBoxLayout()
+        self._discover_search = QLineEdit()
+        self._discover_search.setPlaceholderText("Search MCP servers... (e.g. filesystem, github, slack)")
+        self._discover_search.setStyleSheet(theme.get_line_edit_style())
+        self._discover_search.returnPressed.connect(self._do_discover_search)
+        search_layout.addWidget(self._discover_search)
+
+        self._discover_search_btn = QPushButton("Search")
+        self._discover_search_btn.setStyleSheet(theme.get_button_style())
+        self._discover_search_btn.clicked.connect(self._do_discover_search)
+        search_layout.addWidget(self._discover_search_btn)
+        layout.addLayout(search_layout)
+
+        # Source checkboxes
+        sources_layout = QHBoxLayout()
+        sources_label = QLabel("Sources:")
+        sources_label.setStyleSheet(f"color: {theme.FG_SECONDARY};")
+        sources_layout.addWidget(sources_label)
+
+        self._source_checks = {}
+        for key, label in [
+            ("mcp.so", "mcp.so"),
+            ("mcpservers.org", "mcpservers.org"),
+            ("pulsemcp.com", "PulseMCP"),
+            ("github", "GitHub"),
+        ]:
+            cb = QCheckBox(label)
+            cb.setChecked(True)
+            cb.setStyleSheet(f"color: {theme.FG_PRIMARY};")
+            self._source_checks[key] = cb
+            sources_layout.addWidget(cb)
+        sources_layout.addStretch()
+        layout.addLayout(sources_layout)
+
+        # Results table
+        self._discover_table = QTableWidget()
+        self._discover_table.setColumnCount(5)
+        self._discover_table.setHorizontalHeaderLabels(
+            ["Name", "Description", "Source", "Stars", "Install Command"]
+        )
+        hdr = self._discover_table.horizontalHeader()
+        hdr.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        hdr.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
+        hdr.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
+        hdr.setSectionResizeMode(4, QHeaderView.ResizeMode.Interactive)
+        self._discover_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self._discover_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self._discover_table.verticalHeader().hide()
+        self._discover_table.setSortingEnabled(True)
+        self._discover_table.setStyleSheet(theme.get_table_style())
+        layout.addWidget(self._discover_table, 1)
+
+        # Restore saved column widths
+        from utils.ui_state_manager import UIStateManager
+        UIStateManager.instance().connect_table("mcp.discover_table", self._discover_table)
+
+        # Bottom row: status | rate limit | Add button
+        bottom_layout = QHBoxLayout()
+        self._discover_status = QLabel("Enter a search term above.")
+        self._discover_status.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        bottom_layout.addWidget(self._discover_status)
+        bottom_layout.addStretch()
+
+        self._discover_rate_label = QLabel("")
+        self._discover_rate_label.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        bottom_layout.addWidget(self._discover_rate_label)
+
+        add_btn = QPushButton("Add to Config")
+        add_btn.setStyleSheet(theme.get_button_style())
+        add_btn.clicked.connect(self._add_discover_to_config)
+        bottom_layout.addWidget(add_btn)
+        layout.addLayout(bottom_layout)
+
+        return widget
+
+    def _do_discover_search(self):
+        """Start a background MCP server search."""
+        query = self._discover_search.text().strip()
+        if not query:
+            return
+        sources = [k for k, cb in self._source_checks.items() if cb.isChecked()]
+        if not sources:
+            self._discover_status.setText("Select at least one source.")
+            return
+
+        self._discover_search_btn.setEnabled(False)
+        self._discover_status.setText("Searching…")
+        self._discover_table.setRowCount(0)
+
+        self._search_worker = MCPSearchWorker(query, sources, parent=self)
+        self._search_worker.results_ready.connect(self._on_discover_results)
+        self._search_worker.error.connect(self._on_discover_error)
+        self._search_worker.finished.connect(
+            lambda: self._discover_search_btn.setEnabled(True)
+        )
+        self._search_worker.start()
+
+    def _on_discover_results(self, results):
+        """Populate the results table."""
+        self._discover_table.setSortingEnabled(False)
+        self._discover_table.setRowCount(0)
+        for result in results:
+            row = self._discover_table.rowCount()
+            self._discover_table.insertRow(row)
+            self._discover_table.setItem(row, 0, QTableWidgetItem(result.name))
+            self._discover_table.setItem(row, 1, QTableWidgetItem(result.description))
+            self._discover_table.setItem(row, 2, QTableWidgetItem(result.source))
+            stars_item = QTableWidgetItem(str(result.stars) if result.stars else "")
+            stars_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self._discover_table.setItem(row, 3, stars_item)
+            self._discover_table.setItem(row, 4, QTableWidgetItem(result.install_command))
+            # Store full result for later use
+            self._discover_table.item(row, 0).setData(Qt.ItemDataRole.UserRole, result)
+        self._discover_table.setSortingEnabled(True)
+
+        count = len(results)
+        self._discover_status.setText(
+            f"{count} result{'s' if count != 1 else ''} found."
+        )
+
+        # Update GitHub rate limit display
+        try:
+            from utils.github_client import GitHubClient
+            rl = GitHubClient().get_rate_limit()
+            remaining = rl.get("rate", {}).get("remaining", rl.get("remaining", "?"))
+            self._discover_rate_label.setText(f"GitHub API: {remaining} remaining")
+            win = self.window()
+            if hasattr(win, "update_github_status"):
+                win.update_github_status(remaining)
+        except Exception:
+            pass
+
+    def _on_discover_error(self, msg: str):
+        self._discover_status.setText(f"Search error: {msg}")
+
+    def _add_discover_to_config(self):
+        """Pre-fill AddServerDialog from the selected search result."""
+        row = self._discover_table.currentRow()
+        if row < 0:
+            QMessageBox.warning(self, "No Selection", "Select a server from the results first.")
+            return
+
+        result = self._discover_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        if result is None:
+            return
+
+        # Build a server_config dict from the install_command
+        parts = (result.install_command or "").split()
+        server_config = {}
+        if parts:
+            server_config["command"] = parts[0]
+            if len(parts) > 1:
+                server_config["args"] = parts[1:]
+
+        dialog = AddServerDialog(self, server_config=server_config)
+        safe_name = result.name.lower().replace(" ", "-")
+        dialog.name_input.setText(safe_name)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            server_name, srv_cfg = dialog.get_server_config()
+            config = self.config
+            if "mcpServers" not in config:
+                config["mcpServers"] = {}
+
+            if server_name in config["mcpServers"]:
+                reply = QMessageBox.question(
+                    self,
+                    "Server Exists",
+                    f"Server '{server_name}' already exists. Overwrite?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                if reply == QMessageBox.StandardButton.No:
+                    return
+
+            config["mcpServers"][server_name] = srv_cfg
+            self.config = config
+            self.editor.setPlainText(json.dumps(config, indent=2))
+            self.update_server_list()
+            # Switch to Configure tab so user can save
+            self._sub_tabs.setCurrentIndex(0)
+            win = self.window()
+            if hasattr(win, "set_status"):
+                win.set_status(f"Server '{server_name}' added — remember to save.")
+            else:
+                QMessageBox.information(
+                    self, "Server Added",
+                    f"Server '{server_name}' added.\n\nDon't forget to save the configuration."
+                )
 
     def get_scope_file_path(self):
         """Get file path for the current scope"""
