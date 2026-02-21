@@ -275,7 +275,7 @@ class HooksTab(QWidget):
         folder_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
 
         project_folder_edit = QLineEdit()
-        project_folder_edit.setText("C:\Scripts")
+        project_folder_edit.setText(str(Path.home()))
         project_folder_edit.setReadOnly(True)
         project_folder_edit.setStyleSheet(theme.get_line_edit_style())
 
@@ -451,12 +451,12 @@ class HooksTab(QWidget):
         folder = QFileDialog.getExistingDirectory(
             self,
             "Select Project Folder",
-            "C:\Scripts"
+            str(Path.home())
         )
         if folder:
             self.project_folder = Path(folder)
             if 'folder_edit' in self.scope_widgets[scope]:
-                self.scope_widgets[scope]['folder_edit'].setText("C:\Scripts")
+                self.scope_widgets[scope]['folder_edit'].setText(str(Path.home()))
             # Update file path
             file_path = self.get_scope_file_path(scope)
             self.scope_widgets[scope]['path_label'].setText(f"File: {file_path}")

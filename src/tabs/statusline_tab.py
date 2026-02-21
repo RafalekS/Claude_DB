@@ -198,7 +198,7 @@ class StatuslineTab(QWidget):
         folder_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
 
         self.project_folder_edit = QLineEdit()
-        self.project_folder_edit.setText("C:\Scripts")
+        self.project_folder_edit.setText(str(Path.home()))
         self.project_folder_edit.setReadOnly(True)
         self.project_folder_edit.setStyleSheet(theme.get_line_edit_style())
 
@@ -315,11 +315,11 @@ class StatuslineTab(QWidget):
         folder = QFileDialog.getExistingDirectory(
             self,
             "Select Project Folder",
-            "C:\Scripts"
+            str(Path.home())
         )
         if folder:
             self.project_folder = Path(folder)
-            self.project_folder_edit.setText("C:\Scripts")
+            self.project_folder_edit.setText(str(Path.home()))
             self.project_path_label.setText(f"File: {self.project_folder / '.claude' / 'settings.json'}")
             # Reload settings from new folder
             self.load_statusline("project")

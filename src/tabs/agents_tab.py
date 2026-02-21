@@ -19,8 +19,9 @@ from utils.theme import (
     BG_DARK, BG_MEDIUM, BG_LIGHT,
     FG_PRIMARY, FG_SECONDARY,
     ACCENT_PRIMARY,
-    FONT_SIZE_SMALL, FONT_SIZE_LARGE,
-    get_button_style, get_text_edit_style, get_line_edit_style
+    FONT_SIZE_SMALL, FONT_SIZE_LARGE, FONT_SIZE_NORMAL,
+    get_button_style, get_text_edit_style, get_line_edit_style,
+    get_list_widget_style, get_label_style, get_tab_widget_style,
 )
 from utils.template_manager import get_template_manager
 

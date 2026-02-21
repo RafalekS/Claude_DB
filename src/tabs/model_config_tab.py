@@ -118,7 +118,7 @@ class ModelConfigTab(QWidget):
         folder_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
 
         self.project_folder_edit = QLineEdit()
-        self.project_folder_edit.setText("C:\Scripts")
+        self.project_folder_edit.setText(str(Path.home()))
         self.project_folder_edit.setReadOnly(True)
         self.project_folder_edit.setStyleSheet(f"""
             QLineEdit {{
@@ -158,11 +158,11 @@ class ModelConfigTab(QWidget):
         folder = QFileDialog.getExistingDirectory(
             self,
             "Select Project Folder",
-            "C:\Scripts"
+            str(Path.home())
         )
         if folder:
             self.project_folder = Path(folder)
-            self.project_folder_edit.setText("C:\Scripts")
+            self.project_folder_edit.setText(str(Path.home()))
             # Refresh project tabs
             self.refresh_project_tabs()
 

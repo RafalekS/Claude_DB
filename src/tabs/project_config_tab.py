@@ -418,7 +418,7 @@ class ProjectConfigTab(QWidget):
         folder = QFileDialog.getExistingDirectory(
             self,
             "Select Project Folder",
-            "C:\Scripts",
+            str(Path.home()),
             QFileDialog.Option.ShowDirsOnly
         )
 

@@ -1,7 +1,7 @@
 """
 MCP Inspector utility for connecting to and querying MCP servers.
 
-Adapted from C:\Scripts\AI\mcp-test\modules\mcp_client.py
+Adapted from an earlier mcp_client.py implementation.
 """
 
 import asyncio
