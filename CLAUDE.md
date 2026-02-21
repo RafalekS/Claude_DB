@@ -1,4 +1,20 @@
- Before you remove any functionality or change any functionality - YOU HAVE TO ASK USER for Permission FIRST
+Need you to perform several tasks for this project:
 
-## PyQt6 QComboBox Dropdown Height Fix
-Fusion style ignores `setMaxVisibleItems()` - use `combobox-popup: 0;` in stylesheet + `max-height: 300px;` on view's stylesheet to limit dropdown height.
+1.) Review the codebase and scan for bugs, errors, hardcoded values, inconsitencies, "dead code", unused modules and functions, duplicate modules and functions. Move all the config from the code to config files
+
+2.) When reviewing skills tab have a look at my other project at https://github.com/RafalekS/skills_builder and see how these two could be merged.
+
+3.) When reviewing MCP tab also look at my other project: https://github.com/RafalekS/MCP_Search
+
+4.) Refactor the code Use Coding skill. Use updated documentation from 
+https://code.claude.com/docs/en
+
+
+5.) Compact the UI, make it modern and professional
+
+<!-- AUTOCLAUDE_REPO_START -->
+## Remote Repository
+
+This project is linked to remote repository: https://github.com/RafalekS/Claude_DB.git
+When making changes, `git push` is required for the user to test.
+<!-- AUTOCLAUDE_REPO_END -->

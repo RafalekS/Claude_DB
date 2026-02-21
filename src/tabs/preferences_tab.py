@@ -1036,27 +1036,32 @@ class {class_name}Tab(QWidget):
             self.preview_label.setText(preview_text)
 
     def apply_preferences(self):
-        """Apply preferences immediately without restart"""
+        """Apply preferences immediately — emits theme_changed signal for instant update."""
         theme_name = self.theme_combo.currentText()
         font_size = self.font_size_spin.value()
 
-        # Apply the theme to the theme module (updates global variables)
+        # Apply locally first
         theme.apply_theme(theme_name, font_size)
-
-        # Apply stylesheet to entire application immediately
         app = QApplication.instance()
         if app:
             app.setStyleSheet(theme.generate_app_stylesheet())
 
-        # Save preferences immediately when applying
+        # Emit signal → main window calls apply_theme_change on all tabs
+        self.theme_changed.emit(theme_name, font_size)
+
+        # Save preferences
         self.save_preferences_silently()
 
-        QMessageBox.information(
-            self,
-            "Theme Applied & Saved",
-            f"Theme '{theme_name}' with {font_size}px font has been applied immediately!\n\n"
-            "All changes are now visible across the application."
-        )
+        # Report via status bar if main window has set_status, else show dialog
+        main_win = self.window()
+        if hasattr(main_win, "set_status"):
+            main_win.set_status(f"Theme '{theme_name}' applied ({font_size}px)")
+        else:
+            QMessageBox.information(
+                self,
+                "Theme Applied",
+                f"Theme '{theme_name}' with {font_size}px font applied."
+            )
 
     def save_preferences_silently(self):
         """Save preferences to file without showing message"""
@@ -1104,12 +1109,13 @@ class {class_name}Tab(QWidget):
             with open(self.config_file, 'w') as f:
                 json.dump(config_data, f, indent=2)
 
+            # Emit signal for instant theme refresh across all tabs
+            self.theme_changed.emit(theme_name, font_size)
+
             QMessageBox.information(
                 self,
                 "Saved & Applied",
-                f"Theme '{theme_name}' with {font_size}px font saved and applied!\n\n"
-                f"Saved to: {self.config_file}\n\n"
-                "Restart application to see full changes across all tabs."
+                f"Theme '{theme_name}' with {font_size}px font saved and applied!"
             )
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save preferences:\n{str(e)}")

@@ -1,94 +1,159 @@
 """
-Terminal utilities - Reusable functions for launching commands in terminal
+Terminal utilities — cross-platform functions for launching commands in a terminal.
+
+Supports Windows, Linux, and macOS.
+Terminal preference configurable via config["terminal"]["command"] (empty = auto-detect).
 """
 
+import json
+import logging
+import platform
+import shutil
 import subprocess
+from pathlib import Path
+
 from PyQt6.QtWidgets import QMessageBox
 
+logger = logging.getLogger(__name__)
 
-def run_in_terminal(command, title="Command", parent_widget=None, show_error=True, cwd=None):
+_CONFIG_FILE = Path(__file__).parent.parent.parent / "config" / "config.json"
+
+
+def _get_terminal_command() -> str:
+    """Return user-configured terminal command, or empty string for auto-detect."""
+    try:
+        with open(_CONFIG_FILE) as f:
+            cfg = json.load(f)
+        return cfg.get("terminal", {}).get("command", "")
+    except Exception:
+        return ""
+
+
+def _build_launch_args(command: str, title: str, cwd: str = None) -> list:
+    """Build OS-specific argv list to run *command* in a new terminal window.
+
+    Returns None if no usable terminal is found.
     """
-    Run a command in Windows Terminal with PowerShell 7
+    user_cmd = _get_terminal_command()
+    system = platform.system()
+
+    # ── User override ──────────────────────────────────────────────────────
+    if user_cmd:
+        # User provides full launch template, e.g. "xterm -e"
+        return user_cmd.split() + [command]
+
+    # ── Windows ────────────────────────────────────────────────────────────
+    if system == "Windows":
+        if shutil.which("wt"):
+            args = ["wt", "-w", "0", "new-tab"]
+            if title:
+                args += ["--title", title]
+            if cwd:
+                args += ["-d", cwd]
+            if shutil.which("pwsh"):
+                args += ["pwsh", "-NoExit", "-Command", command]
+            else:
+                args += ["cmd", "/k", command]
+            return args
+        # Fallback: cmd in a new window
+        return ["cmd", "/c", "start", "cmd", "/k", command]
+
+    # ── macOS ──────────────────────────────────────────────────────────────
+    if system == "Darwin":
+        # Use osascript to open Terminal.app
+        osa_cmd = f'tell application "Terminal" to do script "{command.replace(chr(34), chr(92)+chr(34))}"'
+        return ["osascript", "-e", osa_cmd]
+
+    # ── Linux ──────────────────────────────────────────────────────────────
+    candidates = [
+        ("gnome-terminal", ["gnome-terminal", "--title", title or "Terminal", "--", "bash", "-c",
+                            f"{command}; exec bash"]),
+        ("xterm",          ["xterm", "-title", title or "Terminal", "-e",
+                            f"bash -c '{command}; exec bash'"]),
+        ("konsole",        ["konsole", "--new-tab", "--title", title or "Terminal", "-e",
+                            f"bash -c '{command}; exec bash'"]),
+        ("kitty",          ["kitty", "--title", title or "Terminal",
+                            "bash", "-c", f"{command}; exec bash"]),
+        ("alacritty",      ["alacritty", "--title", title or "Terminal", "-e",
+                            "bash", "-c", f"{command}; exec bash"]),
+        ("xfce4-terminal", ["xfce4-terminal", "--title", title or "Terminal", "-e",
+                            f"bash -c '{command}; exec bash'"]),
+    ]
+    for binary, args in candidates:
+        if shutil.which(binary):
+            return args
+
+    return None
+
+
+def run_in_terminal(
+    command: str,
+    title: str = "Command",
+    parent_widget=None,
+    show_error: bool = True,
+    cwd: str = None,
+) -> bool:
+    """Run *command* in a new terminal window.
 
     Args:
-        command: Command string to execute (e.g., 'claude plugin', 'npm install', 'git status')
-        title: Window title for the terminal tab
-        parent_widget: Parent widget for error dialogs (optional)
-        show_error: Whether to show error dialog on failure (default: True)
-        cwd: Working directory for the command (optional)
+        command:       Shell command to execute (e.g. 'claude plugin').
+        title:         Window / tab title.
+        parent_widget: Parent for error dialogs (optional).
+        show_error:    Whether to show a QMessageBox on failure.
+        cwd:           Working directory (optional).
 
     Returns:
-        True if successful, False if failed
-
-    Example:
-        run_in_terminal('claude plugin', 'Browse Plugins')
-        run_in_terminal('npm install @anthropic-ai/claude-agent-sdk', 'Install SDK')
-        run_in_terminal('claude /status', 'Project Status', cwd='C:\\Projects\\MyApp')
+        True if the terminal was launched successfully, False otherwise.
     """
-    try:
-        # Build command list
-        cmd_list = [
-            'wt.exe',
-            '-w', '0',
-            'new-tab',
-            '--title', title
-        ]
-
-        # Add starting directory if provided
-        if cwd:
-            cmd_list.extend(['-d', cwd])
-
-        # Add PowerShell command
-        cmd_list.extend([
-            'pwsh.exe',
-            '-NoExit',
-            '-Command', command
-        ])
-
-        # Use Windows Terminal with pwsh (PowerShell 7)
-        # Use list form to avoid shell escaping issues
-        subprocess.Popen(cmd_list)
-        return True
-
-    except Exception as e:
+    args = _build_launch_args(command, title, cwd)
+    if not args:
+        msg = "No usable terminal emulator found. Install xterm, gnome-terminal, or kitty."
+        logger.error(msg)
         if show_error and parent_widget:
-            QMessageBox.critical(
-                parent_widget,
-                "Terminal Error",
-                f"Failed to launch terminal:\n{str(e)}"
-            )
+            QMessageBox.critical(parent_widget, "Terminal Error", msg)
+        return False
+
+    try:
+        kwargs = {}
+        if cwd:
+            kwargs["cwd"] = cwd
+        subprocess.Popen(args, **kwargs)
+        logger.debug(f"Launched terminal: {args[0]!r} — {command!r}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to launch terminal: {e}")
+        if show_error and parent_widget:
+            QMessageBox.critical(parent_widget, "Terminal Error", f"Failed to launch terminal:\n{e}")
         return False
 
 
-def run_command_silent(command, timeout=30, shell=False):
-    """
-    Run a command silently and capture output
+def run_command_silent(
+    command,
+    timeout: int = 30,
+    shell: bool = False,
+) -> tuple[bool, str, str]:
+    """Run *command* silently and capture output.
 
     Args:
-        command: Command to run (list or string)
-        timeout: Timeout in seconds (default: 30)
-        shell: Whether to use shell=True (default: False)
+        command: List or string command.
+        timeout: Timeout in seconds.
+        shell:   Use shell=True (default False).
 
     Returns:
-        tuple: (success: bool, stdout: str, stderr: str)
-
-    Example:
-        success, out, err = run_command_silent(['claude.cmd', 'plugin', 'list'])
+        (success, stdout, stderr)
     """
     try:
         result = subprocess.run(
             command,
             capture_output=True,
             text=True,
-            encoding='utf-8',
-            errors='replace',
+            encoding="utf-8",
+            errors="replace",
             timeout=timeout,
-            shell=shell
+            shell=shell,
         )
-
-        return (result.returncode == 0, result.stdout, result.stderr)
-
+        return result.returncode == 0, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
-        return (False, "", f"Command timed out after {timeout} seconds")
+        return False, "", f"Command timed out after {timeout} seconds"
     except Exception as e:
-        return (False, "", str(e))
+        return False, "", str(e)

@@ -6,7 +6,9 @@ Main application entry point
 
 import sys
 import json
+import logging
 import os
+from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 from datetime import datetime
 from PyQt6.QtWidgets import (
@@ -14,8 +16,28 @@ from PyQt6.QtWidgets import (
     QHBoxLayout, QPushButton, QLabel, QMessageBox, QStatusBar,
     QTabBar, QStackedWidget
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPalette, QColor, QIcon
+
+# ── Logging setup ────────────────────────────────────────────────────────────
+_LOG_DIR = Path(__file__).parent.parent / "logs"
+_LOG_DIR.mkdir(exist_ok=True)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    handlers=[
+        TimedRotatingFileHandler(
+            _LOG_DIR / "claude_db.log",
+            when="midnight",
+            backupCount=7,
+            encoding="utf-8",
+        ),
+        logging.StreamHandler(),  # console: all levels
+    ],
+    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 # Import tab modules
 from tabs.settings_tab import SettingsTab
@@ -67,9 +89,8 @@ class ClaudeDBApp(QMainWindow):
         # Auto-detect project folder from current working directory
         cwd = Path.cwd()
         if cwd.exists() and cwd.is_dir():
-            # Set current directory as default project on startup
             self.project_context.set_project(cwd)
-            print(f"Auto-detected project folder: {cwd}")
+            logger.info(f"Auto-detected project folder: {cwd}")
 
         # Set application icon BEFORE applying theme (to prevent theme override)
         self.set_app_icon()
@@ -192,7 +213,21 @@ class ClaudeDBApp(QMainWindow):
         # Status bar
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
+
+        # Right-side GitHub rate-limit indicator (hidden until first API call)
+        self._github_label = QLabel("")
+        self._github_label.setStyleSheet("color: #999; font-size: 11px; margin-right: 8px;")
+        self._github_label.hide()
+        self.status_bar.addPermanentWidget(self._github_label)
+
         self.status_bar.showMessage("Ready")
+
+        # Connect preferences theme-change signal → instant theme refresh
+        prefs_widget = self.all_tabs.get("preferences")
+        if prefs_widget:
+            _, prefs_tab = prefs_widget
+            if hasattr(prefs_tab, "theme_changed"):
+                prefs_tab.theme_changed.connect(self.apply_theme_change)
 
     def set_dark_theme(self):
         """Set dark theme for better visibility"""
@@ -239,6 +274,48 @@ class ClaudeDBApp(QMainWindow):
 
         return toolbar_layout
 
+    # ── Status bar helpers ────────────────────────────────────────────────
+
+    def set_status(self, message: str, is_error: bool = False, timeout: int = 5000) -> None:
+        """Show a status-bar message. Called by any tab via self.window().set_status(...)
+
+        Args:
+            message:  Text to display.
+            is_error: If True, text is shown in red with an 8-second timeout.
+            timeout:  Auto-clear delay in milliseconds (0 = permanent until next call).
+        """
+        if is_error:
+            self.status_bar.setStyleSheet("QStatusBar { color: #fb4934; }")
+            timeout = max(timeout, 8000)
+        else:
+            self.status_bar.setStyleSheet("")
+        self.status_bar.showMessage(message, timeout)
+        logger.debug(f"Status: {message}")
+
+    def update_github_status(self, remaining: int) -> None:
+        """Update the GitHub rate-limit indicator in the right of the status bar."""
+        self._github_label.setText(f"GitHub API: {remaining} remaining")
+        self._github_label.show()
+
+    # ── Theme switching ───────────────────────────────────────────────────
+
+    def apply_theme_change(self, theme_name: str, font_size: int) -> None:
+        """Apply a new theme instantly across the whole application.
+
+        Connected to PreferencesTab.theme_changed signal.
+        """
+        from utils import theme as _theme
+        _theme.apply_theme(theme_name, font_size)
+        self.app.setStyleSheet(_theme.generate_app_stylesheet())
+        # Refresh per-widget stylesheets in each tab
+        for _key, (_name, widget) in self.all_tabs.items():
+            if hasattr(widget, "refresh_theme"):
+                try:
+                    widget.refresh_theme()
+                except Exception as e:
+                    logger.warning(f"refresh_theme failed for {_key}: {e}")
+        logger.info(f"Theme changed to '{theme_name}' {font_size}px")
+
     def create_backup(self):
         """Create backup of all configuration files"""
         try:
@@ -259,22 +336,14 @@ class ClaudeDBApp(QMainWindow):
             self.status_bar.showMessage("Backup failed", 5000)
 
     def backup_program_files(self):
-        """Run PowerShell script to backup program files"""
-        import subprocess
-        try:
-            script_path = Path(__file__).parent.parent / "backup_program.ps1"
-            subprocess.Popen(
-                f'start pwsh -NoExit -Command "& \'{script_path}\'"',
-                shell=True,
-                creationflags=subprocess.CREATE_NEW_CONSOLE
-            )
-            self.status_bar.showMessage("Program backup script launched", 3000)
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to launch backup script:\n{str(e)}"
-            )
+        """Launch backup script in a terminal (cross-platform)."""
+        from utils.terminal_utils import run_in_terminal
+        script_path = Path(__file__).parent.parent / "backup_program.sh"
+        if not script_path.exists():
+            self.set_status("Backup script not found", is_error=True)
+            return
+        run_in_terminal(f'bash "{script_path}"', title="Backup", parent_widget=self)
+        self.set_status("Backup script launched", timeout=3000)
 
     def switch_to_row1_tab(self, index):
         """Switch to a tab from row 1"""
@@ -324,7 +393,7 @@ class ClaudeDBApp(QMainWindow):
                             default_name, widget = all_tabs[key]
                             display_name = custom_name if custom_name else default_name
                             row1_tabs.append((display_name, widget))
-                    print(f"Loaded {len(row1_tabs)} tabs for row 1 from config")
+                    logger.debug(f"Loaded {len(row1_tabs)} tabs for row 1 from config")
 
                 if row2_config:
                     for tab_info in row2_config:
@@ -334,7 +403,7 @@ class ClaudeDBApp(QMainWindow):
                             default_name, widget = all_tabs[key]
                             display_name = custom_name if custom_name else default_name
                             row2_tabs.append((display_name, widget))
-                    print(f"Loaded {len(row2_tabs)} tabs for row 2 from config")
+                    logger.debug(f"Loaded {len(row2_tabs)} tabs for row 2 from config")
 
                 # If config exists but is empty, use defaults
                 if not row1_tabs and not row2_tabs:
@@ -342,11 +411,11 @@ class ClaudeDBApp(QMainWindow):
 
                 return row1_tabs, row2_tabs
             else:
-                print("No config file found, using default tab configuration")
+                logger.info("No config file found, using default tab configuration")
                 return self._build_default_tabs(all_tabs, default_row1, default_row2)
 
         except Exception as e:
-            print(f"Failed to load tab configuration: {e}, using defaults")
+            logger.warning(f"Failed to load tab configuration: {e}, using defaults")
             return self._build_default_tabs(all_tabs, default_row1, default_row2)
 
     def _build_default_tabs(self, all_tabs, default_row1, default_row2):
@@ -372,15 +441,14 @@ class ClaudeDBApp(QMainWindow):
                     icon = QIcon(str(icon_path))
                     if not icon.isNull():
                         self.setWindowIcon(icon)
-                        # Also set for the application (taskbar icon)
                         self.app.setWindowIcon(icon)
-                        print(f"Application icon set: {icon_path}")
+                        logger.debug(f"Application icon set: {icon_path}")
                         return
 
-            print("No application icon found in assets/ folder")
+            logger.debug("No application icon found in assets/ folder")
 
         except Exception as e:
-            print(f"Failed to set application icon: {e}")
+            logger.warning(f"Failed to set application icon: {e}")
 
     def load_saved_preferences(self):
         """Load saved preferences and apply theme on startup"""
@@ -408,18 +476,14 @@ class ClaudeDBApp(QMainWindow):
                 if app:
                     app.setStyleSheet(theme.generate_app_stylesheet())
 
-                print(f"Loaded preferences: {theme_name} theme with {font_size}px font")
+                logger.info(f"Loaded preferences: {theme_name} theme with {font_size}px font")
             else:
-                # No saved preferences - use default Gruvbox Dark
-                print("No config file found, using default Gruvbox Dark")
-
-                # Still apply default theme stylesheet
+                logger.info("No config file found, using default Gruvbox Dark")
                 app = QApplication.instance()
                 if app:
                     app.setStyleSheet(theme.generate_app_stylesheet())
         except Exception as e:
-            print(f"Failed to load preferences: {e}")
-            # Continue with default theme
+            logger.warning(f"Failed to load preferences: {e}")
             app = QApplication.instance()
             if app:
                 app.setStyleSheet(theme.generate_app_stylesheet())
