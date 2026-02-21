@@ -1,0 +1,58 @@
+[
+  {
+    "owner": "anthropics",
+    "repo": "skills",
+    "description": "16 official Anthropic skills",
+    "type": "direct",
+    "skills_prefix": "skills/"
+  },
+  {
+    "owner": "VoltAgent",
+    "repo": "awesome-agent-skills",
+    "description": "383+ skills from official engineering teams",
+    "type": "awesome",
+    "skills_prefix": ""
+  },
+  {
+    "owner": "travisvn",
+    "repo": "awesome-claude-skills",
+    "description": "Curated community skills with architecture docs",
+    "type": "awesome",
+    "skills_prefix": ""
+  },
+  {
+    "owner": "ComposioHQ",
+    "repo": "awesome-claude-skills",
+    "description": "78 SaaS integration skills",
+    "type": "awesome",
+    "skills_prefix": ""
+  },
+  {
+    "owner": "hesreallyhim",
+    "repo": "awesome-claude-code",
+    "description": "Broader Claude Code ecosystem resources",
+    "type": "awesome",
+    "skills_prefix": ""
+  },
+  {
+    "owner": "BehiSecc",
+    "repo": "awesome-claude-skills",
+    "description": "Scientific, security and health skills",
+    "type": "awesome",
+    "skills_prefix": ""
+  },
+  {
+    "owner": "obra",
+    "repo": "superpowers-skills",
+    "description": "Battle-tested developer skills",
+    "type": "direct",
+    "skills_prefix": "skills/"
+  },
+  {
+    "owner": "trailofbits",
+    "repo": "skills",
+    "description": "22 professional security skills",
+    "type": "direct",
+    "skills_prefix": "skills/"
+  }
+]

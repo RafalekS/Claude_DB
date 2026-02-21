@@ -8,7 +8,8 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QSpinBox, QPushButton, QMessageBox, QGroupBox, QFormLayout,
     QDialog, QListWidget, QLineEdit, QTextEdit, QListWidgetItem, QInputDialog,
-    QApplication, QTabWidget, QCheckBox
+    QApplication, QTabWidget, QCheckBox, QAbstractItemView, QFileDialog,
+    QTableWidget, QTableWidgetItem, QHeaderView
 )
 from PyQt6.QtCore import pyqtSignal, QProcess, Qt
 import sys
@@ -369,6 +370,7 @@ class PreferencesTab(QWidget):
         self.create_appearance_subtab()
         self.create_backup_subtab()
         self.create_search_subtab()
+        self.create_skills_subtab()
 
         layout.addWidget(self.subtabs)
 
@@ -917,6 +919,191 @@ class PreferencesTab(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save settings:\n{e}")
 
+    def create_skills_subtab(self):
+        """Create Skills settings subtab (dirs + curated skill sources)."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
+
+        group_style = f"""
+            QGroupBox {{
+                font-size: {theme.FONT_SIZE_NORMAL}px; font-weight: bold;
+                color: {theme.ACCENT_PRIMARY};
+                border: 2px solid {theme.ACCENT_PRIMARY};
+                border-radius: 5px;
+                margin-top: 10px; padding-top: 10px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin; left: 10px; padding: 0 5px;
+            }}
+        """
+        # ── Skill directories ────────────────────────────────────────────
+        dir_group = QGroupBox("Skill Directories")
+        dir_group.setStyleSheet(group_style)
+        dir_layout = QFormLayout(dir_group)
+        dir_layout.setSpacing(8)
+
+        user_row = QHBoxLayout()
+        self._skills_user_dir = QLineEdit()
+        self._skills_user_dir.setPlaceholderText("Leave blank for ~/.claude/skills/")
+        self._skills_user_dir.setStyleSheet(theme.get_line_edit_style())
+        user_row.addWidget(self._skills_user_dir)
+        user_browse = QPushButton("Browse")
+        user_browse.setStyleSheet(theme.get_button_style())
+        user_browse.clicked.connect(lambda: self._browse_skills_dir(self._skills_user_dir))
+        user_row.addWidget(user_browse)
+        dir_layout.addRow("User skills dir:", user_row)
+
+        proj_row = QHBoxLayout()
+        self._skills_proj_dir = QLineEdit()
+        self._skills_proj_dir.setPlaceholderText("Leave blank for .claude/skills/ in current project")
+        self._skills_proj_dir.setStyleSheet(theme.get_line_edit_style())
+        proj_row.addWidget(self._skills_proj_dir)
+        proj_browse = QPushButton("Browse")
+        proj_browse.setStyleSheet(theme.get_button_style())
+        proj_browse.clicked.connect(lambda: self._browse_skills_dir(self._skills_proj_dir))
+        proj_row.addWidget(proj_browse)
+        dir_layout.addRow("Project skills dir:", proj_row)
+        layout.addWidget(dir_group)
+
+        # ── Skill sources ────────────────────────────────────────────────
+        src_group = QGroupBox("Skill Sources (config/skill_sources.json)")
+        src_group.setStyleSheet(group_style)
+        src_layout = QVBoxLayout(src_group)
+
+        self._skill_sources_table = QTableWidget()
+        self._skill_sources_table.setColumnCount(4)
+        self._skill_sources_table.setHorizontalHeaderLabels(["Owner/Repo", "Description", "Type", "Skills Prefix"])
+        hdr = self._skill_sources_table.horizontalHeader()
+        hdr.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        hdr.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
+        hdr.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
+        self._skill_sources_table.verticalHeader().hide()
+        self._skill_sources_table.setStyleSheet(theme.get_table_style())
+        self._skill_sources_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        src_layout.addWidget(self._skill_sources_table)
+
+        src_btns = QHBoxLayout()
+        for label, slot in [
+            ("Add", self._add_skill_source),
+            ("Remove", self._remove_skill_source),
+            ("Reset to Defaults", self._reset_skill_sources),
+        ]:
+            btn = QPushButton(label)
+            btn.setStyleSheet(theme.get_button_style())
+            btn.clicked.connect(slot)
+            src_btns.addWidget(btn)
+        src_btns.addStretch()
+        src_layout.addLayout(src_btns)
+        layout.addWidget(src_group)
+
+        save_btn = QPushButton("Save Skills Settings")
+        save_btn.setStyleSheet(theme.get_button_style())
+        save_btn.clicked.connect(self._save_skills_settings)
+        layout.addWidget(save_btn)
+        layout.addStretch()
+
+        self.subtabs.addTab(widget, "🛠 Skills")
+
+    def _browse_skills_dir(self, line_edit: QLineEdit):
+        path = QFileDialog.getExistingDirectory(self, "Select Skills Directory")
+        if path:
+            line_edit.setText(path)
+
+    def _populate_skill_sources_table(self, sources: list):
+        self._skill_sources_table.setRowCount(0)
+        for src in sources:
+            row = self._skill_sources_table.rowCount()
+            self._skill_sources_table.insertRow(row)
+            self._skill_sources_table.setItem(row, 0, QTableWidgetItem(f"{src.get('owner','')}/{src.get('repo','')}"))
+            self._skill_sources_table.setItem(row, 1, QTableWidgetItem(src.get("description", "")))
+            self._skill_sources_table.setItem(row, 2, QTableWidgetItem(src.get("type", "direct")))
+            self._skill_sources_table.setItem(row, 3, QTableWidgetItem(src.get("skills_prefix", "")))
+
+    def _add_skill_source(self):
+        text, ok = QInputDialog.getText(
+            self, "Add Skill Source",
+            "Enter owner/repo (e.g. anthropics/skills):"
+        )
+        if not ok or not text.strip():
+            return
+        parts = text.strip().split("/", 1)
+        if len(parts) != 2:
+            QMessageBox.warning(self, "Invalid", "Enter as owner/repo")
+            return
+        row = self._skill_sources_table.rowCount()
+        self._skill_sources_table.insertRow(row)
+        from PyQt6.QtWidgets import QTableWidgetItem
+        self._skill_sources_table.setItem(row, 0, QTableWidgetItem(text.strip()))
+        self._skill_sources_table.setItem(row, 1, QTableWidgetItem(""))
+        self._skill_sources_table.setItem(row, 2, QTableWidgetItem("direct"))
+        self._skill_sources_table.setItem(row, 3, QTableWidgetItem("skills/"))
+
+    def _remove_skill_source(self):
+        row = self._skill_sources_table.currentRow()
+        if row >= 0:
+            self._skill_sources_table.removeRow(row)
+
+    def _reset_skill_sources(self):
+        from utils.skill_search_client import load_skill_sources
+        self._populate_skill_sources_table(load_skill_sources())
+
+    def _save_skills_settings(self):
+        try:
+            config_data = {}
+            if self.config_file.exists():
+                with open(self.config_file, "r") as f:
+                    config_data = json.load(f)
+
+            config_data.setdefault("paths", {})
+            config_data["paths"]["user_skills_dir"] = self._skills_user_dir.text().strip()
+            config_data["paths"]["project_skills_dir"] = self._skills_proj_dir.text().strip()
+
+            with open(self.config_file, "w") as f:
+                json.dump(config_data, f, indent=2)
+
+            # Save skill sources JSON
+            _sources_file = Path(__file__).parent.parent.parent / "config" / "skill_sources.json"
+            sources = []
+            for row in range(self._skill_sources_table.rowCount()):
+                owner_repo = (self._skill_sources_table.item(row, 0) or QTableWidgetItem("")).text().strip()
+                if not owner_repo:
+                    continue
+                parts = owner_repo.split("/", 1)
+                sources.append({
+                    "owner": parts[0] if len(parts) > 0 else "",
+                    "repo": parts[1] if len(parts) > 1 else "",
+                    "description": (self._skill_sources_table.item(row, 1) or QTableWidgetItem("")).text(),
+                    "type": (self._skill_sources_table.item(row, 2) or QTableWidgetItem("direct")).text() or "direct",
+                    "skills_prefix": (self._skill_sources_table.item(row, 3) or QTableWidgetItem("")).text(),
+                })
+            with open(_sources_file, "w") as f:
+                json.dump(sources, f, indent=2)
+
+            win = self.window()
+            if hasattr(win, "set_status"):
+                win.set_status("Skills settings saved.")
+            else:
+                QMessageBox.information(self, "Saved", "Skills settings saved.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
+
+    def _load_skills_settings(self):
+        try:
+            if self.config_file.exists():
+                with open(self.config_file, "r") as f:
+                    config_data = json.load(f)
+                paths = config_data.get("paths", {})
+                self._skills_user_dir.setText(paths.get("user_skills_dir", ""))
+                self._skills_proj_dir.setText(paths.get("project_skills_dir", ""))
+
+            from utils.skill_search_client import load_skill_sources
+            self._populate_skill_sources_table(load_skill_sources())
+        except Exception:
+            pass
+
     def _load_search_settings(self):
         """Load GitHub + MCP search settings into the Search subtab."""
         try:
@@ -1361,6 +1548,7 @@ class {class_name}Tab(QWidget):
             self.font_size_spin.setValue(14)
 
         self._load_search_settings()
+        self._load_skills_settings()
 
     def reset_to_default(self):
         """Reset to default Gruvbox Dark theme"""
