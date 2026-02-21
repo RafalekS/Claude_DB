@@ -1,0 +1,8 @@
+{
+  "command": "uv",
+  "args": [
+    "run",
+    "C:\\path\\to\\netflix-search-mcp\\server.py"
+  ],
+  "_note": "Python Netflix search. Clone from https://github.com/rafaporci/netflix-search-mcp, run 'pip install -r requirements.txt'"
+}

@@ -1,0 +1,12 @@
+{
+  "type": "stdio",
+  "command": "node",
+  "args": [
+    "C:\\path\\to\\plex-mcp-server\\build\\index.js"
+  ],
+  "env": {
+    "PLEX_URL": "http://localhost:32400",
+    "PLEX_TOKEN": "YOUR_PLEX_TOKEN"
+  },
+  "_note": "Node.js Plex server. Clone from https://github.com/niavasha/plex-mcp-server, run 'npm install && npm run build'"
+}

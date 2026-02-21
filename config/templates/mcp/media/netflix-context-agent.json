@@ -1,0 +1,7 @@
+{
+  "command": "node",
+  "args": [
+    "C:\\path\\to\\Netflix_Context_agent\\dist\\index.js"
+  ],
+  "_note": "Node.js Netflix context agent. Clone from https://github.com/AshutoshRavindraIwale/Netflix_Context_agent, run 'npm install && npm run build'"
+}

@@ -1,0 +1,150 @@
+{
+  "official": [
+    [
+      "https://support.claude.com",
+      "Claude Support"
+    ],
+    [
+      "https://www.anthropic.com/claude",
+      "Anthropic Claude"
+    ],
+    [
+      "https://www.anthropic.com/engineering/claude-code-best-practices",
+      "Claude Code Best Practices"
+    ],
+    [
+      "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills",
+      "Agent Skills Guide"
+    ],
+    [
+      "https://www.anthropic.com/news/claude-code-plugins",
+      "Claude Code Plugins"
+    ],
+    [
+      "https://docs.claude.com/en/docs/claude-code/cli-reference",
+      "CLI Reference"
+    ],
+    [
+      "https://docs.claude.com/en/docs/claude-code/settings",
+      "Settings Documentation"
+    ],
+    [
+      "https://docs.claude.com/en/docs/claude-code/memory",
+      "Memory System"
+    ],
+    [
+      "https://docs.claude.com/en/docs/claude-code/checkpointing",
+      "Checkpointing"
+    ],
+    [
+      "https://docs.claude.com/en/docs/claude-code/slash-commands",
+      "Slash Commands"
+    ],
+    [
+      "https://docs.claude.com/en/docs/claude-code/interactive-mode",
+      "Interactive Mode"
+    ],
+    [
+      "https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview",
+      "Agent Skills Overview"
+    ],
+    [
+      "https://docs.claude.com/en/api/agent-sdk/skills",
+      "Agent SDK Skills"
+    ]
+  ],
+  "community": [
+    [
+      "https://claudelog.com",
+      "ClaudeLog - Community Hub"
+    ],
+    [
+      "https://claudelog.com/configuration/",
+      "Configuration Guide"
+    ],
+    [
+      "https://claudelog.com/mechanics/custom-agents/",
+      "Custom Agents Guide"
+    ],
+    [
+      "https://claudecode.io/tutorials/claude-md-setup",
+      "CLAUDE.md Setup Tutorial"
+    ],
+    [
+      "https://awesomeclaude.ai/code-cheatsheet",
+      "Awesome Claude Cheatsheet"
+    ],
+    [
+      "https://shipyard.build/blog/claude-code-cheat-sheet/",
+      "Shipyard Cheat Sheet"
+    ],
+    [
+      "https://neon.com/blog/our-claude-code-cheatsheet",
+      "Neon Cheat Sheet"
+    ],
+    [
+      "https://ainativedev.io/news/configuring-claude-code",
+      "AI Native Dev - Configuring Claude Code"
+    ],
+    [
+      "https://creatoreconomy.so/p/20-tips-to-master-claude-code-in-35-min-build-an-app",
+      "20 Tips to Master Claude Code"
+    ],
+    [
+      "https://apidog.com/blog/claude-skills/",
+      "Apidog - Claude Skills"
+    ],
+    [
+      "https://blog.promptlayer.com/building-agents-with-claude-codes-sdk/",
+      "Building Agents with SDK"
+    ],
+    [
+      "https://www.reddit.com/r/ClaudeAI/",
+      "Reddit - r/ClaudeAI"
+    ]
+  ],
+  "frameworks": [
+    [
+      "https://github.com/SuperClaude-Org/SuperClaude_Framework",
+      "SuperClaude Framework"
+    ],
+    [
+      "https://github.com/VoltAgent/awesome-claude-code-subagents",
+      "Awesome Claude Code Subagents"
+    ],
+    [
+      "https://github.com/wshobson/agents",
+      "Agent Collection"
+    ],
+    [
+      "https://github.com/ggrigo/claude-code-tools",
+      "Claude Code Tools"
+    ],
+    [
+      "https://github.com/n8n-io/self-hosted-ai-starter-kit",
+      "n8n Self-Hosted AI Starter Kit"
+    ],
+    [
+      "https://github.com/vincenthopf/claude-code",
+      "vincenthopf/claude-code"
+    ],
+    [
+      "https://hub.docker.com/r/gendosu/claude-code-docker",
+      "Docker Image - gendosu"
+    ],
+    [
+      "https://www.npmjs.com/package/@j0kz/api-designer-mcp",
+      "MCP Tools - @j0kz"
+    ]
+  ],
+  "marketplaces": [
+    [
+      "https://claudemarketplaces.com/",
+      "Claude Marketplaces"
+    ],
+    [
+      "https://claudecodemarketplace.com/",
+      "Claude Code Marketplace"
+    ]
+  ]
+}

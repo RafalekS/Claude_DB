@@ -1,0 +1,15 @@
+2024-11-16 13:55:44,345 - ERROR - Command failed: Aborted!
+
+2024-11-16 13:55:45,571 - ERROR - Command failed: Usage: claudesync upgrade [OPTIONS]
+Try 'claudesync upgrade --help' for help.
+
+Error: No such option: --check Did you mean --help?
+
+2024-11-16 13:57:49,830 - ERROR - Command failed: Aborted!
+
+2024-11-16 13:58:14,309 - ERROR - Command failed: Usage: claudesync upgrade [OPTIONS]
+Try 'claudesync upgrade --help' for help.
+
+Error: No such option: --check Did you mean --help?
+
+2026-02-04 17:20:38,908 - ERROR - Command execution error: [WinError 2] The system cannot find the file specified

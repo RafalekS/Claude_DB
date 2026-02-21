@@ -1,0 +1,141 @@
+{
+  "external_tools": {
+    "monitoring": [
+      {
+        "button_text": "Claude Monitor",
+        "command": "claude-monitor",
+        "tooltip": "Real-time monitoring tool"
+      }
+    ],
+    "configuration": [
+      {
+        "button_text": "Config Browser (ccexp)",
+        "command": "ccexp",
+        "tooltip": "Launch interactive config browser"
+      },
+      {
+        "button_text": "Claude Code Templates",
+        "command": "npx claude-code-templates@latest",
+        "tooltip": "Claude Code template system"
+      },
+      {
+        "button_text": "Tweak CC",
+        "command": "npx tweakcc",
+        "tooltip": "Configuration tweaker for Claude Code"
+      },
+      {
+        "button_text": "StatusLine Config",
+        "command": "npx ccstatusline@latest",
+        "tooltip": "StatusLine configurator"
+      }
+    ],
+    "claude_code_templates": [
+      {
+        "button_text": "Claude Code Templates",
+        "command": "npx claude-code-templates@latest",
+        "tooltip": "Main templates dashboard"
+      },
+      {
+        "button_text": "Analytics",
+        "command": "npx claude-code-templates@latest --analytics",
+        "tooltip": "Claude Code Analytics"
+      },
+      {
+        "button_text": "Health Check",
+        "command": "npx claude-code-templates@latest --health-check",
+        "tooltip": "Claude Code Health Check"
+      },
+      {
+        "button_text": "Commands Analysis",
+        "command": "npx claude-code-templates@latest --command-stats -d $HOME",
+        "tooltip": "Commands Analysis for User"
+      },
+      {
+        "button_text": "Hooks Analysis",
+        "command": "npx claude-code-templates@latest --hook-stats -d $HOME\\.claude",
+        "tooltip": "Hooks Analysis for User"
+      },
+      {
+        "button_text": "MCP Server Analysis",
+        "command": "npx claude-code-templates@latest -d $HOME\\.claude --mcp-stats",
+        "tooltip": "User MCP Server analysis"
+      },
+      {
+        "button_text": "Agents Dashboard",
+        "command": "npx claude-code-templates@latest --agents",
+        "tooltip": "Claude Code agents dashboard"
+      },
+      {
+        "button_text": "Plugin Dashboard",
+        "command": "npx claude-code-templates@latest --plugins",
+        "tooltip": "Plugin dashboard"
+      },
+      {
+        "button_text": "Health (User)",
+        "command": "npx claude-code-templates@latest --health",
+        "tooltip": "Health Check for User"
+      },
+      {
+        "button_text": "Health (Project)",
+        "command": "npx claude-code-templates@latest --health -d {project_folder}",
+        "tooltip": "Health Check for Project folder",
+        "requires_input": true,
+        "input_prompt": "Enter project folder path:",
+        "input_label": "Project Folder"
+      },
+      {
+        "button_text": "List Agents (Project)",
+        "command": "npx claude-code-templates@latest --list-agents -d {project_folder}",
+        "tooltip": "List Agents for Project",
+        "requires_input": true,
+        "input_prompt": "Enter project folder path:",
+        "input_label": "Project Folder"
+      },
+      {
+        "button_text": "List Agents (User)",
+        "command": "npx claude-code-templates@latest --list-agents",
+        "tooltip": "List Agents for User"
+      },
+      {
+        "button_text": "Claude Code Studio",
+        "command": "npx claude-code-templates@latest --studio",
+        "tooltip": "Claude Code Studio interface"
+      },
+      {
+        "button_text": "Claude Code Chats",
+        "command": "npx claude-code-templates@latest --chats",
+        "tooltip": "Claude Code Chats Dashboard"
+      },
+      {
+        "button_text": "TEST_2",
+        "command": "TEST_2",
+        "tooltip": "TEST_2",
+        "requires_input": true,
+        "input_prompt": "TEST_2",
+        "input_label": "TEST_2"
+      }
+    ],
+    "plugins": [
+      {
+        "button_text": "Plugin Manager",
+        "command": "npx claude-code-templates@latest --plugins",
+        "tooltip": "Manage plugins and extensions"
+      },
+      {
+        "button_text": "Claude Powerline",
+        "command": "npm i @owloops/claude-powerline",
+        "tooltip": "Install Claude Powerline plugin"
+      }
+    ],
+    "test": [
+      {
+        "button_text": "test",
+        "command": "echo",
+        "tooltip": "test",
+        "requires_input": true,
+        "input_prompt": "{project_folder}",
+        "input_label": "Folder"
+      }
+    ]
+  }
+}

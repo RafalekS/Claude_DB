@@ -1,0 +1,10 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "-y",
+    "@floriscornel/teams-mcp@latest"
+  ],
+  "_note": "Node.js MS Teams via npx. Run 'npm run auth' first for OAuth flow. https://github.com/floriscornel/teams-mcp"
+}

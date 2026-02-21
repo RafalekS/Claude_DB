@@ -1,0 +1,12 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "-y",
+    "mcp-mermaid"
+  ],
+  "env": {
+    "PATH": "C:\\Program Files\\nodejs;C:\\Program Files\\nodejs\\node_modules\\npm\\bin;%PATH%"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "stdio",
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "-y",
+    "@smithery/cli",
+    "run",
+    "@uzaysozen/imdb-mcp-server"
+  ],
+  "env": {
+    "RAPID_API_KEY_IMDB": "YOUR_RAPIDAPI_KEY"
+  },
+  "_note": "Requires RapidAPI account with IMDb API subscription"
+}

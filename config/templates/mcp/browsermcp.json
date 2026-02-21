@@ -1,0 +1,8 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "@browsermcp/mcp@latest"
+  ]
+}

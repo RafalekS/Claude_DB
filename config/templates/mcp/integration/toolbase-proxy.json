@@ -1,0 +1,10 @@
+{
+  "args": [
+    "-p=proxy",
+    "-f=C:\\Users\\r_sta\\.toolbase\\config.json",
+    "-v=claude",
+    "-l=C:\\Users\\r_sta\\AppData\\Roaming\\Toolbase\\logs\\claude-toolbase-proxy.log"
+  ],
+  "command": "C:\\Users\\r_sta\\.toolbase\\toolbase-runner.exe",
+  "env": {}
+}

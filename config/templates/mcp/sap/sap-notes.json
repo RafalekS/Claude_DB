@@ -1,0 +1,11 @@
+{
+  "command": "node",
+  "args": [
+    "C:\\path\\to\\mcp-sap-notes\\dist\\mcp-server.js"
+  ],
+  "env": {
+    "PFX_PATH": "C:\\path\\to\\sap-passport.pfx",
+    "PFX_PASSPHRASE": "YOUR_PASSPHRASE"
+  },
+  "_note": "Node.js SAP Notes server. Clone from https://github.com/marianfoo/mcp-sap-notes, run 'npm install && npm run build'. Requires SAP Passport certificate. Node 18+"
+}

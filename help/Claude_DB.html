@@ -1,0 +1,2404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code CheatSheet - Complete Reference Database</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-bottom: 5px solid #667eea;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .search-container {
+            padding: 30px 40px;
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .section:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .section-header:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #653a8a 100%);
+        }
+        
+        .section-header h2 {
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+        
+        .toggle-icon {
+            font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+        
+        .section-header.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+        
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: white;
+        }
+        
+        .section-content.active {
+            max-height: 10000px;
+            transition: max-height 0.5s ease-in;
+        }
+        
+        .section-body {
+            padding: 25px;
+        }
+        
+        .subsection {
+            margin-bottom: 25px;
+        }
+        
+        .subsection h3 {
+            color: #667eea;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .subsection h4 {
+            color: #2d3748;
+            font-size: 1.1em;
+            margin: 15px 0 10px 0;
+        }
+        
+        code {
+            background: #f7fafc;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e53e3e;
+            font-size: 0.9em;
+        }
+        
+        pre {
+            background: #2d3748;
+            color: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        pre code {
+            background: none;
+            color: #f7fafc;
+            padding: 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        tr:hover {
+            background: #f7fafc;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px 5px 5px 0;
+        }
+        
+        .warning {
+            background: #fff5f5;
+            border-left: 4px solid #f56565;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .info {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .success {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .footer {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        .expand-all-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            transition: all 0.3s;
+        }
+        
+        .expand-all-btn:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.3);
+        }
+        
+        .collapse-all-btn {
+            background: #f56565;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .collapse-all-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 101, 101, 0.3);
+        }
+        
+        .button-container {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Claude Code CheatSheet</h1>
+            <p>Complete Reference Database - Settings, CLI, Environment Variables, MCP & More</p>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="searchBox" class="search-box" placeholder="Search anything... (settings, commands, environment variables, etc.)">
+            <div class="button-container" style="margin-top: 15px;">
+                <button class="expand-all-btn" onclick="expandAll()">Expand All Sections</button>
+                <button class="collapse-all-btn" onclick="collapseAll()">Collapse All Sections</button>
+            </div>
+        </div>
+        
+        <div class="content">
+            
+            <!-- SETTINGS SECTION -->
+            <div class="section" data-keywords="settings configuration files hierarchy global user project local">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h2>Settings & Configuration Files</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        
+                        <div class="subsection">
+                            <h3>Configuration File Hierarchy</h3>
+                            <p>Claude Code uses multiple configuration files with a specific hierarchy. Settings are applied from most general to most specific:</p>
+                            
+                            <table>
+                                <tr>
+                                    <th>File</th>
+                                    <th>Scope</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>~/.claude.json</code></td>
+                                    <td>Legacy/Global</td>
+                                    <td>Legacy file - often the only place certain settings work. Contains global settings, project configs, prompt history, and stats.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>~/.claude/settings.json</code></td>
+                                    <td>User (Global)</td>
+                                    <td>Personal global settings that apply to every project. Preferred location for personal defaults like theme or model preferences.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>.claude/settings.json</code></td>
+                                    <td>Project</td>
+                                    <td>Project-specific settings. Should be checked into source control for team-wide configurations.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>.claude/settings.local.json</code></td>
+                                    <td>Project Local</td>
+                                    <td>Personal project tweaks. Ignored by Git, perfect for API keys or experimental settings.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>~/.claude/mcp_servers.json</code></td>
+                                    <td>User (MCP)</td>
+                                    <td>Dedicated file for MCP server configurations.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>.mcp.json</code></td>
+                                    <td>Project (MCP)</td>
+                                    <td>Project-level MCP configuration, designed to be checked into version control.</td>
+                                </tr>
+                            </table>
+                            
+                            <div class="warning">
+                                <strong>⚠️ Important:</strong> Any of these files can be overridden by enterprise policies or command-line arguments. Settings are applied with more specific files overriding more general ones.
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Recommended Setup Structure</h3>
+                            <p>For reliability, use <code>~/.claude.json</code> as shown in examples:</p>
+                            
+                            <pre><code>{
+  "customApiKeyResponses": {
+    "approved": ["LAST_20_CHARS_OF_API_KEY"],
+    "rejected": []
+  },
+  "shiftEnterKeyBindingInstalled": true,
+  "theme": "dark",
+  "hasCompletedOnboarding": true,
+  "projects": {
+    "/path/to/your/project": {
+      "mcpServers": {
+        "filesystem": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/allowed/path"]
+        }
+      },
+      "allowedTools": [
+        "Task",
+        "Bash(git log:*)",
+        "Read",
+        "Edit",
+        "Write"
+      ]
+    }
+  }
+}</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Key Configuration Settings</h3>
+                            
+                            <h4>Permissions Object</h4>
+                            <p>Controls which tools and commands Claude Code can run:</p>
+                            <ul>
+                                <li><strong>allow:</strong> Tools that can run automatically without prompts</li>
+                                <li><strong>ask:</strong> Tools that require user confirmation first</li>
+                                <li><strong>deny:</strong> Tools that are completely blocked</li>
+                            </ul>
+                            
+                            <div class="warning">
+                                <strong>Known Issue:</strong> "deny" rules are frequently ignored in practice, which poses a security risk. The AI might access files despite explicit deny instructions.
+                            </div>
+                            
+                            <h4>Allowed Tools Configuration</h4>
+                            <pre><code>"allowedTools": [
+  "Task",          // Task management
+  "Bash",          // ⚠️ Dangerous: allows all system commands
+  "Bash(git log:*)",  // Safer: only allows git log commands
+  "Glob",          // Pattern matching
+  "Grep",          // Text search
+  "LS",            // List files
+  "Read",          // Read files
+  "Edit",          // Edit existing files
+  "MultiEdit",     // Edit multiple files
+  "Write",         // Create/write files
+  "WebFetch",      // Fetch web content
+  "WebSearch"      // Web searching
+]</code></pre>
+                            
+                            <h4>API Key Configuration</h4>
+                            <p>Multiple methods to set API key:</p>
+                            <pre><code># Method 1: Environment variable (recommended)
+export ANTHROPIC_API_KEY="your-api-key-here"
+
+# Method 2: Add to shell profile
+echo 'export ANTHROPIC_API_KEY="your-api-key-here"' >> ~/.bashrc
+source ~/.bashrc
+
+# Method 3: API Key Helper Script
+echo 'echo ${ANTHROPIC_API_KEY}' > ~/.claude/anthropic_key_helper.sh
+chmod +x ~/.claude/anthropic_key_helper.sh
+claude config set --global apiKeyHelper ~/.claude/anthropic_key_helper.sh</code></pre>
+                            
+                            <h4>Trust and Onboarding Settings</h4>
+                            <pre><code>claude config set hasTrustDialogAccepted true
+claude config set hasCompletedProjectOnboarding true</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Advanced Settings</h3>
+                            
+                            <h4>Parallel Tasks</h4>
+                            <pre><code>claude config set --global parallelTasksCount 3</code></pre>
+                            <p>Controls the number of subtasks Claude Code works on simultaneously.</p>
+                            
+                            <h4>IDE Extension Installation</h4>
+                            <pre><code># For VS Code
+tempdir=$(mktemp -d)
+cd $tempdir
+npm pack @anthropic-ai/claude-code
+tar -xzvf anthropic-ai-claude-code-*.tgz
+code --install-extension package/vendor/claude-code.vsix
+
+# For Cursor
+cursor --install-extension package/vendor/claude-code.vsix</code></pre>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLI REFERENCE SECTION -->
+            <div class="section" data-keywords="cli command line interface arguments flags commands">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h2>CLI Reference - Commands & Flags</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        
+                        <div class="subsection">
+                            <h3>Basic Commands</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Command</th>
+                                    <th>Description</th>
+                                    <th>Example</th>
+                                </tr>
+                                <tr>
+                                    <td><code>claude</code></td>
+                                    <td>Start interactive REPL</td>
+                                    <td><code>claude</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>claude "query"</code></td>
+                                    <td>Start REPL with initial prompt</td>
+                                    <td><code>claude "explain this project"</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>claude -p "query"</code></td>
+                                    <td>Query via SDK, then exit</td>
+                                    <td><code>claude -p "explain this function"</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>cat file | claude -p "query"</code></td>
+                                    <td>Process piped content</td>
+                                    <td><code>cat logs.txt | claude -p "explain"</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>claude -c</code></td>
+                                    <td>Continue most recent conversation</td>
+                                    <td><code>claude -c</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>claude -c -p "query"</code></td>
+                                    <td>Continue via SDK</td>
+                                    <td><code>claude -c -p "Check for type errors"</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>claude -r "session-id" "query"</code></td>
+                                    <td>Resume session by ID</td>
+                                    <td><code>claude -r "abc123" "Finish this PR"</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>claude update</code></td>
+                                    <td>Update to latest version</td>
+                                    <td><code>claude update</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>claude mcp</code></td>
+                                    <td>Configure MCP servers</td>
+                                    <td><code>claude mcp add filesystem</code></td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Command Flags</h3>
+                            
+                            <h4>--add-dir</h4>
+                            <p>Add additional working directories for Claude to access</p>
+                            <pre><code># Add single directory
+claude --add-dir ../apps
+
+# Add multiple directories
+claude --add-dir ../apps ../lib
+
+# Use with print mode
+claude --add-dir ../backend -p "Validate API calls"</code></pre>
+                            
+                            <h4>--allowedTools</h4>
+                            <p>Specify tools that should be allowed without prompting</p>
+                            <pre><code>claude --allowedTools "Bash(git log:*)" "Bash(git diff:*)" "Read"</code></pre>
+                            
+                            <h4>--disallowedTools</h4>
+                            <p>Specify tools that should be denied</p>
+                            <pre><code>claude --disallowedTools "Bash(git log:*)" "Edit"</code></pre>
+                            
+                            <h4>--print, -p</h4>
+                            <p>Print mode - query and exit (SDK mode)</p>
+                            <pre><code>claude -p "query"</code></pre>
+                            
+                            <h4>--append-system-prompt</h4>
+                            <p>Append custom instructions to system prompt (SDK mode only)</p>
+                            <pre><code>claude --append-system-prompt "Custom instruction"</code></pre>
+                            
+                            <h4>--output-format</h4>
+                            <p>Set output format: text, json, or stream-json</p>
+                            <pre><code>claude -p "query" --output-format json</code></pre>
+                            
+                            <h4>--input-format</h4>
+                            <p>Set input format: text or stream-json</p>
+                            <pre><code>claude -p --output-format json --input-format stream-json</code></pre>
+                            
+                            <h4>--include-partial-messages</h4>
+                            <p>Include partial messages in stream-json output (SDK mode with stream-json only)</p>
+                            <pre><code>claude -p --output-format stream-json --include-partial-messages "query"</code></pre>
+                            
+                            <h4>--verbose</h4>
+                            <p>Enable verbose logging</p>
+                            <pre><code>claude --verbose</code></pre>
+                            
+                            <h4>--max-turns</h4>
+                            <p>Set maximum number of turns</p>
+                            <pre><code>claude -p --max-turns 3 "query"</code></pre>
+                            
+                            <h4>--model</h4>
+                            <p>Specify model (sonnet, opus, or full model name)</p>
+                            <pre><code>claude --model claude-sonnet-4-20250514</code></pre>
+                            
+                            <h4>--permission-mode</h4>
+                            <p>Set permission mode</p>
+                            <pre><code>claude --permission-mode plan</code></pre>
+                            
+                            <h4>--permission-prompt-tool</h4>
+                            <p>Prompt for permission on specific tool</p>
+                            <pre><code>claude -p --permission-prompt-tool mcp_auth_tool "query"</code></pre>
+                            
+                            <h4>--resume</h4>
+                            <p>Resume a specific session</p>
+                            <pre><code>claude --resume abc123 "query"</code></pre>
+                            
+                            <h4>--continue</h4>
+                            <p>Continue most recent conversation</p>
+                            <pre><code>claude --continue</code></pre>
+                            
+                            <h4>--dangerously-skip-permissions</h4>
+                            <p>Skip all permission checks (use with caution!)</p>
+                            <pre><code>claude --dangerously-skip-permissions</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Model Selection</h3>
+                            
+                            <h4>Available Models</h4>
+                            <table>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>ID</th>
+                                    <th>Best For</th>
+                                </tr>
+                                <tr>
+                                    <td>Claude 4.1 Opus</td>
+                                    <td><code>claude-opus-4-1-20250805</code></td>
+                                    <td>Maximum capability with enhanced coding and debugging</td>
+                                </tr>
+                                <tr>
+                                    <td>Claude 4 Opus</td>
+                                    <td><code>claude-opus-4-20250514</code></td>
+                                    <td>Previous generation maximum capability</td>
+                                </tr>
+                                <tr>
+                                    <td>Claude 4 Sonnet</td>
+                                    <td><code>claude-sonnet-4-20250514</code></td>
+                                    <td>Latest balanced performance and speed</td>
+                                </tr>
+                                <tr>
+                                    <td>Claude 3.5 Haiku</td>
+                                    <td><code>claude-3-5-haiku-20241022</code></td>
+                                    <td>Fastest and most cost-effective (limited capabilities)</td>
+                                </tr>
+                            </table>
+                            
+                            <h4>Set Model via Environment</h4>
+                            <pre><code>export ANTHROPIC_MODEL="claude-sonnet-4-20250514"</code></pre>
+                            
+                            <h4>Set Model via CLI</h4>
+                            <pre><code>claude --model claude-opus-4-1-20250805</code></pre>
+                            
+                            <h4>Switch Model During Session</h4>
+                            <pre><code>/model</code></pre>
+                            <p>Available options in interactive menu:</p>
+                            <ul>
+                                <li><strong>Default (recommended):</strong> Opus 4.1 for up to 20% of usage limits, then use Sonnet 4</li>
+                                <li><strong>Opus:</strong> Opus 4.1 for complex tasks (reaches usage limits faster)</li>
+                                <li><strong>Sonnet:</strong> Sonnet 4 for daily use</li>
+                                <li><strong>Opus Plan Mode:</strong> Use Opus 4.1 in plan mode, Sonnet 4 otherwise (automatically switches between models)</li>
+                            </ul>
+                            
+                            <div class="warning">
+                                <strong>Claude 3.5 Haiku Limitations:</strong>
+                                <ul>
+                                    <li>Reduced reasoning capabilities</li>
+                                    <li>Limited context understanding</li>
+                                    <li>Simplified code analysis</li>
+                                    <li>Basic refactoring only</li>
+                                    <li>Limited framework knowledge</li>
+                                </ul>
+                                <strong>Recommended only for:</strong> Simple single-file edits, basic syntax corrections, quick code questions, learning Claude Code basics.
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Multiple Working Directories</h3>
+                            
+                            <h4>At Startup</h4>
+                            <pre><code># Add single directory
+claude --add-dir /path/to/other/project
+
+# Add with other options
+claude --add-dir ~/shared/libraries
+
+# Use with print mode
+claude --add-dir ../backend -p "Validate API calls"</code></pre>
+                            
+                            <h4>Mid-Session (Slash Command)</h4>
+                            <pre><code>/add-dir /path/to/other/project
+/add-dir ~/shared/libraries
+/add-dir ../backend-api</code></pre>
+                            
+                            <h4>Common Use Cases</h4>
+                            <ul>
+                                <li><strong>Multi-Repository Projects:</strong> Work on frontend while referencing backend API</li>
+                                <li><strong>Shared Resources:</strong> Access shared configs or documentation</li>
+                                <li><strong>Dynamic Workflow:</strong> Expand workspace as needed without restarting</li>
+                            </ul>
+                            
+                            <div class="info">
+                                <strong>Note:</strong> The current working directory is always included. CLAUDE.md files may not be read automatically from additional directories added via --add-dir.
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENVIRONMENT VARIABLES SECTION -->
+            <div class="section" data-keywords="environment variables env vars configuration">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h2>Environment Variables</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        
+                        <div class="subsection">
+                            <h3>Authentication & API</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_API_KEY</code></td>
+                                    <td>API key sent as X-Api-Key header (for interactive usage, run /login)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_AUTH_TOKEN</code></td>
+                                    <td>Custom value for Authorization header (prefixed with "Bearer ")</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_CUSTOM_HEADERS</code></td>
+                                    <td>Custom headers in Name: Value format</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Model Configuration</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_MODEL</code></td>
+                                    <td>Name of the model setting to use</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_DEFAULT_HAIKU_MODEL</code></td>
+                                    <td>Default Haiku-class model</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_DEFAULT_OPUS_MODEL</code></td>
+                                    <td>Default Opus-class model</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_DEFAULT_SONNET_MODEL</code></td>
+                                    <td>Default Sonnet-class model</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_SUBAGENT_MODEL</code></td>
+                                    <td>Model for subagent tasks</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_SMALL_FAST_MODEL</code></td>
+                                    <td>[DEPRECATED] Haiku-class model for background tasks</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_MAX_OUTPUT_TOKENS</code></td>
+                                    <td>Maximum number of output tokens for most requests</td>
+                                </tr>
+                                <tr>
+                                    <td><code>MAX_THINKING_TOKENS</code></td>
+                                    <td>Force a thinking budget for the model</td>
+                                </tr>
+                                <tr>
+                                    <td><code>DISABLE_NON_ESSENTIAL_MODEL_CALLS</code></td>
+                                    <td>Set to 1 to disable model calls for non-critical paths like flavor text</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Cloud Provider Configuration</h3>
+                            
+                            <h4>AWS Bedrock</h4>
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_USE_BEDROCK</code></td>
+                                    <td>Use Amazon Bedrock</td>
+                                </tr>
+                                <tr>
+                                    <td><code>AWS_BEARER_TOKEN_BEDROCK</code></td>
+                                    <td>Bedrock API key for authentication</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION</code></td>
+                                    <td>Override AWS region for Haiku-class model</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_SKIP_BEDROCK_AUTH</code></td>
+                                    <td>Skip AWS authentication (e.g., when using LLM gateway)</td>
+                                </tr>
+                            </table>
+                            
+                            <h4>Google Vertex AI</h4>
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_USE_VERTEX</code></td>
+                                    <td>Use Google Vertex AI</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_SKIP_VERTEX_AUTH</code></td>
+                                    <td>Skip Google authentication (e.g., when using LLM gateway)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>VERTEX_REGION_CLAUDE_3_5_HAIKU</code></td>
+                                    <td>Override region for Claude 3.5 Haiku</td>
+                                </tr>
+                                <tr>
+                                    <td><code>VERTEX_REGION_CLAUDE_3_5_SONNET</code></td>
+                                    <td>Override region for Claude 3.5 Sonnet</td>
+                                </tr>
+                                <tr>
+                                    <td><code>VERTEX_REGION_CLAUDE_3_7_SONNET</code></td>
+                                    <td>Override region for Claude 3.7 Sonnet</td>
+                                </tr>
+                                <tr>
+                                    <td><code>VERTEX_REGION_CLAUDE_4_0_OPUS</code></td>
+                                    <td>Override region for Claude 4.0 Opus</td>
+                                </tr>
+                                <tr>
+                                    <td><code>VERTEX_REGION_CLAUDE_4_0_SONNET</code></td>
+                                    <td>Override region for Claude 4.0 Sonnet</td>
+                                </tr>
+                                <tr>
+                                    <td><code>VERTEX_REGION_CLAUDE_4_1_OPUS</code></td>
+                                    <td>Override region for Claude 4.1 Opus</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Bash Command Configuration</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>BASH_DEFAULT_TIMEOUT_MS</code></td>
+                                    <td>Default timeout for long-running bash commands</td>
+                                </tr>
+                                <tr>
+                                    <td><code>BASH_MAX_OUTPUT_LENGTH</code></td>
+                                    <td>Maximum characters in bash outputs before middle-truncation</td>
+                                </tr>
+                                <tr>
+                                    <td><code>BASH_MAX_TIMEOUT_MS</code></td>
+                                    <td>Maximum timeout the model can set for long-running bash commands</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR</code></td>
+                                    <td>Return to original working directory after each Bash command</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>MCP Configuration</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>MCP_TIMEOUT</code></td>
+                                    <td>Timeout in milliseconds for MCP server startup</td>
+                                </tr>
+                                <tr>
+                                    <td><code>MCP_TOOL_TIMEOUT</code></td>
+                                    <td>Timeout in milliseconds for MCP tool execution</td>
+                                </tr>
+                                <tr>
+                                    <td><code>MAX_MCP_OUTPUT_TOKENS</code></td>
+                                    <td>Maximum tokens allowed in MCP tool responses (default: 25000, warning at 10,000)</td>
+                                </tr>
+                            </table>
+                            
+                            <div class="info">
+                                <strong>Example:</strong> <code>MCP_TIMEOUT=10000 claude</code> sets a 10-second timeout for MCP server startup.
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Security & Authentication</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_CLIENT_CERT</code></td>
+                                    <td>Path to client certificate file for mTLS authentication</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_CLIENT_KEY</code></td>
+                                    <td>Path to client private key file for mTLS authentication</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_CLIENT_KEY_PASSPHRASE</code></td>
+                                    <td>Passphrase for encrypted client key (optional)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_API_KEY_HELPER_TTL_MS</code></td>
+                                    <td>Interval for credentials refresh when using apiKeyHelper</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Network & Proxy</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>HTTP_PROXY</code></td>
+                                    <td>Specify HTTP proxy server for network connections</td>
+                                </tr>
+                                <tr>
+                                    <td><code>HTTPS_PROXY</code></td>
+                                    <td>Specify HTTPS proxy server for network connections</td>
+                                </tr>
+                                <tr>
+                                    <td><code>NO_PROXY</code></td>
+                                    <td>List of domains/IPs to bypass proxy</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Feature Flags & Behavior</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>DISABLE_AUTOUPDATER</code></td>
+                                    <td>Set to 1 to disable automatic updates (overrides autoUpdates config)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>DISABLE_BUG_COMMAND</code></td>
+                                    <td>Set to 1 to disable the /bug command</td>
+                                </tr>
+                                <tr>
+                                    <td><code>DISABLE_COST_WARNINGS</code></td>
+                                    <td>Set to 1 to disable cost warning messages</td>
+                                </tr>
+                                <tr>
+                                    <td><code>DISABLE_ERROR_REPORTING</code></td>
+                                    <td>Set to 1 to opt out of Sentry error reporting</td>
+                                </tr>
+                                <tr>
+                                    <td><code>DISABLE_TELEMETRY</code></td>
+                                    <td>Set to 1 to opt out of Statsig telemetry</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC</code></td>
+                                    <td>Equivalent to setting all DISABLE_* variables above</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_DISABLE_TERMINAL_TITLE</code></td>
+                                    <td>Set to 1 to disable automatic terminal title updates</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL</code></td>
+                                    <td>Skip auto-installation of IDE extensions</td>
+                                </tr>
+                                <tr>
+                                    <td><code>USE_BUILTIN_RIPGREP</code></td>
+                                    <td>Set to 0 to use system-installed rg instead of built-in</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Debugging & Logging</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>ANTHROPIC_LOG</code></td>
+                                    <td>Set to "debug" to enable debug logging</td>
+                                </tr>
+                            </table>
+                            
+                            <pre><code># Enable debug logging
+export ANTHROPIC_LOG=debug</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Complete CI/CD Example</h3>
+                            <p>Handy environment variables for build environments:</p>
+                            
+                            <pre><code># Enable debug logging (optional)
+export ANTHROPIC_LOG=debug
+
+# Disable non-essential traffic and telemetry
+# Equivalent to: DISABLE_AUTOUPDATER, DISABLE_BUG_COMMAND, 
+#                DISABLE_ERROR_REPORTING, and DISABLE_TELEMETRY
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=true
+
+# Define frequency of api helper refresh (milliseconds)
+export CLAUDE_CODE_API_KEY_HELPER_TTL_MS=3600000
+
+# Set/increase bash timeout for longer commands (milliseconds)
+export BASH_DEFAULT_TIMEOUT_MS=60000
+
+# Set the MCP timeout (milliseconds)
+export MCP_TIMEOUT=10000</code></pre>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP SECTION -->
+            <div class="section" data-keywords="mcp model context protocol servers tools integration">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h2>Model Context Protocol (MCP)</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        
+                        <div class="subsection">
+                            <h3>MCP Overview</h3>
+                            <p>Model Context Protocol (MCP) allows Claude Code to connect to external tools and services, extending Claude's capabilities beyond its built-in features.</p>
+                            
+                            <div class="info">
+                                <strong>MCP Configuration Locations:</strong>
+                                <ul>
+                                    <li>Project-specific: <code>.claude/settings.local.json</code></li>
+                                    <li>User-specific local: <code>~/.claude/settings.local.json</code></li>
+                                    <li>User-specific global: <code>~/.claude/settings.json</code></li>
+                                    <li>Main Claude.json: <code>~/.claude.json</code> (recommended)</li>
+                                    <li>Dedicated MCP file: <code>~/.claude/mcp_servers.json</code></li>
+                                    <li>Project shared: <code>.mcp.json</code> (for version control)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>MCP Server Setup Commands</h3>
+                            
+                            <h4>Basic Add Commands</h4>
+                            <pre><code># Add HTTP transport server
+claude mcp add --transport http sentry https://mcp.sentry.dev/mcp
+
+# Add SSE transport server
+claude mcp add --transport sse asana https://mcp.asana.com/sse
+
+# Add with environment variables
+claude mcp add clickup --env CLICKUP_API_KEY=YOUR_KEY --env CLICKUP_TEAM_ID=YOUR_ID -- npx -y @hauptsache.net/clickup-mcp
+
+# Add from JSON configuration
+claude mcp add-json puppeteer "$MCP_JSON"
+
+# List all MCP servers
+claude mcp list
+
+# Remove MCP server
+claude mcp remove server_name
+
+# Reset project choices
+claude mcp reset-project-choices</code></pre>
+                            
+                            <div class="warning">
+                                <strong>Windows Note:</strong> NPX commands require <code>cmd /c</code> wrapper:
+                                <pre><code>claude mcp add myserver -- cmd /c npx -y server-package</code></pre>
+                                Without this wrapper, you'll encounter "Connection closed" errors.
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Scope Flags</h3>
+                            <p>Use <code>--scope</code> to specify where configuration is stored:</p>
+                            
+                            <table>
+                                <tr>
+                                    <th>Scope</th>
+                                    <th>Description</th>
+                                    <th>Location</th>
+                                </tr>
+                                <tr>
+                                    <td><code>local</code> (default)</td>
+                                    <td>Available only to you in current project</td>
+                                    <td><code>.claude/settings.local.json</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>project</code></td>
+                                    <td>Shared with everyone via .mcp.json</td>
+                                    <td><code>.mcp.json</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>user</code></td>
+                                    <td>Available to you across all projects</td>
+                                    <td><code>~/.claude/settings.json</code></td>
+                                </tr>
+                            </table>
+                            
+                            <pre><code># Add to user configuration
+claude mcp add myserver --scope user -- npx -y server-package</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Popular MCP Servers</h3>
+                            
+                            <h4>Productivity & Project Management</h4>
+                            <pre><code># Asana
+claude mcp add --transport sse asana https://mcp.asana.com/sse
+
+# Atlassian (Jira, Confluence)
+claude mcp add --transport sse atlassian https://mcp.atlassian.com/v1/sse
+
+# ClickUp
+claude mcp add clickup --env CLICKUP_API_KEY=YOUR_KEY --env CLICKUP_TEAM_ID=YOUR_ID -- npx -y @hauptsache.net/clickup-mcp
+
+# Linear
+claude mcp add --transport sse linear https://mcp.linear.app/sse
+
+# Monday.com
+claude mcp add --transport sse monday https://mcp.monday.com/sse
+
+# Notion
+claude mcp add --transport http notion https://mcp.notion.com/mcp
+
+# Airtable
+claude mcp add airtable --env AIRTABLE_API_KEY=YOUR_KEY -- npx -y airtable-mcp-server</code></pre>
+                            
+                            <h4>Development & Monitoring</h4>
+                            <pre><code># Sentry
+claude mcp add --transport http sentry https://mcp.sentry.dev/mcp
+
+# Socket (security)
+claude mcp add --transport http socket https://mcp.socket.dev/
+
+# Hugging Face
+claude mcp add --transport http hugging-face https://huggingface.co/mcp
+
+# Jam (bug reporting)
+claude mcp add --transport http jam https://mcp.jam.dev/mcp</code></pre>
+                            
+                            <h4>Communication & Support</h4>
+                            <pre><code># Intercom
+claude mcp add --transport http intercom https://mcp.intercom.com/mcp
+
+# Box
+claude mcp add --transport http box https://mcp.box.com/
+
+# Fireflies (meeting transcripts)
+claude mcp add --transport http fireflies https://api.fireflies.ai/mcp</code></pre>
+                            
+                            <h4>Finance & Data</h4>
+                            <pre><code># Daloopa
+claude mcp add --transport http daloopa https://mcp.daloopa.com/server/mcp
+
+# HubSpot
+claude mcp add --transport http hubspot https://mcp.hubspot.com/anthropic
+
+# PayPal
+claude mcp add --transport http paypal https://mcp.paypal.com/mcp
+
+# Plaid
+claude mcp add --transport sse plaid https://api.dashboard.plaid.com/mcp/sse
+
+# Square
+claude mcp add --transport sse square https://mcp.squareup.com/sse
+
+# Stripe
+claude mcp add --transport http stripe https://mcp.stripe.com</code></pre>
+                            
+                            <h4>Design & Media</h4>
+                            <pre><code># Figma Dev Mode
+claude mcp add --transport http figma-dev-mode-mcp-server http://127.0.0.1:3845/mcp
+
+# InVideo
+claude mcp add --transport sse invideo https://mcp.invideo.io/sse
+
+# Canva
+claude mcp add --transport http canva https://mcp.canva.com/mcp</code></pre>
+                            
+                            <h4>Deployment & Infrastructure</h4>
+                            <pre><code># Netlify
+claude mcp add --transport http netlify https://netlify-mcp.netlify.app/mcp
+
+# Stytch (authentication)
+claude mcp add --transport http stytch http://mcp.stytch.dev/mcp
+
+# Vercel
+claude mcp add --transport http vercel https://mcp.vercel.com/</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>MCP Configuration Structure</h3>
+                            
+                            <h4>Example .mcp.json Structure</h4>
+                            <pre><code>{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/allowed/path"],
+      "env": {
+        "CUSTOM_VAR": "value"
+      }
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"]
+    },
+    "remote-http": {
+      "url": "https://api.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${API_TOKEN}"
+      }
+    },
+    "remote-sse": {
+      "url": "https://api.example.com/sse",
+      "transport": "sse"
+    }
+  }
+}</code></pre>
+                            
+                            <h4>Configuration Fields</h4>
+                            <table>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>command</code></td>
+                                    <td>The server executable path</td>
+                                </tr>
+                                <tr>
+                                    <td><code>args</code></td>
+                                    <td>Command-line arguments array</td>
+                                </tr>
+                                <tr>
+                                    <td><code>env</code></td>
+                                    <td>Environment variables passed to server</td>
+                                </tr>
+                                <tr>
+                                    <td><code>url</code></td>
+                                    <td>For SSE/HTTP server types</td>
+                                </tr>
+                                <tr>
+                                    <td><code>headers</code></td>
+                                    <td>For SSE/HTTP server authentication</td>
+                                </tr>
+                                <tr>
+                                    <td><code>transport</code></td>
+                                    <td>Transport type: "stdio", "sse", or "http"</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Environment Variable Expansion</h3>
+                            <p>MCP configurations support environment variable expansion in .mcp.json files:</p>
+                            
+                            <h4>Supported Syntax</h4>
+                            <ul>
+                                <li><code>${VAR}</code> - Expands to the value of environment variable VAR</li>
+                                <li><code>${VAR:-default}</code> - Expands to VAR if set, otherwise uses "default"</li>
+                            </ul>
+                            
+                            <pre><code>{
+  "mcpServers": {
+    "api-server": {
+      "url": "https://api.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${API_TOKEN}",
+        "Custom-Header": "${CUSTOM_VAR:-default-value}"
+      }
+    }
+  }
+}</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>OAuth 2.0 Authentication</h3>
+                            <p>For servers requiring OAuth 2.0:</p>
+                            
+                            <ol>
+                                <li>Add the server that requires authentication</li>
+                                <li>Use the <code>/mcp</code> command within Claude Code</li>
+                                <li>Follow OAuth flow in browser</li>
+                                <li>Use <code>/mcp</code> menu to revoke access if needed</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Using MCP Resources & Prompts</h3>
+                            
+                            <h4>Listing Available Resources</h4>
+                            <p>Type <code>@</code> in your prompt to see available resources from all connected MCP servers. Resources appear alongside files in the autocomplete menu.</p>
+                            
+                            <h4>Reference Specific Resource</h4>
+                            <pre><code>@server:protocol://resource/path</code></pre>
+                            
+                            <h4>Discover Available Prompts</h4>
+                            <p>Type <code>/</code> to see all available commands, including MCP prompts. MCP prompts appear with format:</p>
+                            <pre><code>/mcp__servername__promptname</code></pre>
+                            
+                            <h4>Execute Prompts</h4>
+                            <pre><code># Without arguments
+/mcp__myserver__analyze
+
+# With arguments
+/mcp__myserver__search "query text"</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Import from Claude Desktop</h3>
+                            <pre><code># Import servers from Claude Desktop configuration
+claude mcp import
+
+# Import to user config instead of project
+claude mcp import --scope user</code></pre>
+                            <p>The command will:</p>
+                            <ol>
+                                <li>Read Claude Desktop's MCP configuration</li>
+                                <li>Show interactive selection menu</li>
+                                <li>Import selected servers to Claude Code</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Advanced MCP Example - Docker Installation</h3>
+                            <pre><code># Pull Docker image first
+docker pull mcp/puppeteer
+
+# Create JSON configuration
+read -r -d '' MCP_JSON <<'EOF'
+{
+  "command": "docker",
+  "args": [
+    "run", "-i", "--rm", "--init",
+    "-e", "DOCKER_CONTAINER=true",
+    "mcp/puppeteer"
+  ]
+}
+EOF
+
+# Add the MCP server
+claude mcp add-json puppeteer "$MCP_JSON"
+
+# Verify installation
+claude mcp list
+
+# Set permissions
+claude config add allowedTools "mcp__puppeteer"</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>MCP Troubleshooting</h3>
+                            
+                            <h4>Common Issues</h4>
+                            <div class="warning">
+                                <strong>Connection Closed Errors (Windows):</strong>
+                                <p>If using NPX on Windows, you must use the <code>cmd /c</code> wrapper:</p>
+                                <pre><code>claude mcp add server -- cmd /c npx -y package-name</code></pre>
+                            </div>
+                            
+                            <div class="info">
+                                <strong>Timeout Issues:</strong>
+                                <p>Increase MCP timeouts via environment variables:</p>
+                                <pre><code>export MCP_TIMEOUT=30000        # 30 seconds for startup
+export MCP_TOOL_TIMEOUT=60000   # 60 seconds for tool execution</code></pre>
+                            </div>
+                            
+                            <div class="info">
+                                <strong>Output Token Limits:</strong>
+                                <p>MCP responses are limited to prevent context overflow:</p>
+                                <pre><code>export MAX_MCP_OUTPUT_TOKENS=50000  # Default: 25000</code></pre>
+                                <p>Warning appears at 10,000 tokens.</p>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROMPTS & WORKFLOWS SECTION -->
+            <div class="section" data-keywords="prompts workflows commands custom slash kiro">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h2>Prompts & Custom Workflows</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        
+                        <div class="subsection">
+                            <h3>Built-in Slash Commands</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Command</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>/login</code></td>
+                                    <td>Authenticate with Anthropic API</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/model</code></td>
+                                    <td>Switch between models (interactive menu)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/permissions</code></td>
+                                    <td>Launch interactive permissions UI</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/add-dir</code></td>
+                                    <td>Add additional working directory mid-session</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/mcp</code></td>
+                                    <td>MCP server authentication and management</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/bug</code></td>
+                                    <td>Report a bug (can be disabled via DISABLE_BUG_COMMAND)</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Kiro Workflow - Feature Development</h3>
+                            <p>Complete structured workflow from specification to execution:</p>
+                            
+                            <table>
+                                <tr>
+                                    <th>Command</th>
+                                    <th>Purpose</th>
+                                </tr>
+                                <tr>
+                                    <td><code>/kiro:spec [feature]</code></td>
+                                    <td>Create requirements and acceptance criteria</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/kiro:design [feature]</code></td>
+                                    <td>Develop architecture and component design</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/kiro:task [feature]</code></td>
+                                    <td>Generate implementation task lists</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/kiro:execute [task]</code></td>
+                                    <td>Execute specific implementation tasks</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/kiro:vibe [question]</code></td>
+                                    <td>Quick development assistance</td>
+                                </tr>
+                            </table>
+                            
+                            <div class="info">
+                                <strong>Kiro Workflow Example:</strong>
+                                <pre><code>/kiro:spec user authentication system
+/kiro:design user authentication system
+/kiro:task user authentication system
+/kiro:execute implement JWT token generation</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Advanced Thinking Commands</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Command</th>
+                                    <th>Purpose</th>
+                                </tr>
+                                <tr>
+                                    <td><code>/think-harder [problem]</code></td>
+                                    <td>Enhanced analytical thinking</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/think-ultra [complex problem]</code></td>
+                                    <td>Ultra-comprehensive analysis</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/reflection</code></td>
+                                    <td>Analyze and improve Claude Code instructions</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/reflection-harder</code></td>
+                                    <td>Comprehensive session analysis and learning</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/eureka [breakthrough]</code></td>
+                                    <td>Document technical breakthroughs</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>GitHub Integration Commands</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Command</th>
+                                    <th>Purpose</th>
+                                </tr>
+                                <tr>
+                                    <td><code>/gh:review-pr [PR_NUMBER]</code></td>
+                                    <td>Comprehensive PR review and comments</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/gh:fix-issue [issue-number]</code></td>
+                                    <td>Complete issue resolution workflow</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Creating Custom Commands</h3>
+                            
+                            <h4>Command Creation</h4>
+                            <pre><code>/cc:create-command [name] [description]</code></pre>
+                            
+                            <p>This allows you to create new Claude Code commands tailored to your workflow.</p>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>CLAUDE.md - Project Instructions</h3>
+                            <p>Create a <code>CLAUDE.md</code> file in your project root to provide persistent instructions to Claude Code.</p>
+                            
+                            <h4>Example CLAUDE.md Structure</h4>
+                            <pre><code># Project: My Awesome App
+
+## Project Overview
+Brief description of the project, its purpose, and architecture.
+
+## Code Style Guidelines
+- Use TypeScript strict mode
+- Follow ESLint configuration
+- Use functional components in React
+- Prefer const over let
+
+## Testing Requirements
+- Write unit tests for all new functions
+- Maintain >80% code coverage
+- Use Jest for testing
+
+## Build & Deploy
+- Build command: npm run build
+- Test command: npm test
+- Deploy to staging before production
+
+## Common Tasks
+- To add a new API endpoint: [instructions]
+- To create a new component: [instructions]
+
+## Important Notes
+- Never commit .env files
+- Always update CHANGELOG.md
+- Follow semantic versioning</code></pre>
+                            
+                            <div class="success">
+                                <strong>Best Practice:</strong> CLAUDE.md should be checked into version control so all team members and Claude sessions have consistent context.
+                            </div>
+                            
+                            <div class="warning">
+                                <strong>Note:</strong> CLAUDE.md files from directories added via <code>--add-dir</code> may not be automatically loaded.
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Custom Command Examples</h3>
+                            
+                            <h4>Code Review Prompt</h4>
+                            <pre><code>Review this code for:
+1. Security vulnerabilities
+2. Performance issues
+3. Code style violations
+4. Potential bugs
+5. Suggested improvements
+
+Be specific and provide examples.</code></pre>
+                            
+                            <h4>Documentation Generation</h4>
+                            <pre><code>Generate comprehensive documentation for this code including:
+- Purpose and overview
+- Function signatures with parameter descriptions
+- Return value descriptions
+- Usage examples
+- Error handling notes
+- Related functions/classes</code></pre>
+                            
+                            <h4>Test Generation</h4>
+                            <pre><code>Create comprehensive unit tests for this code covering:
+- Happy path scenarios
+- Edge cases
+- Error conditions
+- Boundary values
+- Mock external dependencies
+
+Use Jest/Mocha syntax.</code></pre>
+                            
+                            <h4>Refactoring Guide</h4>
+                            <pre><code>Analyze this code and suggest refactoring to:
+- Improve readability
+- Reduce complexity
+- Follow SOLID principles
+- Enhance maintainability
+- Optimize performance
+
+Provide before/after examples.</code></pre>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- USER CONFIG & PERMISSIONS SECTION -->
+            <div class="section" data-keywords="user configuration permissions tools security allowed denied">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h2>User Configuration & Permissions</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        
+                        <div class="subsection">
+                            <h3>Interactive Permission Management</h3>
+                            <p>Use the <code>/permissions</code> command for user-friendly permission management:</p>
+                            
+                            <pre><code>/permissions</code></pre>
+                            
+                            <p>This interface allows you to:</p>
+                            <ul>
+                                <li>View current permissions</li>
+                                <li>Explicitly allow tools</li>
+                                <li>Explicitly deny tools</li>
+                                <li>Navigate visually without editing JSON</li>
+                                <li>Make real-time changes without restart</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Tool Permission Patterns</h3>
+                            
+                            <h4>Basic Tool Names</h4>
+                            <pre><code>"allowedTools": [
+  "Task",
+  "Read",
+  "Write",
+  "Edit",
+  "MultiEdit",
+  "Glob",
+  "Grep",
+  "LS",
+  "WebFetch",
+  "WebSearch"
+]</code></pre>
+                            
+                            <h4>Bash Command Patterns</h4>
+                            <pre><code>"allowedTools": [
+  "Bash",                    // ⚠️ Allows ALL bash commands
+  "Bash(git log:*)",         // Only git log commands
+  "Bash(git diff:*)",        // Only git diff commands
+  "Bash(npm install:*)",     // Only npm install commands
+  "Bash(ls:*)",              // Only ls commands
+]</code></pre>
+                            
+                            <div class="warning">
+                                <strong>Security Warning:</strong> Using <code>"Bash"</code> without restrictions allows Claude to execute ANY system command. Always use specific patterns like <code>"Bash(git log:*)"</code> unless you fully trust the environment.
+                            </div>
+                            
+                            <h4>MCP Tool Patterns</h4>
+                            <pre><code>"allowedTools": [
+  "mcp__filesystem",
+  "mcp__puppeteer",
+  "mcp__memory"
+]</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Config Management Commands</h3>
+                            
+                            <h4>Setting Configuration Values</h4>
+                            <pre><code># Set global config value
+claude config set --global [key] [value]
+
+# Set project config value
+claude config set [key] [value]
+
+# Add to array config
+claude config add allowedTools "Edit,Bash"
+
+# Examples
+claude config set --global apiKeyHelper ~/.claude/anthropic_key_helper.sh
+claude config set hasTrustDialogAccepted true
+claude config set hasCompletedProjectOnboarding true
+claude config add allowedTools "mcp__puppeteer"</code></pre>
+                            
+                            <h4>Getting Configuration Values</h4>
+                            <pre><code># View current configuration
+claude config get [key]
+
+# View all configuration
+claude config list</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>User Preference Settings</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Setting</th>
+                                    <th>Description</th>
+                                    <th>Values</th>
+                                </tr>
+                                <tr>
+                                    <td><code>theme</code></td>
+                                    <td>UI theme preference</td>
+                                    <td>"light", "dark"</td>
+                                </tr>
+                                <tr>
+                                    <td><code>autoUpdates</code></td>
+                                    <td>Enable automatic updates</td>
+                                    <td>true, false</td>
+                                </tr>
+                                <tr>
+                                    <td><code>shiftEnterKeyBindingInstalled</code></td>
+                                    <td>Terminal key binding configuration</td>
+                                    <td>true, false</td>
+                                </tr>
+                                <tr>
+                                    <td><code>hasCompletedOnboarding</code></td>
+                                    <td>Skip onboarding wizard</td>
+                                    <td>true, false</td>
+                                </tr>
+                                <tr>
+                                    <td><code>hasTrustDialogAccepted</code></td>
+                                    <td>Skip trust dialog in directories</td>
+                                    <td>true, false</td>
+                                </tr>
+                                <tr>
+                                    <td><code>hasCompletedProjectOnboarding</code></td>
+                                    <td>Skip project onboarding</td>
+                                    <td>true, false</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>API Key Trust Configuration</h3>
+                            <p>Manage trusted API keys to avoid repeated prompts:</p>
+                            
+                            <pre><code>{
+  "customApiKeyResponses": {
+    "approved": [
+      "LAST_20_CHARS_OF_API_KEY"
+    ],
+    "rejected": []
+  }
+}</code></pre>
+                            
+                            <p>The syntax uses the last 20 characters of your API key:</p>
+                            <pre><code>ANTHROPIC_API_KEY_LAST_20_CHARS=${ANTHROPIC_API_KEY: -20}
+
+cat <<EOM > ~/.claude.json
+{
+  "customApiKeyResponses": {
+    "approved": [ "$ANTHROPIC_API_KEY_LAST_20_CHARS"],
+    "rejected": [ ]
+  }
+}
+EOM</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Permission Mode Settings</h3>
+                            <p>Control how Claude handles permissions:</p>
+                            
+                            <table>
+                                <tr>
+                                    <th>Mode</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td><code>ask</code></td>
+                                    <td>Prompt for each tool use (default, safest)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>plan</code></td>
+                                    <td>Show plan before execution, allow approval</td>
+                                </tr>
+                                <tr>
+                                    <td><code>auto</code></td>
+                                    <td>Use allowed tools automatically</td>
+                                </tr>
+                            </table>
+                            
+                            <pre><code># Set via CLI flag
+claude --permission-mode plan
+
+# Set in configuration
+"permissionMode": "plan"</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Complete User Configuration Example</h3>
+                            <pre><code>{
+  "customApiKeyResponses": {
+    "approved": ["last-20-chars-of-key"],
+    "rejected": []
+  },
+  "theme": "dark",
+  "autoUpdates": true,
+  "shiftEnterKeyBindingInstalled": true,
+  "hasCompletedOnboarding": true,
+  "hasTrustDialogAccepted": true,
+  "hasCompletedProjectOnboarding": true,
+  "apiKeyHelper": "/home/user/.claude/anthropic_key_helper.sh",
+  "parallelTasksCount": 3,
+  "projects": {
+    "/path/to/project": {
+      "mcpServers": {
+        "filesystem": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/allowed/path"]
+        }
+      },
+      "allowedTools": [
+        "Task",
+        "Bash(git log:*)",
+        "Bash(git diff:*)",
+        "Read",
+        "Edit",
+        "Write",
+        "Glob",
+        "Grep",
+        "LS",
+        "mcp__filesystem"
+      ],
+      "permissionMode": "plan"
+    }
+  }
+}</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Security Best Practices</h3>
+                            
+                            <div class="warning">
+                                <strong>Known Issues:</strong>
+                                <ul>
+                                    <li><strong>Deny Rules Often Ignored:</strong> "deny" permissions in the configuration are frequently not enforced, creating security risks</li>
+                                    <li><strong>Unreliable Blocks:</strong> Files marked as denied may still be accessible by Claude</li>
+                                    <li><strong>Workaround:</strong> Use filesystem permissions or place sensitive files outside allowed directories</li>
+                                </ul>
+                            </div>
+                            
+                            <h4>Recommended Security Approach</h4>
+                            <ol>
+                                <li><strong>Use specific tool patterns:</strong> Always use <code>Bash(command:*)</code> patterns instead of general <code>Bash</code></li>
+                                <li><strong>Limit file access:</strong> Only add necessary directories with <code>--add-dir</code></li>
+                                <li><strong>Review permissions regularly:</strong> Use <code>/permissions</code> to audit and update</li>
+                                <li><strong>Sensitive data isolation:</strong> Keep API keys, credentials, and sensitive files outside project directories</li>
+                                <li><strong>Use .gitignore patterns:</strong> Claude respects .gitignore for some operations</li>
+                                <li><strong>Monitor tool usage:</strong> Review what tools Claude is requesting</li>
+                            </ol>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- TIPS & BEST PRACTICES SECTION -->
+            <div class="section" data-keywords="tips best practices optimization workflow productivity">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h2>Tips & Best Practices</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        
+                        <div class="subsection">
+                            <h3>Configuration Best Practices</h3>
+                            
+                            <h4>File Organization</h4>
+                            <ul>
+                                <li><strong>Use ~/.claude.json:</strong> Most reliable location for settings despite being "legacy"</li>
+                                <li><strong>Version control .mcp.json:</strong> Share MCP configurations with team</li>
+                                <li><strong>Keep .claude/settings.local.json private:</strong> For API keys and personal tweaks</li>
+                                <li><strong>Document in CLAUDE.md:</strong> Project-specific instructions and conventions</li>
+                            </ul>
+                            
+                            <h4>API Key Management</h4>
+                            <ul>
+                                <li>Prefer environment variables over config files</li>
+                                <li>Use API Key Helper for dynamic key retrieval</li>
+                                <li>Never commit API keys to version control</li>
+                                <li>Trust keys via customApiKeyResponses to avoid repeated prompts</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Model Selection Strategy</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Task Type</th>
+                                    <th>Recommended Model</th>
+                                    <th>Rationale</th>
+                                </tr>
+                                <tr>
+                                    <td>Complex refactoring</td>
+                                    <td>Opus 4.1</td>
+                                    <td>Best reasoning and architectural understanding</td>
+                                </tr>
+                                <tr>
+                                    <td>Daily development</td>
+                                    <td>Sonnet 4</td>
+                                    <td>Best balance of capability and speed</td>
+                                </tr>
+                                <tr>
+                                    <td>Simple edits</td>
+                                    <td>Sonnet 4</td>
+                                    <td>Fast enough for quick tasks</td>
+                                </tr>
+                                <tr>
+                                    <td>Planning phase</td>
+                                    <td>Opus Plan Mode</td>
+                                    <td>Auto-switches: Opus for planning, Sonnet for execution</td>
+                                </tr>
+                            </table>
+                            
+                            <div class="success">
+                                <strong>Pro Tip:</strong> Use <code>/model</code> to switch models mid-session based on task complexity. Start with Sonnet 4, escalate to Opus when needed.
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Performance Optimization</h3>
+                            
+                            <h4>Reduce Context Size</h4>
+                            <ul>
+                                <li>Use .gitignore to exclude node_modules, build artifacts</li>
+                                <li>Add only necessary directories with <code>--add-dir</code></li>
+                                <li>Keep conversations focused on specific tasks</li>
+                                <li>Start new sessions for unrelated work</li>
+                            </ul>
+                            
+                            <h4>Speed Up Operations</h4>
+                            <pre><code># Disable non-essential traffic
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=true
+
+# Use built-in ripgrep (faster)
+export USE_BUILTIN_RIPGREP=1
+
+# Increase parallel tasks
+claude config set --global parallelTasksCount 3</code></pre>
+                            
+                            <h4>Optimize Bash Timeouts</h4>
+                            <pre><code># Increase for long-running commands
+export BASH_DEFAULT_TIMEOUT_MS=120000
+export BASH_MAX_TIMEOUT_MS=300000</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Multi-Repository Workflows</h3>
+                            
+                            <h4>At Startup</h4>
+                            <pre><code># Backend + Frontend development
+claude --add-dir ../backend --add-dir ../frontend
+
+# Monorepo with multiple services
+claude --add-dir ./apps/api --add-dir ./apps/web --add-dir ./packages/shared</code></pre>
+                            
+                            <h4>Dynamic Expansion</h4>
+                            <pre><code># Start focused, expand as needed
+claude
+# Later in session...
+/add-dir ../shared-components
+/add-dir ../documentation</code></pre>
+                            
+                            <div class="success">
+                                <strong>Workflow Advantage:</strong> No need to restart sessions. Add directories dynamically as your work expands across repositories.
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>CI/CD Integration</h3>
+                            
+                            <h4>Complete Setup Script</h4>
+                            <pre><code>#!/bin/bash
+
+# Install Claude Code
+npm install -g @anthropic-ai/claude-code
+
+# Setup API helper
+echo 'echo ${ANTHROPIC_API_KEY}' > ~/.claude/anthropic_key_helper.sh
+chmod +x ~/.claude/anthropic_key_helper.sh
+
+# Get last 20 chars of API key for trust
+ANTHROPIC_API_KEY_LAST_20_CHARS=${ANTHROPIC_API_KEY: -20}
+
+# Write global config
+cat <<EOM > ~/.claude.json
+{
+  "customApiKeyResponses": {
+    "approved": [ "$ANTHROPIC_API_KEY_LAST_20_CHARS"],
+    "rejected": [ ]
+  },
+  "shiftEnterKeyBindingInstalled": true,
+  "theme": "dark",
+  "hasCompletedOnboarding": true
+}
+EOM
+
+# Configure API Key Helper
+claude config set --global apiKeyHelper ~/.claude/anthropic_key_helper.sh
+
+# Skip dialogs
+claude config set hasTrustDialogAccepted true
+claude config set hasCompletedProjectOnboarding true
+
+# Disable telemetry for CI
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=true
+
+# Set timeouts for CI environment
+export BASH_DEFAULT_TIMEOUT_MS=60000
+export MCP_TIMEOUT=10000</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Common Pitfalls & Solutions</h3>
+                            
+                            <div class="warning">
+                                <strong>Issue: Settings not taking effect</strong>
+                                <p><strong>Solution:</strong> Settings hierarchy can be confusing. Try setting in ~/.claude.json which often overrides other locations.</p>
+                            </div>
+                            
+                            <div class="warning">
+                                <strong>Issue: Deny rules ignored</strong>
+                                <p><strong>Solution:</strong> Known bug. Use filesystem permissions or move sensitive files outside allowed directories.</p>
+                            </div>
+                            
+                            <div class="warning">
+                                <strong>Issue: MCP "Connection closed" on Windows</strong>
+                                <p><strong>Solution:</strong> Use <code>cmd /c</code> wrapper for npx commands on Windows.</p>
+                            </div>
+                            
+                            <div class="warning">
+                                <strong>Issue: CLAUDE.md not being read from --add-dir</strong>
+                                <p><strong>Solution:</strong> Known limitation. CLAUDE.md from additional directories may not auto-load. Copy important instructions to main project CLAUDE.md.</p>
+                            </div>
+                            
+                            <div class="warning">
+                                <strong>Issue: High API costs</strong>
+                                <p><strong>Solution:</strong> Use Opus Plan Mode (auto-switches to Sonnet), or manually switch to Sonnet 4 for routine work. Reserve Opus for complex tasks.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Team Collaboration</h3>
+                            
+                            <h4>Files to Version Control</h4>
+                            <ul>
+                                <li><strong>✅ Commit:</strong> CLAUDE.md, .mcp.json, .claude/settings.json (project settings)</li>
+                                <li><strong>❌ Don't commit:</strong> .claude/settings.local.json, API keys, personal preferences</li>
+                            </ul>
+                            
+                            <h4>Example .gitignore</h4>
+                            <pre><code># Claude Code
+.claude/settings.local.json
+.claude/sessions/
+.claude/cache/
+
+# Keep shared configs
+!.mcp.json
+!.claude/settings.json
+!CLAUDE.md</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Debugging & Troubleshooting</h3>
+                            
+                            <h4>Enable Debug Logging</h4>
+                            <pre><code>export ANTHROPIC_LOG=debug
+claude --verbose</code></pre>
+                            
+                            <h4>Check Configuration</h4>
+                            <pre><code># View all config
+claude config list
+
+# Check specific setting
+claude config get allowedTools
+
+# List MCP servers
+claude mcp list
+
+# View active sessions
+ps aux | grep claude</code></pre>
+                            
+                            <h4>Reset Configuration</h4>
+                            <pre><code># Backup first
+mv ~/.claude ~/.claude.backup
+mv ~/.claude.json ~/.claude.json.backup
+
+# Start fresh
+claude</code></pre>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PRICING & RESOURCES SECTION -->
+            <div class="section" data-keywords="pricing costs resources links documentation">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h2>Pricing & Resources</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        
+                        <div class="subsection">
+                            <h3>Pricing Plans</h3>
+                            
+                            <table>
+                                <tr>
+                                    <th>Plan</th>
+                                    <th>Price</th>
+                                    <th>Best For</th>
+                                </tr>
+                                <tr>
+                                    <td>Pro</td>
+                                    <td>$20/month</td>
+                                    <td>Everyday use, individual developers</td>
+                                </tr>
+                                <tr>
+                                    <td>Max</td>
+                                    <td>Starts at $100/month</td>
+                                    <td>5x Pro usage, heavy users</td>
+                                </tr>
+                                <tr>
+                                    <td>API</td>
+                                    <td>Pay per use</td>
+                                    <td>CI/CD, automation, custom integrations</td>
+                                </tr>
+                            </table>
+                            
+                            <div class="info">
+                                <strong>Note:</strong> Usage limits can change based on server traffic. For critical business applications, API access with predictable billing may be preferable.
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Official Resources</h3>
+                            
+                            <h4>Documentation</h4>
+                            <ul>
+                                <li><strong>Claude Code Docs:</strong> <a href="https://docs.claude.com/en/docs/claude-code/overview" target="_blank">https://docs.claude.com/en/docs/claude-code/overview</a></li>
+                                <li><strong>Settings Reference:</strong> <a href="https://docs.claude.com/en/docs/claude-code/settings" target="_blank">https://docs.claude.com/en/docs/claude-code/settings</a></li>
+                                <li><strong>CLI Reference:</strong> <a href="https://docs.claude.com/en/docs/claude-code/cli-reference" target="_blank">https://docs.claude.com/en/docs/claude-code/cli-reference</a></li>
+                                <li><strong>MCP Documentation:</strong> <a href="https://docs.claude.com/en/docs/claude-code/mcp" target="_blank">https://docs.claude.com/en/docs/claude-code/mcp</a></li>
+                                <li><strong>API Documentation:</strong> <a href="https://docs.claude.com" target="_blank">https://docs.claude.com</a></li>
+                            </ul>
+                            
+                            <h4>Support & Community</h4>
+                            <ul>
+                                <li><strong>Product Support:</strong> <a href="https://support.claude.com" target="_blank">https://support.claude.com</a></li>
+                                <li><strong>Anthropic Website:</strong> <a href="https://www.anthropic.com/claude" target="_blank">https://www.anthropic.com/claude</a></li>
+                                <li><strong>Pricing:</strong> <a href="https://www.anthropic.com/pricing" target="_blank">https://www.anthropic.com/pricing</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Community Resources</h3>
+                            
+                            <ul>
+                                <li><strong>ClaudeLog:</strong> <a href="https://claudelog.com" target="_blank">https://claudelog.com</a> - Community docs, guides, and tutorials</li>
+                                <li><strong>Configuration Guide:</strong> <a href="https://claudelog.com/configuration/" target="_blank">https://claudelog.com/configuration/</a></li>
+                                <li><strong>ClaudeLog FAQs:</strong> <a href="https://claudelog.com/faq/" target="_blank">https://claudelog.com/faq/</a></li>
+                                <li><strong>Shipyard Cheat Sheet:</strong> <a href="https://shipyard.build/blog/claude-code-cheat-sheet/" target="_blank">https://shipyard.build/blog/claude-code-cheat-sheet/</a></li>
+                                <li><strong>AI Native Dev Configuration:</strong> <a href="https://ainativedev.io/news/configuring-claude-code" target="_blank">https://ainativedev.io/news/configuring-claude-code</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Example Configurations</h3>
+                            
+                            <ul>
+                                <li><strong>feiskyer/claude-code-settings:</strong> <a href="https://github.com/feiskyer/claude-code-settings" target="_blank">https://github.com/feiskyer/claude-code-settings</a></li>
+                                <li><strong>Claude Init Script Gist:</strong> <a href="https://gist.github.com/jedi4ever/762ca6746ef22b064550ad7c04f3bd2f" target="_blank">https://gist.github.com/jedi4ever/762ca6746ef22b064550ad7c04f3bd2f</a></li>
+                            </ul>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <!-- QUICK REFERENCE SECTION -->
+            <div class="section" data-keywords="quick reference cheatsheet commands shortcuts">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h2>Quick Reference</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        
+                        <div class="subsection">
+                            <h3>Essential Commands</h3>
+                            <pre><code># Start Claude Code
+claude
+
+# Start with prompt
+claude "explain this project"
+
+# SDK mode (print and exit)
+claude -p "query"
+
+# Continue last conversation
+claude -c
+
+# Add working directory
+claude --add-dir ../other-project
+
+# Specify model
+claude --model claude-sonnet-4-20250514
+
+# Update Claude Code
+claude update</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Configuration Quick Commands</h3>
+                            <pre><code># Set API key
+export ANTHROPIC_API_KEY="your-key"
+
+# Configure API helper
+claude config set --global apiKeyHelper ~/.claude/key_helper.sh
+
+# Skip dialogs
+claude config set hasTrustDialogAccepted true
+claude config set hasCompletedProjectOnboarding true
+
+# Add allowed tools
+claude config add allowedTools "Edit,Read,Write"
+
+# Set parallel tasks
+claude config set --global parallelTasksCount 3
+
+# View config
+claude config list</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>MCP Quick Commands</h3>
+                            <pre><code># Add MCP server (HTTP)
+claude mcp add --transport http name https://url
+
+# Add MCP server (SSE)
+claude mcp add --transport sse name https://url
+
+# Add with env vars
+claude mcp add name --env KEY=value -- npx -y package
+
+# Add from JSON
+claude mcp add-json name "$JSON_CONFIG"
+
+# List servers
+claude mcp list
+
+# Import from Claude Desktop
+claude mcp import</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>In-Session Slash Commands</h3>
+                            <pre><code>/login              # Authenticate
+/model              # Switch models
+/permissions        # Manage permissions
+/add-dir path       # Add working directory
+/mcp                # MCP authentication
+/bug                # Report bug</code></pre>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h3>Key Environment Variables</h3>
+                            <pre><code>ANTHROPIC_API_KEY                  # API authentication
+ANTHROPIC_MODEL                    # Default model
+BASH_DEFAULT_TIMEOUT_MS            # Bash command timeout
+MCP_TIMEOUT                        # MCP startup timeout
+MCP_TOOL_TIMEOUT                   # MCP tool execution timeout
+MAX_MCP_OUTPUT_TOKENS              # MCP output limit
+CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC  # Disable telemetry
+ANTHROPIC_LOG=debug                # Debug logging</code></pre>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <div class="footer">
+            <p>Claude Code CheatSheet Database | Created: October 2025</p>
+            <p>Sources: docs.claude.com, claudelog.com, ainativedev.io, community resources</p>
+        </div>
+    </div>
+    
+    <script>
+        // Toggle section visibility
+        function toggleSection(header) {
+            header.classList.toggle('active');
+            const content = header.nextElementSibling;
+            content.classList.toggle('active');
+        }
+        
+        // Expand all sections
+        function expandAll() {
+            document.querySelectorAll('.section-header').forEach(header => {
+                header.classList.add('active');
+                header.nextElementSibling.classList.add('active');
+            });
+        }
+        
+        // Collapse all sections
+        function collapseAll() {
+            document.querySelectorAll('.section-header').forEach(header => {
+                header.classList.remove('active');
+                header.nextElementSibling.classList.remove('active');
+            });
+        }
+        
+        // Search functionality
+        document.getElementById('searchBox').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const sections = document.querySelectorAll('.section');
+            
+            sections.forEach(section => {
+                const sectionText = section.textContent.toLowerCase();
+                const keywords = section.getAttribute('data-keywords') || '';
+                
+                if (searchTerm === '') {
+                    section.style.display = 'block';
+                } else if (sectionText.includes(searchTerm) || keywords.includes(searchTerm)) {
+                    section.style.display = 'block';
+                    // Auto-expand matching sections
+                    const header = section.querySelector('.section-header');
+                    const content = section.querySelector('.section-content');
+                    header.classList.add('active');
+                    content.classList.add('active');
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        });
+        
+        // Auto-expand first section on load
+        window.addEventListener('load', function() {
+            const firstHeader = document.querySelector('.section-header');
+            if (firstHeader) {
+                toggleSection(firstHeader);
+            }
+        });
+    </script>
+</body>
+</html>

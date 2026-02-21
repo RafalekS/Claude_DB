@@ -1,0 +1,7 @@
+{
+  "command": "node",
+  "args": [
+    "C:\\path\\to\\whatsapp-mcp-ts\\src\\main.ts"
+  ],
+  "_note": "Node.js 23.10+ WhatsApp TypeScript. Clone from https://github.com/jlucaso1/whatsapp-mcp-ts, run 'npm install'. Requires Node 23.10+ for built-in TS/SQLite"
+}

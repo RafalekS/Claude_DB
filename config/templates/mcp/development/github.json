@@ -1,0 +1,12 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "-y",
+    "@modelcontextprotocol/server-github"
+  ],
+  "env": {
+    "GITHUB_TOKEN": "your-github-token-here"
+  }
+}

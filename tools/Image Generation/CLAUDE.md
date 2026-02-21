@@ -1,0 +1,1 @@
+Using these instructions plus gemini-agent and codex agent build a program that would create icons based on user prompt

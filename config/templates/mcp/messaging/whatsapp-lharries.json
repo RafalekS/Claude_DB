@@ -1,0 +1,10 @@
+{
+  "command": "uv",
+  "args": [
+    "--directory",
+    "C:\\path\\to\\whatsapp-mcp\\whatsapp-mcp-server",
+    "run",
+    "main.py"
+  ],
+  "_note": "Python+Go WhatsApp bridge. Clone from https://github.com/lharries/whatsapp-mcp. Requires Go, Python 3.6+, UV. Run Go bridge first: 'cd whatsapp-bridge && go run main.go'"
+}

@@ -1,0 +1,9 @@
+{
+  "command": "java",
+  "args": [
+    "-jar",
+    "C:\\path\\to\\CDataMCP-jar-with-dependencies.jar",
+    "C:\\path\\to\\sap-netweaver-gateway.prp"
+  ],
+  "_note": "Java SAP NetWeaver Gateway via CData. Clone from https://github.com/cdatasoftware/sap-netweaver-gateway-mcp-server-by-cdata, run 'mvn clean install'. Requires CData JDBC Driver license"
+}
