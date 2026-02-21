@@ -30,17 +30,17 @@ class AddPermissionDialog(QDialog):
         "File Operations": {
             "Read": {
                 "format": "Read(pattern)",
-                "examples": ["**", "//c/Scripts/**", "//c/Users/r_sta/**", "*.py"],
+                "examples": ["**", "//c/Scripts/**", "//c/Users/USERNAME/**", "*.py"],
                 "placeholder": "//c/path/** or *.txt"
             },
             "Write": {
                 "format": "Write(pattern)",
-                "examples": ["**", "//c/Scripts/**", "//c/Users/r_sta/**", "*.txt"],
+                "examples": ["**", "//c/Scripts/**", "//c/Users/USERNAME/**", "*.txt"],
                 "placeholder": "//c/path/** or *.txt"
             },
             "Edit": {
                 "format": "Edit(pattern)",
-                "examples": ["**", "//c/Scripts/**", "//c/Users/r_sta/**", "*.py"],
+                "examples": ["**", "//c/Scripts/**", "//c/Users/USERNAME/**", "*.py"],
                 "placeholder": "//c/path/** or *.py"
             },
             "NotebookEdit": {

@@ -353,37 +353,16 @@ class UsageTab(QWidget):
             )
 
     def launch_ccmonitor(self):
-        """Launch ccmonitor in a separate window"""
-        try:
-            view_mode = self.view_combo.currentText()
-            cmd = ["ccmonitor.exe", f"--view={view_mode}"]
-
-            # Launch in separate window
-            subprocess.Popen(
-                cmd,
-                creationflags=subprocess.CREATE_NEW_CONSOLE
-            )
-
-            QMessageBox.information(
-                self,
-                "ccmonitor Launched",
-                f"ccmonitor launched with view mode: {view_mode}\n\n"
-                "A new console window should open with the real-time monitor."
-            )
-
-        except FileNotFoundError:
-            QMessageBox.warning(
-                self,
-                "Command Not Found",
-                "ccmonitor.exe not found. Please ensure it is installed and in your PATH.\n\n"
-                "You can install it from: https://github.com/user/ccmonitor"
-            )
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to launch ccmonitor:\n{str(e)}"
-            )
+        """Launch ccmonitor in a separate terminal window"""
+        from utils.terminal_utils import run_in_terminal
+        import platform
+        view_mode = self.view_combo.currentText()
+        binary = "ccmonitor.exe" if platform.system() == "Windows" else "ccmonitor"
+        run_in_terminal(
+            f"{binary} --view={view_mode}",
+            title="ccmonitor",
+            parent_widget=self,
+        )
 
     def create_stat_card(self, title, value):
         """Create a stat card widget"""

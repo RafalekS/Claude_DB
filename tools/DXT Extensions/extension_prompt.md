@@ -6,14 +6,14 @@
 
 **DEPENDENCY RULE:** NEVER use `@modelcontextprotocol/sdk` or ANY external dependencies in DXT extensions. Dependencies are NOT bundled in .dxt files and will cause `Cannot find package` errors. Always create standalone MCP server implementations that handle the protocol directly.
 
-**FILE ACCESS:** I have direct filesystem access to `C:\Users\r_sta\Downloads\claude\` - use this to create/modify files directly instead of providing code in artifacts.
+**FILE ACCESS:** I have direct filesystem access to `C:\Users\USERNAME\Downloads\claude\` - use this to create/modify files directly instead of providing code in artifacts.
 
 **NO BUILD SCRIPTS:** Don't create PowerShell build scripts unless specifically requested. Provide manual commands instead.
 
 ## EXTENSION DEVELOPMENT FRAMEWORK
 
 ### Project Setup
-1. **Extension Directory:** `C:\Users\r_sta\Downloads\claude\[extension_name]\`
+1. **Extension Directory:** `C:\Users\USERNAME\Downloads\claude\[extension_name]\`
 2. **File Structure:**
    ```
    [extension_name]/
@@ -231,7 +231,7 @@ server.run();
 - **Specify configuration** - what settings users need to customize
 
 ### 2. Implementation Steps
-1. **Create directory structure** in `C:\Users\r_sta\Downloads\claude\[extension_name]\`
+1. **Create directory structure** in `C:\Users\USERNAME\Downloads\claude\[extension_name]\`
 2. **Write manifest.json** following DXT 0.1 specification
 3. **Create package.json** with NO dependencies
 4. **Implement standalone MCP server** in `server/index.js`
@@ -264,7 +264,7 @@ return {
 
 ### Manual Build Command
 ```powershell
-cd "C:\Users\r_sta\Downloads\claude\[extension_name]"
+cd "C:\Users\USERNAME\Downloads\claude\[extension_name]"
 Compress-Archive -Path manifest.json,package.json,server,README.md -DestinationPath dist\[extension_name].dxt -Force
 ```
 

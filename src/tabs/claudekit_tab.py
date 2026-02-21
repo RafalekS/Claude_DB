@@ -2,7 +2,6 @@
 ClaudeKit Tab - ClaudeKit tools with config-based commands
 """
 
-import subprocess
 import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -322,51 +321,32 @@ class ClaudeKitTab(QWidget):
             )
 
     def run_tool(self, command, tool_name):
-        """Run external tool directly in PowerShell 7"""
+        """Run external tool in a cross-platform terminal"""
+        from utils.terminal_utils import run_in_terminal
         try:
-            # Check if this is a setup command (only setup accepts --user/--project flags)
             is_setup_command = command.strip().startswith("claudekit setup")
+            cwd = None
 
-            # Build the full command
             if self.radio_global.isChecked():
-                # For GLOBAL mode
                 if is_setup_command:
-                    # Setup commands: use --user flag
-                    full_command = f"{command} --user; Read-Host 'Press Enter to close'"
+                    command = f"{command} --user"
                 else:
-                    # Other commands: cd to ~/.claude first
-                    claude_dir = str(Path.home() / ".claude").replace('\\', '/')
-                    full_command = f"cd '{claude_dir}'; {command}; Read-Host 'Press Enter to close'"
+                    cwd = str(Path.home() / ".claude")
 
             elif self.radio_project.isChecked():
-                # For PROJECT mode
                 try:
                     working_dir = self.get_working_directory()
                 except ValueError as e:
                     QMessageBox.warning(self, "No Project Folder", str(e))
                     return
 
-                working_dir_ps = working_dir.replace('\\', '/')
-
+                working_dir_safe = working_dir.replace('\\', '/')
                 if is_setup_command:
-                    # Setup commands: use --project flag
-                    full_command = f"{command} --project '{working_dir_ps}'; Read-Host 'Press Enter to close'"
+                    command = f"{command} --project '{working_dir_safe}'"
                 else:
-                    # Other commands: cd to project folder first
-                    full_command = f"cd '{working_dir_ps}'; {command}; Read-Host 'Press Enter to close'"
-            else:
-                # Fallback
-                full_command = f"{command}; Read-Host 'Press Enter to close'"
+                    cwd = working_dir
 
-            # Launch pwsh directly
-            subprocess.Popen(
-                [
-                    'pwsh.exe',
-                    '-NoProfile',
-                    '-Command', full_command
-                ],
-                creationflags=subprocess.CREATE_NEW_CONSOLE
-            )
+            run_in_terminal(command, title=tool_name, parent_widget=self, cwd=cwd)
 
         except Exception as e:
             QMessageBox.critical(

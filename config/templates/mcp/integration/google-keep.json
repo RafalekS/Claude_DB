@@ -1,5 +1,5 @@
 {
-  "command": "C:\\Users\\r_sta\\mcp_scripts\\start_keep_mcp.bat",
+  "command": "C:\\Users\\USERNAME\\mcp_scripts\\start_keep_mcp.bat",
   "args": [],
   "env": {
     "UNSAFE_MODE": "true"

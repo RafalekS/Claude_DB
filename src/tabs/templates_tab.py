@@ -2,7 +2,6 @@
 Templates Tab - Claude Code template management with config-based commands
 """
 
-import subprocess
 import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -157,25 +156,6 @@ class TemplatesTab(QWidget):
         self.run_tool(command, button_text)
 
     def run_tool(self, command, tool_name):
-        """Run template tool using Windows Terminal"""
-        try:
-            # Use Windows Terminal with pwsh
-            subprocess.Popen(
-                [
-                    'wt.exe',
-                    '-w', '0',
-                    'new-tab',
-                    '--title', tool_name,
-                    'pwsh.exe',
-                    '-NoExit',
-                    '-Command', command
-                ]
-            )
-
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to run {tool_name}:\n{str(e)}\n\n"
-                f"Make sure Windows Terminal and PowerShell 7 (pwsh) are installed."
-            )
+        """Run template tool in a cross-platform terminal"""
+        from utils.terminal_utils import run_in_terminal
+        run_in_terminal(command, title=tool_name, parent_widget=self)

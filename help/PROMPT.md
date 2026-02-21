@@ -69,7 +69,7 @@ Must provide interfaces for:
 - **Language**: Python 3.10+
 
 ### Configuration Paths
-- User Config: `~/.claude/`  (C:\Users\r_sta\.claude)
+- User Config: `~/.claude/`  (C:\Users\USERNAME\.claude)
 - Settings: `~/.claude/settings.json`
 - Agents: `~/.claude/agents/`
 - Commands: `~/.claude/commands/`

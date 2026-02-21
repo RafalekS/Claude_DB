@@ -213,7 +213,7 @@ class ProjectsTab(QWidget):
         rest = dir_name[idx+2:]
 
         # Handle dot directories: -- means \. (backslash-dot)
-        # Example: C--Users-r-sta--claude → C:\Users\r_sta\.claude
+        # Example: C--Users-USERNAME--claude → C:\Users\USERNAME\.claude
         # Replace -- with special marker that becomes \. (not just .)
         rest = rest.replace('--', '\x00BSDOT\x00')
 

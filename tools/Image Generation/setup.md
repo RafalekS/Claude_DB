@@ -1,5 +1,5 @@
 xx`
-c:\Users\r_sta\.lmstudio\models\sd-1\
+c:\Users\USERNAME\.lmstudio\models\sd-1\
 
 https://github.com/akoww/InvokeAI-DirectML?tab=readme-ov-file
 https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Install-and-Run-on-AMD-GPUs
