@@ -156,6 +156,24 @@ class GitHubClient:
         self._cache_set(key, data)
         return data
 
+    def get_file_content(self, owner: str, repo: str, path: str) -> str:
+        """Get the decoded text content of a single file in a GitHub repository."""
+        import base64
+        key = f"file_content:{owner}/{repo}/{path}"
+        cached = self._cache_get(key)
+        if cached is not None:
+            return cached
+        url = f"{self.API_BASE}/repos/{owner}/{repo}/contents/{path}"
+        data = self._request(url)
+        if isinstance(data, dict) and data.get("encoding") == "base64":
+            content = base64.b64decode(data["content"]).decode("utf-8")
+        elif isinstance(data, dict) and data.get("download_url"):
+            content = self.fetch_raw_url(data["download_url"])
+        else:
+            raise RuntimeError(f"Unexpected response for file content: {owner}/{repo}/{path}")
+        self._cache_set(key, content)
+        return content
+
     def get_repo_info(self, owner: str, repo: str) -> dict:
         """Get repository metadata (stars, description, etc.)."""
         key = f"repo:{owner}/{repo}"
