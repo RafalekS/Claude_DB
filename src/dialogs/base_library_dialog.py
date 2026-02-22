@@ -12,6 +12,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.template_manager import get_template_manager
+from utils.ui_state_manager import UIStateManager
 
 
 class BaseLibraryDialog(QDialog):
@@ -113,6 +114,11 @@ class BaseLibraryDialog(QDialog):
         self.table = self._build_table()
         self.populate_table()
         layout.addWidget(self.table)
+
+        _ui_mgr = UIStateManager.instance()
+        _table_id = f"{self.get_template_type()}_library.table"
+        _ui_mgr.restore_table_state(_table_id, self.table)
+        _ui_mgr.connect_table(_table_id, self.table)
 
         # Manage buttons row
         manage_layout = QHBoxLayout()
