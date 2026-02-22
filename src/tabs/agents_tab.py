@@ -15,15 +15,9 @@ from PyQt6.QtGui import QColor
 import sys
 import json
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import (
-    BG_DARK, BG_MEDIUM, BG_LIGHT,
-    FG_PRIMARY, FG_SECONDARY,
-    ACCENT_PRIMARY,
-    FONT_SIZE_SMALL, FONT_SIZE_LARGE, FONT_SIZE_NORMAL,
-    get_button_style, get_text_edit_style, get_line_edit_style,
-    get_list_widget_style, get_label_style, get_tab_widget_style,
-)
+from utils import theme
 from utils.template_manager import get_template_manager
+from utils.ui_state_manager import UIStateManager
 
 # Load AVAILABLE_TOOLS from config, fall back to defaults
 _config_file = Path(__file__).parent.parent.parent / "config" / "config.json"
@@ -64,19 +58,19 @@ class NewAgentDialog(QDialog):
         # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., bill-organizer")
-        self.name_edit.setStyleSheet(get_line_edit_style())
+        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Agent Name*:", self.name_edit)
 
         # Display Name field
         self.display_name_edit = QLineEdit()
         self.display_name_edit.setPlaceholderText("e.g., Bill Organizer (optional)")
-        self.display_name_edit.setStyleSheet(get_line_edit_style())
+        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("e.g., Extract and organize utility bills from Gmail")
-        self.description_edit.setStyleSheet(get_text_edit_style())
+        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -84,7 +78,7 @@ class NewAgentDialog(QDialog):
         # Category field
         self.category_edit = QLineEdit()
         self.category_edit.setPlaceholderText("e.g., automation, code-quality, documentation (optional)")
-        self.category_edit.setStyleSheet(get_line_edit_style())
+        self.category_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Category:", self.category_edit)
 
         # Color field
@@ -104,14 +98,14 @@ class NewAgentDialog(QDialog):
         # Subfolder field (optional)
         self.subfolder_edit = QLineEdit()
         self.subfolder_edit.setPlaceholderText("e.g., code-quality (optional)")
-        self.subfolder_edit.setStyleSheet(get_line_edit_style())
+        self.subfolder_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Subfolder:", self.subfolder_edit)
 
         layout.addLayout(form)
 
         # Tools checkboxes
         tools_label = QLabel("Tools (optional):")
-        tools_label.setStyleSheet(f"color: {FG_PRIMARY}; font-weight: bold;")
+        tools_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
         layout.addWidget(tools_label)
 
         self.tool_checkboxes = {}
@@ -121,7 +115,7 @@ class NewAgentDialog(QDialog):
         # Create checkboxes in a 3-column grid
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {FG_PRIMARY};")
+            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             self.tool_checkboxes[tool] = checkbox
             row = idx // 3
             col = idx % 3
@@ -129,7 +123,7 @@ class NewAgentDialog(QDialog):
 
         tools_widget = QWidget()
         tools_widget.setLayout(tools_grid)
-        tools_widget.setStyleSheet(f"background: {BG_MEDIUM}; padding: 8px; border-radius: 3px;")
+        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;")
         layout.addWidget(tools_widget)
 
         # Info label
@@ -139,14 +133,14 @@ class NewAgentDialog(QDialog):
             "You can add detailed instructions in the markdown content after creation."
         )
         info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
         # Button box
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(get_button_style())
+        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -183,26 +177,26 @@ def get_combo_box_style():
     """Get combo box style"""
     return f"""
         QComboBox {{
-            background: {BG_MEDIUM};
-            color: {FG_PRIMARY};
-            border: 1px solid {BG_LIGHT};
+            background: {theme.BG_MEDIUM};
+            color: {theme.FG_PRIMARY};
+            border: 1px solid {theme.BG_LIGHT};
             border-radius: 3px;
             padding: 5px;
             min-height: 25px;
         }}
         QComboBox:hover {{
-            border: 1px solid {ACCENT_PRIMARY};
+            border: 1px solid {theme.ACCENT_PRIMARY};
         }}
         QComboBox::drop-down {{
             border: none;
             padding-right: 5px;
         }}
         QComboBox QAbstractItemView {{
-            background: {BG_MEDIUM};
-            color: {FG_PRIMARY};
-            selection-background-color: {ACCENT_PRIMARY};
+            background: {theme.BG_MEDIUM};
+            color: {theme.FG_PRIMARY};
+            selection-background-color: {theme.ACCENT_PRIMARY};
             selection-color: white;
-            border: 1px solid {BG_LIGHT};
+            border: 1px solid {theme.BG_LIGHT};
         }}
     """
 
@@ -239,7 +233,7 @@ class AgentsTab(QWidget):
 
         scope_label = "User" if self.scope == "user" else "Project"
         header = QLabel(f"Agents ({scope_label})")
-        header.setStyleSheet(f"font-size: {FONT_SIZE_LARGE}px; font-weight: bold; color: {ACCENT_PRIMARY};")
+        header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         header_layout.addWidget(header)
         header_layout.addStretch()
@@ -269,7 +263,7 @@ class AgentsTab(QWidget):
             "Project agents (./.claude/agents/) are shared with team via git"
         )
         tip_label.setWordWrap(True)
-        tip_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(tip_label)
 
     def create_agents_editor(self):
@@ -282,7 +276,7 @@ class AgentsTab(QWidget):
         # File path label
         agents_dir = self.get_scope_agents_dir()
         path_label = QLabel(f"Directory: {agents_dir}")
-        path_label.setStyleSheet(f"font-size: {FONT_SIZE_SMALL}px; color: {FG_SECONDARY};")
+        path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(path_label)
 
         # Store references
@@ -302,13 +296,13 @@ class AgentsTab(QWidget):
         search_box = QLineEdit()
         search_box.setPlaceholderText("Search...")
         search_box.textChanged.connect(self.filter_agents)
-        search_box.setStyleSheet(get_line_edit_style())
+        search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(search_box)
 
         # Agent list
         agent_list = QListWidget()
         agent_list.itemClicked.connect(self.load_agent_content)
-        agent_list.setStyleSheet(get_list_widget_style())
+        agent_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(agent_list)
 
         # Buttons
@@ -327,7 +321,7 @@ class AgentsTab(QWidget):
         library_btn.setToolTip("Browse and add agents from library templates")
 
         for btn in [new_btn, edit_btn, del_btn, refresh_btn, library_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         new_btn.clicked.connect(self.create_new_agent)
         edit_btn.clicked.connect(self.edit_agent_metadata)
@@ -355,7 +349,7 @@ class AgentsTab(QWidget):
         editor_btn_layout.setSpacing(5)
 
         agent_name_label = QLabel("No agent selected")
-        agent_name_label.setStyleSheet(get_label_style("normal", "secondary"))
+        agent_name_label.setStyleSheet(theme.get_label_style("normal", "secondary"))
 
         save_btn = QPushButton("💾 Save")
         save_btn.setToolTip("Save the current agent to file")
@@ -365,7 +359,7 @@ class AgentsTab(QWidget):
         revert_btn.setToolTip("Revert to saved version (discards unsaved changes)")
 
         for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         save_btn.clicked.connect(self.save_agent)
         backup_save_btn.clicked.connect(self.backup_and_save_agent)
@@ -380,7 +374,7 @@ class AgentsTab(QWidget):
 
         # Editor
         agent_editor = QTextEdit()
-        agent_editor.setStyleSheet(get_text_edit_style())
+        agent_editor.setStyleSheet(theme.get_text_edit_style())
         right_layout.addWidget(agent_editor)
 
         splitter.addWidget(right_panel)
@@ -782,20 +776,20 @@ class AgentLibraryDialog(QDialog):
 
         # Header
         header = QLabel("Agent Library - Manage and deploy agent templates")
-        header.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY}; font-size: {FONT_SIZE_LARGE}px;")
+        header.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_LARGE}px;")
         layout.addWidget(header)
 
         # Navigation bar with back button and path
         nav_layout = QHBoxLayout()
 
         self.back_btn = QPushButton("⬅ Back")
-        self.back_btn.setStyleSheet(get_button_style())
+        self.back_btn.setStyleSheet(theme.get_button_style())
         self.back_btn.clicked.connect(self.go_back)
         self.back_btn.setVisible(False)  # Hidden at root level
         nav_layout.addWidget(self.back_btn)
 
         self.path_label = QLabel(f"📁 {self.templates_dir}")
-        self.path_label.setStyleSheet(f"color: {FG_SECONDARY}; font-size: {FONT_SIZE_SMALL}px;")
+        self.path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         nav_layout.addWidget(self.path_label)
         nav_layout.addStretch()
 
@@ -810,7 +804,9 @@ class AgentLibraryDialog(QDialog):
         self.table.setHorizontalHeaderLabels(["", "Name", "Description"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
+        UIStateManager.instance().restore_table_state("agents.library_table", self.table)
+        UIStateManager.instance().connect_table("agents.library_table", self.table)
         self.table.setColumnWidth(0, 40)
         self.table.setColumnWidth(1, 200)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -820,19 +816,19 @@ class AgentLibraryDialog(QDialog):
         self.table.doubleClicked.connect(self.on_double_click)
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
             QHeaderView::section {{
-                background-color: {BG_MEDIUM};
-                color: {FG_PRIMARY};
+                background-color: {theme.BG_MEDIUM};
+                color: {theme.FG_PRIMARY};
                 padding: 5px;
-                border: 1px solid {BG_LIGHT};
+                border: 1px solid {theme.BG_LIGHT};
             }}
             QHeaderView::section:hover {{
-                background-color: {BG_LIGHT};
+                background-color: {theme.BG_LIGHT};
             }}
         """)
 
@@ -843,37 +839,37 @@ class AgentLibraryDialog(QDialog):
         manage_layout = QHBoxLayout()
 
         add_btn = QPushButton("➕ Add Template")
-        add_btn.setStyleSheet(get_button_style())
+        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.setToolTip("Create a new agent template with GUI form")
         add_btn.clicked.connect(self.add_template)
         manage_layout.addWidget(add_btn)
 
         edit_btn = QPushButton("✏️ Edit Selected")
-        edit_btn.setStyleSheet(get_button_style())
+        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.setToolTip("Edit selected template with GUI form")
         edit_btn.clicked.connect(self.edit_template)
         manage_layout.addWidget(edit_btn)
 
         bulk_add_btn = QPushButton("📋 Bulk Add")
-        bulk_add_btn.setStyleSheet(get_button_style())
+        bulk_add_btn.setStyleSheet(theme.get_button_style())
         bulk_add_btn.setToolTip("Add multiple agents at once by pasting")
         bulk_add_btn.clicked.connect(self.bulk_add_agents)
         manage_layout.addWidget(bulk_add_btn)
 
         delete_btn = QPushButton("🗑️ Delete Selected")
-        delete_btn.setStyleSheet(get_button_style())
+        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.setToolTip("Delete selected templates from library")
         delete_btn.clicked.connect(self.delete_selected)
         manage_layout.addWidget(delete_btn)
 
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet(get_button_style())
+        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.setToolTip("Reload templates from folder")
         refresh_btn.clicked.connect(self.refresh_templates)
         manage_layout.addWidget(refresh_btn)
 
         open_folder_btn = QPushButton("📁 Open Folder")
-        open_folder_btn.setStyleSheet(get_button_style())
+        open_folder_btn.setStyleSheet(theme.get_button_style())
         open_folder_btn.setToolTip("Open templates folder in file explorer")
         open_folder_btn.clicked.connect(self.open_folder)
         manage_layout.addWidget(open_folder_btn)
@@ -884,12 +880,12 @@ class AgentLibraryDialog(QDialog):
         # Select All / Deselect All buttons
         select_layout = QHBoxLayout()
         select_all_btn = QPushButton("✓ Select All")
-        select_all_btn.setStyleSheet(get_button_style())
+        select_all_btn.setStyleSheet(theme.get_button_style())
         select_all_btn.clicked.connect(self.select_all)
         select_layout.addWidget(select_all_btn)
 
         deselect_all_btn = QPushButton("✗ Deselect All")
-        deselect_all_btn.setStyleSheet(get_button_style())
+        deselect_all_btn.setStyleSheet(theme.get_button_style())
         deselect_all_btn.clicked.connect(self.deselect_all)
         select_layout.addWidget(deselect_all_btn)
 
@@ -898,7 +894,7 @@ class AgentLibraryDialog(QDialog):
 
         # Info label
         info = QLabel("Select agents to deploy, then click OK. You can also drop .md files directly into the templates folder.")
-        info.setStyleSheet(f"color: {FG_SECONDARY}; font-size: {FONT_SIZE_SMALL}px;")
+        info.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         info.setWordWrap(True)
         layout.addWidget(info)
 
@@ -975,16 +971,16 @@ class AgentLibraryDialog(QDialog):
                 icon_item = QTableWidgetItem("📁")
                 icon_item.setData(Qt.ItemDataRole.UserRole, 'folder')
                 name_item = QTableWidgetItem(name)
-                name_item.setForeground(QColor(ACCENT_PRIMARY))
+                name_item.setForeground(QColor(theme.ACCENT_PRIMARY))
                 desc_item = QTableWidgetItem("")
             else:
                 icon_item = QTableWidgetItem("📄")
                 icon_item.setData(Qt.ItemDataRole.UserRole, 'template')
                 display_name = name.split('/')[-1] if '/' in name else name
                 name_item = QTableWidgetItem(display_name)
-                name_item.setForeground(QColor(FG_PRIMARY))
+                name_item.setForeground(QColor(theme.FG_PRIMARY))
                 desc_item = QTableWidgetItem(description)
-                desc_item.setForeground(QColor(FG_SECONDARY))
+                desc_item.setForeground(QColor(theme.FG_SECONDARY))
 
             name_item.setData(Qt.ItemDataRole.UserRole, name)
             icon_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1184,7 +1180,7 @@ class BulkAgentAddDialog(QDialog):
 
         # Header
         header = QLabel("Bulk Add Agents to Template Library")
-        header.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY}; font-size: {FONT_SIZE_LARGE}px;")
+        header.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_LARGE}px;")
         layout.addWidget(header)
 
         # Instructions
@@ -1195,38 +1191,38 @@ class BulkAgentAddDialog(QDialog):
             "Each agent should include YAML frontmatter with 'name:' field."
         )
         instructions.setWordWrap(True)
-        instructions.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        instructions.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(instructions)
 
         # Text area for pasting
         input_label = QLabel("Paste agent template(s):")
-        input_label.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY};")
+        input_label.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY};")
         layout.addWidget(input_label)
 
         self.input_text = QTextEdit()
         self.input_text.setPlaceholderText(
             "---\nname: code-reviewer\ndescription: Reviews code for quality\n---\n\n# Code Reviewer\n...\n\n---AGENT---\n\n---\nname: test-generator\n..."
         )
-        self.input_text.setStyleSheet(get_text_edit_style())
+        self.input_text.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.input_text)
 
         # Buttons
         button_layout = QHBoxLayout()
 
         parse_btn = QPushButton("🔄 Parse & Preview")
-        parse_btn.setStyleSheet(get_button_style())
+        parse_btn.setStyleSheet(theme.get_button_style())
         parse_btn.clicked.connect(self.parse_and_preview)
         button_layout.addWidget(parse_btn)
 
         button_layout.addStretch()
 
         save_btn = QPushButton("💾 Save to Library")
-        save_btn.setStyleSheet(get_button_style())
+        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self.save_to_library)
         button_layout.addWidget(save_btn)
 
         close_btn = QPushButton("✗ Close")
-        close_btn.setStyleSheet(get_button_style())
+        close_btn.setStyleSheet(theme.get_button_style())
         close_btn.clicked.connect(self.reject)
         button_layout.addWidget(close_btn)
 
@@ -1234,12 +1230,12 @@ class BulkAgentAddDialog(QDialog):
 
         # Preview area
         preview_label = QLabel("Preview (will create these template files):")
-        preview_label.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY};")
+        preview_label.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY};")
         layout.addWidget(preview_label)
 
         self.preview_text = QTextEdit()
         self.preview_text.setReadOnly(True)
-        self.preview_text.setStyleSheet(get_text_edit_style())
+        self.preview_text.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.preview_text)
 
     def parse_and_preview(self):
@@ -1333,19 +1329,19 @@ class NewAgentTemplateDialog(QDialog):
         # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., code-reviewer or code-quality/code-reviewer")
-        self.name_edit.setStyleSheet(get_line_edit_style())
+        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
         # Display Name field
         self.display_name_edit = QLineEdit()
         self.display_name_edit.setPlaceholderText("e.g., Code Reviewer (optional)")
-        self.display_name_edit.setStyleSheet(get_line_edit_style())
+        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("e.g., Reviews code for quality, security, and best practices")
-        self.description_edit.setStyleSheet(get_text_edit_style())
+        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -1353,7 +1349,7 @@ class NewAgentTemplateDialog(QDialog):
         # Category field
         self.category_edit = QLineEdit()
         self.category_edit.setPlaceholderText("e.g., code-quality, automation (optional)")
-        self.category_edit.setStyleSheet(get_line_edit_style())
+        self.category_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Category:", self.category_edit)
 
         # Color field
@@ -1372,7 +1368,7 @@ class NewAgentTemplateDialog(QDialog):
 
         # Tools checkboxes
         tools_label = QLabel("Tools (optional):")
-        tools_label.setStyleSheet(f"color: {FG_PRIMARY}; font-weight: bold;")
+        tools_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
         layout.addWidget(tools_label)
 
         self.tool_checkboxes = {}
@@ -1382,7 +1378,7 @@ class NewAgentTemplateDialog(QDialog):
         # Create checkboxes in a 3-column grid
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {FG_PRIMARY};")
+            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             self.tool_checkboxes[tool] = checkbox
             row = idx // 3
             col = idx % 3
@@ -1390,7 +1386,7 @@ class NewAgentTemplateDialog(QDialog):
 
         tools_widget = QWidget()
         tools_widget.setLayout(tools_grid)
-        tools_widget.setStyleSheet(f"background: {BG_MEDIUM}; padding: 8px; border-radius: 3px;")
+        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;")
         layout.addWidget(tools_widget)
 
         info_label = QLabel(
@@ -1399,13 +1395,13 @@ class NewAgentTemplateDialog(QDialog):
             "The template will be created with YAML frontmatter."
         )
         info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(get_button_style())
+        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -1488,19 +1484,19 @@ class EditAgentTemplateDialog(QDialog):
         # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setText(parsed_name)
-        self.name_edit.setStyleSheet(get_line_edit_style())
+        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
         # Display Name field
         self.display_name_edit = QLineEdit()
         self.display_name_edit.setText(parsed_display)
-        self.display_name_edit.setStyleSheet(get_line_edit_style())
+        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
-        self.description_edit.setStyleSheet(get_text_edit_style())
+        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -1508,7 +1504,7 @@ class EditAgentTemplateDialog(QDialog):
         # Category field
         self.category_edit = QLineEdit()
         self.category_edit.setText(parsed_category)
-        self.category_edit.setStyleSheet(get_line_edit_style())
+        self.category_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Category:", self.category_edit)
 
         # Color field
@@ -1529,14 +1525,14 @@ class EditAgentTemplateDialog(QDialog):
         self.subfolder_edit = QLineEdit()
         self.subfolder_edit.setText(parsed_subfolder)
         self.subfolder_edit.setPlaceholderText("e.g., code-quality (optional)")
-        self.subfolder_edit.setStyleSheet(get_line_edit_style())
+        self.subfolder_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Subfolder:", self.subfolder_edit)
 
         layout.addLayout(form)
 
         # Tools checkboxes
         tools_label = QLabel("Tools (optional):")
-        tools_label.setStyleSheet(f"color: {FG_PRIMARY}; font-weight: bold;")
+        tools_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
         layout.addWidget(tools_label)
 
         self.tool_checkboxes = {}
@@ -1551,7 +1547,7 @@ class EditAgentTemplateDialog(QDialog):
         # Create checkboxes in a 3-column grid
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {FG_PRIMARY};")
+            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             # Check if this tool was in the parsed list
             if tool in existing_tools:
                 checkbox.setChecked(True)
@@ -1562,18 +1558,18 @@ class EditAgentTemplateDialog(QDialog):
 
         tools_widget = QWidget()
         tools_widget.setLayout(tools_grid)
-        tools_widget.setStyleSheet(f"background: {BG_MEDIUM}; padding: 8px; border-radius: 3px;")
+        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;")
         layout.addWidget(tools_widget)
 
         info_label = QLabel("* Required fields")
         info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(get_button_style())
+        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)

@@ -977,9 +977,11 @@ class PreferencesTab(QWidget):
         self._skill_sources_table.setHorizontalHeaderLabels(["Owner/Repo", "Description", "Type", "Skills Prefix"])
         hdr = self._skill_sources_table.horizontalHeader()
         hdr.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
-        hdr.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
         hdr.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
         hdr.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
+        UIStateManager.instance().restore_table_state("prefs.skill_sources", self._skill_sources_table)
+        UIStateManager.instance().connect_table("prefs.skill_sources", self._skill_sources_table)
         self._skill_sources_table.verticalHeader().hide()
         self._skill_sources_table.setStyleSheet(theme.get_table_style())
         self._skill_sources_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -1356,6 +1358,7 @@ from PyQt6.QtCore import Qt
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
+from utils.ui_state_manager import UIStateManager
 
 
 class {class_name}Tab(QWidget):

@@ -47,6 +47,10 @@ class SettingsManager(QObject):
         settings_path = project_path / ".claude" / "settings.local.json"
         return self._load_settings(settings_path, f"project_local_{project_path}")
 
+    def save_user_settings(self, settings: Dict[str, Any]) -> bool:
+        """Save a full settings dict to ~/.claude/settings.json"""
+        return self.save_settings(self.user_settings_path, settings)
+
     def update_user_setting(self, key: str, value: Any) -> bool:
         """Update a specific setting in user settings.json"""
         return self._update_setting(self.user_settings_path, key, value, "user")

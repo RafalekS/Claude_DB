@@ -12,13 +12,7 @@ from pathlib import Path
 import sys
 import json
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import (
-    BG_DARK, BG_MEDIUM, BG_LIGHT,
-    FG_PRIMARY, FG_SECONDARY,
-    ACCENT_PRIMARY,
-    FONT_SIZE_SMALL, FONT_SIZE_NORMAL, FONT_SIZE_LARGE,
-    get_button_style, get_line_edit_style
-)
+from utils import theme
 from utils.template_manager import get_template_manager
 
 
@@ -37,7 +31,7 @@ class AddHTTPServerDialog(QDialog):
 
         # Header
         header = QLabel("Add HTTP MCP Server Template")
-        header.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY}; font-size: {FONT_SIZE_NORMAL}px;")
+        header.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_NORMAL}px;")
         layout.addWidget(header)
 
         # Form layout
@@ -46,13 +40,13 @@ class AddHTTPServerDialog(QDialog):
         # Server Name
         self.name_input = QLineEdit()
         self.name_input.setPlaceholderText("e.g., sap-docs")
-        self.name_input.setStyleSheet(get_line_edit_style())
+        self.name_input.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Server Name*:", self.name_input)
 
         # URL
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("e.g., https://mcp-sap-docs.marianzeis.de/mcp")
-        self.url_input.setStyleSheet(get_line_edit_style())
+        self.url_input.setStyleSheet(theme.get_line_edit_style())
         self.url_input.textChanged.connect(self.on_url_changed)
         form.addRow("URL*:", self.url_input)
 
@@ -61,12 +55,12 @@ class AddHTTPServerDialog(QDialog):
         self.http_radio = QPushButton("HTTP")
         self.http_radio.setCheckable(True)
         self.http_radio.setChecked(True)
-        self.http_radio.setStyleSheet(get_button_style())
+        self.http_radio.setStyleSheet(theme.get_button_style())
         self.http_radio.clicked.connect(lambda: self.set_type("http"))
 
         self.sse_radio = QPushButton("SSE")
         self.sse_radio.setCheckable(True)
-        self.sse_radio.setStyleSheet(get_button_style())
+        self.sse_radio.setStyleSheet(theme.get_button_style())
         self.sse_radio.clicked.connect(lambda: self.set_type("sse"))
 
         type_layout.addWidget(self.http_radio)
@@ -80,7 +74,7 @@ class AddHTTPServerDialog(QDialog):
 
         # Info
         info = QLabel("* Required fields. This creates a template for an HTTP-based MCP server.")
-        info.setStyleSheet(f"color: {FG_SECONDARY}; font-size: {FONT_SIZE_SMALL}px;")
+        info.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info)
 
         # Buttons
@@ -163,20 +157,20 @@ class MCPLibraryDialog(QDialog):
         layout = QVBoxLayout(self)
 
         header = QLabel("MCP Server Library - Manage and deploy MCP server templates")
-        header.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY}; font-size: {FONT_SIZE_LARGE}px;")
+        header.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_LARGE}px;")
         layout.addWidget(header)
 
         # Navigation bar with back button and path
         nav_layout = QHBoxLayout()
 
         self.back_btn = QPushButton("⬅ Back")
-        self.back_btn.setStyleSheet(get_button_style())
+        self.back_btn.setStyleSheet(theme.get_button_style())
         self.back_btn.clicked.connect(self.go_back)
         self.back_btn.setVisible(False)  # Hidden at root level
         nav_layout.addWidget(self.back_btn)
 
         self.path_label = QLabel(f"📁 {self.templates_dir}")
-        self.path_label.setStyleSheet(f"color: {FG_SECONDARY}; font-size: {FONT_SIZE_SMALL}px;")
+        self.path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         nav_layout.addWidget(self.path_label)
         nav_layout.addStretch()
 
@@ -189,7 +183,7 @@ class MCPLibraryDialog(QDialog):
         self.table.setHorizontalHeaderLabels(["", "Name", "Description"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
         self.table.setColumnWidth(0, 40)  # Wider for emoji icons
         self.table.setColumnWidth(1, 200)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -202,19 +196,19 @@ class MCPLibraryDialog(QDialog):
         self.table.setTextElideMode(Qt.TextElideMode.ElideNone)
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
             QHeaderView::section {{
-                background-color: {BG_MEDIUM};
-                color: {FG_PRIMARY};
+                background-color: {theme.BG_MEDIUM};
+                color: {theme.FG_PRIMARY};
                 padding: 5px;
-                border: 1px solid {BG_LIGHT};
+                border: 1px solid {theme.BG_LIGHT};
             }}
             QHeaderView::section:hover {{
-                background-color: {BG_LIGHT};
+                background-color: {theme.BG_LIGHT};
             }}
         """)
 
@@ -224,39 +218,39 @@ class MCPLibraryDialog(QDialog):
         manage_layout = QHBoxLayout()
 
         add_btn = QPushButton("➕ Add Template")
-        add_btn.setStyleSheet(get_button_style())
+        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.setToolTip("Add stdio/command-based MCP server template")
         add_btn.clicked.connect(self.add_template)
         manage_layout.addWidget(add_btn)
 
         add_http_btn = QPushButton("🌐 Add HTTP Template")
-        add_http_btn.setStyleSheet(get_button_style())
+        add_http_btn.setStyleSheet(theme.get_button_style())
         add_http_btn.setToolTip("Add HTTP/SSE-based MCP server template")
         add_http_btn.clicked.connect(self.add_http_template)
         manage_layout.addWidget(add_http_btn)
 
         edit_btn = QPushButton("✏️ Edit Selected")
-        edit_btn.setStyleSheet(get_button_style())
+        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.clicked.connect(self.edit_template)
         manage_layout.addWidget(edit_btn)
 
         bulk_add_btn = QPushButton("📋 Bulk Add")
-        bulk_add_btn.setStyleSheet(get_button_style())
+        bulk_add_btn.setStyleSheet(theme.get_button_style())
         bulk_add_btn.clicked.connect(self.bulk_add_mcps)
         manage_layout.addWidget(bulk_add_btn)
 
         delete_btn = QPushButton("🗑️ Delete Selected")
-        delete_btn.setStyleSheet(get_button_style())
+        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.clicked.connect(self.delete_selected)
         manage_layout.addWidget(delete_btn)
 
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet(get_button_style())
+        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.clicked.connect(self.refresh_templates)
         manage_layout.addWidget(refresh_btn)
 
         open_folder_btn = QPushButton("📁 Open Folder")
-        open_folder_btn.setStyleSheet(get_button_style())
+        open_folder_btn.setStyleSheet(theme.get_button_style())
         open_folder_btn.clicked.connect(self.open_folder)
         manage_layout.addWidget(open_folder_btn)
 
@@ -265,12 +259,12 @@ class MCPLibraryDialog(QDialog):
 
         select_layout = QHBoxLayout()
         select_all_btn = QPushButton("✓ Select All")
-        select_all_btn.setStyleSheet(get_button_style())
+        select_all_btn.setStyleSheet(theme.get_button_style())
         select_all_btn.clicked.connect(self.select_all)
         select_layout.addWidget(select_all_btn)
 
         deselect_all_btn = QPushButton("✗ Deselect All")
-        deselect_all_btn.setStyleSheet(get_button_style())
+        deselect_all_btn.setStyleSheet(theme.get_button_style())
         deselect_all_btn.clicked.connect(self.deselect_all)
         select_layout.addWidget(deselect_all_btn)
 
@@ -278,7 +272,7 @@ class MCPLibraryDialog(QDialog):
         layout.addLayout(select_layout)
 
         info = QLabel("Select MCP servers to deploy, then click OK. You can also drop .json files directly into the templates folder.")
-        info.setStyleSheet(f"color: {FG_SECONDARY}; font-size: {FONT_SIZE_SMALL}px;")
+        info.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         info.setWordWrap(True)
         layout.addWidget(info)
 
@@ -350,7 +344,7 @@ class MCPLibraryDialog(QDialog):
                 icon_item = QTableWidgetItem("📁")
                 icon_item.setData(Qt.ItemDataRole.UserRole, 'folder')
                 name_item = QTableWidgetItem(name)
-                name_item.setForeground(QColor(ACCENT_PRIMARY))
+                name_item.setForeground(QColor(theme.ACCENT_PRIMARY))
                 desc_item = QTableWidgetItem("")  # No description for folders
             else:
                 icon_item = QTableWidgetItem("📄")
@@ -358,7 +352,7 @@ class MCPLibraryDialog(QDialog):
                 # Show just the filename for display
                 display_name = name.split('/')[-1] if '/' in name else name
                 name_item = QTableWidgetItem(display_name)
-                name_item.setForeground(QColor(FG_PRIMARY))
+                name_item.setForeground(QColor(theme.FG_PRIMARY))
 
                 # Extract description from _note field in JSON
                 description = ""
@@ -369,7 +363,7 @@ class MCPLibraryDialog(QDialog):
                     except (json.JSONDecodeError, KeyError):
                         pass
                 desc_item = QTableWidgetItem(description)
-                desc_item.setForeground(QColor(FG_SECONDARY))
+                desc_item.setForeground(QColor(theme.FG_SECONDARY))
 
             # Store full name in UserRole for later retrieval
             name_item.setData(Qt.ItemDataRole.UserRole, name)

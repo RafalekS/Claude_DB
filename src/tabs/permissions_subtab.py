@@ -11,9 +11,7 @@ from PyQt6.QtCore import Qt
 import sys
 import json
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
-
-
+from utils import theme
 class PermissionsSubtab(QWidget):
     """Subtab for managing Claude Code permissions (single-scope)"""
 
@@ -46,7 +44,7 @@ class PermissionsSubtab(QWidget):
 
         scope_label = "User" if self.scope == "user" else "Project"
         header = QLabel(f"Permissions ({scope_label})")
-        header.setStyleSheet(f"font-size: {FONT_SIZE_LARGE}px; font-weight: bold; color: {ACCENT_PRIMARY};")
+        header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         header_layout.addWidget(header)
         header_layout.addStretch()
@@ -66,7 +64,7 @@ class PermissionsSubtab(QWidget):
             "Each permission is a JSON file with description and permissions configuration."
         )
         tip_label.setWordWrap(True)
-        tip_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(tip_label)
 
     def create_permissions_editor(self):
@@ -79,7 +77,7 @@ class PermissionsSubtab(QWidget):
         # File path label
         permissions_dir = self.get_scope_permissions_dir()
         path_label = QLabel(f"Directory: {permissions_dir}")
-        path_label.setStyleSheet(f"font-size: {FONT_SIZE_SMALL}px; color: {FG_SECONDARY};")
+        path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(path_label)
 
         # Store references
@@ -99,13 +97,13 @@ class PermissionsSubtab(QWidget):
         search_box = QLineEdit()
         search_box.setPlaceholderText("Search...")
         search_box.textChanged.connect(self.filter_permissions)
-        search_box.setStyleSheet(get_line_edit_style())
+        search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(search_box)
 
         # Permission list
         permission_list = QListWidget()
         permission_list.itemClicked.connect(self.load_permission_content)
-        permission_list.setStyleSheet(get_list_widget_style())
+        permission_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(permission_list)
 
         # Buttons
@@ -122,7 +120,7 @@ class PermissionsSubtab(QWidget):
         refresh_btn.setToolTip("Reload the permissions list")
 
         for btn in [new_btn, edit_btn, del_btn, refresh_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         new_btn.clicked.connect(self.create_new_permission)
         edit_btn.clicked.connect(self.edit_permission)
@@ -148,7 +146,7 @@ class PermissionsSubtab(QWidget):
         editor_btn_layout.setSpacing(5)
 
         permission_name_label = QLabel("No permission selected")
-        permission_name_label.setStyleSheet(get_label_style("normal", "secondary"))
+        permission_name_label.setStyleSheet(theme.get_label_style("normal", "secondary"))
 
         save_btn = QPushButton("💾 Save")
         save_btn.setToolTip("Save the current permission to file")
@@ -158,7 +156,7 @@ class PermissionsSubtab(QWidget):
         revert_btn.setToolTip("Revert to saved version (discards unsaved changes)")
 
         for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         save_btn.clicked.connect(self.save_permission)
         backup_save_btn.clicked.connect(self.backup_and_save_permission)
@@ -173,7 +171,7 @@ class PermissionsSubtab(QWidget):
 
         # JSON Editor
         permission_editor = QTextEdit()
-        permission_editor.setStyleSheet(get_text_edit_style())
+        permission_editor.setStyleSheet(theme.get_text_edit_style())
         permission_editor.setPlaceholderText("Select a permission to edit or create a new one...")
         right_layout.addWidget(permission_editor)
 

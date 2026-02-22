@@ -13,9 +13,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
-
-
+from utils import theme
 class LinkEditDialog(QDialog):
     """Proper dialog for adding/editing a link"""
 
@@ -96,17 +94,17 @@ class LinkManagerDialog(QDialog):
         btn_layout = QHBoxLayout()
 
         add_btn = QPushButton("➕ Add Link")
-        add_btn.setStyleSheet(get_button_style())
+        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.setFixedWidth(120)
         add_btn.clicked.connect(self.add_link)
 
         edit_btn = QPushButton("✏️ Edit Link")
-        edit_btn.setStyleSheet(get_button_style())
+        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.setFixedWidth(120)
         edit_btn.clicked.connect(self.edit_link)
 
         delete_btn = QPushButton("🗑️ Delete Link")
-        delete_btn.setStyleSheet(get_button_style())
+        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.setFixedWidth(120)
         delete_btn.clicked.connect(self.delete_link)
 
@@ -119,7 +117,7 @@ class LinkManagerDialog(QDialog):
 
         # Close button
         close_btn = QPushButton("Close")
-        close_btn.setStyleSheet(get_button_style())
+        close_btn.setStyleSheet(theme.get_button_style())
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn)
 
@@ -290,19 +288,19 @@ class AboutTab(QWidget):
         # Compact Header with all buttons
         header_layout = QHBoxLayout()
         header = QLabel("Claude_DB v2.0.0")
-        header.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {ACCENT_PRIMARY};")
+        header.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
         header_layout.addWidget(header)
 
         # Link management button
         manage_btn = QPushButton("🔗 Manage Links")
-        manage_btn.setStyleSheet(get_button_style())
+        manage_btn.setStyleSheet(theme.get_button_style())
         manage_btn.setFixedWidth(130)
         manage_btn.clicked.connect(self.manage_links)
         header_layout.addWidget(manage_btn)
 
         # Documentation Button
         docs_button = QPushButton("📚 Docs")
-        docs_button.setStyleSheet(get_button_style())
+        docs_button.setStyleSheet(theme.get_button_style())
         docs_button.setToolTip("Open Claude_DB.html")
         docs_button.setFixedWidth(90)
         docs_button.clicked.connect(self.open_local_docs)
@@ -333,13 +331,13 @@ class AboutTab(QWidget):
         # Claude Agent SDK Installation - compact
         sdk_layout = QHBoxLayout()
         sdk_label = QLabel("SDK:")
-        sdk_label.setStyleSheet(f"color: {FG_PRIMARY}; font-weight: bold;")
+        sdk_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
 
         cmd_label = QLabel("npm install @anthropic-ai/claude-agent-sdk")
-        cmd_label.setStyleSheet(f"background: {BG_DARK}; padding: 5px; color: {FG_PRIMARY}; font-family: 'Consolas', 'Monaco', monospace; border-radius: 3px;")
+        cmd_label.setStyleSheet(f"background: {theme.BG_DARK}; padding: 5px; color: {theme.FG_PRIMARY}; font-family: 'Consolas', 'Monaco', monospace; border-radius: 3px;")
 
         copy_sdk_btn = QPushButton("📋 Copy")
-        copy_sdk_btn.setStyleSheet(get_button_style())
+        copy_sdk_btn.setStyleSheet(theme.get_button_style())
         copy_sdk_btn.setFixedWidth(90)
         copy_sdk_btn.clicked.connect(self.copy_sdk_command)
 
@@ -351,7 +349,7 @@ class AboutTab(QWidget):
 
         # Developer Info - compact
         dev_info = QLabel("Rafal Staska | r.staska@gmail.com | GitHub: RafalekS")
-        dev_info.setStyleSheet(f"margin-top: 5px; padding: 5px; background: {BG_MEDIUM}; color: {FG_SECONDARY}; font-size: {FONT_SIZE_SMALL}px; border-radius: 3px;")
+        dev_info.setStyleSheet(f"margin-top: 5px; padding: 5px; background: {theme.BG_MEDIUM}; color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; border-radius: 3px;")
         layout.addWidget(dev_info)
 
         layout.addStretch()
@@ -362,13 +360,13 @@ class AboutTab(QWidget):
         group.setStyleSheet(f"""
             QGroupBox {{
                 font-weight: bold;
-                border: 1px solid {BG_LIGHT};
+                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 5px;
                 margin-top: 5px;
                 padding-top: 10px;
-                color: {ACCENT_PRIMARY};
-                font-size: {FONT_SIZE_NORMAL}px;
-                background: {BG_DARK};
+                color: {theme.ACCENT_PRIMARY};
+                font-size: {theme.FONT_SIZE_NORMAL}px;
+                background: {theme.BG_DARK};
             }}
             QGroupBox::title {{
                 subcontrol-origin: margin;
@@ -385,16 +383,16 @@ class AboutTab(QWidget):
 
         html = "<ul style='line-height: 1.6; margin: 0; padding-left: 20px;'>"
         for url, text in links:
-            html += f"<li><a href='{url}' style='color: {ACCENT_PRIMARY};'>{text}</a></li>"
+            html += f"<li><a href='{url}' style='color: {theme.ACCENT_PRIMARY};'>{text}</a></li>"
         html += "</ul>"
 
         content.setHtml(html)
         content.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
                 border: none;
-                font-size: {FONT_SIZE_SMALL}px;
+                font-size: {theme.FONT_SIZE_SMALL}px;
             }}
         """)
         content.setMaximumHeight(120)
@@ -424,7 +422,7 @@ class AboutTab(QWidget):
         """Refresh the display of links in a QTextBrowser"""
         html = "<ul style='line-height: 1.6; margin: 0; padding-left: 20px;'>"
         for url, text in links:
-            html += f"<li><a href='{url}' style='color: {ACCENT_PRIMARY};'>{text}</a></li>"
+            html += f"<li><a href='{url}' style='color: {theme.ACCENT_PRIMARY};'>{text}</a></li>"
         html += "</ul>"
         content_widget.setHtml(html)
 

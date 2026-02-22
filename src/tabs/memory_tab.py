@@ -12,9 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
-
-
+from utils import theme
 class MemoryTab(QWidget):
     """Tab for memory and checkpointing info"""
 
@@ -35,10 +33,10 @@ class MemoryTab(QWidget):
         header_layout.setSpacing(5)
 
         header = QLabel("Memory & Checkpointing")
-        header.setStyleSheet(f"font-size: {FONT_SIZE_LARGE}px; font-weight: bold; color: {ACCENT_PRIMARY};")
+        header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet(get_button_style())
+        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.setToolTip("Refresh all memory and history data")
         refresh_btn.clicked.connect(self.refresh_all)
 
@@ -52,22 +50,22 @@ class MemoryTab(QWidget):
         self.tab_widget = QTabWidget()
         self.tab_widget.setStyleSheet(f"""
             QTabWidget::pane {{
-                border: 1px solid {BG_LIGHT};
-                background-color: {BG_MEDIUM};
+                border: 1px solid {theme.BG_LIGHT};
+                background-color: {theme.BG_MEDIUM};
             }}
             QTabBar::tab {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
                 padding: 8px 16px;
                 margin-right: 2px;
-                border: 1px solid {BG_LIGHT};
+                border: 1px solid {theme.BG_LIGHT};
             }}
             QTabBar::tab:selected {{
-                background-color: {ACCENT_PRIMARY};
+                background-color: {theme.ACCENT_PRIMARY};
                 color: white;
             }}
             QTabBar::tab:hover {{
-                background-color: {BG_LIGHT};
+                background-color: {theme.BG_LIGHT};
             }}
         """)
 
@@ -90,9 +88,9 @@ class MemoryTab(QWidget):
 
         info = QTextBrowser()
         info.setHtml(f"""
-            <h3 style="color: {ACCENT_PRIMARY};">Claude Code Memory System</h3>
+            <h3 style="color: {theme.ACCENT_PRIMARY};">Claude Code Memory System</h3>
 
-            <h4 style="color: {ACCENT_PRIMARY}; margin-top: 15px;">Memory Hierarchy (Precedence Order)</h4>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Memory Hierarchy (Precedence Order)</h4>
             <p>Claude Code loads memory from multiple locations with the following precedence:</p>
             <ol style="line-height: 1.8;">
                 <li><b>Enterprise Policy:</b> System-wide (<code>C:\\ProgramData\\ClaudeCode\\CLAUDE.md</code> on Windows)</li>
@@ -102,11 +100,11 @@ class MemoryTab(QWidget):
             </ol>
             <p><b>Tip:</b> Use <code>/memory</code> to edit CLAUDE.md files • Use <code>#</code> prefix in prompts to quickly add content</p>
 
-            <h4 style="color: {ACCENT_PRIMARY}; margin-top: 15px;">Conversation History</h4>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Conversation History</h4>
             <p><b>Location:</b> <code>~/.claude/history.jsonl</code></p>
             <p>Stores all conversation turns for context persistence across sessions.</p>
 
-            <h4 style="color: {ACCENT_PRIMARY}; margin-top: 15px;">Checkpointing</h4>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Checkpointing</h4>
             <p>Save conversation state and rollback if needed:</p>
             <ul style="line-height: 1.8;">
                 <li><code>/checkpoint</code> - Create a checkpoint at current state</li>
@@ -114,26 +112,26 @@ class MemoryTab(QWidget):
                 <li><code>/restore &lt;id&gt;</code> - Restore to a specific checkpoint</li>
             </ul>
 
-            <h4 style="color: {ACCENT_PRIMARY}; margin-top: 15px;">File History</h4>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">File History</h4>
             <p><b>Location:</b> <code>~/.claude/file-history/</code></p>
             <p>Tracks all file modifications made during sessions.</p>
 
-            <h4 style="color: {ACCENT_PRIMARY}; margin-top: 15px;">Project Memory</h4>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Project Memory</h4>
             <p><b>Location:</b> <code>./.claude/</code></p>
             <p>Project-specific context and settings stored in your project directory.</p>
 
-            <h4 style="color: {ACCENT_PRIMARY}; margin-top: 15px;">Memory Management</h4>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Memory Management</h4>
             <ul style="line-height: 1.8;">
                 <li><b>Token Usage:</b> Claude Code tracks context window usage</li>
                 <li><b>Auto Pruning:</b> Automatically manages conversation length</li>
                 <li><b>CLAUDE.md:</b> Persistent project instructions</li>
             </ul>
 
-            <h4 style="color: {ACCENT_PRIMARY}; margin-top: 15px;">Shell Snapshots</h4>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Shell Snapshots</h4>
             <p><b>Location:</b> <code>~/.claude/shell-snapshots/</code></p>
             <p>Snapshots of shell command outputs for reference.</p>
         """)
-        info.setStyleSheet(get_text_browser_style())
+        info.setStyleSheet(theme.get_text_browser_style())
         layout.addWidget(info)
 
         return widget
@@ -151,13 +149,13 @@ class MemoryTab(QWidget):
         self.history_list = QListWidget()
         self.history_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 font-family: 'Consolas', 'Monaco', monospace;
             }}
             QListWidget::item:selected {{
-                background-color: {ACCENT_PRIMARY};
+                background-color: {theme.ACCENT_PRIMARY};
                 color: white;
             }}
         """)
@@ -168,11 +166,11 @@ class MemoryTab(QWidget):
         self.history_viewer.setReadOnly(True)
         self.history_viewer.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 font-family: 'Consolas', 'Monaco', monospace;
-                font-size: {FONT_SIZE_SMALL}px;
+                font-size: {theme.FONT_SIZE_SMALL}px;
             }}
         """)
 
@@ -198,13 +196,13 @@ class MemoryTab(QWidget):
         self.file_history_list = QListWidget()
         self.file_history_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 font-family: 'Consolas', 'Monaco', monospace;
             }}
             QListWidget::item:selected {{
-                background-color: {ACCENT_PRIMARY};
+                background-color: {theme.ACCENT_PRIMARY};
                 color: white;
             }}
         """)
@@ -215,11 +213,11 @@ class MemoryTab(QWidget):
         self.file_history_viewer.setReadOnly(True)
         self.file_history_viewer.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 font-family: 'Consolas', 'Monaco', monospace;
-                font-size: {FONT_SIZE_SMALL}px;
+                font-size: {theme.FONT_SIZE_SMALL}px;
             }}
         """)
 
@@ -245,13 +243,13 @@ class MemoryTab(QWidget):
         self.shell_list = QListWidget()
         self.shell_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 font-family: 'Consolas', 'Monaco', monospace;
             }}
             QListWidget::item:selected {{
-                background-color: {ACCENT_PRIMARY};
+                background-color: {theme.ACCENT_PRIMARY};
                 color: white;
             }}
         """)
@@ -262,11 +260,11 @@ class MemoryTab(QWidget):
         self.shell_viewer.setReadOnly(True)
         self.shell_viewer.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 font-family: 'Consolas', 'Monaco', monospace;
-                font-size: {FONT_SIZE_SMALL}px;
+                font-size: {theme.FONT_SIZE_SMALL}px;
             }}
         """)
 

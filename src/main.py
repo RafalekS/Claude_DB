@@ -303,17 +303,17 @@ class ClaudeDBApp(QMainWindow):
         """Apply a new theme instantly across the whole application.
 
         Connected to PreferencesTab.theme_changed signal.
+        Clears all per-widget stylesheets so the app-level stylesheet
+        (generate_app_stylesheet) takes full control.
         """
         from utils import theme as _theme
         _theme.apply_theme(theme_name, font_size)
+        # Clear per-widget stylesheets so app stylesheet is not overridden
+        for widget in self.findChildren(QWidget):
+            if widget.styleSheet():
+                widget.setStyleSheet("")
+        # Apply comprehensive app-level stylesheet (covers all widget types)
         self.app.setStyleSheet(_theme.generate_app_stylesheet())
-        # Refresh per-widget stylesheets in each tab
-        for _key, (_name, widget) in self.all_tabs.items():
-            if hasattr(widget, "refresh_theme"):
-                try:
-                    widget.refresh_theme()
-                except Exception as e:
-                    logger.warning(f"refresh_theme failed for {_key}: {e}")
         logger.info(f"Theme changed to '{theme_name}' {font_size}px")
 
     def create_backup(self):

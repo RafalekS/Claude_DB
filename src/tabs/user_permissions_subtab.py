@@ -19,6 +19,7 @@ from PyQt6.QtGui import QDesktopServices, QColor
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
+from utils.ui_state_manager import UIStateManager
 
 
 
@@ -409,7 +410,9 @@ class UserPermissionsSubTab(QWidget):
         self.perm_table = QTableWidget()
         self.perm_table.setColumnCount(3)
         self.perm_table.setHorizontalHeaderLabels(["Type", "Pattern", "Level"])
-        self.perm_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.perm_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
+        UIStateManager.instance().restore_table_state("permissions.perm_table", self.perm_table)
+        UIStateManager.instance().connect_table("permissions.perm_table", self.perm_table)
         self.perm_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.perm_table.setStyleSheet(theme.get_table_style())
         layout.addWidget(self.perm_table, 1)

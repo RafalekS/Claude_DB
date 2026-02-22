@@ -8,9 +8,7 @@ from PyQt6.QtWidgets import (
 )
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
-
-
+from utils import theme
 class DocsViewerTab(QWidget):
     """Tab for viewing documentation"""
 
@@ -26,7 +24,7 @@ class DocsViewerTab(QWidget):
 
         # Header
         header = QLabel("Documentation Viewer")
-        header.setStyleSheet(f"font-size: {FONT_SIZE_LARGE}px; font-weight: bold; color: {ACCENT_PRIMARY};")
+        header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
         layout.addWidget(header)
 
         # Content area - QTextBrowser with Gruvbox styling
@@ -43,19 +41,19 @@ class DocsViewerTab(QWidget):
                     content.setHtml(html_content)
             except Exception as e:
                 content.setHtml(f"""
-                    <h2 style="color: {ACCENT_PRIMARY};">Error loading documentation</h2>
-                    <p style="color: {ERROR_COLOR};">{str(e)}</p>
+                    <h2 style="color: {theme.ACCENT_PRIMARY};">Error loading documentation</h2>
+                    <p style="color: {theme.ERROR_COLOR};">{str(e)}</p>
                 """)
         else:
             content.setHtml(f"""
-                <h2 style="color: {ACCENT_PRIMARY};">Documentation</h2>
-                <p style="color: {FG_PRIMARY};">The documentation file <code>help/Claude_DB.html</code> is missing.</p>
-                <p style="color: {FG_SECONDARY};">This should contain comprehensive information from all Claude Code documentation sources.</p>
+                <h2 style="color: {theme.ACCENT_PRIMARY};">Documentation</h2>
+                <p style="color: {theme.FG_PRIMARY};">The documentation file <code>help/Claude_DB.html</code> is missing.</p>
+                <p style="color: {theme.FG_SECONDARY};">This should contain comprehensive information from all Claude Code documentation sources.</p>
             """)
 
         content.setStyleSheet(f"""
             QTextBrowser {{
-                border: 1px solid {BG_LIGHT};
+                border: 1px solid {theme.BG_LIGHT};
                 padding: 5px;
             }}
         """)

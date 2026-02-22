@@ -11,9 +11,7 @@ from PyQt6.QtCore import Qt
 import sys
 import json
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
-
-
+from utils import theme
 class StatuslineSubtab(QWidget):
     """Subtab for managing Claude Code statusline configurations (single-scope)"""
 
@@ -46,7 +44,7 @@ class StatuslineSubtab(QWidget):
 
         scope_label = "User" if self.scope == "user" else "Project"
         header = QLabel(f"Statusline ({scope_label})")
-        header.setStyleSheet(f"font-size: {FONT_SIZE_LARGE}px; font-weight: bold; color: {ACCENT_PRIMARY};")
+        header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         header_layout.addWidget(header)
         header_layout.addStretch()
@@ -66,7 +64,7 @@ class StatuslineSubtab(QWidget):
             "Each statusline is a JSON file with description and statusLine configuration."
         )
         tip_label.setWordWrap(True)
-        tip_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(tip_label)
 
     def create_statusline_editor(self):
@@ -79,7 +77,7 @@ class StatuslineSubtab(QWidget):
         # File path label
         statusline_dir = self.get_scope_statusline_dir()
         path_label = QLabel(f"Directory: {statusline_dir}")
-        path_label.setStyleSheet(f"font-size: {FONT_SIZE_SMALL}px; color: {FG_SECONDARY};")
+        path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(path_label)
 
         # Store references
@@ -99,13 +97,13 @@ class StatuslineSubtab(QWidget):
         search_box = QLineEdit()
         search_box.setPlaceholderText("Search...")
         search_box.textChanged.connect(self.filter_statuslines)
-        search_box.setStyleSheet(get_line_edit_style())
+        search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(search_box)
 
         # Statusline list
         statusline_list = QListWidget()
         statusline_list.itemClicked.connect(self.load_statusline_content)
-        statusline_list.setStyleSheet(get_list_widget_style())
+        statusline_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(statusline_list)
 
         # Buttons
@@ -122,7 +120,7 @@ class StatuslineSubtab(QWidget):
         refresh_btn.setToolTip("Reload the statuslines list")
 
         for btn in [new_btn, edit_btn, del_btn, refresh_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         new_btn.clicked.connect(self.create_new_statusline)
         edit_btn.clicked.connect(self.edit_statusline)
@@ -148,7 +146,7 @@ class StatuslineSubtab(QWidget):
         editor_btn_layout.setSpacing(5)
 
         statusline_name_label = QLabel("No statusline selected")
-        statusline_name_label.setStyleSheet(get_label_style("normal", "secondary"))
+        statusline_name_label.setStyleSheet(theme.get_label_style("normal", "secondary"))
 
         save_btn = QPushButton("💾 Save")
         save_btn.setToolTip("Save the current statusline to file")
@@ -158,7 +156,7 @@ class StatuslineSubtab(QWidget):
         revert_btn.setToolTip("Revert to saved version (discards unsaved changes)")
 
         for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         save_btn.clicked.connect(self.save_statusline)
         backup_save_btn.clicked.connect(self.backup_and_save_statusline)
@@ -173,7 +171,7 @@ class StatuslineSubtab(QWidget):
 
         # JSON Editor
         statusline_editor = QTextEdit()
-        statusline_editor.setStyleSheet(get_text_edit_style())
+        statusline_editor.setStyleSheet(theme.get_text_edit_style())
         statusline_editor.setPlaceholderText("Select a statusline to edit or create a new one...")
         right_layout.addWidget(statusline_editor)
 

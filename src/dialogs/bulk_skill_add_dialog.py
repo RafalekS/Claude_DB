@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 import re
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
+from utils import theme
 from utils.template_manager import get_template_manager
 
 
@@ -29,7 +29,7 @@ class BulkSkillAddDialog(QDialog):
         layout = QVBoxLayout(self)
 
         header = QLabel("Bulk Add Skills to Template Library")
-        header.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY}; font-size: {FONT_SIZE_LARGE}px;")
+        header.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_LARGE}px;")
         layout.addWidget(header)
 
         instructions = QLabel(
@@ -39,48 +39,48 @@ class BulkSkillAddDialog(QDialog):
             "Each skill should include YAML frontmatter with 'name:' field."
         )
         instructions.setWordWrap(True)
-        instructions.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        instructions.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(instructions)
 
         input_label = QLabel("Paste skill template(s):")
-        input_label.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY};")
+        input_label.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY};")
         layout.addWidget(input_label)
 
         self.input_text = QTextEdit()
         self.input_text.setPlaceholderText(
             "---\nname: example-skill\ndescription: Example skill\n---\n\n# Example Skill\n...\n\n---SKILL---\n\n---\nname: another-skill\n..."
         )
-        self.input_text.setStyleSheet(get_text_edit_style())
+        self.input_text.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.input_text)
 
         button_layout = QHBoxLayout()
 
         parse_btn = QPushButton("🔄 Parse & Preview")
-        parse_btn.setStyleSheet(get_button_style())
+        parse_btn.setStyleSheet(theme.get_button_style())
         parse_btn.clicked.connect(self.parse_and_preview)
         button_layout.addWidget(parse_btn)
 
         button_layout.addStretch()
 
         save_btn = QPushButton("💾 Save to Library")
-        save_btn.setStyleSheet(get_button_style())
+        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self.save_to_library)
         button_layout.addWidget(save_btn)
 
         close_btn = QPushButton("✗ Close")
-        close_btn.setStyleSheet(get_button_style())
+        close_btn.setStyleSheet(theme.get_button_style())
         close_btn.clicked.connect(self.reject)
         button_layout.addWidget(close_btn)
 
         layout.addLayout(button_layout)
 
         preview_label = QLabel("Preview (will create these template files):")
-        preview_label.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY};")
+        preview_label.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY};")
         layout.addWidget(preview_label)
 
         self.preview_text = QTextEdit()
         self.preview_text.setReadOnly(True)
-        self.preview_text.setStyleSheet(get_text_edit_style())
+        self.preview_text.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.preview_text)
 
     def parse_and_preview(self):

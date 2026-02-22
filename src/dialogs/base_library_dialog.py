@@ -10,11 +10,7 @@ from PyQt6.QtGui import QColor
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import (
-    FG_PRIMARY, FG_SECONDARY, FONT_SIZE_LARGE, FONT_SIZE_SMALL,
-    BG_DARK, BG_MEDIUM, BG_LIGHT, ACCENT_PRIMARY,
-    get_button_style
-)
+from utils import theme
 from utils.template_manager import get_template_manager
 
 
@@ -93,20 +89,20 @@ class BaseLibraryDialog(QDialog):
         layout = QVBoxLayout(self)
 
         header = QLabel(self.get_header_text())
-        header.setStyleSheet(f"font-weight: bold; color: {FG_PRIMARY}; font-size: {FONT_SIZE_LARGE}px;")
+        header.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_LARGE}px;")
         layout.addWidget(header)
 
         # Navigation bar
         nav_layout = QHBoxLayout()
 
         self.back_btn = QPushButton("Back")
-        self.back_btn.setStyleSheet(get_button_style())
+        self.back_btn.setStyleSheet(theme.get_button_style())
         self.back_btn.clicked.connect(self.go_back)
         self.back_btn.setVisible(False)
         nav_layout.addWidget(self.back_btn)
 
         self.path_label = QLabel(f"{self.templates_dir}")
-        self.path_label.setStyleSheet(f"color: {FG_SECONDARY}; font-size: {FONT_SIZE_SMALL}px;")
+        self.path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         nav_layout.addWidget(self.path_label)
         nav_layout.addStretch()
 
@@ -128,12 +124,12 @@ class BaseLibraryDialog(QDialog):
         # Select/Deselect row
         select_layout = QHBoxLayout()
         select_all_btn = QPushButton("Select All")
-        select_all_btn.setStyleSheet(get_button_style())
+        select_all_btn.setStyleSheet(theme.get_button_style())
         select_all_btn.clicked.connect(self.select_all)
         select_layout.addWidget(select_all_btn)
 
         deselect_all_btn = QPushButton("Deselect All")
-        deselect_all_btn.setStyleSheet(get_button_style())
+        deselect_all_btn.setStyleSheet(theme.get_button_style())
         deselect_all_btn.clicked.connect(self.deselect_all)
         select_layout.addWidget(deselect_all_btn)
 
@@ -141,7 +137,7 @@ class BaseLibraryDialog(QDialog):
         layout.addLayout(select_layout)
 
         info = QLabel(self.get_info_text())
-        info.setStyleSheet(f"color: {FG_SECONDARY}; font-size: {FONT_SIZE_SMALL}px;")
+        info.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         info.setWordWrap(True)
         layout.addWidget(info)
 
@@ -159,7 +155,7 @@ class BaseLibraryDialog(QDialog):
         table.setHorizontalHeaderLabels(["", "Name", "Description"])
         table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
-        table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
         table.setColumnWidth(0, 40)
         table.setColumnWidth(1, 200)
         table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -169,19 +165,19 @@ class BaseLibraryDialog(QDialog):
         table.doubleClicked.connect(self.on_double_click)
         table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
             QHeaderView::section {{
-                background-color: {BG_MEDIUM};
-                color: {FG_PRIMARY};
+                background-color: {theme.BG_MEDIUM};
+                color: {theme.FG_PRIMARY};
                 padding: 5px;
-                border: 1px solid {BG_LIGHT};
+                border: 1px solid {theme.BG_LIGHT};
             }}
             QHeaderView::section:hover {{
-                background-color: {BG_LIGHT};
+                background-color: {theme.BG_LIGHT};
             }}
         """)
         return table
@@ -189,34 +185,34 @@ class BaseLibraryDialog(QDialog):
     def _add_base_manage_buttons(self, layout):
         """Add buttons common to all library dialogs."""
         add_btn = QPushButton("Add Template")
-        add_btn.setStyleSheet(get_button_style())
+        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.clicked.connect(self.add_template)
         layout.addWidget(add_btn)
 
         edit_btn = QPushButton("Edit Selected")
-        edit_btn.setStyleSheet(get_button_style())
+        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.clicked.connect(self.edit_template)
         layout.addWidget(edit_btn)
 
         bulk_cls = self.get_bulk_add_class()
         if bulk_cls is not None:
             bulk_btn = QPushButton("Bulk Add")
-            bulk_btn.setStyleSheet(get_button_style())
+            bulk_btn.setStyleSheet(theme.get_button_style())
             bulk_btn.clicked.connect(self._open_bulk_add)
             layout.addWidget(bulk_btn)
 
         delete_btn = QPushButton("Delete Selected")
-        delete_btn.setStyleSheet(get_button_style())
+        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.clicked.connect(self.delete_selected)
         layout.addWidget(delete_btn)
 
         refresh_btn = QPushButton("Refresh")
-        refresh_btn.setStyleSheet(get_button_style())
+        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.clicked.connect(self.refresh_templates)
         layout.addWidget(refresh_btn)
 
         open_folder_btn = QPushButton("Open Folder")
-        open_folder_btn.setStyleSheet(get_button_style())
+        open_folder_btn.setStyleSheet(theme.get_button_style())
         open_folder_btn.clicked.connect(self.open_folder)
         layout.addWidget(open_folder_btn)
 
@@ -237,16 +233,16 @@ class BaseLibraryDialog(QDialog):
             icon_item = QTableWidgetItem("F")
             icon_item.setData(Qt.ItemDataRole.UserRole, 'folder')
             name_item = QTableWidgetItem(name)
-            name_item.setForeground(QColor(ACCENT_PRIMARY))
+            name_item.setForeground(QColor(theme.ACCENT_PRIMARY))
             desc_item = QTableWidgetItem("")
         else:
             icon_item = QTableWidgetItem("D")
             icon_item.setData(Qt.ItemDataRole.UserRole, 'template')
             display_name = name.split('/')[-1] if '/' in name else name
             name_item = QTableWidgetItem(display_name)
-            name_item.setForeground(QColor(FG_PRIMARY))
+            name_item.setForeground(QColor(theme.FG_PRIMARY))
             desc_item = QTableWidgetItem(description)
-            desc_item.setForeground(QColor(FG_SECONDARY))
+            desc_item.setForeground(QColor(theme.FG_SECONDARY))
 
         name_item.setData(Qt.ItemDataRole.UserRole, name)
         icon_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)

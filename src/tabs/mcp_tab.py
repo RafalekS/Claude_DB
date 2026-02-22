@@ -61,7 +61,7 @@ class KeyValueTableWidget(QWidget):
         self.table.setColumnCount(2)
         self.table.setHorizontalHeaderLabels(["Key", "Value"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setStyleSheet(f"""
             QTableWidget {{
@@ -477,7 +477,7 @@ class CustomRenameDialog(QDialog):
         self.table.setColumnCount(2)
         self.table.setHorizontalHeaderLabels(["Conflicting Name", "New Name"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
         self.table.setStyleSheet(f"""
             QTableWidget {{
                 background-color: {theme.BG_DARK};
@@ -875,7 +875,7 @@ class MCPTab(QWidget):
         )
         hdr = self._discover_table.horizontalHeader()
         hdr.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
-        hdr.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
         hdr.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
         hdr.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
         hdr.setSectionResizeMode(4, QHeaderView.ResizeMode.Interactive)

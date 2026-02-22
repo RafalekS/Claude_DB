@@ -9,9 +9,7 @@ from PyQt6.QtWidgets import (
 )
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
-
-
+from utils import theme
 class ClaudeMDTab(QWidget):
     """Tab for editing CLAUDE.md"""
 
@@ -33,7 +31,7 @@ class ClaudeMDTab(QWidget):
         header_layout.setSpacing(5)
 
         self.file_label = QLabel(f"{self.config_manager.claude_md}")
-        self.file_label.setStyleSheet(f"color: {FG_DIM}; font-size: {FONT_SIZE_SMALL}px;")
+        self.file_label.setStyleSheet(f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px;")
 
         self.save_btn = QPushButton("Save")
         self.save_btn.setToolTip("Save CLAUDE.md to file")
@@ -43,7 +41,7 @@ class ClaudeMDTab(QWidget):
         self.revert_btn.setToolTip("Reload CLAUDE.md from file (discards unsaved changes)")
 
         for btn in [self.save_btn, self.backup_save_btn, self.revert_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         self.save_btn.clicked.connect(self.save_content)
         self.backup_save_btn.clicked.connect(self.backup_and_save)
@@ -60,18 +58,18 @@ class ClaudeMDTab(QWidget):
         # Statistics panel
         self.stats_label = QLabel()
         self.stats_label.setStyleSheet(f"""
-            background-color: {BG_MEDIUM};
-            color: {FG_SECONDARY};
+            background-color: {theme.BG_MEDIUM};
+            color: {theme.FG_SECONDARY};
             padding: 8px;
-            border: 1px solid {BG_LIGHT};
+            border: 1px solid {theme.BG_LIGHT};
             border-radius: 3px;
-            font-size: {FONT_SIZE_SMALL}px;
+            font-size: {theme.FONT_SIZE_SMALL}px;
         """)
         layout.addWidget(self.stats_label)
 
         # Editor - FILLS ALL SPACE
         self.editor = QTextEdit()
-        self.editor.setStyleSheet(get_text_edit_style())
+        self.editor.setStyleSheet(theme.get_text_edit_style())
         self.editor.textChanged.connect(self.update_statistics)  # Update stats on text change
         layout.addWidget(self.editor, 1)  # Stretch factor
 
@@ -85,7 +83,7 @@ class ClaudeMDTab(QWidget):
             "Document custom tools, code style, and project-specific warnings"
         )
         tip_label.setWordWrap(True)
-        tip_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(tip_label)
 
     def update_statistics(self):

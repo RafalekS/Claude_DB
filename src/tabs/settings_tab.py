@@ -13,15 +13,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import (
-    BG_DARK, BG_MEDIUM, BG_LIGHT,
-    FG_PRIMARY, FG_SECONDARY, FG_DIM,
-    ACCENT_PRIMARY, ERROR_COLOR, SUCCESS_COLOR,
-    FONT_SIZE_SMALL, FONT_SIZE_NORMAL,
-    get_button_style, get_tab_widget_style, get_text_edit_style, get_line_edit_style
-)
-
-
+from utils import theme
 class SettingsTab(QWidget):
     """Tab for managing Claude Code settings"""
 
@@ -51,7 +43,7 @@ class SettingsTab(QWidget):
 
         # Tabs for User / Project settings
         self.settings_tabs = QTabWidget()
-        self.settings_tabs.setStyleSheet(get_tab_widget_style())
+        self.settings_tabs.setStyleSheet(theme.get_tab_widget_style())
 
         # User settings tab (~/.claude/settings.json)
         self.user_tab = self.create_settings_editor(
@@ -86,7 +78,7 @@ class SettingsTab(QWidget):
             "Keep ~/.claude.json private (chmod 600)"
         )
         tip_label.setWordWrap(True)
-        tip_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(tip_label)
 
     def create_settings_editor(self, file_path, description):
@@ -115,7 +107,7 @@ class SettingsTab(QWidget):
         set_notif_btn.setToolTip("Set notification channel to terminal_bell")
 
         for btn in [load_btn, save_btn, backup_save_btn, validate_btn, set_notif_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         btn_layout.addWidget(info_label)
         btn_layout.addWidget(set_notif_btn)
@@ -132,7 +124,7 @@ class SettingsTab(QWidget):
 
         # JSON Editor (top half)
         editor = QTextEdit()
-        editor.setStyleSheet(get_text_edit_style())
+        editor.setStyleSheet(theme.get_text_edit_style())
 
         # Load content
         try:
@@ -182,10 +174,10 @@ class SettingsTab(QWidget):
         self.project_folder_edit = QLineEdit()
         self.project_folder_edit.setText(str(Path.home()))
         self.project_folder_edit.setReadOnly(True)
-        self.project_folder_edit.setStyleSheet(get_line_edit_style())
+        self.project_folder_edit.setStyleSheet(theme.get_line_edit_style())
 
         browse_folder_btn = QPushButton("Browse...")
-        browse_folder_btn.setStyleSheet(get_button_style())
+        browse_folder_btn.setStyleSheet(theme.get_button_style())
         browse_folder_btn.setToolTip("Select a different project folder")
         browse_folder_btn.clicked.connect(self.browse_project_folder)
 
@@ -197,7 +189,7 @@ class SettingsTab(QWidget):
 
         # Sub-tabs for settings.json and settings.local.json
         self.project_settings_tabs = QTabWidget()
-        self.project_settings_tabs.setStyleSheet(get_tab_widget_style())
+        self.project_settings_tabs.setStyleSheet(theme.get_tab_widget_style())
 
         # Shared project settings (.claude/settings.json)
         self.shared_settings_widget = self.create_project_settings_editor_widget("shared")
@@ -245,7 +237,7 @@ class SettingsTab(QWidget):
         validate_btn.setToolTip("Check if JSON syntax is valid")
 
         for btn in [load_btn, save_btn, backup_save_btn, validate_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         btn_layout.addWidget(path_label)
         btn_layout.addStretch()
@@ -261,7 +253,7 @@ class SettingsTab(QWidget):
 
         # JSON Editor (top half)
         editor = QTextEdit()
-        editor.setStyleSheet(get_text_edit_style())
+        editor.setStyleSheet(theme.get_text_edit_style())
 
         # Load initial content
         try:
@@ -394,7 +386,7 @@ class SettingsTab(QWidget):
         # Header
         header_layout = QHBoxLayout()
         header = QLabel("Environment Variables")
-        header.setStyleSheet(f"font-size: {FONT_SIZE_NORMAL}px; font-weight: bold; color: {ACCENT_PRIMARY};")
+        header.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
         header_layout.addWidget(header)
         header_layout.addStretch()
         layout.addLayout(header_layout)
@@ -404,12 +396,12 @@ class SettingsTab(QWidget):
         env_list.setMaximumHeight(150)
         env_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 3px;
-                font-size: {FONT_SIZE_SMALL}px;
+                font-size: {theme.FONT_SIZE_SMALL}px;
             }}
         """)
         layout.addWidget(env_list)
@@ -426,7 +418,7 @@ class SettingsTab(QWidget):
         refresh_btn.setToolTip("Refresh list")
 
         for btn in [add_btn, edit_btn, remove_btn, refresh_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
             btn.setMaximumWidth(80)
 
         btn_layout.addWidget(add_btn)
@@ -447,7 +439,7 @@ class SettingsTab(QWidget):
                     if not env_vars:
                         item = QListWidgetItem("No environment variables configured")
                         item.setFlags(Qt.ItemFlag.NoItemFlags)
-                        item.setForeground(QColor(FG_DIM))
+                        item.setForeground(QColor(theme.FG_DIM))
                         env_list.addItem(item)
                     else:
                         for key, value in sorted(env_vars.items()):
@@ -458,12 +450,12 @@ class SettingsTab(QWidget):
                                 display_value = value
                             item = QListWidgetItem(f"{key} = {display_value}")
                             item.setData(Qt.ItemDataRole.UserRole, {'key': key, 'value': value})
-                            item.setForeground(QColor(SUCCESS_COLOR))
+                            item.setForeground(QColor(theme.SUCCESS_COLOR))
                             env_list.addItem(item)
             except Exception as e:
                 item = QListWidgetItem(f"Error loading: {str(e)}")
                 item.setFlags(Qt.ItemFlag.NoItemFlags)
-                item.setForeground(QColor(ERROR_COLOR))
+                item.setForeground(QColor(theme.ERROR_COLOR))
                 env_list.addItem(item)
 
         # Add env var

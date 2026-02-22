@@ -22,6 +22,7 @@ from utils import theme
 
 # Import the same AddPermissionDialog from user_permissions_subtab
 from tabs.user_permissions_subtab import AddPermissionDialog
+from utils.ui_state_manager import UIStateManager
 
 
 class ProjectPermissionsSubTab(QWidget):
@@ -102,7 +103,9 @@ class ProjectPermissionsSubTab(QWidget):
         perm_table = QTableWidget()
         perm_table.setColumnCount(3)
         perm_table.setHorizontalHeaderLabels(["Type", "Pattern", "Level"])
-        perm_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        perm_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
+        UIStateManager.instance().restore_table_state("permissions.project_table", perm_table)
+        UIStateManager.instance().connect_table("permissions.project_table", perm_table)
         perm_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         perm_table.setStyleSheet(theme.get_table_style())
         layout.addWidget(perm_table, 1)

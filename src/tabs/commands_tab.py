@@ -14,7 +14,7 @@ from PyQt6.QtGui import QColor
 import sys
 import json
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
+from utils import theme
 from utils.template_manager import get_template_manager
 from dialogs.command_library_dialog import CommandLibraryDialog
 
@@ -51,7 +51,7 @@ class CommandsTab(QWidget):
 
         scope_label = "User" if self.scope == "user" else "Project"
         header = QLabel(f"Commands ({scope_label})")
-        header.setStyleSheet(f"font-size: {FONT_SIZE_LARGE}px; font-weight: bold; color: {ACCENT_PRIMARY};")
+        header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         header_layout.addWidget(header)
         header_layout.addStretch()
@@ -86,7 +86,7 @@ class CommandsTab(QWidget):
             "Use <code>/command-name</code> to invoke"
         )
         tip_label.setWordWrap(True)
-        tip_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(tip_label)
 
     def create_commands_editor(self):
@@ -99,7 +99,7 @@ class CommandsTab(QWidget):
         # File path label
         commands_dir = self.get_scope_commands_dir()
         path_label = QLabel(f"Directory: {commands_dir}")
-        path_label.setStyleSheet(f"font-size: {FONT_SIZE_SMALL}px; color: {FG_SECONDARY};")
+        path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(path_label)
 
         # Store references
@@ -119,13 +119,13 @@ class CommandsTab(QWidget):
         search_box = QLineEdit()
         search_box.setPlaceholderText("Search...")
         search_box.textChanged.connect(self.filter_commands)
-        search_box.setStyleSheet(get_line_edit_style())
+        search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(search_box)
 
         # Command list
         command_list = QListWidget()
         command_list.itemClicked.connect(self.load_command_content)
-        command_list.setStyleSheet(get_list_widget_style())
+        command_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(command_list)
 
         # Buttons
@@ -144,7 +144,7 @@ class CommandsTab(QWidget):
         library_btn.setToolTip("Browse and add commands from library templates")
 
         for btn in [new_btn, edit_btn, del_btn, refresh_btn, library_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         new_btn.clicked.connect(self.create_new_command)
         edit_btn.clicked.connect(self.edit_command)
@@ -172,7 +172,7 @@ class CommandsTab(QWidget):
         editor_btn_layout.setSpacing(5)
 
         command_name_label = QLabel("No command selected")
-        command_name_label.setStyleSheet(get_label_style("normal", "secondary"))
+        command_name_label.setStyleSheet(theme.get_label_style("normal", "secondary"))
 
         save_btn = QPushButton("💾 Save")
         save_btn.setToolTip("Save the current command to file")
@@ -182,7 +182,7 @@ class CommandsTab(QWidget):
         revert_btn.setToolTip("Revert to saved version (discards unsaved changes)")
 
         for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         save_btn.clicked.connect(self.save_command)
         backup_save_btn.clicked.connect(self.backup_and_save_command)
@@ -197,7 +197,7 @@ class CommandsTab(QWidget):
 
         # Editor
         command_editor = QTextEdit()
-        command_editor.setStyleSheet(get_text_edit_style())
+        command_editor.setStyleSheet(theme.get_text_edit_style())
         right_layout.addWidget(command_editor)
 
         splitter.addWidget(right_panel)
@@ -478,19 +478,19 @@ class NewCommandDialog(QDialog):
         # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., bash-timeout")
-        self.name_edit.setStyleSheet(get_line_edit_style())
+        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Command Name*:", self.name_edit)
 
         # Display Name field
         self.display_name_edit = QLineEdit()
         self.display_name_edit.setPlaceholderText("e.g., Bash Timeout")
-        self.display_name_edit.setStyleSheet(get_line_edit_style())
+        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("e.g., Runs bash commands with timeout")
-        self.description_edit.setStyleSheet(get_text_edit_style())
+        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -500,12 +500,12 @@ class NewCommandDialog(QDialog):
         # Info label
         info_label = QLabel("* Required fields")
         info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
         # Button box
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(get_button_style())
+        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -555,13 +555,13 @@ class EditCommandDialog(QDialog):
         # Display Name field
         self.display_name_edit = QLineEdit()
         self.display_name_edit.setText(parsed_display_name)
-        self.display_name_edit.setStyleSheet(get_line_edit_style())
+        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
-        self.description_edit.setStyleSheet(get_text_edit_style())
+        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -570,11 +570,11 @@ class EditCommandDialog(QDialog):
 
         info_label = QLabel("* Required fields")
         info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(get_button_style())
+        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)

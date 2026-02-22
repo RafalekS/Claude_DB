@@ -16,9 +16,8 @@ from PyQt6.QtGui import QColor
 import json
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.theme import *
-
-
+from utils import theme
+from utils.ui_state_manager import UIStateManager
 class AddPermissionDialog(QDialog):
     """Dialog for adding or editing a permission"""
 
@@ -37,7 +36,7 @@ class AddPermissionDialog(QDialog):
         # Permission Type
         type_layout = QHBoxLayout()
         type_label = QLabel("Permission Type:")
-        type_label.setStyleSheet(get_label_style("normal", "primary"))
+        type_label.setStyleSheet(theme.get_label_style("normal", "primary"))
         self.type_combo = QComboBox()
         self.type_combo.addItems([
             "Tool Permission",
@@ -46,7 +45,7 @@ class AddPermissionDialog(QDialog):
             "WebFetch Domain Permission",
             "MCP Tool Permission"
         ])
-        self.type_combo.setStyleSheet(get_combo_style())
+        self.type_combo.setStyleSheet(theme.get_combo_style())
         self.type_combo.currentTextChanged.connect(self.on_type_changed)
         type_layout.addWidget(type_label)
         type_layout.addWidget(self.type_combo, 1)
@@ -63,7 +62,7 @@ class AddPermissionDialog(QDialog):
 
         # Permission Level
         level_group = QGroupBox("Permission Level")
-        level_group.setStyleSheet(get_groupbox_style())
+        level_group.setStyleSheet(theme.get_groupbox_style())
         level_layout = QHBoxLayout()
 
         self.allow_radio = QCheckBox("Allow")
@@ -71,7 +70,7 @@ class AddPermissionDialog(QDialog):
         self.deny_radio = QCheckBox("Deny")
 
         for radio in [self.allow_radio, self.ask_radio, self.deny_radio]:
-            radio.setStyleSheet(f"color: {FG_PRIMARY};")
+            radio.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             radio.toggled.connect(self.on_radio_toggled)
             level_layout.addWidget(radio)
 
@@ -81,14 +80,14 @@ class AddPermissionDialog(QDialog):
         # Info label
         self.info_label = QLabel()
         self.info_label.setWordWrap(True)
-        self.info_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        self.info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(self.info_label)
 
         # Button box
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(get_button_style())
+        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -113,27 +112,27 @@ class AddPermissionDialog(QDialog):
         # Tool name
         self.tool_name_edit = QLineEdit()
         self.tool_name_edit.setPlaceholderText("e.g., Read, Write, Bash")
-        self.tool_name_edit.setStyleSheet(get_line_edit_style())
+        self.tool_name_edit.setStyleSheet(theme.get_line_edit_style())
 
         # File path pattern
         self.file_path_edit = QLineEdit()
         self.file_path_edit.setPlaceholderText("e.g., /path/to/file.txt or /path/to/**")
-        self.file_path_edit.setStyleSheet(get_line_edit_style())
+        self.file_path_edit.setStyleSheet(theme.get_line_edit_style())
 
         # Bash command pattern
         self.bash_cmd_edit = QLineEdit()
         self.bash_cmd_edit.setPlaceholderText("e.g., ls:*, git status, python:*")
-        self.bash_cmd_edit.setStyleSheet(get_line_edit_style())
+        self.bash_cmd_edit.setStyleSheet(theme.get_line_edit_style())
 
         # WebFetch domain
         self.domain_edit = QLineEdit()
         self.domain_edit.setPlaceholderText("e.g., github.com, api.example.com")
-        self.domain_edit.setStyleSheet(get_line_edit_style())
+        self.domain_edit.setStyleSheet(theme.get_line_edit_style())
 
         # MCP tool
         self.mcp_tool_edit = QLineEdit()
         self.mcp_tool_edit.setPlaceholderText("e.g., mcp__server__tool_name")
-        self.mcp_tool_edit.setStyleSheet(get_line_edit_style())
+        self.mcp_tool_edit.setStyleSheet(theme.get_line_edit_style())
 
     def on_type_changed(self, perm_type):
         """Update form based on selected permission type"""
@@ -306,7 +305,7 @@ class PermissionsTab(QWidget):
         header_layout.setSpacing(5)
 
         header = QLabel("Permissions")
-        header.setStyleSheet(f"font-size: {FONT_SIZE_LARGE}px; font-weight: bold; color: {ACCENT_PRIMARY};")
+        header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         header_layout.addWidget(header)
         header_layout.addStretch()
@@ -315,7 +314,7 @@ class PermissionsTab(QWidget):
 
         # Main tab widget for User / Project (Local) / Project
         self.main_tabs = QTabWidget()
-        self.main_tabs.setStyleSheet(get_tab_widget_style())
+        self.main_tabs.setStyleSheet(theme.get_tab_widget_style())
 
         # User tab (~/.claude/settings.json)
         self.user_tab = self.create_permissions_editor("user")
@@ -342,7 +341,7 @@ class PermissionsTab(QWidget):
             "Project (Local) > Project > User (most specific wins)"
         )
         tip_label.setWordWrap(True)
-        tip_label.setStyleSheet(f"color: {FG_SECONDARY}; background: {BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {FONT_SIZE_SMALL}px;")
+        tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(tip_label)
 
     def create_permissions_editor(self, scope):
@@ -355,7 +354,7 @@ class PermissionsTab(QWidget):
         # File path label
         settings_file = self.get_scope_settings_file(scope)
         path_label = QLabel(f"File: {settings_file}")
-        path_label.setStyleSheet(f"font-size: {FONT_SIZE_SMALL}px; color: {FG_SECONDARY};")
+        path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(path_label)
 
         # Store references for this scope
@@ -385,15 +384,15 @@ class PermissionsTab(QWidget):
         folder_layout.setSpacing(5)
 
         folder_label = QLabel("Project Folder:")
-        folder_label.setStyleSheet(f"color: {FG_PRIMARY}; font-weight: bold;")
+        folder_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
 
         project_folder_edit = QLineEdit()
         project_folder_edit.setText(str(Path.home()))
         project_folder_edit.setReadOnly(True)
-        project_folder_edit.setStyleSheet(get_line_edit_style())
+        project_folder_edit.setStyleSheet(theme.get_line_edit_style())
 
         browse_folder_btn = QPushButton("Browse...")
-        browse_folder_btn.setStyleSheet(get_button_style())
+        browse_folder_btn.setStyleSheet(theme.get_button_style())
         browse_folder_btn.setToolTip("Select a different project folder")
         browse_folder_btn.clicked.connect(lambda: self.browse_project_folder(scope))
 
@@ -406,7 +405,7 @@ class PermissionsTab(QWidget):
         # File path label
         settings_file = self.get_scope_settings_file(scope)
         path_label = QLabel(f"File: {settings_file}")
-        path_label.setStyleSheet(f"font-size: {FONT_SIZE_SMALL}px; color: {FG_SECONDARY};")
+        path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(path_label)
 
         # Store references for this scope
@@ -440,7 +439,7 @@ class PermissionsTab(QWidget):
         # Permissions label and buttons
         perm_header = QHBoxLayout()
         perm_label = QLabel("Permissions")
-        perm_label.setStyleSheet(get_label_style("normal", "primary"))
+        perm_label.setStyleSheet(theme.get_label_style("normal", "primary"))
 
         add_perm_btn = QPushButton("Add")
         add_perm_btn.setToolTip("Add a new permission")
@@ -452,12 +451,12 @@ class PermissionsTab(QWidget):
         del_perm_btn.setToolTip("Delete selected permission")
 
         for btn in [add_perm_btn, edit_perm_btn, refresh_perm_btn]:
-            btn.setStyleSheet(get_button_style())
+            btn.setStyleSheet(theme.get_button_style())
 
         # Delete button with orange border
-        del_perm_btn.setStyleSheet(get_button_style() + f"""
+        del_perm_btn.setStyleSheet(theme.get_button_style() + f"""
             QPushButton {{
-                border: 2px solid {WARNING_COLOR};
+                border: 2px solid {theme.WARNING_COLOR};
             }}
         """)
 
@@ -480,23 +479,25 @@ class PermissionsTab(QWidget):
         perm_table.setHorizontalHeaderLabels(["Type", "Pattern", "Level"])
         perm_table.horizontalHeader().setStretchLastSection(False)
         perm_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        perm_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        perm_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
         perm_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        UIStateManager.instance().restore_table_state("permissions.user_table", perm_table)
+        UIStateManager.instance().connect_table("permissions.user_table", perm_table)
         perm_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         perm_table.setStyleSheet(f"""
             QTableWidget {{
-                background: {BG_DARK};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
             }}
             QTableWidget::item:selected {{
-                background: {ACCENT_PRIMARY};
-                color: {BG_DARK};
+                background: {theme.ACCENT_PRIMARY};
+                color: {theme.BG_DARK};
             }}
             QHeaderView::section {{
-                background: {BG_MEDIUM};
-                color: {FG_PRIMARY};
-                border: 1px solid {BG_LIGHT};
+                background: {theme.BG_MEDIUM};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
                 padding: 5px;
                 font-weight: bold;
             }}
@@ -514,17 +515,17 @@ class PermissionsTab(QWidget):
         # Workspace label and buttons
         workspace_header = QHBoxLayout()
         workspace_label = QLabel("Workspace Folders")
-        workspace_label.setStyleSheet(get_label_style("normal", "primary"))
+        workspace_label.setStyleSheet(theme.get_label_style("normal", "primary"))
 
         add_workspace_btn = QPushButton("Add Folder")
         add_workspace_btn.setToolTip("Add a folder to workspace")
         remove_workspace_btn = QPushButton("Remove")
         remove_workspace_btn.setToolTip("Remove selected workspace folder")
 
-        add_workspace_btn.setStyleSheet(get_button_style())
-        remove_workspace_btn.setStyleSheet(get_button_style() + f"""
+        add_workspace_btn.setStyleSheet(theme.get_button_style())
+        remove_workspace_btn.setStyleSheet(theme.get_button_style() + f"""
             QPushButton {{
-                border: 2px solid {WARNING_COLOR};
+                border: 2px solid {theme.WARNING_COLOR};
             }}
         """)
 
@@ -539,7 +540,7 @@ class PermissionsTab(QWidget):
 
         # Workspace list
         workspace_list = QListWidget()
-        workspace_list.setStyleSheet(get_list_widget_style())
+        workspace_list.setStyleSheet(theme.get_list_widget_style())
         bottom_layout.addWidget(workspace_list)
 
         splitter.addWidget(bottom_widget)
@@ -660,11 +661,11 @@ class PermissionsTab(QWidget):
 
         # Color code based on level
         if level == "allow":
-            level_item.setForeground(QColor(SUCCESS_COLOR))
+            level_item.setForeground(QColor(theme.SUCCESS_COLOR))
         elif level == "deny":
-            level_item.setForeground(QColor(ERROR_COLOR))
+            level_item.setForeground(QColor(theme.ERROR_COLOR))
         else:  # ask
-            level_item.setForeground(QColor(WARNING_COLOR))
+            level_item.setForeground(QColor(theme.WARNING_COLOR))
 
         table.setItem(row, 2, level_item)
 
