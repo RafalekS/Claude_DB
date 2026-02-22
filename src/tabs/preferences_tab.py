@@ -15,6 +15,7 @@ from PyQt6.QtCore import pyqtSignal, QProcess, Qt
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
+from utils.ui_state_manager import UIStateManager
 from tabs.config_sync_tab import ConfigSyncTab
 
 
@@ -1358,7 +1359,6 @@ from PyQt6.QtCore import Qt
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
-from utils.ui_state_manager import UIStateManager
 
 
 class {class_name}Tab(QWidget):
