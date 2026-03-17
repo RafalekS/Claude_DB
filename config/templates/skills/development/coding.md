@@ -5,100 +5,166 @@ description: Development, coding and programming standards for all projects. Inc
 
 # Development & Coding Standards
 
-## Projects: and Documentation
-Every project you will work on should have these subfolders (and some files within these folders)
+## Scope
+Use these standards whenever writing code, starting projects, programming, writing Python, or discussing development work.
 
-CLAUDE.md - Prompt/project instructions for claude code
-
-help - Default folder for documentation files
-
-help/README.md - this one is created at the project finish describing project. Brief information on how to use the program.
-
-help/TODO.md - where progress of work and instructions for resuming in a new session are stored.
-This document HAS to follow these rules:
-
-  1. Concise and actionable - Focus on WHAT needs to be done, not detailed documentation of what WAS done
-  2. No duplication - Don't repeat information already in the file
-  3. It HAS to be updated after each completed step, phase, when given new requirements, user reports issues to fix
-  4. Organized structure - Keep related items grouped together with clear headers
-  5. Reference, don't document - Point to code files (e.g., "See modules/database.py") instead of documenting implementation details
-  6. Focus on pending work - Current tasks and decisions needed, not comprehensive summaries
-  7. Keep it scannable - Should be able to quickly see what's pending and what's next
-  8. Remove stale content - Delete outdated information and old notes that are no longer relevant
-
-
-help/PROMPT.md - this is where the initial requirements for the project/application/research are stored with a detailed plan for a project to be presented to user for acceptance. (optional)
-
-
-backup - this is where program backups will be stored
-
-config - used for storing  configuration files like program themes, API definitions, connection configs, database files, etc. 
-config/assets - this is where the program icons will be stored
-config/ui - for GUI programs only. this is where .ui files are stored
-config/themes - for GUI programs only. this is where themes (if configured) will be stored
-config/config.json - this is where the program configuration will be stored in json format or config.ini for simple projects)
-
-modules - For complicated projects always create modular programs stoed in this subfolder, grouping functions by functionality, split front and backend.
-
-logs - this is where logs will be stored 
-tests - this is where all test files and cases will be stored
-
-Do not create documentation in other or multiple separate files unless asked to. 
-Whenever project is finished as prompted by user create a file __finished__.md in help subfolder that contains only the program name in it. That way I can always search for projects that are finished.
+## Project Structure and Documentation
+Every project you work on must include these folders and files:
 
 project_name/
 ├── CLAUDE.md           # Prompt instructions for claude code
-├── help/
-│   ├── PROMPT.md       # Initial project requirements and detailed plan (optional)
+├── help/               # Default folder for documentation files
 │   ├── TODO.md         # Progress tracking, issues, new features, improvements
-│   ├── README.md       # Final project description and usage instructions (created after project is marked as completed)
-│   └── __finished__.md # Completion marker (contains only program name)
+│   └── README.md       # Final project description and usage instructions (created after project is completed)
 ├── backup/             # Program backups
 ├── config/             # Program configuration files, API definitions, database files, etc.
-│   ├── assets/        # Program icons
-│   ├── ui/            # GUI UI configuration (GUI projects only)
-│   ├── themes/        # Theme files (GUI projects only)
-│   └── config.json    # Program configuration (or config.ini for simple projects)
-├── modules/           # Modular code grouped by functionality
-├── tests/             # folder for all test scripts, cases, test data
-└── logs/              # Application logs
+│   ├── assets/         # Program icons
+│   ├── ui/             # GUI UI configuration (optional - GUI projects only)
+│   ├── themes/         # Theme files (GUI projects only)
+│   └── config.json     # Program configuration (or config.ini for simple projects)
+├── modules/            # Always create modular programs stored here; group functions by functionality; split front and backend
+└── logs/               # Application logs
 
+Do not create documentation in other or multiple separate files unless asked to.
 
-## Coding Preferences
-When coding nothing can be marked as done and working until I HAVE TESTED IT!!!
-Before you remove any functionality or change any functionality - YOU HAVE TO ASK USER for Permission FIRST
-You can run commands that check syntax (for example python -m py_compile), non-interactive commands, file manipulation, etc.
-ALWAYS ask User to test visual/GUI things
-Never hardcode anything in the program code. Use variables that can be saved in the config file.
-If you are are unsure then DO not try to guess API mappings, config schemes, table and field names, etc. Ask the user first!
+### help/TODO.md Rules (Mandatory)
+1. Concise and actionable: focus on WHAT needs to be done, not detailed documentation of what WAS done.
+2. No duplication: do not repeat information already in the file.
+3. Update after each completed step, phase, new requirement, or user-reported issue.
+4. Organized structure: keep related items grouped together with clear headers.
+5. Reference, do not document: point to code files (e.g., "See modules/database.py") instead of documenting implementation details.
+6. Focus on pending work: current tasks and decisions needed, not comprehensive summaries.
+7. Scannable: you should be able to quickly see what's pending and what's next.
+8. Remove stale content: delete outdated information and old notes that are no longer relevant.
+9. Clean up and compact after big updates.
+10. Note down the mistakes you made and how you fixed them.
+
+## Coding Rules
+Always include a .gitattributes file at the root with * text=auto eol=lf to normalise all line endings to LF in the repository, preventing CRLF/LF conflicts on Windows
+### Structure
+Enforce modular project structure.
+Merge duplicate logic into reusable components.
+
+### Tables & Lists Must Support
+
+- Resizable columns
+- Reorderable columns
+- Sortable columns
+- Persistent column order
+- Persistent column width
+- Persistent sorting state
+
+### Persist Also
+
+- Window geometry
+- Dialog sizes
+- UI preferences
+
+### Testing and Completion
+Nothing can be marked as done and working until the user has tested it.
+The user prefers to test themselves. ALWAYS ask the user to test programs instead of running them yourself (especially GUI).
+
+### Change Control
+Before removing or changing any functionality, you MUST ask the user for permission first.
+
+### Allowed Actions
+You can run commands that check syntax (for example `python -m py_compile`), non-interactive commands, file manipulation, etc.
+
+### Dont's and Error Handling
+Never hardcode paths, variables, values, formatting, or styles in program code. Use variables that can be saved in the config file.
+If you are unsure, DO NOT guess API mappings, config schemes, table or field names, etc. Ask the user first.
+NEVER suppress or silence errors. Do not set logger levels to hide errors, do not add broad `except: pass`, and do not redirect stderr to `/dev/null`. Find and fix the ROOT CAUSE. Suppressing errors hides real bugs and lets them compound.
 
 ## Development Environments
 
 ### PowerShell
-Version: > 7.5.4 with custom config
-ALWAYS give user "one liners" - don't do any of that \ backslash line continuation bullshit
+Version: > 7.5.4 with custom config.
+ALWAYS give the user one-liners. Do not use backslash line continuation.
 
 ### Bash
-WSL2 Ubuntu 24
-Prefer dedicated tools over bash commands for file operations
+WSL2 Ubuntu 24.
+Prefer dedicated tools over bash commands for file operations.
 
 ### Python
-Version: Python 3.1x
-GUI: PyQt6 (use .ui for GUI creation via Qt Designer) or customtkinter/tkinter for simple applications
-Syntax validation: python -m py_compile
-User prefers to test himself. Just ask user to test the programs instead of running them yourself.
+Version: Python 3.1x.
+GUI: PyQt6.
+Syntax validation: `python -m py_compile`.
+When running Python, do not use the `python3` executable.
+If a button is displayed on the screen, it MUST have a visible caption.
 
-PyQt6 QComboBox Dropdown Height Fix:
-Fusion style ignores setMaxVisibleItems() - use combobox-popup: 0; in stylesheet + max-height: 300px; on view's stylesheet to limit dropdown height.
+## PyQt6 Guidance
 
-make sure that if the button is displayed on the screen then it HAS to have a visible caption!!
+### QTableWidget Column Handling (Critical)
+Never use `header.setStretchLastSection(True)` if you want ALL columns to be resizable by the user.
+`setStretchLastSection(True)` LOCKS the last column and prevents manual resizing.
 
-### Docker
-Prefers Docker containers in /share/Containers/ directory structure on QNAP device - managed by Container Station
+```python
+# CORRECT: all columns including last can be resized
+header = table.horizontalHeader()
+header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+# Do NOT call setStretchLastSection at all
+```
 
-### Other Technologies
-Node.js LTS
-Git
-Debian >= Bookworm on Raspberry Pi4
-Busybox on Linux NAS-RLS 5.10.60-qnap
-n8n workflows
+Every table header must also have:
+- `header.setSectionsMovable(True)` (not set by default)
+- Disable sorting before populating, re-enable after. `setSortingEnabled(True)` during population causes items to land in wrong rows.
+- Apply all header settings at creation time. Widgets outside MainWindow are not covered by any generic restore loop.
+
+### Path Expansion (Critical)
+Python does NOT expand `~` in paths.
+
+`os.makedirs("~/.test")` creates a LITERAL directory named `~`, not the home directory.
+ALWAYS use `os.path.expanduser()` (and `os.path.expandvars()` for `$HOME`) before any file operation. This applies to ALL paths read from config files, JSON, or user input. They are plain strings, NOT shell-expanded.
+When building config JSON to deploy to remote systems, use `$HOME` (expanded by bash in deploy scripts) instead of `~` (not expanded by Python). But ALWAYS expanduser/expandvars on the Python side too as a safety net.
+
+### Table View State Persistence
+When implementing table column manipulation (sort, resize, reorder, filter) with persistence between program runs:
+
+1. Use QTimer for debounced saving.
+   Save state 500ms after last change (prevents saving 50+ times during drag).
+   Use `QTimer.setSingleShot(True)` and restart on each change.
+
+2. Save on application close.
+   Override `hideEvent()` to save when tab hidden.
+   Override `closeEvent()` to save when window closes.
+   Stop debounce timer and save immediately (bypass delay).
+
+3. Load state after table population.
+   Populate table with data FIRST.
+   Enable sorting SECOND.
+   Load saved state LAST (so sort/widths can be applied).
+
+4. Block signals during load.
+   Use `widget.blockSignals(True)` before setting values from saved state.
+   Prevents triggering multiple refresh/reload cycles.
+   Always unblock after: `widget.blockSignals(False)`.
+
+5. Correct load order example:
+```python
+def load_data(self):
+    # 1. Populate table
+    self.table.setRowCount(0)
+    for row_data in data:
+        # Add rows
+
+    # 2. Enable sorting
+    self.table.setSortingEnabled(True)
+
+    # 3. Load saved state (widths, order, sort)
+    self.view_state.load_state(self.table, "table_id")
+```
+### Dialogs, warnings, errors
+Use QPlainTextEdit for all output (errors, status, command outputs) so it is easy for user to copy it from the screen.
+
+### QPushButton Width (Critical)
+Never use `setFixedWidth` on `QPushButton`. Let Qt auto-size buttons to fit their text content.
+
+### Windows Taskbar Icon (PyQt6)
+`setWindowIcon()` only sets the title bar icon. For the Windows taskbar icon, use:
+`ctypes.windll.user32.SendMessageW(hwnd, 0x0080, ICON_BIG, hicon)` via `LoadImageW` after `window.show()`.
+
+### Prevent Console Windows in GUI Apps
+When using `pythonw`, always call `no_window()` (from `subprocess_utils`) on every `subprocess.run()` or `subprocess.Popen()` call.
+
+### QComboBox Dropdown Height Fix (PyQt6)
+Fusion style ignores `setMaxVisibleItems()`. Use `combobox-popup: 0;` in the stylesheet and set `max-height` on the view's stylesheet to limit dropdown height.
