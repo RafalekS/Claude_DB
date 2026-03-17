@@ -25,6 +25,9 @@ cache/
 logs/
 config/ui_state.json
 
+# Claude local config - NEVER push
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
