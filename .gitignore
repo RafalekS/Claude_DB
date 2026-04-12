@@ -20,39 +20,17 @@ env/
 *.swp
 *.swo
 
-# Claude_DB runtime files — written by the app, user-specific
+# Claude local config (never sync)
+.claude/
+
+# Claude_DB runtime files
 cache/
 logs/
 config/ui_state.json
-config/config.json
 
-# Backups — generated locally, never commit
-backup/
-*.tar.gz
-*.zip
-
-# Old/deprecated tab files — kept locally for reference only
-src/tabs/old/
-src/tabs/*_old.py
-src/tabs/*_backup.py
-src/tabs/model_config_tab_old.py
-src/tabs/project_permissions_subtab_old.py
-src/tabs/settings_tab_backup.py
-src/tabs/user_permissions_subtab_old.py
-
-# Temp/generated assets
-assets/.gitkeep
-
-# Template scratch files
-config/templates/git_issue.txt
-
-# Claude local config — NEVER push
+# Claude local config - NEVER push
 .claude/
 
 # OS
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# Windows scripts — local tooling only
-backup/find_today.ps1

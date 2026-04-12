@@ -1,51 +1,94 @@
-# update_skills.ps1 - Copy SKILL.md and overhaul.md to all destinations
+# update_skills.ps1
 
+# ── CONFIG ────────────────────────────────────────────────────────────────────
 $SshKey     = "C:\Users\r_sta\.ssh\P16_id_rsa"
 $RemoteUser = "pi"
 $RemoteHost = "192.168.0.97"
 
-# ── SKILL.md ──────────────────────────────────────────────────────────────────
-$SkillSrc = "C:\Users\r_sta\.claude\skills\coding\SKILL.md"
+# ── GENERIC FUNCTION ──────────────────────────────────────────────────────────
+function Sync-File {
+    param (
+        [string]$Name,
+        [string]$Source,
+        [string[]]$Destinations,
+        [string]$RemotePath
+    )
 
-$SkillDests = @(
+    Write-Host "`nCopying $Name..." -ForegroundColor Cyan
+
+    foreach ($dest in $Destinations) {
+        $dir = Split-Path $dest -Parent
+        if (-not (Test-Path $dir)) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        }
+
+        Copy-Item -Path $Source -Destination $dest -Force
+        Write-Host "  -> $dest"
+    }
+
+    if ($RemotePath) {
+        scp -i $global:SshKey -o StrictHostKeyChecking=no `
+            $Source "${global:RemoteUser}@${global:RemoteHost}:${RemotePath}"
+    }
+}
+
+# ── SOURCES ───────────────────────────────────────────────────────────────────
+$src1 = "C:\Users\r_sta\.claude\skills\coding\SKILL.md"
+$src2 = "C:\Users\r_sta\.claude\skills\help_wiki\SKILL.md"
+$src3 = "C:\Users\r_sta\.claude\commands\raf\overhaul.md"
+
+# ── DESTINATIONS ──────────────────────────────────────────────────────────────
+
+# coding
+$dest1 = @(
     "C:\Scripts\Raspberry\picc\config\home\.claude\skills\coding\SKILL.md",
     "C:\Scripts\AI\Claude_DB\config\templates\skills\development\coding.md",
     "C:\Scripts\AI\autoclaude\reference\templates\skills\development\coding.md"
 )
 
-Write-Host "Copying SKILL.md..." -ForegroundColor Cyan
+# help_wiki
+$dest2 = @(
+    "C:\Scripts\Raspberry\picc\config\home\.claude\skills\help_wiki\SKILL.md",
+    "C:\Scripts\AI\Claude_DB\config\templates\skills\development\help_wiki.md",
+    "C:\Scripts\AI\autoclaude\reference\templates\skills\development\help_wiki.md"
+)
 
-foreach ($dest in $SkillDests) {
-    $dir = Split-Path $dest -Parent
-    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-    Copy-Item -Path $SkillSrc -Destination $dest -Force
-    Write-Host "  -> $dest"
-}
-
-$RemoteSkillPath = "/home/pi/.claude/skills/coding/SKILL.md"
-Write-Host "  -> scp ${RemoteUser}@${RemoteHost}:${RemoteSkillPath}"
-scp -i $SshKey -o StrictHostKeyChecking=no $SkillSrc "${RemoteUser}@${RemoteHost}:${RemoteSkillPath}"
-
-# ── overhaul.md ───────────────────────────────────────────────────────────────
-$OverhaulSrc = "C:\Users\r_sta\.claude\commands\raf\overhaul.md"
-
-$OverhaulDests = @(
+# overhaul
+$dest3 = @(
     "C:\Scripts\Raspberry\picc\config\home\.claude\commands\raf\overhaul.md",
     "C:\Scripts\AI\Claude_DB\config\templates\commands\raf\overhaul.md",
     "C:\Scripts\AI\autoclaude\reference\templates\commands\raf\overhaul.md"
 )
 
-Write-Host "`nCopying overhaul.md..." -ForegroundColor Cyan
+# ── EXECUTION MAP (THIS IS THE ONLY PLACE YOU TOUCH) ──────────────────────────
+$jobs = @(
+    @{
+        name = "coding SKILL.md"
+        src  = $src1
+        dest = $dest1
+        remote = "/home/pi/.claude/skills/coding/SKILL.md"
+    },
+    @{
+        name = "help_wiki SKILL.md"
+        src  = $src2
+        dest = $dest2
+        remote = "/home/pi/.claude/skills/help_wiki/SKILL.md"
+    },
+    @{
+        name = "overhaul.md"
+        src  = $src3
+        dest = $dest3
+        remote = "/home/pi/.claude/commands/overhaul.md"
+    }
+)
 
-foreach ($dest in $OverhaulDests) {
-    $dir = Split-Path $dest -Parent
-    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-    Copy-Item -Path $OverhaulSrc -Destination $dest -Force
-    Write-Host "  -> $dest"
+# ── RUN ───────────────────────────────────────────────────────────────────────
+foreach ($job in $jobs) {
+    Sync-File `
+        -Name $job.name `
+        -Source $job.src `
+        -Destinations $job.dest `
+        -RemotePath $job.remote
 }
-
-$RemoteOverhaulPath = "/home/pi/.claude/commands/overhaul.md"
-Write-Host "  -> scp ${RemoteUser}@${RemoteHost}:${RemoteOverhaulPath}"
-scp -i $SshKey -o StrictHostKeyChecking=no $OverhaulSrc "${RemoteUser}@${RemoteHost}:${RemoteOverhaulPath}"
 
 Write-Host "`nDone." -ForegroundColor Green

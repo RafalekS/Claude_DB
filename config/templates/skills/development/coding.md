@@ -39,41 +39,74 @@ Do not create documentation in other or multiple separate files unless asked to.
 9. Clean up and compact after big updates.
 10. Note down the mistakes you made and how you fixed them.
 
+## Git Repository Rules
+
+Always include `.gitattributes`:
+* text=auto eol=lf
+
+---
+
 ## Coding Rules
-Always include a .gitattributes file at the root with * text=auto eol=lf to normalise all line endings to LF in the repository, preventing CRLF/LF conflicts on Windows
-### Structure
-Enforce modular project structure.
-Merge duplicate logic into reusable components.
 
-### Tables & Lists Must Support
+- Enforce modular design
+- Merge duplicate logic into reusable components
+- NEVER hardcode paths, values, or formatting
+- EVERYTHING configurable must be in config
+- If unsure → ASK (do NOT guess)
 
-- Resizable columns
+---
+
+## Tables & Lists (MANDATORY)
+
+ALL tables MUST support:
+
+- Resizable columns (manual drag)
 - Reorderable columns
 - Sortable columns
 - Persistent column order
 - Persistent column width
 - Persistent sorting state
 
-### Persist Also
+Also persist:
 
 - Window geometry
 - Dialog sizes
 - UI preferences
 
-### Testing and Completion
-Nothing can be marked as done and working until the user has tested it.
-The user prefers to test themselves. ALWAYS ask the user to test programs instead of running them yourself (especially GUI).
+---
 
-### Change Control
-Before removing or changing any functionality, you MUST ask the user for permission first.
+## Testing & Completion
 
-### Allowed Actions
-You can run commands that check syntax (for example `python -m py_compile`), non-interactive commands, file manipulation, etc.
+- Nothing is complete until user tests it
+- ALWAYS ask user to test (especially GUI)
+- DO NOT run GUI apps for the user
 
-### Dont's and Error Handling
-Never hardcode paths, variables, values, formatting, or styles in program code. Use variables that can be saved in the config file.
-If you are unsure, DO NOT guess API mappings, config schemes, table or field names, etc. Ask the user first.
-NEVER suppress or silence errors. Do not set logger levels to hide errors, do not add broad `except: pass`, and do not redirect stderr to `/dev/null`. Find and fix the ROOT CAUSE. Suppressing errors hides real bugs and lets them compound.
+---
+
+## Change Control
+
+- NEVER remove or change functionality without explicit approval
+
+---
+
+## Execution Rules
+
+Allowed:
+
+- Syntax checks (`python -m py_compile`)
+- Non-interactive commands
+- File operations
+
+---
+
+## Error Handling (STRICT)
+
+- NEVER suppress errors
+- NEVER use `except: pass`
+- NEVER hide stderr/logs
+- ALWAYS fix root cause
+
+---
 
 ## Development Environments
 
@@ -86,85 +119,205 @@ WSL2 Ubuntu 24.
 Prefer dedicated tools over bash commands for file operations.
 
 ### Python
-Version: Python 3.1x.
-GUI: PyQt6.
-Syntax validation: `python -m py_compile`.
-When running Python, do not use the `python3` executable.
-If a button is displayed on the screen, it MUST have a visible caption.
 
-## PyQt6 Guidance
+- Version: 3.1x
+- Use `python`, NOT `python3`
+- Syntax check: `python -m py_compile`
+- GUI: PyQt6
+- All buttons MUST have visible captions
 
-### QTableWidget Column Handling (Critical)
-Never use `header.setStretchLastSection(True)` if you want ALL columns to be resizable by the user.
-`setStretchLastSection(True)` LOCKS the last column and prevents manual resizing.
+---
+# PyQt6 Guidance (CRITICAL)
+
+## QTableWidget / QTableView — STRICT CONTRACT
+
+### REQUIRED BEHAVIOUR
+
+- All columns must be manually resizable
+- Columns must be reorderable
+- Sorting must work correctly
+- Column order, width, and sorting MUST persist
+- No column may become locked or non-resizable
+
+---
+
+## HARD FAIL CONDITIONS (INVALID IMPLEMENTATION)
+
+Any implementation containing the following is **invalid** and must be corrected before submission:
+
+* **Prohibited Attributes:**
+    * `setStretchLastSection(True)` is used anywhere (Delete it).
+    * Any column uses `ResizeMode.Stretch` (Change to `Interactive`).
+* **Logic Errors:**
+    * Sorting is enabled **during** data population.
+    * `restoreState()` is called inside a loop or after every `populate()` call (Move to startup only).
+* **Behavioral Failures:**
+    * The last column cannot be resized manually.
+    * Columns "snap back" to default sizes after a user resizes them.
+    * Column order, widths, or sorting states do not persist after a restart.
+
+---
+
+## REQUIRED HEADER CONFIGURATION (DO NOT MODIFY)
 
 ```python
-# CORRECT: all columns including last can be resized
 header = table.horizontalHeader()
-header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-# Do NOT call setStretchLastSection at all
+
+for i in range(table.columnCount()):
+    header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
+
+header.setSectionsMovable(True)
 ```
 
-Every table header must also have:
-- `header.setSectionsMovable(True)` (not set by default)
-- Disable sorting before populating, re-enable after. `setSortingEnabled(True)` during population causes items to land in wrong rows.
-- Apply all header settings at creation time. Widgets outside MainWindow are not covered by any generic restore loop.
+### RULES
 
-### Path Expansion (Critical)
-Python does NOT expand `~` in paths.
+- Apply immediately after table creation
+- DO NOT replace with shortcuts
+- DO NOT introduce Stretch unless explicitly required
+- DO NOT use `setStretchLastSection`
+- DO NOT “improve” or rewrite this logic
 
-`os.makedirs("~/.test")` creates a LITERAL directory named `~`, not the home directory.
-ALWAYS use `os.path.expanduser()` (and `os.path.expandvars()` for `$HOME`) before any file operation. This applies to ALL paths read from config files, JSON, or user input. They are plain strings, NOT shell-expanded.
-When building config JSON to deploy to remote systems, use `$HOME` (expanded by bash in deploy scripts) instead of `~` (not expanded by Python). But ALWAYS expanduser/expandvars on the Python side too as a safety net.
+---
 
-### Table View State Persistence
-When implementing table column manipulation (sort, resize, reorder, filter) with persistence between program runs:
+## SORTING RULE (STRICT ORDER — DO NOT CHANGE)
 
-1. Use QTimer for debounced saving.
-   Save state 500ms after last change (prevents saving 50+ times during drag).
-   Use `QTimer.setSingleShot(True)` and restart on each change.
-
-2. Save on application close.
-   Override `hideEvent()` to save when tab hidden.
-   Override `closeEvent()` to save when window closes.
-   Stop debounce timer and save immediately (bypass delay).
-
-3. Load state after table population.
-   Populate table with data FIRST.
-   Enable sorting SECOND.
-   Load saved state LAST (so sort/widths can be applied).
-
-4. Block signals during load.
-   Use `widget.blockSignals(True)` before setting values from saved state.
-   Prevents triggering multiple refresh/reload cycles.
-   Always unblock after: `widget.blockSignals(False)`.
-
-5. Correct load order example:
 ```python
-def load_data(self):
-    # 1. Populate table
-    self.table.setRowCount(0)
-    for row_data in data:
-        # Add rows
+populate_table()
 
-    # 2. Enable sorting
-    self.table.setSortingEnabled(True)
+table.setSortingEnabled(True)
 
-    # 3. Load saved state (widths, order, sort)
-    self.view_state.load_state(self.table, "table_id")
+restore_table_state()
 ```
-### Dialogs, warnings, errors
-Use QPlainTextEdit for all output (errors, status, command outputs) so it is easy for user to copy it from the screen.
 
-### QPushButton Width (Critical)
-Never use `setFixedWidth` on `QPushButton`. Let Qt auto-size buttons to fit their text content.
+- Sorting MUST be disabled during population
 
-### Windows Taskbar Icon (PyQt6)
-`setWindowIcon()` only sets the title bar icon. For the Windows taskbar icon, use:
-`ctypes.windll.user32.SendMessageW(hwnd, 0x0080, ICON_BIG, hicon)` via `LoadImageW` after `window.show()`.
+---
 
-### Prevent Console Windows in GUI Apps
-When using `pythonw`, always call `no_window()` (from `subprocess_utils`) on every `subprocess.run()` or `subprocess.Popen()` call.
+## STATE PERSISTENCE (MANDATORY)
 
-### QComboBox Dropdown Height Fix (PyQt6)
-Fusion style ignores `setMaxVisibleItems()`. Use `combobox-popup: 0;` in the stylesheet and set `max-height` on the view's stylesheet to limit dropdown height.
+### REQUIRED STARTUP SEQUENCE (STRICT ORDER)
+1.  **Initialize UI**: Setup windows and instantiate empty tables.
+2.  **Configure Headers**: Apply `Interactive` resize mode and `setSectionsMovable(True)`.
+3.  **Populate Data**: Load initial data/rows into the table.
+4.  **Enable Sorting**: Set `table.setSortingEnabled(True)`.
+5.  **Restore State**: Execute `restore_table_state()` once to apply saved widths and sort order.
+
+### PERSISTENCE LOGIC
+```python
+# Save/Restore bytearray for ordering and sorting
+state = table.horizontalHeader().saveState()
+table.horizontalHeader().restoreState(state)
+```
+* Note: Save explicit column widths via columnWidth(i) as a list and restore via setColumnWidth(i, w) during startup. Do NOT call restoreState() after every population; Interactive mode naturally maintains widths across setRowCount(0) refreshes.
+
+### NUMERIC SORTING
+Any column displaying formatted numbers (bytes, duration, counts, IDs) MUST use a NumericItem (QTableWidgetItem subclass). Standard items sort lexicographically (e.g., "9 GB" > "10 GB"), which is strictly prohibited.
+
+
+## STATE SAVE/LOAD RULES
+
+### Debounced Save
+
+- Use `QTimer`
+- 500ms delay
+- `setSingleShot(True)`
+- Restart on every change
+
+### Save Triggers
+
+- Column resize
+- Column reorder
+- Sort change
+- `hideEvent()`
+- `closeEvent()` (force immediate save)
+
+### Load Order
+
+1. Populate table
+2. Enable sorting
+3. Restore state
+
+---
+
+## SIGNAL BLOCKING (MANDATORY)
+
+```python
+widget.blockSignals(True)
+# restore state
+widget.blockSignals(False)
+```
+
+---
+
+## Path Handling (CRITICAL)
+
+Python does NOT expand `~`.
+
+ALWAYS:
+
+```python
+os.path.expanduser()
+os.path.expandvars()
+```
+
+Applies to ALL:
+
+- config paths
+- user input
+- JSON values
+
+Use `$HOME` in deploy configs, but STILL expand in Python.
+
+---
+
+## UI Rules
+
+### Output Panels
+
+Use `QPlainTextEdit` for:
+
+- logs
+- errors
+- command output
+
+---
+
+### QPushButton
+
+- NEVER use `setFixedWidth`
+- Let Qt auto-size
+
+---
+
+### Windows Taskbar Icon
+
+`setWindowIcon()` is NOT enough.
+
+Use `SendMessageW` with `ICON_BIG` AFTER `window.show()`.
+
+Taskbar icon: After window.show(), send WM_SETICON via ctypes with LoadImageW.restype = ctypes.c_void_p (required on 64-bit Windows) — without it, the HANDLE is truncated to 32-bit and the taskbar shows the generic placeholder icon.
+---
+
+### Subprocess (GUI apps)
+
+When using `pythonw`:
+
+- ALWAYS call `no_window()` for subprocesses
+
+---
+
+### QComboBox Dropdown Fix
+
+Fusion style ignores `setMaxVisibleItems()`.
+
+Use:
+
+- `combobox-popup: 0;`
+- set `max-height` via stylesheet
+
+---
+
+# Final Rule
+
+Do NOT simplify, optimize, or replace defined patterns.
+Follow this document EXACTLY.
