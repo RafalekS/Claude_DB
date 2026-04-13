@@ -11,8 +11,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.terminal_utils import run_in_terminal
 
@@ -682,13 +680,12 @@ class PluginsTab(QWidget):
 
             # Run claude plugin install command
             result = subprocess.run(
-                ["claude.cmd", "plugin", "install", plugin_name],
+                ["claude", "plugin", "install", plugin_name],
                 capture_output=True,
                 text=True,
                 encoding='utf-8',
                 errors='replace',
                 timeout=60,
-                shell=True
             )
 
             if result.returncode == 0:

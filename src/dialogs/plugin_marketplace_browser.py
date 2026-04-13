@@ -12,8 +12,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -655,13 +653,12 @@ class PluginMarketplaceBrowserDialog(QDialog):
         # Run installation
         try:
             result = subprocess.run(
-                ["claude.cmd", "plugin", "install", full_name],
+                ["claude", "plugin", "install", full_name],
                 capture_output=True,
                 text=True,
                 encoding='utf-8',
                 errors='replace',
                 timeout=120,
-                shell=True
             )
 
             if result.returncode == 0:

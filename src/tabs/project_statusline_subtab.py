@@ -3,7 +3,6 @@ Project Statusline Sub-Tab - Manage project-level statusline configuration
 Dedicated subtab for statusline in .claude/settings.json (Shared) and .claude/settings.local.json (Local)
 """
 
-import sys
 import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -13,7 +12,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -55,7 +53,7 @@ class ProjectStatuslineSubTab(QWidget):
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official statusline documentation")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://docs.claude.com/en/docs/claude-code/settings#statusline")
+            QUrl("https://code.claude.com/en/docs/claude-code/settings#statusline")
         ))
 
         header_layout.addWidget(header)
@@ -228,7 +226,8 @@ class ProjectStatuslineSubTab(QWidget):
             else:
                 settings = self.settings_manager.get_project_local_settings(self.project_context.get_project())
 
-            statusline = settings.get("statusline", {})
+            # Claude Code reads "statusLine" (camelCase); fall back to legacy lowercase for compat
+            statusline = settings.get("statusLine", settings.get("statusline", {}))
 
             if isinstance(statusline, dict):
                 editor_data['command_input'].setText(statusline.get("command", ""))
@@ -294,7 +293,9 @@ class ProjectStatuslineSubTab(QWidget):
             if template:
                 statusline_config["template"] = template
 
-            settings["statusline"] = statusline_config
+            settings["statusLine"] = statusline_config
+            # Remove legacy lowercase key if present
+            settings.pop("statusline", None)
             self.settings_manager.save_settings(settings_file, settings)
 
             self.update_preview(scope)
@@ -323,8 +324,8 @@ class ProjectStatuslineSubTab(QWidget):
                     settings = self.settings_manager.get_project_local_settings(self.project_context.get_project())
                     settings_file = self.project_context.get_project() / ".claude" / "settings.local.json"
 
-                if "statusline" in settings:
-                    del settings["statusline"]
+                settings.pop("statusLine", None)
+                settings.pop("statusline", None)
 
                 self.settings_manager.save_settings(settings_file, settings)
 

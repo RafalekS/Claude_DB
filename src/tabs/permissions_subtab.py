@@ -8,9 +8,7 @@ from PyQt6.QtWidgets import (
     QLabel, QMessageBox, QListWidget, QSplitter, QLineEdit, QInputDialog
 )
 from PyQt6.QtCore import Qt
-import sys
 import json
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 class PermissionsSubtab(QWidget):
     """Subtab for managing Claude Code permissions (single-scope)"""

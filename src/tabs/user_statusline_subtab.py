@@ -3,7 +3,6 @@ User Statusline Sub-Tab - Manage user-level statusline configuration
 Dedicated subtab for statusline in ~/.claude/settings.json
 """
 
-import sys
 import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -13,7 +12,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -48,7 +46,7 @@ class UserStatuslineSubTab(QWidget):
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official statusline documentation")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://docs.claude.com/en/docs/claude-code/settings#statusline")
+            QUrl("https://code.claude.com/en/docs/claude-code/settings#statusline")
         ))
 
         header_layout.addWidget(header)

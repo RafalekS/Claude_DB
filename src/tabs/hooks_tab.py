@@ -4,7 +4,6 @@ Hooks Tab - Manage Claude Code hooks from all settings sources
 
 import json
 from pathlib import Path
-import sys
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTextEdit, QMessageBox, QSplitter, QListWidget,
@@ -13,7 +12,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -57,7 +55,7 @@ class HooksTab(QWidget):
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official hooks documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://docs.claude.com/en/docs/claude-code/hooks")
+            QUrl("https://code.claude.com/docs/en/docs/claude-code/hooks")
         ))
 
         header_layout.addWidget(header)
@@ -456,7 +454,7 @@ class HooksTab(QWidget):
         if folder:
             self.project_folder = Path(folder)
             if 'folder_edit' in self.scope_widgets[scope]:
-                self.scope_widgets[scope]['folder_edit'].setText(str(Path.home()))
+                self.scope_widgets[scope]['folder_edit'].setText(folder)
             # Update file path
             file_path = self.get_scope_file_path(scope)
             self.scope_widgets[scope]['path_label'].setText(f"File: {file_path}")
@@ -557,7 +555,7 @@ class HooksTab(QWidget):
       "hooks": [{{
         "type": "command",
         "command": "echo 'File written'",
-        "timeout": 60
+        "timeout": 600
       }}]
     }}]
   }}
@@ -579,14 +577,16 @@ class HooksTab(QWidget):
             return False
 
     def save_hooks(self, scope):
-        """Save hooks configuration"""
+        """Save hooks configuration (atomic write via temp-file-and-rename)."""
         if not self.validate_json(scope):
             return
 
         try:
+            import shutil
+            import tempfile
+
             editor = self.scope_widgets[scope]['editor']
-            content = editor.toPlainText()
-            config = json.loads(content)
+            config = json.loads(editor.toPlainText())
             hooks = config.get("hooks", {})
 
             file_path = self.get_scope_file_path(scope)
@@ -599,12 +599,16 @@ class HooksTab(QWidget):
                 settings = {}
                 file_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Update hooks section
             settings["hooks"] = hooks
 
-            # Save
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, indent=2)
+            # Atomic write: write to temp file, then rename
+            with tempfile.NamedTemporaryFile(
+                mode='w', suffix='.json', delete=False,
+                dir=file_path.parent, encoding='utf-8'
+            ) as tmp:
+                json.dump(settings, tmp, indent=2)
+                tmp_path = tmp.name
+            shutil.move(tmp_path, file_path)
 
             self.scope_widgets[scope]['config'] = hooks
             self.update_events_list(scope)
@@ -643,7 +647,7 @@ class HooksTab(QWidget):
                 {
                     "type": "command",
                     "command": "echo 'Hook triggered'",
-                    "timeout": 60
+                    "timeout": 600
                 }
             ]
         }

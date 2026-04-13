@@ -11,7 +11,6 @@ Includes centralized project folder picker and 8 sub-tabs:
 8. Skills
 """
 
-import sys
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -19,7 +18,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 # Import subtabs (using OLD correct implementations)
 from tabs.project_settings_subtab import ProjectSettingsSubTab

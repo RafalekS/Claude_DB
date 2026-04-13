@@ -11,8 +11,6 @@ from PyQt6.QtWidgets import (
     QLabel, QMessageBox, QGroupBox, QLineEdit, QInputDialog, QDialog, QDialogButtonBox
 )
 from PyQt6.QtCore import Qt
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 

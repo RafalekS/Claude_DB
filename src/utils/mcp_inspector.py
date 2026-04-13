@@ -5,9 +5,12 @@ Adapted from an earlier mcp_client.py implementation.
 """
 
 import asyncio
+import logging
 import os
-from typing import Optional, List, Dict, Any
 from contextlib import AsyncExitStack
+from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -126,7 +129,7 @@ class MCPInspector:
         try:
             await self.exit_stack.aclose()
         except Exception as e:
-            print(f"Warning: Error during disconnect: {e}")
+            logger.warning("Error during disconnect: %s", e)
         finally:
             self.session = None
             self.server_name = None

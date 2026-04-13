@@ -2,11 +2,9 @@
 User Model Information Sub-Tab - Claude model comparison and information
 """
 
-import sys
 from pathlib import Path
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextBrowser
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -107,8 +105,8 @@ class UserModelInfoSubTab(QWidget):
 
             <p style="margin-top: 20px;"><b>Links:</b></p>
             <ul>
-                <li><a href="https://docs.claude.com/en/docs/about-claude/models/overview">Model Overview</a></li>
-                <li><a href="https://docs.claude.com/en/docs/about-claude/models/choosing-a-model">Choosing a Model</a></li>
+                <li><a href="https://code.claude.com/en/docs/about-claude/models/overview">Model Overview</a></li>
+                <li><a href="https://code.claude.com/en/docs/about-claude/models/choosing-a-model">Choosing a Model</a></li>
             </ul>
         </body>
         </html>

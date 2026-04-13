@@ -15,9 +15,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor
-import sys
 import json
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.template_manager import get_template_manager
 from dialogs.skill_library_dialog import SkillLibraryDialog
@@ -32,7 +30,9 @@ try:
         "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
         "AskUserQuestion", "Skill", "SlashCommand"
     ])
-except Exception:
+except (OSError, json.JSONDecodeError) as _cfg_err:
+    import logging as _logging
+    _logging.getLogger(__name__).warning("Could not load claude_tools from config: %s", _cfg_err)
     AVAILABLE_TOOLS = [
         "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
         "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
@@ -478,7 +478,7 @@ class SkillsTab(QWidget):
         fetch_btn.setStyleSheet(theme.get_button_style())
         fetch_btn.clicked.connect(self._fetch_source_skills)
         left_layout.addWidget(fetch_btn)
-        left.setFixedWidth(220)
+        left.setMinimumWidth(200)
         layout.addWidget(left)
 
         # Right: results + preview

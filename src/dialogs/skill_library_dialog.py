@@ -1,7 +1,9 @@
 """Skill Library Dialog - manages skill templates"""
 
 import json
+import logging
 from pathlib import Path
+
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView,
@@ -10,9 +12,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
+
+logger = logging.getLogger(__name__)
 from utils.template_manager import get_template_manager
 from dialogs.base_library_dialog import BaseLibraryDialog
 
@@ -67,7 +69,7 @@ class SkillLibraryDialog(BaseLibraryDialog):
                 if '/' in name:
                     self.folders.add(name.split('/')[0])
             except Exception as e:
-                print(f"Error loading template {name}: {e}")
+                logger.warning("Error loading template %s: %s", name, e)
 
     def populate_table(self):
         """Populate table based on current folder"""

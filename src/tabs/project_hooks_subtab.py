@@ -3,7 +3,6 @@ Project Hooks Sub-Tab - Manage project-level hooks configuration
 Dedicated subtab for hooks in .claude/settings.json (Shared) and .claude/settings.local.json (Local)
 """
 
-import sys
 import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -13,7 +12,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -68,7 +66,7 @@ class ProjectHooksSubTab(QWidget):
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official hooks documentation")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://docs.claude.com/en/docs/claude-code/hooks")
+            QUrl("https://code.claude.com/en/docs/claude-code/hooks")
         ))
 
         header_layout.addWidget(header)

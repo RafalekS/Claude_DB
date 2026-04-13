@@ -3,14 +3,12 @@ CLI Reference Tab - Display Claude Code CLI commands and options
 """
 
 from pathlib import Path
-import sys
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextBrowser, QLabel
 )
 from PyQt6.QtCore import QUrl, Qt
 from PyQt6.QtGui import QDesktopServices
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -38,7 +36,7 @@ class CLIReferenceTab(QWidget):
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official CLI reference documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://docs.claude.com/en/docs/claude-code/cli-reference")
+            QUrl("https://code.claude.com/en/docs/claude-code/cli-reference")
         ))
 
         header_layout.addWidget(header)
@@ -185,7 +183,7 @@ class CLIReferenceTab(QWidget):
 
             <p style="margin-top: 20px; padding: 10px; background-color: {theme.BG_MEDIUM}; border-left: 3px solid {theme.ACCENT_SECONDARY};">
                 <strong>💡 Tip:</strong> For full documentation and latest updates, visit the
-                <a href="https://docs.claude.com/en/docs/claude-code/cli-reference" style="color: {theme.ACCENT_SECONDARY};">official CLI reference</a>.
+                <a href="https://code.claude.com/en/docs/claude-code/cli-reference" style="color: {theme.ACCENT_SECONDARY};">official CLI reference</a>.
             </p>
         </body>
         </html>

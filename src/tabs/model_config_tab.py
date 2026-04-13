@@ -11,8 +11,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -43,7 +41,7 @@ class ModelConfigTab(QWidget):
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official models documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://docs.claude.com/en/docs/about-claude/models/overview")
+            QUrl("https://code.claude.com/en/docs/about-claude/models/overview")
         ))
 
         header_layout.addWidget(header)
@@ -369,8 +367,8 @@ class ModelConfigTab(QWidget):
 
             <p style="margin-top: 20px;"><b>Links:</b></p>
             <ul>
-                <li><a href="https://docs.claude.com/en/docs/about-claude/models/overview">Model Overview</a></li>
-                <li><a href="https://docs.claude.com/en/docs/about-claude/models/choosing-a-model">Choosing a Model</a></li>
+                <li><a href="https://code.claude.com/en/docs/about-claude/models/overview">Model Overview</a></li>
+                <li><a href="https://code.claude.com/en/docs/about-claude/models/choosing-a-model">Choosing a Model</a></li>
             </ul>
         </body>
         </html>

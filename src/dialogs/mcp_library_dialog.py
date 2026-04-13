@@ -8,11 +8,13 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-from pathlib import Path
-import sys
 import json
-sys.path.insert(0, str(Path(__file__).parent.parent))
+import logging
+from pathlib import Path
+
 from utils import theme
+
+logger = logging.getLogger(__name__)
 from utils.template_manager import get_template_manager
 
 
@@ -300,7 +302,7 @@ class MCPLibraryDialog(QDialog):
                     folder = name.split('/')[0]
                     self.folders.add(folder)
             except Exception as e:
-                print(f"Error loading template {name}: {e}")
+                logger.warning("Error loading template %s: %s", name, e)
 
     def populate_table(self):
         """Populate table based on current folder"""

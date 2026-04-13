@@ -17,9 +17,8 @@ class ConfigManager:
     def __init__(self):
         self.claude_dir = self.get_claude_dir()
         self.settings_file = self.claude_dir / "settings.json"
-        self.mcp_file = self.claude_dir / ".mcp.json"  # Local scope
-        self.mcp_user_file = self.claude_dir.parent / ".claude.json"  # User scope
-        self.mcp_project_file = Path.cwd() / ".mcp.json"  # Project scope
+        self.mcp_user_file = self.claude_dir.parent / ".claude.json"  # User scope (~/.claude.json)
+        self.mcp_project_file = Path.cwd() / ".mcp.json"  # Project scope (<project>/.mcp.json)
         self.claude_md = self.claude_dir / "CLAUDE.md"
         self.agents_dir = self.claude_dir / "agents"
         self.commands_dir = self.claude_dir / "commands"
@@ -90,47 +89,41 @@ class ConfigManager:
         self.write_json_file(self.settings_file, settings)
 
     # MCP Configuration
-    def get_mcp_config(self, scope: str = "local") -> Dict:
+    def get_mcp_config(self, scope: str = "user") -> Dict:
         """Get MCP server configuration from specified scope
 
         Args:
-            scope: "user", "local", or "project"
+            scope: "user" (~/.claude.json) or "project" (<project>/.mcp.json)
         """
         if scope == "user":
             return self.read_json_file(self.mcp_user_file)
-        elif scope == "local":
-            return self.read_json_file(self.mcp_file)
         elif scope == "project":
             return self.read_json_file(self.mcp_project_file)
         else:
-            raise ValueError(f"Invalid scope: {scope}")
+            raise ValueError(f"Invalid MCP scope: {scope!r} (expected 'user' or 'project')")
 
-    def save_mcp_config(self, config: Dict, scope: str = "local") -> None:
+    def save_mcp_config(self, config: Dict, scope: str = "user") -> None:
         """Save MCP server configuration to specified scope
 
         Args:
             config: Configuration dictionary
-            scope: "user", "local", or "project"
+            scope: "user" (~/.claude.json) or "project" (<project>/.mcp.json)
         """
         if scope == "user":
             self.write_json_file(self.mcp_user_file, config)
-        elif scope == "local":
-            self.write_json_file(self.mcp_file, config)
         elif scope == "project":
             self.write_json_file(self.mcp_project_file, config)
         else:
-            raise ValueError(f"Invalid scope: {scope}")
+            raise ValueError(f"Invalid MCP scope: {scope!r} (expected 'user' or 'project')")
 
-    def get_mcp_file_path(self, scope: str = "local") -> Path:
+    def get_mcp_file_path(self, scope: str = "user") -> Path:
         """Get the file path for specified MCP scope"""
         if scope == "user":
             return self.mcp_user_file
-        elif scope == "local":
-            return self.mcp_file
         elif scope == "project":
             return self.mcp_project_file
         else:
-            raise ValueError(f"Invalid scope: {scope}")
+            raise ValueError(f"Invalid MCP scope: {scope!r} (expected 'user' or 'project')")
 
     # Agents
     def list_agents(self) -> List[Path]:

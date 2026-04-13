@@ -7,8 +7,6 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox
 )
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 class ClaudeMDTab(QWidget):
     """Tab for editing CLAUDE.md"""

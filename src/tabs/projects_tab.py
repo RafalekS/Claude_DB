@@ -10,8 +10,6 @@ from PyQt6.QtWidgets import (
     QTabWidget
 )
 from PyQt6.QtCore import Qt
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.terminal_utils import run_in_terminal
 

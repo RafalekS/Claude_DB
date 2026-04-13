@@ -109,8 +109,8 @@ class GitHubClient:
             body = ""
             try:
                 body = e.read().decode()
-            except Exception:
-                pass
+            except Exception as read_err:
+                logger.debug("Could not read HTTP error body: %s", read_err)
             raise RuntimeError(f"GitHub API {e.code}: {e.reason} — {body[:200]}")
         except urllib.error.URLError as e:
             raise RuntimeError(f"Network error: {e.reason}")

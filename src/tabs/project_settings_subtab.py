@@ -3,7 +3,6 @@ Project Settings Sub-Tab - Complete Settings interface for Model, Theme, and Env
 Includes Shared (.claude/settings.json) and Local (.claude/settings.local.json) tabs
 """
 
-import sys
 import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -14,7 +13,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 

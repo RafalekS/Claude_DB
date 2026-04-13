@@ -2,7 +2,9 @@
 Agents Tab - Manage Claude Code agents
 """
 
+import logging
 from pathlib import Path
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox, QListWidget, QSplitter, QLineEdit, QInputDialog,
@@ -10,14 +12,15 @@ from PyQt6.QtWidgets import (
     QCheckBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QGridLayout, QScrollArea
 )
+import json
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-import sys
-import json
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.template_manager import get_template_manager
 from utils.ui_state_manager import UIStateManager
+
+logger = logging.getLogger(__name__)
 
 # Load AVAILABLE_TOOLS from config, fall back to defaults
 _config_file = Path(__file__).parent.parent.parent / "config" / "config.json"
@@ -29,7 +32,8 @@ try:
         "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
         "AskUserQuestion", "Skill", "SlashCommand"
     ])
-except Exception:
+except (OSError, json.JSONDecodeError) as _cfg_err:
+    logger.warning("Could not load claude_tools from config: %s", _cfg_err)
     AVAILABLE_TOOLS = [
         "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
         "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
@@ -61,12 +65,6 @@ class NewAgentDialog(QDialog):
         self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Agent Name*:", self.name_edit)
 
-        # Display Name field
-        self.display_name_edit = QLineEdit()
-        self.display_name_edit.setPlaceholderText("e.g., Bill Organizer (optional)")
-        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
-        form.addRow("Display Name:", self.display_name_edit)
-
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("e.g., Extract and organize utility bills from Gmail")
@@ -75,25 +73,19 @@ class NewAgentDialog(QDialog):
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
 
-        # Category field
-        self.category_edit = QLineEdit()
-        self.category_edit.setPlaceholderText("e.g., automation, code-quality, documentation (optional)")
-        self.category_edit.setStyleSheet(theme.get_line_edit_style())
-        form.addRow("Category:", self.category_edit)
-
         # Color field
         self.color_combo = QComboBox()
         self.color_combo.addItems([
-            "blue", "green", "red", "yellow", "purple", "cyan", "magenta", "orange"
+            "blue", "green", "red", "yellow", "purple", "cyan", "magenta", "orange", "pink"
         ])
         self.color_combo.setStyleSheet(get_combo_box_style())
         form.addRow("Color:", self.color_combo)
 
-        # Model dropdown
+        # Model dropdown (inherit = use parent/default model)
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["sonnet", "opus", "haiku"])
+        self.model_combo.addItems(["inherit", "sonnet", "opus", "haiku"])
         self.model_combo.setStyleSheet(get_combo_box_style())
-        form.addRow("Model*:", self.model_combo)
+        form.addRow("Model:", self.model_combo)
 
         # Subfolder field (optional)
         self.subfolder_edit = QLineEdit()
@@ -163,9 +155,7 @@ class NewAgentDialog(QDialog):
 
         return {
             'name': self.name_edit.text().strip(),
-            'displayName': self.display_name_edit.text().strip(),
             'description': self.description_edit.toPlainText().strip(),
-            'category': self.category_edit.text().strip(),
             'color': self.color_combo.currentText(),
             'model': self.model_combo.currentText(),
             'subfolder': self.subfolder_edit.text().strip(),
@@ -528,13 +518,7 @@ class AgentsTab(QWidget):
                 f"name: {agent_data['name']}"
             ]
 
-            if agent_data['displayName']:
-                frontmatter_lines.append(f"displayName: {agent_data['displayName']}")
-
             frontmatter_lines.append(f"description: {agent_data['description']}")
-
-            if agent_data['category']:
-                frontmatter_lines.append(f"category: {agent_data['category']}")
 
             frontmatter_lines.append(f"color: {agent_data['color']}")
             frontmatter_lines.append(f"model: {agent_data['model']}")
@@ -548,7 +532,7 @@ class AgentsTab(QWidget):
             # Build full content
             content = f"""{frontmatter}
 
-# {agent_data['displayName'] or agent_data['name']}
+# {agent_data['name']}
 
 {agent_data['description']}
 
@@ -619,9 +603,9 @@ Add detailed instructions for this agent here.
             dialog = NewAgentDialog(self)
             dialog.setWindowTitle("Edit Agent Metadata")
             dialog.name_edit.setText(frontmatter.get('name', ''))
-            dialog.display_name_edit.setText(frontmatter.get('displayName', ''))
+
             dialog.description_edit.setPlainText(frontmatter.get('description', ''))
-            dialog.category_edit.setText(frontmatter.get('category', ''))
+
 
             # Set color combo
             color = frontmatter.get('color', 'blue')
@@ -658,13 +642,7 @@ Add detailed instructions for this agent here.
                 f"name: {agent_data['name']}"
             ]
 
-            if agent_data['displayName']:
-                frontmatter_lines.append(f"displayName: {agent_data['displayName']}")
-
             frontmatter_lines.append(f"description: {agent_data['description']}")
-
-            if agent_data['category']:
-                frontmatter_lines.append(f"category: {agent_data['category']}")
 
             frontmatter_lines.append(f"color: {agent_data['color']}")
             frontmatter_lines.append(f"model: {agent_data['model']}")
@@ -927,7 +905,7 @@ class AgentLibraryDialog(QDialog):
                     folder = name.split('/')[0]
                     self.folders.add(folder)
             except Exception as e:
-                print(f"Error loading template {name}: {e}")
+                logger.warning("Error loading template %s: %s", name, e)
 
     def populate_table(self):
         """Populate table based on current folder"""
@@ -1038,8 +1016,6 @@ class AgentLibraryDialog(QDialog):
 name: {template_data['name']}
 description: {template_data['description']}"""
 
-                if template_data.get('category'):
-                    frontmatter += f"\ncategory: {template_data['category']}"
                 if template_data.get('color'):
                     frontmatter += f"\ncolor: {template_data['color']}"
                 if template_data.get('tools'):
@@ -1050,7 +1026,7 @@ description: {template_data['description']}"""
                 frontmatter += "\n---\n\n"
 
                 # Build content
-                content = frontmatter + f"# {template_data.get('displayName') or template_data['name']}\n\nAgent template content here.\n"
+                content = frontmatter + f"# {template_data['name']}\n\nAgent template content here.\n"
 
                 # If in a folder, save to that folder
                 if self.current_folder:
@@ -1332,11 +1308,6 @@ class NewAgentTemplateDialog(QDialog):
         self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
-        # Display Name field
-        self.display_name_edit = QLineEdit()
-        self.display_name_edit.setPlaceholderText("e.g., Code Reviewer (optional)")
-        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
-        form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
@@ -1346,19 +1317,13 @@ class NewAgentTemplateDialog(QDialog):
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
 
-        # Category field
-        self.category_edit = QLineEdit()
-        self.category_edit.setPlaceholderText("e.g., code-quality, automation (optional)")
-        self.category_edit.setStyleSheet(theme.get_line_edit_style())
-        form.addRow("Category:", self.category_edit)
-
         # Color field
         self.color_combo = QComboBox()
-        self.color_combo.addItems(["blue", "green", "red", "yellow", "purple", "cyan", "magenta", "orange"])
+        self.color_combo.addItems(["blue", "green", "red", "yellow", "purple", "cyan", "magenta", "orange", "pink"])
         self.color_combo.setStyleSheet(get_combo_box_style())
         form.addRow("Color:", self.color_combo)
 
-        # Model dropdown
+        # Model dropdown (inherit = use parent/default model)
         self.model_combo = QComboBox()
         self.model_combo.addItems(["inherit", "sonnet", "opus", "haiku"])
         self.model_combo.setStyleSheet(get_combo_box_style())
@@ -1422,9 +1387,7 @@ class NewAgentTemplateDialog(QDialog):
 
         return {
             'name': self.name_edit.text().strip(),
-            'displayName': self.display_name_edit.text().strip(),
             'description': self.description_edit.toPlainText().strip(),
-            'category': self.category_edit.text().strip(),
             'color': self.color_combo.currentText(),
             'model': self.model_combo.currentText(),
             'tools': tools_str
@@ -1452,29 +1415,23 @@ class EditAgentTemplateDialog(QDialog):
             frontmatter_text = frontmatter_match.group(1)
             # Parse frontmatter fields
             name_match = re.search(r'name:\s*(.+)', frontmatter_text)
-            display_match = re.search(r'displayName:\s*(.+)', frontmatter_text)
             desc_match = re.search(r'description:\s*(.+)', frontmatter_text)
-            category_match = re.search(r'category:\s*(.+)', frontmatter_text)
             color_match = re.search(r'color:\s*(.+)', frontmatter_text)
             model_match = re.search(r'model:\s*(.+)', frontmatter_text)
             subfolder_match = re.search(r'subfolder:\s*(.+)', frontmatter_text)
             tools_match = re.search(r'tools:\s*(.+)', frontmatter_text)
 
             parsed_name = name_match.group(1).strip() if name_match else self.template_name
-            parsed_display = display_match.group(1).strip() if display_match else ""
             parsed_desc = desc_match.group(1).strip() if desc_match else ""
-            parsed_category = category_match.group(1).strip() if category_match else ""
             parsed_color = color_match.group(1).strip() if color_match else "blue"
-            parsed_model = model_match.group(1).strip() if model_match else "sonnet"
+            parsed_model = model_match.group(1).strip() if model_match else "inherit"
             parsed_subfolder = subfolder_match.group(1).strip() if subfolder_match else ""
             parsed_tools = tools_match.group(1).strip() if tools_match else ""
         else:
             parsed_name = self.template_name
-            parsed_display = ""
             parsed_desc = ""
-            parsed_category = ""
             parsed_color = "blue"
-            parsed_model = "sonnet"
+            parsed_model = "inherit"
             parsed_subfolder = ""
             parsed_tools = ""
 
@@ -1487,11 +1444,6 @@ class EditAgentTemplateDialog(QDialog):
         self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
-        # Display Name field
-        self.display_name_edit = QLineEdit()
-        self.display_name_edit.setText(parsed_display)
-        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
-        form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
@@ -1501,25 +1453,20 @@ class EditAgentTemplateDialog(QDialog):
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
 
-        # Category field
-        self.category_edit = QLineEdit()
-        self.category_edit.setText(parsed_category)
-        self.category_edit.setStyleSheet(theme.get_line_edit_style())
-        form.addRow("Category:", self.category_edit)
 
         # Color field
         self.color_combo = QComboBox()
-        self.color_combo.addItems(["blue", "green", "red", "yellow", "purple", "cyan", "magenta", "orange"])
+        self.color_combo.addItems(["blue", "green", "red", "yellow", "purple", "cyan", "magenta", "orange", "pink"])
         self.color_combo.setCurrentText(parsed_color)
         self.color_combo.setStyleSheet(get_combo_box_style())
         form.addRow("Color:", self.color_combo)
 
         # Model field
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["sonnet", "opus", "haiku"])
+        self.model_combo.addItems(["inherit", "sonnet", "opus", "haiku"])
         self.model_combo.setCurrentText(parsed_model)
         self.model_combo.setStyleSheet(get_combo_box_style())
-        form.addRow("Model*:", self.model_combo)
+        form.addRow("Model:", self.model_combo)
 
         # Subfolder field
         self.subfolder_edit = QLineEdit()
@@ -1588,11 +1535,8 @@ class EditAgentTemplateDialog(QDialog):
         data = self.get_template_data()
         content = f"""---
 name: {data['name']}
-displayName: {data['displayName']}
 description: {data['description']}"""
 
-        if data['category']:
-            content += f"\ncategory: {data['category']}"
         if data['color']:
             content += f"\ncolor: {data['color']}"
 
@@ -1608,7 +1552,7 @@ model: {data['model']}"""
         content += f"""
 ---
 
-# {data['displayName'] or data['name']}
+# {data['name']}
 
 {data['description']}
 
@@ -1625,9 +1569,7 @@ Describe when and how to use this agent.
 
         return {
             'name': self.name_edit.text().strip(),
-            'displayName': self.display_name_edit.text().strip(),
             'description': self.description_edit.toPlainText().strip(),
-            'category': self.category_edit.text().strip(),
             'color': self.color_combo.currentText(),
             'model': self.model_combo.currentText(),
             'subfolder': self.subfolder_edit.text().strip(),

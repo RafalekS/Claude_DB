@@ -5,7 +5,6 @@ Workflows Tab - View common Claude Code workflows
 
 import json
 from pathlib import Path
-import sys
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTextBrowser
@@ -13,7 +12,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -43,7 +41,7 @@ class StylesWorkflowsTab(QWidget):
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official common workflows documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://docs.claude.com/en/docs/claude-code/common-workflows")
+            QUrl("https://code.claude.com/en/docs/claude-code/common-workflows")
         ))
 
         header_layout.addWidget(header)

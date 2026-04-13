@@ -11,13 +11,11 @@ Includes 8 sub-tabs:
 8. Skills
 """
 
-import sys
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTabWidget
 )
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 # Import subtabs (using OLD correct implementations)
 from tabs.user_settings_subtab import UserSettingsSubTab

@@ -14,8 +14,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 import json
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.ui_state_manager import UIStateManager
 class AddPermissionDialog(QDialog):

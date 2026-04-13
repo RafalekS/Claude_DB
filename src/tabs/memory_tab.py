@@ -10,8 +10,6 @@ from PyQt6.QtWidgets import (
     QMessageBox, QTabWidget, QListWidget, QSplitter, QTextEdit
 )
 from PyQt6.QtCore import Qt
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 class MemoryTab(QWidget):
     """Tab for memory and checkpointing info"""

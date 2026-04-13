@@ -3,9 +3,13 @@ Project Context Manager - Centralized project folder selection and state
 Manages current project path and provides helper methods for project-specific paths
 """
 
+import logging
 from pathlib import Path
 from typing import Optional
+
 from PyQt6.QtCore import QObject, pyqtSignal
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectContext(QObject):
@@ -84,7 +88,7 @@ class ProjectContext(QObject):
             claude_folder.mkdir(parents=True, exist_ok=True)
             return True
         except Exception as e:
-            print(f"Error creating .claude folder: {e}")
+            logger.error("Error creating .claude folder: %s", e)
             return False
 
     # Path helper methods

@@ -3,7 +3,6 @@ Tools Tab - External tool integration with config-based commands
 """
 
 import json
-import sys
 import os
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -13,7 +12,6 @@ from PyQt6.QtWidgets import (
     QFormLayout
 )
 from PyQt6.QtCore import Qt, QProcess
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.terminal_utils import run_in_terminal
 

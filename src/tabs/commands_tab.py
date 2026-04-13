@@ -11,9 +11,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-import sys
 import json
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.template_manager import get_template_manager
 from dialogs.command_library_dialog import CommandLibraryDialog

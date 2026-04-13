@@ -103,7 +103,7 @@ class ClaudeDBApp(QMainWindow):
     def init_ui(self):
         """Initialize the user interface"""
         self.setWindowTitle("Claude_DB - Claude Code Configuration Manager")
-        self.setGeometry(100, 100, 1200, 800)
+        self.resize(1200, 800)
 
         # Theme is already applied in load_saved_preferences()
         # No need to override it here
@@ -119,23 +119,23 @@ class ClaudeDBApp(QMainWindow):
         header = self.create_header()
         main_layout.addWidget(header)
 
-        # Tab bar style
-        tab_bar_style = """
-            QTabBar::tab {
-                background: #3c3c3c;
-                color: #ddd;
+        # Tab bar style — built from theme variables so it updates on theme change
+        tab_bar_style = f"""
+            QTabBar::tab {{
+                background: {theme.BG_MEDIUM};
+                color: {theme.FG_PRIMARY};
                 padding: 8px 12px;
                 margin-right: 2px;
-                border: 1px solid #555;
-            }
-            QTabBar::tab:selected {
-                background: #667eea;
+                border: 1px solid {theme.BG_LIGHT};
+            }}
+            QTabBar::tab:selected {{
+                background: {theme.ACCENT_PRIMARY};
                 color: white;
                 font-weight: bold;
-            }
-            QTabBar::tab:hover {
-                background: #4c4c4c;
-            }
+            }}
+            QTabBar::tab:hover {{
+                background: {theme.BG_LIGHT};
+            }}
         """
 
         # Create two tab bars (just the tab buttons, no content panes)
@@ -147,7 +147,9 @@ class ClaudeDBApp(QMainWindow):
 
         # Create single content area (stacked widget)
         self.content_stack = QStackedWidget()
-        self.content_stack.setStyleSheet("QStackedWidget { border: 1px solid #444; background: #2b2b2b; }")
+        self.content_stack.setStyleSheet(
+            f"QStackedWidget {{ border: 1px solid {theme.BG_LIGHT}; background: {theme.BG_DARK}; }}"
+        )
 
         # Define all tabs with their widgets - use keys for lookup
         # Key format: "tab_key" -> (default_display_name, widget)
@@ -252,11 +254,11 @@ class ClaudeDBApp(QMainWindow):
         header_layout.setSpacing(2)
 
         title = QLabel("Claude Code Configuration Manager")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #667eea;")
+        title.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         subtitle = QLabel(f"Config: {self.config_manager.claude_dir}")
-        subtitle.setStyleSheet("font-size: 11px; color: #999;")
+        subtitle.setStyleSheet(f"font-size: 11px; color: {theme.FG_SECONDARY};")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         header_layout.addWidget(title)
@@ -303,17 +305,40 @@ class ClaudeDBApp(QMainWindow):
         """Apply a new theme instantly across the whole application.
 
         Connected to PreferencesTab.theme_changed signal.
-        Clears all per-widget stylesheets so the app-level stylesheet
-        (generate_app_stylesheet) takes full control.
+        Applies the app-level stylesheet and rebuilds the two tab-bar stylesheets
+        from current theme variables so hardcoded colours stay correct.
         """
-        from utils import theme as _theme
+        _theme = theme
         _theme.apply_theme(theme_name, font_size)
-        # Clear per-widget stylesheets so app stylesheet is not overridden
-        for widget in self.findChildren(QWidget):
-            if widget.styleSheet():
-                widget.setStyleSheet("")
-        # Apply comprehensive app-level stylesheet (covers all widget types)
         self.app.setStyleSheet(_theme.generate_app_stylesheet())
+
+        # Rebuild tab bar stylesheets from theme variables (they were set with
+        # hardcoded colours in init_ui; refresh them here so they match the new theme)
+        tab_bar_style = f"""
+            QTabBar::tab {{
+                background: {_theme.BG_MEDIUM};
+                color: {_theme.FG_PRIMARY};
+                padding: 8px 12px;
+                margin-right: 2px;
+                border: 1px solid {_theme.BG_LIGHT};
+            }}
+            QTabBar::tab:selected {{
+                background: {_theme.ACCENT_PRIMARY};
+                color: {_theme.BG_DARK};
+                font-weight: bold;
+            }}
+            QTabBar::tab:hover {{
+                background: {_theme.BG_LIGHT};
+            }}
+        """
+        self.tab_bar_row1.setStyleSheet(tab_bar_style)
+        self.tab_bar_row2.setStyleSheet(tab_bar_style)
+
+        # Refresh header subtitle colour
+        self.content_stack.setStyleSheet(
+            f"QStackedWidget {{ border: 1px solid {_theme.BG_LIGHT}; background: {_theme.BG_DARK}; }}"
+        )
+
         logger.info(f"Theme changed to '{theme_name}' {font_size}px")
 
     def create_backup(self):

@@ -2,8 +2,12 @@
 Preferences Tab - Application settings and theme management
 """
 
-from pathlib import Path
 import json
+import logging
+import shutil
+import tempfile
+from pathlib import Path
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QSpinBox, QPushButton, QMessageBox, QGroupBox, QFormLayout,
@@ -12,11 +16,23 @@ from PyQt6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView
 )
 from PyQt6.QtCore import pyqtSignal, QProcess, Qt
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.ui_state_manager import UIStateManager
 from tabs.config_sync_tab import ConfigSyncTab
+
+logger = logging.getLogger(__name__)
+
+
+def _atomic_json_write(path: Path, data: dict) -> None:
+    """Write *data* as JSON to *path* atomically (temp-file + rename)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode='w', suffix='.json', delete=False,
+        dir=path.parent, encoding='utf-8'
+    ) as tmp:
+        json.dump(data, tmp, indent=2)
+        tmp_path = tmp.name
+    shutil.move(tmp_path, path)
 
 
 # Load themes from config file
@@ -768,7 +784,7 @@ class PreferencesTab(QWidget):
         token_row.addWidget(self._github_token_input)
 
         show_btn = QPushButton("👁")
-        show_btn.setFixedWidth(32)
+        show_btn.setMaximumWidth(40)
         show_btn.setCheckable(True)
         show_btn.setStyleSheet(theme.get_button_style())
         show_btn.toggled.connect(
@@ -909,8 +925,7 @@ class PreferencesTab(QWidget):
             ]
             config_data["mcp_search"]["cache_hours"] = self._mcp_cache_spin.value()
 
-            with open(self.config_file, "w") as f:
-                json.dump(config_data, f, indent=2)
+            _atomic_json_write(self.config_file, config_data)
 
             win = self.window()
             if hasattr(win, "set_status"):
@@ -1064,8 +1079,7 @@ class PreferencesTab(QWidget):
             config_data["paths"]["user_skills_dir"] = self._skills_user_dir.text().strip()
             config_data["paths"]["project_skills_dir"] = self._skills_proj_dir.text().strip()
 
-            with open(self.config_file, "w") as f:
-                json.dump(config_data, f, indent=2)
+            _atomic_json_write(self.config_file, config_data)
 
             # Save skill sources JSON
             _sources_file = Path(__file__).parent.parent.parent / "config" / "skill_sources.json"
@@ -1082,8 +1096,7 @@ class PreferencesTab(QWidget):
                     "type": (self._skill_sources_table.item(row, 2) or QTableWidgetItem("direct")).text() or "direct",
                     "skills_prefix": (self._skill_sources_table.item(row, 3) or QTableWidgetItem("")).text(),
                 })
-            with open(_sources_file, "w") as f:
-                json.dump(sources, f, indent=2)
+            _atomic_json_write(_sources_file, sources)
 
             win = self.window()
             if hasattr(win, "set_status"):
@@ -1104,8 +1117,8 @@ class PreferencesTab(QWidget):
 
             from utils.skill_search_client import load_skill_sources
             self._populate_skill_sources_table(load_skill_sources())
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to load skills settings: %s", e)
 
     def _load_search_settings(self):
         """Load GitHub + MCP search settings into the Search subtab."""
@@ -1125,8 +1138,8 @@ class PreferencesTab(QWidget):
             for key, cb in self._mcp_source_checks.items():
                 cb.setChecked(key in enabled)
             self._mcp_cache_spin.setValue(mcp.get("cache_hours", 24))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to load search settings: %s", e)
 
     def open_tab_editor_dialog(self):
         """Open unified dialog for editing tabs (reorder and rename)"""
@@ -1164,7 +1177,7 @@ class PreferencesTab(QWidget):
                     tabs_row2.append(main_window.tab_bar_row2.tabText(i))
         except Exception as e:
             # On error, fallback to reading from UI
-            print(f"Error reading config, using UI: {e}")
+            logger.warning("Error reading config, using UI: %s", e)
             for i in range(main_window.tab_bar_row1.count()):
                 tabs_row1.append(main_window.tab_bar_row1.tabText(i))
             for i in range(main_window.tab_bar_row2.count()):
@@ -1200,7 +1213,7 @@ class PreferencesTab(QWidget):
                             display_to_key[name] = key
 
             except Exception as e:
-                print(f"Error reading config for mapping: {e}")
+                logger.warning("Error reading config for mapping: %s", e)
 
             # Also add default names as fallback
             for key, (default_name, widget) in main_window.all_tabs.items():
@@ -1293,8 +1306,7 @@ class PreferencesTab(QWidget):
             config_data.pop("tab_order", None)
             config_data.pop("tab_renames", None)
 
-            with open(self.config_file, 'w') as f:
-                json.dump(config_data, f, indent=2)
+            _atomic_json_write(self.config_file, config_data)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save tab configuration:\n{str(e)}")
 
@@ -1327,8 +1339,7 @@ class PreferencesTab(QWidget):
                 "content": tab_data["content"]
             })
 
-            with open(self.config_file, 'w') as f:
-                json.dump(config_data, f, indent=2)
+            _atomic_json_write(self.config_file, config_data)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to create new tab:\n{str(e)}")
@@ -1351,13 +1362,11 @@ class PreferencesTab(QWidget):
 """
 
 from pathlib import Path
-import sys
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextBrowser, QLabel
 )
 from PyQt6.QtCore import Qt
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -1476,11 +1485,10 @@ class {class_name}Tab(QWidget):
                 "font_size": self.font_size_spin.value()
             }
 
-            # Save merged config
-            with open(self.config_file, 'w') as f:
-                json.dump(config_data, f, indent=2)
+            # Save merged config (atomic)
+            _atomic_json_write(self.config_file, config_data)
         except Exception as e:
-            print(f"Failed to save preferences: {e}")
+            logger.warning("Failed to auto-save preferences: %s", e)
 
     def save_preferences(self):
         """Save preferences to file and apply theme"""
@@ -1503,9 +1511,8 @@ class {class_name}Tab(QWidget):
                 "font_size": font_size
             }
 
-            # Save merged config
-            with open(self.config_file, 'w') as f:
-                json.dump(config_data, f, indent=2)
+            # Save merged config (atomic)
+            _atomic_json_write(self.config_file, config_data)
 
             # Emit signal for instant theme refresh across all tabs
             self.theme_changed.emit(theme_name, font_size)
@@ -1545,7 +1552,7 @@ class {class_name}Tab(QWidget):
                 self.theme_combo.setCurrentText("Gruvbox Dark")
                 self.font_size_spin.setValue(14)
         except Exception as e:
-            print(f"Failed to load preferences: {e}")
+            logger.warning("Failed to load preferences: %s", e)
             # Use defaults on error
             self.theme_combo.setCurrentText("Gruvbox Dark")
             self.font_size_spin.setValue(14)

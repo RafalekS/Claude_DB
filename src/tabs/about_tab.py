@@ -2,18 +2,22 @@
 About Tab - Information and resources
 """
 
-from pathlib import Path
-import os
 import json
+import logging
+import os
+from pathlib import Path
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextBrowser, QGroupBox, QPushButton,
     QDialog, QLineEdit, QDialogButtonBox, QMessageBox, QListWidget, QComboBox,
     QListWidgetItem, QFormLayout, QTextEdit
 )
 from PyQt6.QtCore import Qt
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
+
+logger = logging.getLogger(__name__)
+
+
 class LinkEditDialog(QDialog):
     """Proper dialog for adding/editing a link"""
 
@@ -38,7 +42,7 @@ class LinkEditDialog(QDialog):
         url_label = QLabel("URL:")
         self.url_input = QTextEdit()
         self.url_input.setPlainText(url)
-        self.url_input.setPlaceholderText("e.g., https://docs.claude.com/...")
+        self.url_input.setPlaceholderText("e.g., https://code.claude.com/...")
         self.url_input.setMaximumHeight(80)
         self.url_input.setMinimumWidth(600)
         form.addRow(url_label, self.url_input)
@@ -95,17 +99,17 @@ class LinkManagerDialog(QDialog):
 
         add_btn = QPushButton("➕ Add Link")
         add_btn.setStyleSheet(theme.get_button_style())
-        add_btn.setFixedWidth(120)
+        add_btn.setMinimumWidth(100)
         add_btn.clicked.connect(self.add_link)
 
         edit_btn = QPushButton("✏️ Edit Link")
         edit_btn.setStyleSheet(theme.get_button_style())
-        edit_btn.setFixedWidth(120)
+        edit_btn.setMinimumWidth(100)
         edit_btn.clicked.connect(self.edit_link)
 
         delete_btn = QPushButton("🗑️ Delete Link")
         delete_btn.setStyleSheet(theme.get_button_style())
-        delete_btn.setFixedWidth(120)
+        delete_btn.setMinimumWidth(100)
         delete_btn.clicked.connect(self.delete_link)
 
         btn_layout.addWidget(add_btn)
@@ -217,7 +221,7 @@ class AboutTab(QWidget):
                     self.marketplaces_links = data.get("marketplaces", [])
                     return
             except Exception as e:
-                print(f"Failed to load links: {e}")
+                logger.warning("Failed to load links: %s", e)
 
         # Default links
         self.official_links = [
@@ -226,14 +230,14 @@ class AboutTab(QWidget):
             ["https://www.anthropic.com/engineering/claude-code-best-practices", "Claude Code Best Practices"],
             ["https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills", "Agent Skills Guide"],
             ["https://www.anthropic.com/news/claude-code-plugins", "Claude Code Plugins"],
-            ["https://docs.claude.com/en/docs/claude-code/cli-reference", "CLI Reference"],
-            ["https://docs.claude.com/en/docs/claude-code/settings", "Settings Documentation"],
-            ["https://docs.claude.com/en/docs/claude-code/memory", "Memory System"],
-            ["https://docs.claude.com/en/docs/claude-code/checkpointing", "Checkpointing"],
-            ["https://docs.claude.com/en/docs/claude-code/slash-commands", "Slash Commands"],
-            ["https://docs.claude.com/en/docs/claude-code/interactive-mode", "Interactive Mode"],
-            ["https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview", "Agent Skills Overview"],
-            ["https://docs.claude.com/en/api/agent-sdk/skills", "Agent SDK Skills"],
+            ["https://code.claude.com/en/docs/claude-code/cli-reference", "CLI Reference"],
+            ["https://code.claude.com/en/docs/claude-code/settings", "Settings Documentation"],
+            ["https://code.claude.com/en/docs/claude-code/memory", "Memory System"],
+            ["https://code.claude.com/en/docs/claude-code/checkpointing", "Checkpointing"],
+            ["https://code.claude.com/en/docs/claude-code/slash-commands", "Slash Commands"],
+            ["https://code.claude.com/en/docs/claude-code/interactive-mode", "Interactive Mode"],
+            ["https://code.claude.com/en/docs/agents-and-tools/agent-skills/overview", "Agent Skills Overview"],
+            ["https://code.claude.com/en/api/agent-sdk/skills", "Agent SDK Skills"],
         ]
         self.community_links = [
             ["https://claudelog.com", "ClaudeLog - Community Hub"],
@@ -294,7 +298,7 @@ class AboutTab(QWidget):
         # Link management button
         manage_btn = QPushButton("🔗 Manage Links")
         manage_btn.setStyleSheet(theme.get_button_style())
-        manage_btn.setFixedWidth(130)
+        manage_btn.setMinimumWidth(110)
         manage_btn.clicked.connect(self.manage_links)
         header_layout.addWidget(manage_btn)
 
@@ -302,7 +306,7 @@ class AboutTab(QWidget):
         docs_button = QPushButton("📚 Docs")
         docs_button.setStyleSheet(theme.get_button_style())
         docs_button.setToolTip("Open Claude_DB.html")
-        docs_button.setFixedWidth(90)
+        docs_button.setMinimumWidth(80)
         docs_button.clicked.connect(self.open_local_docs)
         header_layout.addWidget(docs_button)
 
@@ -338,7 +342,7 @@ class AboutTab(QWidget):
 
         copy_sdk_btn = QPushButton("📋 Copy")
         copy_sdk_btn.setStyleSheet(theme.get_button_style())
-        copy_sdk_btn.setFixedWidth(90)
+        copy_sdk_btn.setMinimumWidth(80)
         copy_sdk_btn.clicked.connect(self.copy_sdk_command)
 
         sdk_layout.addWidget(sdk_label)

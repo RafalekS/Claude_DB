@@ -2,7 +2,6 @@
 User Workflows Sub-Tab - Common Claude Code workflows guide
 """
 
-import sys
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextBrowser
@@ -10,7 +9,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -41,7 +39,7 @@ class UserWorkflowsSubTab(QWidget):
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official common workflows documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://docs.claude.com/en/docs/claude-code/common-workflows")
+            QUrl("https://code.claude.com/en/docs/claude-code/common-workflows")
         ))
 
         header_layout.addWidget(header)

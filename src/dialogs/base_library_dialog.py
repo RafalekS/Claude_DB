@@ -8,8 +8,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from pathlib import Path
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.template_manager import get_template_manager
 from utils.ui_state_manager import UIStateManager

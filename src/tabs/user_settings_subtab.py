@@ -2,7 +2,6 @@
 User Settings Sub-Tab - Complete Settings interface for Model, Theme, and Environment Variables
 """
 
-import sys
 import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -13,7 +12,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 

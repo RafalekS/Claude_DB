@@ -3,7 +3,10 @@ Theme management - Dynamic theme system with config file support
 """
 
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Path to themes config
 THEMES_FILE = Path(__file__).parent.parent.parent / "config" / "themes.json"
@@ -15,7 +18,7 @@ def load_themes():
         with open(THEMES_FILE, 'r') as f:
             return json.load(f)
     except Exception as e:
-        print(f"Error loading themes: {e}")
+        logger.error("Error loading themes: %s", e)
         # Return default Gruvbox Dark if file can't be loaded
         return {
             "Gruvbox Dark": {
@@ -79,7 +82,7 @@ def apply_theme(theme_name, font_size=14):
     global _current_theme
 
     if theme_name not in AVAILABLE_THEMES:
-        print(f"Theme '{theme_name}' not found, using Gruvbox Dark")
+        logger.warning("Theme '%s' not found, using Gruvbox Dark", theme_name)
         theme_name = "Gruvbox Dark"
 
     _current_theme = AVAILABLE_THEMES[theme_name]

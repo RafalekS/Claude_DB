@@ -5,9 +5,7 @@ from PyQt6.QtWidgets import (
     QMessageBox, QTextEdit
 )
 from pathlib import Path
-import sys
 import re
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.template_manager import get_template_manager
 

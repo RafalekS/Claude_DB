@@ -3,9 +3,12 @@ Prompts Tab - managing Claude Code prompts from promptInfo.json
 """
 
 import json
-import urllib.request
+import logging
 import urllib.error
+import urllib.request
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox, QListWidget, QSplitter, QLineEdit, QInputDialog,
@@ -14,8 +17,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 
@@ -59,7 +60,7 @@ class PromptsTab(QWidget):
         library_btn = QPushButton("📚 Prompt Library")
         library_btn.setStyleSheet(theme.get_button_style())
         library_btn.setToolTip("Open Anthropic Prompt Library for inspiration")
-        library_btn.clicked.connect(lambda: self.open_url("https://docs.claude.com/en/resources/prompt-library/library"))
+        library_btn.clicked.connect(lambda: self.open_url("https://code.claude.com/en/resources/prompt-library/library"))
 
         # Import from GitHub button
         import_btn = QPushButton("📥 Import from GitHub")
@@ -797,7 +798,7 @@ class PromptsTab(QWidget):
 
                 except Exception as file_error:
                     # Skip files that fail to fetch
-                    print(f"Failed to fetch {md_file.get('name')}: {file_error}")
+                    logger.warning("Failed to fetch %s: %s", md_file.get('name'), file_error)
                     continue
 
             return prompts

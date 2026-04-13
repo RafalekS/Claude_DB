@@ -4,10 +4,12 @@ Copied from working permissions_tab.py implementation
 Uses official Claude Code format: {"allow": [...], "deny": [...], "ask": [...]}
 """
 
-import sys
 import json
+import logging
 import re
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView,
@@ -17,7 +19,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QColor
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 
 # Import the same AddPermissionDialog from user_permissions_subtab
@@ -114,22 +115,22 @@ class ProjectPermissionsSubTab(QWidget):
         btn_layout = QHBoxLayout()
         add_btn = QPushButton("➕ Add")
         add_btn.setStyleSheet(theme.get_button_style())
-        add_btn.setFixedWidth(100)
+        add_btn.setMinimumWidth(90)
         add_btn.clicked.connect(lambda: self.add_permission(scope))
 
         edit_btn = QPushButton("✏️ Edit")
         edit_btn.setStyleSheet(theme.get_button_style())
-        edit_btn.setFixedWidth(100)
+        edit_btn.setMinimumWidth(90)
         edit_btn.clicked.connect(lambda: self.edit_permission(scope))
 
         delete_btn = QPushButton("🗑️ Delete")
         delete_btn.setStyleSheet(theme.get_button_style())
-        delete_btn.setFixedWidth(100)
+        delete_btn.setMinimumWidth(90)
         delete_btn.clicked.connect(lambda: self.delete_permission(scope))
 
         refresh_btn = QPushButton("🔄 Refresh")
         refresh_btn.setStyleSheet(theme.get_button_style())
-        refresh_btn.setFixedWidth(100)
+        refresh_btn.setMinimumWidth(90)
         refresh_btn.clicked.connect(lambda: self.refresh_permissions(scope))
 
         btn_layout.addWidget(add_btn)
@@ -195,7 +196,7 @@ class ProjectPermissionsSubTab(QWidget):
 
             # Handle corrupted format (array instead of object)
             if isinstance(permissions, list):
-                print(f"Warning: {scope} permissions in wrong format (array). Converting to proper format.")
+                logger.warning("%s permissions in wrong format (array). Converting to proper format.", scope)
                 permissions = {"allow": [], "deny": [], "ask": []}
 
             for level in ["allow", "deny", "ask"]:
@@ -205,7 +206,7 @@ class ProjectPermissionsSubTab(QWidget):
                     self.add_permission_to_table(table, perm_type, pattern, level)
 
         except Exception as e:
-            print(f"Error loading {scope} permissions: {e}")
+            logger.error("Error loading %s permissions: %s", scope, e)
 
     def parse_permission_string(self, perm_string):
         """Parse permission string into type and pattern"""

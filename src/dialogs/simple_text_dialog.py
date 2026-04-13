@@ -4,9 +4,7 @@ Simple text editor dialog for editing template content
 
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox, QLabel
 from PyQt6.QtCore import Qt
-import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 class SimpleTextDialog(QDialog):
     """Simple dialog for editing text content"""

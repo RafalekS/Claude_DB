@@ -3,8 +3,10 @@ MCP Tab - Manage Claude Code MCP server configuration
 """
 
 import json
+import logging
 import re
 from pathlib import Path
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox, QListWidget, QSplitter, QComboBox, QListWidgetItem,
@@ -14,12 +16,12 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon, QColor
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import theme
 from utils.terminal_utils import run_command_silent
 from utils.mcp_validator import MCPValidator
 from utils.template_manager import get_template_manager
+
+logger = logging.getLogger(__name__)
 from dialogs.mcp_tools_dialog import MCPToolsDialog
 from dialogs.mcp_library_dialog import MCPLibraryDialog
 
@@ -587,13 +589,13 @@ class MCPTab(QWidget):
         self.server_health = {}  # Store health status from claude mcp list
 
         # Validate parameters
-        if scope in ("project", "local") and not project_context:
-            raise ValueError("project_context is required when scope='project' or 'local'")
+        if scope == "project" and not project_context:
+            raise ValueError("project_context is required when scope='project'")
 
         self.init_ui()
 
         # Connect to project changes if project or local scope
-        if self.scope in ("project", "local") and self.project_context:
+        if self.scope == "project" and self.project_context:
             self.project_context.project_changed.connect(self.on_project_changed)
 
     def init_ui(self):
@@ -606,7 +608,7 @@ class MCPTab(QWidget):
         header_layout = QHBoxLayout()
         header_layout.setSpacing(5)
 
-        scope_label = "User" if self.scope == "user" else "Local" if self.scope == "local" else "Project"
+        scope_label = "User" if self.scope == "user" else "Project"
         header = QLabel(f"MCP Servers ({scope_label})")
         header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
@@ -967,8 +969,8 @@ class MCPTab(QWidget):
             win = self.window()
             if hasattr(win, "update_github_status"):
                 win.update_github_status(remaining)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Could not update GitHub rate limit display: %s", e)
 
     def _on_discover_error(self, msg: str):
         self._discover_status.setText(f"Search error: {msg}")
@@ -1031,10 +1033,6 @@ class MCPTab(QWidget):
         """Get file path for the current scope"""
         if self.scope == "user":
             return self.config_manager.get_mcp_file_path("user")
-        elif self.scope == "local":
-            if not self.project_context or not self.project_context.has_project():
-                return Path.home() / ".claude" / ".mcp.json"
-            return self.project_context.get_project() / ".claude" / ".mcp.json"
         else:  # project
             if not self.project_context or not self.project_context.has_project():
                 return None
@@ -1053,7 +1051,6 @@ class MCPTab(QWidget):
         """Get display name for current scope"""
         return {
             "user": "User",
-            "local": "Local",
             "project": "Project"
         }.get(self.scope, "Unknown")
 
@@ -1065,7 +1062,7 @@ class MCPTab(QWidget):
         if self.scope == "project" and hasattr(self, 'mcp_json_servers') and hasattr(self, 'claude_json_servers'):
             merged_servers = {**self.mcp_json_servers, **self.claude_json_servers}
         else:
-            # For user/local scope, just use self.config
+            # For user scope, just use self.config
             merged_servers = self.config.get("mcpServers", {})
 
         for server_name, server_config in merged_servers.items():
@@ -1235,7 +1232,7 @@ class MCPTab(QWidget):
                     else:
                         self.claude_json_info_label.setVisible(False)
                 else:
-                    # For local scope: show all servers normally (no special handling)
+                    # For user scope: show all servers normally (no special handling)
                     self.config = {"mcpServers": self.mcp_json_servers}
                     if hasattr(self, 'claude_json_info_label'):
                         self.claude_json_info_label.setVisible(False)
@@ -1630,7 +1627,6 @@ class MCPTab(QWidget):
         success, stdout, stderr = run_command_silent(
             ["claude", "mcp", "reset-project-choices"],
             timeout=30,
-            shell=True
         )
 
         if success:
