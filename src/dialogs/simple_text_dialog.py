@@ -27,7 +27,6 @@ class SimpleTextDialog(QDialog):
         # Text editor
         self.text_edit = QTextEdit()
         self.text_edit.setPlainText(initial_text)
-        self.text_edit.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.text_edit)
 
         # Buttons

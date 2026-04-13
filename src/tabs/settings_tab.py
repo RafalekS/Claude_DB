@@ -122,7 +122,6 @@ class SettingsTab(QWidget):
 
         # JSON Editor (top half)
         editor = QTextEdit()
-        editor.setStyleSheet(theme.get_text_edit_style())
 
         # Load content
         try:
@@ -172,7 +171,6 @@ class SettingsTab(QWidget):
         self.project_folder_edit = QLineEdit()
         self.project_folder_edit.setText(str(Path.home()))
         self.project_folder_edit.setReadOnly(True)
-        self.project_folder_edit.setStyleSheet(theme.get_line_edit_style())
 
         browse_folder_btn = QPushButton("Browse...")
         browse_folder_btn.setStyleSheet(theme.get_button_style())
@@ -251,7 +249,6 @@ class SettingsTab(QWidget):
 
         # JSON Editor (top half)
         editor = QTextEdit()
-        editor.setStyleSheet(theme.get_text_edit_style())
 
         # Load initial content
         try:

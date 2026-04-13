@@ -33,7 +33,7 @@ class HooksSubtab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -95,13 +95,11 @@ class HooksSubtab(QWidget):
         search_box = QLineEdit()
         search_box.setPlaceholderText("Search...")
         search_box.textChanged.connect(self.filter_hooks)
-        search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(search_box)
 
         # Hook list
         hook_list = QListWidget()
         hook_list.itemClicked.connect(self.load_hook_content)
-        hook_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(hook_list)
 
         # Buttons

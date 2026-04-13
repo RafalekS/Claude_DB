@@ -214,12 +214,10 @@ class NewSkillTemplateDialog(QDialog):
 
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., example-skill")
-        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("e.g., A skill that does something useful")
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -310,12 +308,10 @@ class EditSkillTemplateDialog(QDialog):
 
         self.name_edit = QLineEdit()
         self.name_edit.setText(parsed_name)
-        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)

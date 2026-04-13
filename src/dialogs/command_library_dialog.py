@@ -188,36 +188,30 @@ class NewCommandTemplateDialog(QDialog):
 
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., bash-timeout")
-        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("What the command does (role, purpose, overview)")
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         form.addRow("Description*:", self.description_edit)
 
         self.requirements_edit = QTextEdit()
         self.requirements_edit.setPlaceholderText("Arguments, parameters, prerequisites...")
-        self.requirements_edit.setStyleSheet(theme.get_text_edit_style())
         self.requirements_edit.setMinimumHeight(100)
         form.addRow("Requirements:", self.requirements_edit)
 
         self.instructions_edit = QTextEdit()
         self.instructions_edit.setPlaceholderText("Step-by-step instructions for using this command...")
-        self.instructions_edit.setStyleSheet(theme.get_text_edit_style())
         self.instructions_edit.setMinimumHeight(120)
         form.addRow("Instructions*:", self.instructions_edit)
 
         self.examples_edit = QTextEdit()
         self.examples_edit.setPlaceholderText("Code examples, usage examples, reference workflows...")
-        self.examples_edit.setStyleSheet(theme.get_text_edit_style())
         self.examples_edit.setMinimumHeight(120)
         form.addRow("Examples*:", self.examples_edit)
 
         self.notes_edit = QTextEdit()
         self.notes_edit.setPlaceholderText("Important notes, warnings, limitations, considerations...")
-        self.notes_edit.setStyleSheet(theme.get_text_edit_style())
         self.notes_edit.setMinimumHeight(100)
         form.addRow("Important Notes:", self.notes_edit)
 
@@ -314,36 +308,30 @@ class EditCommandTemplateDialog(QDialog):
 
         self.name_edit = QLineEdit()
         self.name_edit.setText(parsed_name)
-        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         form.addRow("Description*:", self.description_edit)
 
         self.requirements_edit = QTextEdit()
         self.requirements_edit.setPlainText(parsed_requirements)
-        self.requirements_edit.setStyleSheet(theme.get_text_edit_style())
         self.requirements_edit.setMinimumHeight(100)
         form.addRow("Requirements:", self.requirements_edit)
 
         self.instructions_edit = QTextEdit()
         self.instructions_edit.setPlainText(parsed_instructions)
-        self.instructions_edit.setStyleSheet(theme.get_text_edit_style())
         self.instructions_edit.setMinimumHeight(120)
         form.addRow("Instructions*:", self.instructions_edit)
 
         self.examples_edit = QTextEdit()
         self.examples_edit.setPlainText(parsed_examples)
-        self.examples_edit.setStyleSheet(theme.get_text_edit_style())
         self.examples_edit.setMinimumHeight(120)
         form.addRow("Examples*:", self.examples_edit)
 
         self.notes_edit = QTextEdit()
         self.notes_edit.setPlainText(parsed_notes)
-        self.notes_edit.setStyleSheet(theme.get_text_edit_style())
         self.notes_edit.setMinimumHeight(100)
         form.addRow("Important Notes:", self.notes_edit)
 

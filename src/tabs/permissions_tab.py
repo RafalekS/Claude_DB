@@ -43,7 +43,6 @@ class AddPermissionDialog(QDialog):
             "WebFetch Domain Permission",
             "MCP Tool Permission"
         ])
-        self.type_combo.setStyleSheet(theme.get_combo_style())
         self.type_combo.currentTextChanged.connect(self.on_type_changed)
         type_layout.addWidget(type_label)
         type_layout.addWidget(self.type_combo, 1)
@@ -110,27 +109,22 @@ class AddPermissionDialog(QDialog):
         # Tool name
         self.tool_name_edit = QLineEdit()
         self.tool_name_edit.setPlaceholderText("e.g., Read, Write, Bash")
-        self.tool_name_edit.setStyleSheet(theme.get_line_edit_style())
 
         # File path pattern
         self.file_path_edit = QLineEdit()
         self.file_path_edit.setPlaceholderText("e.g., /path/to/file.txt or /path/to/**")
-        self.file_path_edit.setStyleSheet(theme.get_line_edit_style())
 
         # Bash command pattern
         self.bash_cmd_edit = QLineEdit()
         self.bash_cmd_edit.setPlaceholderText("e.g., ls:*, git status, python:*")
-        self.bash_cmd_edit.setStyleSheet(theme.get_line_edit_style())
 
         # WebFetch domain
         self.domain_edit = QLineEdit()
         self.domain_edit.setPlaceholderText("e.g., github.com, api.example.com")
-        self.domain_edit.setStyleSheet(theme.get_line_edit_style())
 
         # MCP tool
         self.mcp_tool_edit = QLineEdit()
         self.mcp_tool_edit.setPlaceholderText("e.g., mcp__server__tool_name")
-        self.mcp_tool_edit.setStyleSheet(theme.get_line_edit_style())
 
     def on_type_changed(self, perm_type):
         """Update form based on selected permission type"""
@@ -295,7 +289,7 @@ class PermissionsTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -387,7 +381,6 @@ class PermissionsTab(QWidget):
         project_folder_edit = QLineEdit()
         project_folder_edit.setText(str(Path.home()))
         project_folder_edit.setReadOnly(True)
-        project_folder_edit.setStyleSheet(theme.get_line_edit_style())
 
         browse_folder_btn = QPushButton("Browse...")
         browse_folder_btn.setStyleSheet(theme.get_button_style())
@@ -538,7 +531,6 @@ class PermissionsTab(QWidget):
 
         # Workspace list
         workspace_list = QListWidget()
-        workspace_list.setStyleSheet(theme.get_list_widget_style())
         bottom_layout.addWidget(workspace_list)
 
         splitter.addWidget(bottom_widget)

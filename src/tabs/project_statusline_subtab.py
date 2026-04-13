@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QTextEdit, QMessageBox, QTabWidget, QLineEdit, QFormLayout, QGroupBox
 )
 from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtGui import QDesktopServices, QFont
 
 from utils import theme
 
@@ -36,7 +36,7 @@ class ProjectStatuslineSubTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -132,12 +132,10 @@ class ProjectStatuslineSubTab(QWidget):
 
         command_input = QLineEdit()
         command_input.setPlaceholderText("e.g., git branch --show-current 2>/dev/null || echo 'main'")
-        command_input.setStyleSheet(theme.get_line_edit_style())
         form_layout.addRow("Command:", command_input)
 
         template_input = QLineEdit()
         template_input.setPlaceholderText("e.g., {{project_name}} [{{git_branch}}]")
-        template_input.setStyleSheet(theme.get_line_edit_style())
         form_layout.addRow("Template:", template_input)
 
         config_layout.addLayout(form_layout)

@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QMessageBox, QTextEdit
 )
+from PyQt6.QtGui import QFont
 from pathlib import Path
 import re
 from utils import theme
@@ -48,7 +49,6 @@ class BulkCommandAddDialog(QDialog):
         self.input_text.setPlaceholderText(
             "example-command.md:\n# Example Command\nCommand description...\n\n---COMMAND---\n\nanother-command.md:\n# Another Command\n..."
         )
-        self.input_text.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.input_text)
 
         button_layout = QHBoxLayout()
@@ -78,7 +78,7 @@ class BulkCommandAddDialog(QDialog):
 
         self.preview_text = QTextEdit()
         self.preview_text.setReadOnly(True)
-        self.preview_text.setStyleSheet(theme.get_text_edit_style())
+        self.preview_text.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
         layout.addWidget(self.preview_text)
 
     def parse_and_preview(self):

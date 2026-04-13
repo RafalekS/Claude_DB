@@ -42,13 +42,11 @@ class AddHTTPServerDialog(QDialog):
         # Server Name
         self.name_input = QLineEdit()
         self.name_input.setPlaceholderText("e.g., sap-docs")
-        self.name_input.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Server Name*:", self.name_input)
 
         # URL
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("e.g., https://mcp-sap-docs.marianzeis.de/mcp")
-        self.url_input.setStyleSheet(theme.get_line_edit_style())
         self.url_input.textChanged.connect(self.on_url_changed)
         form.addRow("URL*:", self.url_input)
 

@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QCheckBox, QLineEdit
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QFont
 
 from utils import theme
 
@@ -30,7 +30,7 @@ class UserSettingsSubTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setContentsMargins(6, 6, 6, 6)
         main_layout.setSpacing(5)
 
         # Header
@@ -268,7 +268,7 @@ class UserSettingsSubTab(QWidget):
 
         layout = QFormLayout()
         layout.setSpacing(10)
-        layout.setContentsMargins(10, 15, 10, 10)
+        layout.setContentsMargins(6, 8, 6, 6)
 
         lbl_style = f"color: {theme.FG_PRIMARY}; font-weight: bold;"
         sub_style = f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;"

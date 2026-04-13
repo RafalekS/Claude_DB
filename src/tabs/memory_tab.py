@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QMessageBox, QTabWidget, QListWidget, QSplitter, QTextEdit
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from utils import theme
 class MemoryTab(QWidget):
     """Tab for memory and checkpointing info"""
@@ -23,7 +24,7 @@ class MemoryTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -82,7 +83,7 @@ class MemoryTab(QWidget):
         """Create overview tab with general info"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
 
         info = QTextBrowser()
         info.setHtml(f"""

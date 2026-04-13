@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QTextEdit, QSplitter
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QFont
 import asyncio
 import json
 from typing import List, Dict, Any
@@ -108,6 +108,7 @@ class MCPToolsDialog(QDialog):
         self.details_text = QTextEdit()
         self.details_text.setReadOnly(True)
         self.details_text.setMaximumHeight(200)
+        self.details_text.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
         details_layout.addWidget(self.details_text)
 
         details_widget = QLabel()  # Dummy widget to hold layout

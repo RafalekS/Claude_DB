@@ -38,7 +38,7 @@ class ClaudeKitTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setContentsMargins(6, 6, 6, 6)
         main_layout.setSpacing(5)
 
         # Header
@@ -133,7 +133,6 @@ class ClaudeKitTab(QWidget):
         self.project_path_edit = QLineEdit()
         self.project_path_edit.setPlaceholderText("Select project folder...")
         self.project_path_edit.setEnabled(False)
-        self.project_path_edit.setStyleSheet(theme.get_line_edit_style())
 
         browse_btn = QPushButton("Browse...")
         browse_btn.setEnabled(False)
@@ -221,7 +220,7 @@ class ClaudeKitTab(QWidget):
 
         grid = QGridLayout()
         grid.setSpacing(8)
-        grid.setContentsMargins(10, 10, 10, 10)
+        grid.setContentsMargins(6, 6, 6, 6)
 
         row = 0
         col = 0

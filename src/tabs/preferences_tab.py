@@ -395,7 +395,7 @@ class PreferencesTab(QWidget):
         """Create Tab Settings subtab"""
         tab_settings_widget = QWidget()
         layout = QVBoxLayout(tab_settings_widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(10)
 
         # Tab Management Group
@@ -443,7 +443,7 @@ class PreferencesTab(QWidget):
         """Create Appearance subtab"""
         appearance_widget = QWidget()
         layout = QVBoxLayout(appearance_widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(10)
 
         # Theme Settings Group
@@ -697,7 +697,7 @@ class PreferencesTab(QWidget):
         """Create Backup subtab"""
         backup_widget = QWidget()
         layout = QVBoxLayout(backup_widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(10)
 
         # Backup Management Group
@@ -754,7 +754,7 @@ class PreferencesTab(QWidget):
         """Create Search Settings subtab (GitHub token, MCP sources, cache)."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(10)
 
         group_style = f"""
@@ -780,7 +780,6 @@ class PreferencesTab(QWidget):
         self._github_token_input = QLineEdit()
         self._github_token_input.setEchoMode(QLineEdit.EchoMode.Password)
         self._github_token_input.setPlaceholderText("ghp_xxxxxxxxxxxxxxxxxxxx (optional)")
-        self._github_token_input.setStyleSheet(theme.get_line_edit_style())
         token_row.addWidget(self._github_token_input)
 
         show_btn = QPushButton("👁")
@@ -939,7 +938,7 @@ class PreferencesTab(QWidget):
         """Create Skills settings subtab (dirs + curated skill sources)."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(10)
 
         group_style = f"""
@@ -963,7 +962,6 @@ class PreferencesTab(QWidget):
         user_row = QHBoxLayout()
         self._skills_user_dir = QLineEdit()
         self._skills_user_dir.setPlaceholderText("Leave blank for ~/.claude/skills/")
-        self._skills_user_dir.setStyleSheet(theme.get_line_edit_style())
         user_row.addWidget(self._skills_user_dir)
         user_browse = QPushButton("Browse")
         user_browse.setStyleSheet(theme.get_button_style())
@@ -974,7 +972,6 @@ class PreferencesTab(QWidget):
         proj_row = QHBoxLayout()
         self._skills_proj_dir = QLineEdit()
         self._skills_proj_dir.setPlaceholderText("Leave blank for .claude/skills/ in current project")
-        self._skills_proj_dir.setStyleSheet(theme.get_line_edit_style())
         proj_row.addWidget(self._skills_proj_dir)
         proj_browse = QPushButton("Browse")
         proj_browse.setStyleSheet(theme.get_button_style())
@@ -999,7 +996,6 @@ class PreferencesTab(QWidget):
         UIStateManager.instance().restore_table_state("prefs.skill_sources", self._skill_sources_table)
         UIStateManager.instance().connect_table("prefs.skill_sources", self._skill_sources_table)
         self._skill_sources_table.verticalHeader().hide()
-        self._skill_sources_table.setStyleSheet(theme.get_table_style())
         self._skill_sources_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         src_layout.addWidget(self._skill_sources_table)
 
@@ -1380,7 +1376,7 @@ class {class_name}Tab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header

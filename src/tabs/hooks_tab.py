@@ -68,7 +68,7 @@ class HooksTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header with docs link
@@ -295,7 +295,6 @@ class HooksTab(QWidget):
         project_folder_edit = QLineEdit()
         project_folder_edit.setText(str(Path.home()))
         project_folder_edit.setReadOnly(True)
-        project_folder_edit.setStyleSheet(theme.get_line_edit_style())
 
         browse_folder_btn = QPushButton("Browse...")
         browse_folder_btn.setStyleSheet(theme.get_button_style())

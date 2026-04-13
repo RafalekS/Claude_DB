@@ -53,8 +53,8 @@ class ProjectPermissionsSubTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(6)
 
         # Header
         header_layout = QHBoxLayout()
@@ -91,8 +91,8 @@ class ProjectPermissionsSubTab(QWidget):
         """Create permissions panel for a scope"""
         panel = QWidget()
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(6)
 
         # File path
         file_name = "settings.json" if scope == "shared" else "settings.local.json"
@@ -108,7 +108,6 @@ class ProjectPermissionsSubTab(QWidget):
         UIStateManager.instance().restore_table_state("permissions.project_table", perm_table)
         UIStateManager.instance().connect_table("permissions.project_table", perm_table)
         perm_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        perm_table.setStyleSheet(theme.get_table_style())
         layout.addWidget(perm_table, 1)
 
         # Buttons

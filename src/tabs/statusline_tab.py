@@ -28,7 +28,7 @@ class StatuslineTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header with docs link
@@ -111,13 +111,12 @@ class StatuslineTab(QWidget):
         # Command input
         self.user_command_input = QLineEdit()
         self.user_command_input.setPlaceholderText("e.g., ~/.claude/statusline.sh or powershell -File ~/.claude/statusline.ps1")
-        self.user_command_input.setStyleSheet(theme.get_line_edit_style())
+
         config_layout.addRow("Command:", self.user_command_input)
 
         # Padding input
         self.user_padding_input = QLineEdit()
         self.user_padding_input.setPlaceholderText("0")
-        self.user_padding_input.setStyleSheet(theme.get_line_edit_style())
         config_layout.addRow("Padding:", self.user_padding_input)
 
         config_group.setLayout(config_layout)
@@ -198,7 +197,6 @@ class StatuslineTab(QWidget):
         self.project_folder_edit = QLineEdit()
         self.project_folder_edit.setText(str(Path.home()))
         self.project_folder_edit.setReadOnly(True)
-        self.project_folder_edit.setStyleSheet(theme.get_line_edit_style())
 
         browse_folder_btn = QPushButton("Browse...")
         browse_folder_btn.setStyleSheet(theme.get_button_style())
@@ -238,13 +236,11 @@ class StatuslineTab(QWidget):
         # Command input
         self.project_command_input = QLineEdit()
         self.project_command_input.setPlaceholderText("e.g., ~/.claude/statusline.sh or powershell -File ~/.claude/statusline.ps1")
-        self.project_command_input.setStyleSheet(theme.get_line_edit_style())
         config_layout.addRow("Command:", self.project_command_input)
 
         # Padding input
         self.project_padding_input = QLineEdit()
         self.project_padding_input.setPlaceholderText("0")
-        self.project_padding_input.setStyleSheet(theme.get_line_edit_style())
         config_layout.addRow("Padding:", self.project_padding_input)
 
         config_group.setLayout(config_layout)

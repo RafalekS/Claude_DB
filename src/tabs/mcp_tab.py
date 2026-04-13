@@ -136,7 +136,6 @@ class AddServerDialog(QDialog):
         # Server Name
         self.name_input = QLineEdit()
         self.name_input.setPlaceholderText("e.g., my-server")
-        self.name_input.setStyleSheet(theme.get_line_edit_style())
         if self.edit_mode:
             self.name_input.setText(self.original_server_name)
             self.name_input.setReadOnly(True)
@@ -147,7 +146,6 @@ class AddServerDialog(QDialog):
         self.description_label = QLabel("Description:")
         self.description_input = QLineEdit()
         self.description_input.setPlaceholderText("e.g., Clone from https://github.com/..., run 'npm install'")
-        self.description_input.setStyleSheet(theme.get_line_edit_style())
         self.description_input.setVisible(False)  # Hidden by default, shown for templates
         self.description_label.setVisible(False)
         form.addRow(self.description_label, self.description_input)
@@ -156,7 +154,6 @@ class AddServerDialog(QDialog):
         type_layout = QHBoxLayout()
         self.type_combo = QComboBox()
         self.type_combo.addItems(["Command (stdio)", "HTTP", "SSE"])
-        self.type_combo.setStyleSheet(theme.get_combo_style())
         self.type_combo.currentTextChanged.connect(self.on_type_changed)
         type_layout.addWidget(self.type_combo)
 
@@ -171,7 +168,6 @@ class AddServerDialog(QDialog):
         template_layout = QHBoxLayout()
         self.template_combo = QComboBox()
         self.template_combo.addItems(["Custom", "npx", "uvx"])
-        self.template_combo.setStyleSheet(theme.get_combo_style())
         self.template_combo.currentTextChanged.connect(self.on_template_changed)
         template_layout.addWidget(self.template_combo)
 
@@ -185,14 +181,12 @@ class AddServerDialog(QDialog):
         self.command_label = QLabel("Command*:")
         self.command_input = QLineEdit()
         self.command_input.setPlaceholderText("e.g., npx @example/server or C:\\path\\to\\python.exe")
-        self.command_input.setStyleSheet(theme.get_line_edit_style())
         form.addRow(self.command_label, self.command_input)
 
         # Arguments (for stdio type)
         self.args_label = QLabel("Arguments:")
         self.args_input = QTextEdit()
         self.args_input.setPlaceholderText("One argument per line, e.g.:\nC:\\path\\to\\script.py\n--verbose\n--port 3000")
-        self.args_input.setStyleSheet(theme.get_text_edit_style())
         self.args_input.setMaximumHeight(80)
         form.addRow(self.args_label, self.args_input)
 
@@ -207,7 +201,6 @@ class AddServerDialog(QDialog):
         self.url_label = QLabel("URL*:")
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("e.g., http://localhost:3000/mcp or https://api.example.com/mcp")
-        self.url_input.setStyleSheet(theme.get_line_edit_style())
         form.addRow(self.url_label, self.url_input)
 
         layout.addLayout(form)
@@ -507,7 +500,6 @@ class CustomRenameDialog(QDialog):
             # New name input
             new_name_input = QLineEdit()
             new_name_input.setPlaceholderText(f"{conflict_name}-renamed")
-            new_name_input.setStyleSheet(theme.get_line_edit_style())
             self.table.setCellWidget(row, 1, new_name_input)
             self.name_inputs[conflict_name] = new_name_input
 
@@ -601,7 +593,7 @@ class MCPTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -686,7 +678,6 @@ class MCPTab(QWidget):
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Search servers...")
         self.search_box.textChanged.connect(self.filter_servers)
-        self.search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(self.search_box)
 
         list_label = QLabel("Servers:")
@@ -831,14 +822,13 @@ class MCPTab(QWidget):
         """Build the Discover sub-tab UI."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(6)
 
         # Search bar
         search_layout = QHBoxLayout()
         self._discover_search = QLineEdit()
         self._discover_search.setPlaceholderText("Search MCP servers... (e.g. filesystem, github, slack)")
-        self._discover_search.setStyleSheet(theme.get_line_edit_style())
         self._discover_search.returnPressed.connect(self._do_discover_search)
         search_layout.addWidget(self._discover_search)
 
@@ -885,7 +875,6 @@ class MCPTab(QWidget):
         self._discover_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self._discover_table.verticalHeader().hide()
         self._discover_table.setSortingEnabled(True)
-        self._discover_table.setStyleSheet(theme.get_table_style())
         layout.addWidget(self._discover_table, 1)
 
         # Restore saved column widths

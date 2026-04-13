@@ -27,7 +27,7 @@ class ModelConfigTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header with docs link
@@ -176,7 +176,7 @@ class ModelConfigTab(QWidget):
         """Create model selector tab for given scope"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
 
         # Model selection group
         model_group = QGroupBox("Select Default Model")
@@ -283,7 +283,7 @@ class ModelConfigTab(QWidget):
         """Create model information tab"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
 
         info_browser = QTextBrowser()
         info_browser.setOpenExternalLinks(True)

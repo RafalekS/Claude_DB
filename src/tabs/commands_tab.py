@@ -40,7 +40,7 @@ class CommandsTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -117,13 +117,11 @@ class CommandsTab(QWidget):
         search_box = QLineEdit()
         search_box.setPlaceholderText("Search...")
         search_box.textChanged.connect(self.filter_commands)
-        search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(search_box)
 
         # Command list
         command_list = QListWidget()
         command_list.itemClicked.connect(self.load_command_content)
-        command_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(command_list)
 
         # Buttons
@@ -476,19 +474,16 @@ class NewCommandDialog(QDialog):
         # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., bash-timeout")
-        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Command Name*:", self.name_edit)
 
         # Display Name field
         self.display_name_edit = QLineEdit()
         self.display_name_edit.setPlaceholderText("e.g., Bash Timeout")
-        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("e.g., Runs bash commands with timeout")
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -553,13 +548,11 @@ class EditCommandDialog(QDialog):
         # Display Name field
         self.display_name_edit = QLineEdit()
         self.display_name_edit.setText(parsed_display_name)
-        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)

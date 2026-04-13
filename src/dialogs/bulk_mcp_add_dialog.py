@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QMessageBox, QTextEdit
 )
+from PyQt6.QtGui import QFont
 from pathlib import Path
 import json
 from utils import theme
@@ -51,7 +52,6 @@ class BulkMCPAddDialog(QDialog):
         self.input_text.setPlaceholderText(
             '{"mcpServers": {"github": {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-github"]}}}'
         )
-        self.input_text.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.input_text)
 
         button_layout = QHBoxLayout()
@@ -81,7 +81,7 @@ class BulkMCPAddDialog(QDialog):
 
         self.preview_text = QTextEdit()
         self.preview_text.setReadOnly(True)
-        self.preview_text.setStyleSheet(theme.get_text_edit_style())
+        self.preview_text.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
         layout.addWidget(self.preview_text)
 
     def preprocess_json_text(self, text):

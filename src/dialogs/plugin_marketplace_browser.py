@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QMessageBox, QHeaderView, QTextEdit, QSplitter
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QFont
 from utils import theme
 
 
@@ -313,7 +313,7 @@ class PluginMarketplaceBrowserDialog(QDialog):
         self.setMinimumSize(1000, 700)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(10)
 
         # Header
@@ -330,7 +330,6 @@ class PluginMarketplaceBrowserDialog(QDialog):
         selector_layout.addWidget(selector_label)
 
         self.marketplace_combo = QComboBox()
-        self.marketplace_combo.setStyleSheet(theme.get_line_edit_style())
         self.marketplace_combo.currentIndexChanged.connect(self.on_marketplace_changed)
         selector_layout.addWidget(self.marketplace_combo, 1)
 
@@ -351,7 +350,6 @@ class PluginMarketplaceBrowserDialog(QDialog):
         search_layout.addWidget(search_label)
 
         self.search_box = QLineEdit()
-        self.search_box.setStyleSheet(theme.get_line_edit_style())
         self.search_box.setPlaceholderText("Type to filter plugins...")
         self.search_box.textChanged.connect(self.filter_plugins)
         search_layout.addWidget(self.search_box, 1)
@@ -370,7 +368,6 @@ class PluginMarketplaceBrowserDialog(QDialog):
         self.plugins_table = QTableWidget()
         self.plugins_table.setColumnCount(5)
         self.plugins_table.setHorizontalHeaderLabels(["Name", "Version", "Author", "Description", "Install"])
-        self.plugins_table.setStyleSheet(theme.get_list_widget_style())
         self.plugins_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.plugins_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.plugins_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -387,8 +384,8 @@ class PluginMarketplaceBrowserDialog(QDialog):
         # Plugin details viewer
         self.details_viewer = QTextEdit()
         self.details_viewer.setReadOnly(True)
-        self.details_viewer.setStyleSheet(theme.get_text_edit_style())
         self.details_viewer.setMaximumHeight(200)
+        self.details_viewer.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
         self.details_viewer.setPlaceholderText("Select a plugin to view details...")
 
         splitter.addWidget(self.details_viewer)

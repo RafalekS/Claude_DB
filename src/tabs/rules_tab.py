@@ -144,7 +144,6 @@ class RuleEditorWidget(QWidget):
         left_layout.addWidget(list_lbl)
 
         self._file_list = QListWidget()
-        self._file_list.setStyleSheet(theme.get_list_widget_style())
         self._file_list.itemClicked.connect(self._on_file_selected)
         left_layout.addWidget(self._file_list)
 
@@ -378,7 +377,7 @@ class RulesTab(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header

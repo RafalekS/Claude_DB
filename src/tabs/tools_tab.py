@@ -215,7 +215,6 @@ class ToolsConfigDialog(QDialog):
 
         self.sections_list = QListWidget()
         self.sections_list.itemClicked.connect(self.on_section_selected)
-        self.sections_list.setStyleSheet(theme.get_list_widget_style())
         layout.addWidget(self.sections_list)
 
         # Buttons with distinct styling for sections
@@ -301,7 +300,6 @@ class ToolsConfigDialog(QDialog):
         layout.addWidget(self.buttons_label)
 
         self.buttons_list = QListWidget()
-        self.buttons_list.setStyleSheet(theme.get_list_widget_style())
         layout.addWidget(self.buttons_list)
 
         # Buttons with distinct styling for buttons (green/blue theme)
@@ -812,7 +810,7 @@ class ToolsTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header with Manage button

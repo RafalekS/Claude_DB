@@ -37,8 +37,8 @@ class TemplatesTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(6)
 
         # Header
         header = QLabel("Claude Code Templates")
@@ -89,7 +89,7 @@ class TemplatesTab(QWidget):
 
         grid = QGridLayout()
         grid.setSpacing(10)
-        grid.setContentsMargins(15, 15, 15, 15)
+        grid.setContentsMargins(8, 8, 8, 8)
 
         row = 0
         col = 0

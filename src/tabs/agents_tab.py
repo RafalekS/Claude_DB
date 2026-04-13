@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 import json
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QFont
 from utils import theme
 from utils.template_manager import get_template_manager
 from utils.ui_state_manager import UIStateManager
@@ -62,13 +62,11 @@ class NewAgentDialog(QDialog):
         # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., bill-organizer")
-        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Agent Name*:", self.name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("e.g., Extract and organize utility bills from Gmail")
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -90,7 +88,6 @@ class NewAgentDialog(QDialog):
         # Subfolder field (optional)
         self.subfolder_edit = QLineEdit()
         self.subfolder_edit.setPlaceholderText("e.g., code-quality (optional)")
-        self.subfolder_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Subfolder:", self.subfolder_edit)
 
         layout.addLayout(form)
@@ -214,7 +211,7 @@ class AgentsTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -286,13 +283,11 @@ class AgentsTab(QWidget):
         search_box = QLineEdit()
         search_box.setPlaceholderText("Search...")
         search_box.textChanged.connect(self.filter_agents)
-        search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(search_box)
 
         # Agent list
         agent_list = QListWidget()
         agent_list.itemClicked.connect(self.load_agent_content)
-        agent_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(agent_list)
 
         # Buttons
@@ -1179,7 +1174,6 @@ class BulkAgentAddDialog(QDialog):
         self.input_text.setPlaceholderText(
             "---\nname: code-reviewer\ndescription: Reviews code for quality\n---\n\n# Code Reviewer\n...\n\n---AGENT---\n\n---\nname: test-generator\n..."
         )
-        self.input_text.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.input_text)
 
         # Buttons
@@ -1211,7 +1205,7 @@ class BulkAgentAddDialog(QDialog):
 
         self.preview_text = QTextEdit()
         self.preview_text.setReadOnly(True)
-        self.preview_text.setStyleSheet(theme.get_text_edit_style())
+        self.preview_text.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
         layout.addWidget(self.preview_text)
 
     def parse_and_preview(self):
@@ -1305,14 +1299,12 @@ class NewAgentTemplateDialog(QDialog):
         # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., code-reviewer or code-quality/code-reviewer")
-        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("e.g., Reviews code for quality, security, and best practices")
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -1441,14 +1433,12 @@ class EditAgentTemplateDialog(QDialog):
         # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setText(parsed_name)
-        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Template Name*:", self.name_edit)
 
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
@@ -1472,7 +1462,6 @@ class EditAgentTemplateDialog(QDialog):
         self.subfolder_edit = QLineEdit()
         self.subfolder_edit.setText(parsed_subfolder)
         self.subfolder_edit.setPlaceholderText("e.g., code-quality (optional)")
-        self.subfolder_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Subfolder:", self.subfolder_edit)
 
         layout.addLayout(form)

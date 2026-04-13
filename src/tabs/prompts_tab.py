@@ -39,7 +39,7 @@ class PromptsTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -54,7 +54,6 @@ class PromptsTab(QWidget):
         self.search_box.setPlaceholderText("Search prompts...")
         self.search_box.setMaximumWidth(200)
         self.search_box.textChanged.connect(self.filter_prompts)
-        self.search_box.setStyleSheet(theme.get_line_edit_style())
 
         # Link to Anthropic Prompt Library
         library_btn = QPushButton("📚 Prompt Library")
@@ -97,7 +96,6 @@ class PromptsTab(QWidget):
 
         self.prompts_list = QListWidget()
         self.prompts_list.itemClicked.connect(self.load_prompt_content)
-        self.prompts_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(self.prompts_list)
 
         # Buttons
@@ -154,7 +152,6 @@ class PromptsTab(QWidget):
         cmd_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; color: {theme.FG_SECONDARY};")
         self.cmd_edit = QLineEdit()
         self.cmd_edit.setReadOnly(True)
-        self.cmd_edit.setStyleSheet(theme.get_line_edit_style())
         cmd_layout.addWidget(cmd_label)
         cmd_layout.addWidget(self.cmd_edit)
         right_layout.addLayout(cmd_layout)
@@ -165,7 +162,6 @@ class PromptsTab(QWidget):
         act_label = QLabel("ACT:")
         act_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; color: {theme.FG_SECONDARY};")
         self.act_edit = QLineEdit()
-        self.act_edit.setStyleSheet(theme.get_line_edit_style())
         act_layout.addWidget(act_label)
         act_layout.addWidget(self.act_edit)
         right_layout.addLayout(act_layout)
@@ -893,7 +889,6 @@ class GitHubImportDialog(QDialog):
             "Import", "CMD", "Display Name (ACT)", "Status", "If Conflict"
         ])
         self.table.horizontalHeader().setStretchLastSection(False)
-        self.table.setStyleSheet(theme.get_list_widget_style())
 
         # Populate table
         self.populate_table()

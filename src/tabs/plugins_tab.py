@@ -35,7 +35,7 @@ class PluginsTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header with combined info
@@ -154,7 +154,6 @@ class PluginsTab(QWidget):
         known_marketplaces_layout = QVBoxLayout()
         self.known_marketplaces_list = QListWidget()
         self.known_marketplaces_list.setMinimumHeight(150)  # Make it taller
-        self.known_marketplaces_list.setStyleSheet(theme.get_list_widget_style())
         known_marketplaces_layout.addWidget(self.known_marketplaces_list)
         known_marketplaces_group.setLayout(known_marketplaces_layout)
         layout.addWidget(known_marketplaces_group)
@@ -181,7 +180,6 @@ class PluginsTab(QWidget):
 
         enabled_plugins_layout = QVBoxLayout()
         self.enabled_plugins_list = QListWidget()
-        self.enabled_plugins_list.setStyleSheet(theme.get_list_widget_style())
         enabled_plugins_layout.addWidget(self.enabled_plugins_list)
 
         enabled_plugins_btn_layout = QHBoxLayout()
@@ -234,7 +232,6 @@ class PluginsTab(QWidget):
 
         installed_plugins_layout = QVBoxLayout()
         self.installed_plugins_list = QListWidget()
-        self.installed_plugins_list.setStyleSheet(theme.get_list_widget_style())
         installed_plugins_layout.addWidget(self.installed_plugins_list)
         installed_plugins_group.setLayout(installed_plugins_layout)
         layout.addWidget(installed_plugins_group)
@@ -261,7 +258,6 @@ class PluginsTab(QWidget):
 
         extra_marketplaces_layout = QVBoxLayout()
         self.extra_marketplaces_list = QListWidget()
-        self.extra_marketplaces_list.setStyleSheet(theme.get_list_widget_style())
         extra_marketplaces_layout.addWidget(self.extra_marketplaces_list)
 
         extra_marketplaces_btn_layout = QHBoxLayout()

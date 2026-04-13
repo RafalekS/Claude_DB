@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QCheckBox, QAbstractItemView, QFormLayout, QGridLayout, QComboBox
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QFont
 import json
 from utils import theme
 from utils.template_manager import get_template_manager
@@ -196,7 +196,7 @@ class SkillsTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -283,7 +283,6 @@ class SkillsTab(QWidget):
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Search skills...")
         self.search_box.textChanged.connect(self.filter_skills)
-        self.search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(self.search_box)
 
         list_label = QLabel("Skills (directories with SKILL.md)")
@@ -292,7 +291,6 @@ class SkillsTab(QWidget):
 
         self.skills_list = QListWidget()
         self.skills_list.itemClicked.connect(self.load_skill_content)
-        self.skills_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(self.skills_list)
 
         # Buttons
@@ -467,7 +465,6 @@ class SkillsTab(QWidget):
         left_layout.addWidget(lbl)
 
         self._source_list = QListWidget()
-        self._source_list.setStyleSheet(theme.get_list_widget_style())
         self._source_list.itemClicked.connect(self._on_source_selected)
 
         from utils.skill_search_client import load_skill_sources
@@ -504,7 +501,6 @@ class SkillsTab(QWidget):
         self._source_results.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self._source_results.verticalHeader().hide()
         self._source_results.setSortingEnabled(True)
-        self._source_results.setStyleSheet(theme.get_table_style())
         self._source_results.currentCellChanged.connect(self._on_source_result_selected)
 
         from utils.ui_state_manager import UIStateManager
@@ -615,7 +611,6 @@ class SkillsTab(QWidget):
         row = QHBoxLayout()
         self._gh_search_input = QLineEdit()
         self._gh_search_input.setPlaceholderText("Search GitHub for skills (e.g. 'code review', 'security')")
-        self._gh_search_input.setStyleSheet(theme.get_line_edit_style())
         self._gh_search_input.returnPressed.connect(self._do_gh_search)
         row.addWidget(self._gh_search_input)
         search_btn = QPushButton("Search")
@@ -636,7 +631,6 @@ class SkillsTab(QWidget):
         self._gh_results.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self._gh_results.verticalHeader().hide()
         self._gh_results.setSortingEnabled(True)
-        self._gh_results.setStyleSheet(theme.get_table_style())
         self._gh_results.currentCellChanged.connect(self._on_gh_result_selected)
 
         from utils.ui_state_manager import UIStateManager
@@ -734,7 +728,6 @@ class SkillsTab(QWidget):
         self._url_input.setPlaceholderText(
             "https://github.com/owner/repo/blob/main/skills/name/SKILL.md"
         )
-        self._url_input.setStyleSheet(theme.get_line_edit_style())
         row.addWidget(self._url_input)
         fetch_btn = QPushButton("Fetch")
         fetch_btn.setStyleSheet(theme.get_button_style())
@@ -1278,13 +1271,11 @@ class NewSkillDialog(QDialog):
         # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., my-awesome-skill")
-        self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Skill Name*:", self.name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("Use when you need to... / Helps with...")
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(80)
         self.description_edit.setMaximumHeight(120)
         form.addRow("Description*:", self.description_edit)
@@ -1292,13 +1283,11 @@ class NewSkillDialog(QDialog):
         # Argument hint (shown as CLI hint when invoking the skill)
         self.argument_hint_edit = QLineEdit()
         self.argument_hint_edit.setPlaceholderText("e.g., <file-path> or <query> (optional)")
-        self.argument_hint_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Argument Hint:", self.argument_hint_edit)
 
         # Model override
         self.model_combo = QComboBox()
         self.model_combo.addItems(["(default)", "claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"])
-        self.model_combo.setStyleSheet(theme.get_combo_style())
         form.addRow("Model:", self.model_combo)
 
         layout.addLayout(form)
@@ -1404,7 +1393,6 @@ class EditSkillDialog(QDialog):
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
-        self.description_edit.setStyleSheet(theme.get_text_edit_style())
         self.description_edit.setMinimumHeight(80)
         self.description_edit.setMaximumHeight(120)
         form.addRow("Description*:", self.description_edit)
@@ -1413,7 +1401,6 @@ class EditSkillDialog(QDialog):
         self.argument_hint_edit = QLineEdit()
         self.argument_hint_edit.setText(parsed_arg_hint)
         self.argument_hint_edit.setPlaceholderText("e.g., <file-path> or <query> (optional)")
-        self.argument_hint_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Argument Hint:", self.argument_hint_edit)
 
         # Model override
@@ -1422,7 +1409,6 @@ class EditSkillDialog(QDialog):
         current_model = parsed_model if parsed_model else "(default)"
         idx = self.model_combo.findText(current_model)
         self.model_combo.setCurrentIndex(idx if idx >= 0 else 0)
-        self.model_combo.setStyleSheet(theme.get_combo_style())
         form.addRow("Model:", self.model_combo)
 
         layout.addLayout(form)

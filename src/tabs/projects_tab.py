@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QTabWidget
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from utils import theme
 from utils.terminal_utils import run_in_terminal
 
@@ -35,8 +36,8 @@ class ProjectsTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(6)
 
         # Header
         header = QLabel("Projects Management")
@@ -89,7 +90,7 @@ class ProjectsTab(QWidget):
         # Project Info viewer
         self.info_viewer = QTextEdit()
         self.info_viewer.setReadOnly(True)
-        self.info_viewer.setStyleSheet(theme.get_text_edit_style())
+        self.info_viewer.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
 
         return self.info_viewer
 

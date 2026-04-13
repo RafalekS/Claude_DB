@@ -33,7 +33,7 @@ class PermissionsSubtab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -95,13 +95,11 @@ class PermissionsSubtab(QWidget):
         search_box = QLineEdit()
         search_box.setPlaceholderText("Search...")
         search_box.textChanged.connect(self.filter_permissions)
-        search_box.setStyleSheet(theme.get_line_edit_style())
         left_layout.addWidget(search_box)
 
         # Permission list
         permission_list = QListWidget()
         permission_list.itemClicked.connect(self.load_permission_content)
-        permission_list.setStyleSheet(theme.get_list_widget_style())
         left_layout.addWidget(permission_list)
 
         # Buttons
@@ -169,7 +167,6 @@ class PermissionsSubtab(QWidget):
 
         # JSON Editor
         permission_editor = QTextEdit()
-        permission_editor.setStyleSheet(theme.get_text_edit_style())
         permission_editor.setPlaceholderText("Select a permission to edit or create a new one...")
         right_layout.addWidget(permission_editor)
 

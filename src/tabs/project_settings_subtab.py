@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QComboBox, QFormLayout, QListWidget, QListWidgetItem, QInputDialog
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QFont
 
 from utils import theme
 
@@ -44,7 +44,7 @@ class ProjectSettingsSubTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setContentsMargins(6, 6, 6, 6)
         main_layout.setSpacing(5)
 
         # Header

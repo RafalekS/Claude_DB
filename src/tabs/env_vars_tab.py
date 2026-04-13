@@ -29,7 +29,7 @@ class EnvVarsTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
         # Header
@@ -79,7 +79,6 @@ class EnvVarsTab(QWidget):
         self.search_box.setPlaceholderText("Filter variables...")
         self.search_box.setMaximumWidth(200)
         self.search_box.textChanged.connect(self.filter_env_vars)
-        self.search_box.setStyleSheet(theme.get_line_edit_style())
 
         search_layout.addWidget(search_label)
         search_layout.addWidget(self.search_box)
@@ -90,7 +89,6 @@ class EnvVarsTab(QWidget):
         # Env vars list
         self.env_vars_list = QListWidget()
         self.env_vars_list.itemClicked.connect(self.on_env_var_selected)
-        self.env_vars_list.setStyleSheet(theme.get_list_widget_style())
         env_vars_layout.addWidget(self.env_vars_list)
 
         # Buttons

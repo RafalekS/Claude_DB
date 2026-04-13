@@ -137,7 +137,6 @@ class AddPermissionDialog(QDialog):
         category_label.setStyleSheet(theme.get_label_style("normal", "primary"))
         self.category_combo = QComboBox()
         self.category_combo.addItems(list(self.TOOLS.keys()))
-        self.category_combo.setStyleSheet(theme.get_combo_style())
         self.category_combo.currentTextChanged.connect(self.on_category_changed)
         category_layout.addWidget(category_label, 0)
         category_layout.addWidget(self.category_combo, 1)
@@ -148,7 +147,6 @@ class AddPermissionDialog(QDialog):
         tool_label = QLabel("Tool:")
         tool_label.setStyleSheet(theme.get_label_style("normal", "primary"))
         self.tool_combo = QComboBox()
-        self.tool_combo.setStyleSheet(theme.get_combo_style())
         self.tool_combo.currentTextChanged.connect(self.on_tool_changed)
         tool_layout.addWidget(tool_label, 0)
         tool_layout.addWidget(self.tool_combo, 1)
@@ -159,7 +157,6 @@ class AddPermissionDialog(QDialog):
         pattern_label = QLabel("Pattern:")
         pattern_label.setStyleSheet(theme.get_label_style("normal", "primary"))
         self.pattern_edit = QLineEdit()
-        self.pattern_edit.setStyleSheet(theme.get_line_edit_style())
         pattern_layout.addWidget(pattern_label, 0)
         pattern_layout.addWidget(self.pattern_edit, 1)
         simple_layout.addLayout(pattern_layout)
@@ -197,7 +194,6 @@ class AddPermissionDialog(QDialog):
 
         self.advanced_edit = QLineEdit()
         self.advanced_edit.setPlaceholderText("e.g., Read(//c/Scripts/**) or Bash(cat:*)")
-        self.advanced_edit.setStyleSheet(theme.get_line_edit_style())
         advanced_layout.addWidget(self.advanced_edit)
 
         adv_info = QLabel("Enter the full permission string manually. Format: Tool(pattern)")
@@ -387,8 +383,8 @@ class UserPermissionsSubTab(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(6)
 
         # Header
         header_layout = QHBoxLayout()
@@ -415,7 +411,6 @@ class UserPermissionsSubTab(QWidget):
         UIStateManager.instance().restore_table_state("permissions.perm_table", self.perm_table)
         UIStateManager.instance().connect_table("permissions.perm_table", self.perm_table)
         self.perm_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.perm_table.setStyleSheet(theme.get_table_style())
         layout.addWidget(self.perm_table, 1)
 
         # Buttons
