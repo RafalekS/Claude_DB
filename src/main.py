@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 # Import tab modules
 from tabs.settings_tab import SettingsTab
 from tabs.claude_md_tab import ClaudeMDTab
+from tabs.claude_local_md_tab import ClaudeLocalMDTab
 from tabs.agents_tab import AgentsTab  # Used by User/Project Config tabs
 from tabs.commands_tab import CommandsTab  # Used by User/Project Config tabs
 from tabs.skills_tab import SkillsTab  # Used by User/Project Config tabs
@@ -162,6 +163,7 @@ class ClaudeDBApp(QMainWindow):
             # OLD TABS - DEPRECATED (moved to src/tabs/old/)
             "settings": ("⚙️ Settings", SettingsTab(self.config_manager, self.backup_manager)),
             "claudemd": ("📝 CLAUDE.md", ClaudeMDTab(self.config_manager, self.backup_manager)),
+            "claudelocalmd": ("📝 CLAUDE.local.md", ClaudeLocalMDTab(self.config_manager, self.backup_manager)),
             "prompts": ("💬 Prompts", PromptsTab(self.config_manager, self.backup_manager)),
             "plugins": ("🧩 Plugins", PluginsTab(self.config_manager, self.backup_manager)),
             "hooks": ("🪝 Hooks", HooksTab(self.config_manager, self.backup_manager)),
@@ -181,8 +183,9 @@ class ClaudeDBApp(QMainWindow):
 
         # Default tab order (using keys)
         # NEW tabs at front, OLD tabs kept for comparison
-        default_row1 = ["userconfig", "projectconfig", "settings", "claudemd", "agents", "commands",
-                        "skills", "prompts", "mcp", "plugins", "hooks", "rules", "statusline"]
+        default_row1 = ["userconfig", "projectconfig", "settings", "claudemd", "claudelocalmd",
+                        "agents", "commands", "skills", "prompts", "mcp", "plugins", "hooks",
+                        "rules", "statusline"]
         default_row2 = ["memory", "permissions", "usage", "modelconfig", "clireference", "styles",
                         "claudekit", "tools", "projects", "about", "preferences"]
 
