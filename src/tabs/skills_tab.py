@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QLabel, QMessageBox, QListWidget, QSplitter, QLineEdit, QInputDialog,
     QListWidgetItem, QGroupBox, QFileDialog, QTabWidget, QDialog,
     QDialogButtonBox, QTableWidget, QTableWidgetItem, QHeaderView,
-    QCheckBox, QAbstractItemView, QFormLayout, QGridLayout
+    QCheckBox, QAbstractItemView, QFormLayout, QGridLayout, QComboBox
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor
@@ -961,13 +961,21 @@ class SkillsTab(QWidget):
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 new_data = dialog.get_skill_data()
                 # Regenerate content with frontmatter
-                new_content = f"""---
-name: {skill_name}
-description: {new_data['description']}
-allowed-tools: {new_data['allowed_tools']}
----
+                fm_lines = [
+                    "---",
+                    f"name: {skill_name}",
+                    f"description: {new_data['description']}",
+                    f"allowed-tools: {new_data['allowed_tools']}",
+                ]
+                if new_data.get('argument_hint'):
+                    fm_lines.append(f"argument-hint: {new_data['argument_hint']}")
+                if new_data.get('model'):
+                    fm_lines.append(f"model: {new_data['model']}")
+                fm_lines.append("---")
+                new_frontmatter = "\n".join(fm_lines)
+                new_content = f"""{new_frontmatter}
 
-# {new_data['display_name'] or skill_name}
+# {skill_name}
 
 {new_data['description']}
 
@@ -1008,13 +1016,21 @@ Provide examples of using this skill.
             skill_dir.mkdir(parents=True, exist_ok=True)
 
             # Build YAML frontmatter
-            content = f"""---
-name: {skill_name}
-description: {skill_data['description']}
-allowed-tools: {skill_data['allowed_tools']}
----
+            fm_lines = [
+                "---",
+                f"name: {skill_name}",
+                f"description: {skill_data['description']}",
+                f"allowed-tools: {skill_data['allowed_tools']}",
+            ]
+            if skill_data.get('argument_hint'):
+                fm_lines.append(f"argument-hint: {skill_data['argument_hint']}")
+            if skill_data.get('model'):
+                fm_lines.append(f"model: {skill_data['model']}")
+            fm_lines.append("---")
+            frontmatter = "\n".join(fm_lines)
+            content = f"""{frontmatter}
 
-# {skill_data['display_name'] or skill_name}
+# {skill_name}
 
 {skill_data['description']}
 
@@ -1249,19 +1265,25 @@ class NewSkillDialog(QDialog):
         self.name_edit.setStyleSheet(theme.get_line_edit_style())
         form.addRow("Skill Name*:", self.name_edit)
 
-        # Display Name field
-        self.display_name_edit = QLineEdit()
-        self.display_name_edit.setPlaceholderText("e.g., My Awesome Skill (optional)")
-        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
-        form.addRow("Display Name:", self.display_name_edit)
-
         # Description field
         self.description_edit = QTextEdit()
-        self.description_edit.setPlaceholderText("e.g., A skill that does awesome things")
+        self.description_edit.setPlaceholderText("Use when you need to... / Helps with...")
         self.description_edit.setStyleSheet(theme.get_text_edit_style())
-        self.description_edit.setMinimumHeight(100)
-        self.description_edit.setMaximumHeight(150)
+        self.description_edit.setMinimumHeight(80)
+        self.description_edit.setMaximumHeight(120)
         form.addRow("Description*:", self.description_edit)
+
+        # Argument hint (shown as CLI hint when invoking the skill)
+        self.argument_hint_edit = QLineEdit()
+        self.argument_hint_edit.setPlaceholderText("e.g., <file-path> or <query> (optional)")
+        self.argument_hint_edit.setStyleSheet(theme.get_line_edit_style())
+        form.addRow("Argument Hint:", self.argument_hint_edit)
+
+        # Model override
+        self.model_combo = QComboBox()
+        self.model_combo.addItems(["(default)", "claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"])
+        self.model_combo.setStyleSheet(theme.get_combo_style())
+        form.addRow("Model:", self.model_combo)
 
         layout.addLayout(form)
 
@@ -1316,10 +1338,12 @@ class NewSkillDialog(QDialog):
         selected_tools = [tool for tool, checkbox in self.tool_checkboxes.items() if checkbox.isChecked()]
         tools_str = ", ".join(selected_tools) if selected_tools else ""
 
+        model_val = self.model_combo.currentText()
         return {
             'name': self.name_edit.text().strip(),
-            'display_name': self.display_name_edit.text().strip(),
             'description': self.description_edit.toPlainText().strip(),
+            'argument_hint': self.argument_hint_edit.text().strip(),
+            'model': "" if model_val == "(default)" else model_val,
             'allowed_tools': tools_str
         }
 
@@ -1345,33 +1369,45 @@ class EditSkillDialog(QDialog):
             frontmatter_text = frontmatter_match.group(1)
             desc_match = re.search(r'description:\s*(.+)', frontmatter_text)
             tools_match = re.search(r'allowed-tools:\s*(.+)', frontmatter_text)
+            arg_hint_match = re.search(r'argument-hint:\s*(.+)', frontmatter_text)
+            model_match = re.search(r'model:\s*(.+)', frontmatter_text)
 
             parsed_desc = desc_match.group(1).strip() if desc_match else ""
             parsed_tools = tools_match.group(1).strip() if tools_match else "Read, Grep, Glob"
+            parsed_arg_hint = arg_hint_match.group(1).strip() if arg_hint_match else ""
+            parsed_model = model_match.group(1).strip() if model_match else ""
         else:
             parsed_desc = ""
             parsed_tools = "Read, Grep, Glob"
-
-        # Parse display name from markdown title
-        title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
-        parsed_display_name = title_match.group(1).strip() if title_match else self.skill_name
+            parsed_arg_hint = ""
+            parsed_model = ""
 
         form = QFormLayout()
         form.setSpacing(8)
-
-        # Display Name field
-        self.display_name_edit = QLineEdit()
-        self.display_name_edit.setText(parsed_display_name)
-        self.display_name_edit.setStyleSheet(theme.get_line_edit_style())
-        form.addRow("Display Name:", self.display_name_edit)
 
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
         self.description_edit.setStyleSheet(theme.get_text_edit_style())
-        self.description_edit.setMinimumHeight(100)
-        self.description_edit.setMaximumHeight(150)
+        self.description_edit.setMinimumHeight(80)
+        self.description_edit.setMaximumHeight(120)
         form.addRow("Description*:", self.description_edit)
+
+        # Argument hint
+        self.argument_hint_edit = QLineEdit()
+        self.argument_hint_edit.setText(parsed_arg_hint)
+        self.argument_hint_edit.setPlaceholderText("e.g., <file-path> or <query> (optional)")
+        self.argument_hint_edit.setStyleSheet(theme.get_line_edit_style())
+        form.addRow("Argument Hint:", self.argument_hint_edit)
+
+        # Model override
+        self.model_combo = QComboBox()
+        self.model_combo.addItems(["(default)", "claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"])
+        current_model = parsed_model if parsed_model else "(default)"
+        idx = self.model_combo.findText(current_model)
+        self.model_combo.setCurrentIndex(idx if idx >= 0 else 0)
+        self.model_combo.setStyleSheet(theme.get_combo_style())
+        form.addRow("Model:", self.model_combo)
 
         layout.addLayout(form)
 
@@ -1428,8 +1464,10 @@ class EditSkillDialog(QDialog):
         selected_tools = [tool for tool, checkbox in self.tool_checkboxes.items() if checkbox.isChecked()]
         tools_str = ", ".join(selected_tools) if selected_tools else ""
 
+        model_val = self.model_combo.currentText()
         return {
-            'display_name': self.display_name_edit.text().strip(),
             'description': self.description_edit.toPlainText().strip(),
+            'argument_hint': self.argument_hint_edit.text().strip(),
+            'model': "" if model_val == "(default)" else model_val,
             'allowed_tools': tools_str
         }
