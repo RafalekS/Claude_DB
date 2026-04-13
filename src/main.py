@@ -40,14 +40,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import tab modules
-from tabs.settings_tab import SettingsTab
 from tabs.claude_md_tab import ClaudeMDTab
-from tabs.claude_local_md_tab import ClaudeLocalMDTab
-from tabs.agents_tab import AgentsTab  # Used by User/Project Config tabs
-from tabs.commands_tab import CommandsTab  # Used by User/Project Config tabs
-from tabs.skills_tab import SkillsTab  # Used by User/Project Config tabs
 from tabs.prompts_tab import PromptsTab
-from tabs.mcp_tab import MCPTab  # Used by User/Project Config tabs
 from tabs.plugins_tab import PluginsTab
 from tabs.hooks_tab import HooksTab
 from tabs.statusline_tab import StatuslineTab
@@ -58,17 +52,11 @@ from tabs.model_config_tab import ModelConfigTab
 from tabs.styles_workflows_tab import StylesWorkflowsTab
 from tabs.claudekit_tab import ClaudeKitTab
 from tabs.tools_tab import ToolsTab
-from tabs.config_sync_tab import ConfigSyncTab
 from tabs.projects_tab import ProjectsTab
 from tabs.about_tab import AboutTab
 from tabs.preferences_tab import PreferencesTab
-# New refactored tabs (Phase 4)
 from tabs.user_config_tab import UserConfigTab
 from tabs.project_config_tab import ProjectConfigTab
-from tabs.rules_tab import RulesTab
-from tabs.worktrees_tab import WorktreesTab
-from tabs.agent_teams_tab import AgentTeamsTab
-from tabs.remote_control_tab import RemoteControlTab
 
 from utils.config_manager import ConfigManager
 from utils.backup_manager import BackupManager
@@ -160,20 +148,12 @@ class ClaudeDBApp(QMainWindow):
         # Key format: "tab_key" -> (default_display_name, widget)
         # Store as instance variable so preferences_tab can access it
         self.all_tabs = {
-            # NEW REFACTORED TABS (Phase 4)
             "userconfig": ("👤 User Config", UserConfigTab(self.config_manager, self.backup_manager, self.settings_manager)),
             "projectconfig": ("📁 Project Config", ProjectConfigTab(self.config_manager, self.backup_manager, self.settings_manager, self.project_context)),
-            # OLD TABS - DEPRECATED (moved to src/tabs/old/)
-            "settings": ("⚙️ Settings", SettingsTab(self.config_manager, self.backup_manager)),
             "claudemd": ("📝 CLAUDE.md", ClaudeMDTab(self.config_manager, self.backup_manager)),
-            "claudelocalmd": ("📝 CLAUDE.local.md", ClaudeLocalMDTab(self.config_manager, self.backup_manager)),
             "prompts": ("💬 Prompts", PromptsTab(self.config_manager, self.backup_manager)),
             "plugins": ("🧩 Plugins", PluginsTab(self.config_manager, self.backup_manager)),
             "hooks": ("🪝 Hooks", HooksTab(self.config_manager, self.backup_manager)),
-            "rules": ("📋 Rules", RulesTab(self.config_manager, self.backup_manager)),
-            "worktrees": ("🌿 Worktrees", WorktreesTab(self.config_manager, self.backup_manager)),
-            "agentteams": ("🤝 Agent Teams", AgentTeamsTab(self.config_manager, self.backup_manager)),
-            "remotecontrol": ("📡 Remote Control", RemoteControlTab(self.config_manager, self.backup_manager)),
             "statusline": ("📊 Statusline", StatuslineTab(self.config_manager, self.backup_manager)),
             "memory": ("💾 Memory", MemoryTab(self.config_manager, self.backup_manager)),
             "usage": ("📈 Usage & Analytics", UsageTab(self.config_manager, self.backup_manager)),
@@ -188,13 +168,10 @@ class ClaudeDBApp(QMainWindow):
         }
 
         # Default tab order (using keys)
-        # NEW tabs at front, OLD tabs kept for comparison
-        default_row1 = ["userconfig", "projectconfig", "settings", "claudemd", "claudelocalmd",
-                        "agents", "commands", "skills", "prompts", "mcp", "plugins", "hooks",
-                        "rules", "statusline"]
-        default_row2 = ["memory", "permissions", "usage", "worktrees", "agentteams", "remotecontrol",
-                        "modelconfig", "clireference", "styles", "claudekit", "tools", "projects",
-                        "about", "preferences"]
+        default_row1 = ["userconfig", "projectconfig", "claudemd", "prompts", "plugins",
+                        "hooks", "statusline", "memory"]
+        default_row2 = ["usage", "modelconfig", "clireference", "styles", "claudekit",
+                        "tools", "projects", "about", "preferences"]
 
         # Load custom tab configuration from config
         row1_tabs, row2_tabs = self.load_tab_configuration(self.all_tabs, default_row1, default_row2)

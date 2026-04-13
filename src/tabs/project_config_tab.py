@@ -29,6 +29,10 @@ from tabs.commands_tab import CommandsTab
 from tabs.mcp_tab import MCPTab
 from tabs.skills_tab import SkillsTab
 from tabs.projects_tab import ProjectsTab
+from tabs.rules_tab import RulesTab
+from tabs.worktrees_tab import WorktreesTab
+from tabs.agent_teams_tab import AgentTeamsTab
+from tabs.remote_control_tab import RemoteControlTab
 
 
 class ProjectClaudeMDSubTab(QWidget):
@@ -401,6 +405,22 @@ class ProjectConfigTab(QWidget):
         # Projects sub-tab (projects management - simplified to only Project Info)
         projects_tab = ProjectsTab(self.config_manager, self.backup_manager)
         self.sub_tabs.addTab(projects_tab, "📂 Projects")
+
+        # Rules sub-tab (project-level rules)
+        rules_tab = RulesTab(self.config_manager, self.backup_manager)
+        self.sub_tabs.addTab(rules_tab, "📋 Rules")
+
+        # Worktrees sub-tab (project git worktrees)
+        worktrees_tab = WorktreesTab(self.config_manager, self.backup_manager)
+        self.sub_tabs.addTab(worktrees_tab, "🌿 Worktrees")
+
+        # Agent Teams reference sub-tab
+        agent_teams_tab = AgentTeamsTab(self.config_manager, self.backup_manager)
+        self.sub_tabs.addTab(agent_teams_tab, "👥 Agent Teams")
+
+        # Remote Control reference sub-tab
+        remote_control_tab = RemoteControlTab(self.config_manager, self.backup_manager)
+        self.sub_tabs.addTab(remote_control_tab, "🌐 Remote Control")
 
         layout.addWidget(self.sub_tabs, 1)
 
