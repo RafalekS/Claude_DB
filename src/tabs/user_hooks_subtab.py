@@ -87,7 +87,7 @@ class UserHooksSubTab(QWidget):
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official hooks documentation")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://code.claude.com/en/docs/claude-code/hooks")
+            QUrl("https://code.claude.com/docs/en/hooks")
         ))
 
         header_layout.addWidget(header)

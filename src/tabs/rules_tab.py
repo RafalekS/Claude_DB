@@ -411,11 +411,12 @@ class RulesTab(QWidget):
 
         # Footer
         footer = QLabel(
-            "💡 <b>Rules</b> are Markdown files that provide reusable instructions to Claude. "
-            "Use <b>paths:</b> frontmatter to scope a rule to specific directories. "
-            "Rules in <code>~/.claude/rules/</code> apply globally; "
-            "rules in <code>.claude/rules/</code> apply to the current project. "
-            "Use <code>claudeMdExcludes</code> in settings to prevent loading rules from certain paths."
+            "💡 <b>Rules</b> are Markdown files providing modular instructions to Claude. "
+            "Rules without <b>paths:</b> frontmatter load at session start like CLAUDE.md; "
+            "rules with <b>paths:</b> load only when Claude reads a matching file. "
+            "User rules in <code>~/.claude/rules/</code> apply to all projects; "
+            "project rules in <code>.claude/rules/</code> apply to the current project. "
+            "Use <code>claudeMdExcludes</code> in settings to skip rules from specific paths."
         )
         footer.setWordWrap(True)
         footer.setStyleSheet(

@@ -20,6 +20,7 @@ class ConfigManager:
         self.mcp_user_file = self.claude_dir.parent / ".claude.json"  # User scope (~/.claude.json)
         self.mcp_project_file = Path.cwd() / ".mcp.json"  # Project scope (<project>/.mcp.json)
         self.claude_md = self.claude_dir / "CLAUDE.md"
+        self.claude_local_md = self.claude_dir / "CLAUDE.local.md"
         self.agents_dir = self.claude_dir / "agents"
         self.commands_dir = self.claude_dir / "commands"
         self.hooks_dir = self.claude_dir / "hooks"
@@ -175,6 +176,16 @@ class ConfigManager:
     def save_claude_md(self, content: str) -> None:
         """Save CLAUDE.md content"""
         self.write_text_file(self.claude_md, content)
+
+    def get_claude_local_md(self) -> str:
+        """Get CLAUDE.local.md content (returns empty string if file doesn't exist)"""
+        if not self.claude_local_md.exists():
+            return ""
+        return self.read_text_file(self.claude_local_md)
+
+    def save_claude_local_md(self, content: str) -> None:
+        """Save CLAUDE.local.md content"""
+        self.write_text_file(self.claude_local_md, content)
 
     # Search
     def search_in_files(self, query: str, file_type: str = 'all') -> List[Dict]:
