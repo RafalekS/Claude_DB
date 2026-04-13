@@ -4,41 +4,171 @@ All significant changes made across the full refactor and feature update session
 
 ---
 
-## Original Requirements (from CLAUDE.md)
+## Session Prompt — What Was Asked
 
-These were the 5 tasks specified in the project's CLAUDE.md:
-
-| # | Request | Status |
-|---|---------|--------|
-| 1 | Review codebase — scan for bugs, hardcoded values, dead code, unused/duplicate modules; move config to config files | ✅ Done — Phases 1–2, v2.0.1–2.0.2 |
-| 2 | Skills tab — review and merge with [skills_builder](https://github.com/RafalekS/skills_builder) project | ✅ Done — Phase 4 |
-| 3 | MCP tab — review and merge with [MCP_Search](https://github.com/RafalekS/MCP_Search) project | ✅ Done — Phase 3 |
-| 4 | Refactor code using Coding skill; use updated docs from code.claude.com/docs/en | ✅ Done — Phases 1–5 |
-| 5 | Compact the UI, make it modern and professional | ⚠️ Partially done — tab bar layout improved, dual-row tabs, theme system; deeper spacing/compactness pass still pending |
+> Review this project using my coding skill and @python-reviewer.
+>
+> Claude_DB is a PyQt6 desktop application for managing Claude Code configuration.
+> After the code review, cross-reference the implementation against the current Claude Code
+> documentation at https://code.claude.com/docs/en/ — specifically check:
+>
+> - Skills: are they structured, named, and invoked correctly?
+> - Hooks (PreToolUse / PostToolUse / Stop): correct event names, matcher syntax, exit codes?
+> - Agents
+> - Commands
+> - Statusline
+> - Permissions
+> - Plugins / MCP servers: registration format, config schema, tool naming conventions?
+> - Project config (.claude/settings.json): valid fields and values?
+> - User config (~/.claude/settings.json): any fields the app reads/writes correctly?
+>
+> Flag anything the app does that conflicts with or is now outdated relative to the docs.
 
 ---
 
-## 9-Point Follow-Up Review
+## Code Review Findings (33 Items)
 
-These were 9 specific items raised in a follow-up session after the initial refactor:
+Full code review produced 33 findings. Status of each:
 
-| # | Request | Status |
+### CRITICAL
+
+| # | Issue | Status |
+|---|-------|--------|
+| 1 | Command injection — `shell=True` with list arg in `plugins_tab.py`, `mcp_tab.py`, `plugin_marketplace_browser.py` | ✅ Fixed |
+| 2 | `statusline` key written as `"statusline"` — Claude Code uses `"statusLine"` (camelCase) — silent data loss | ✅ Fixed |
+
+### HIGH
+
+| # | Issue | Status |
+|---|-------|--------|
+| 3 | `_notify_watchers` never called from `save_settings` — `watch_file()` callbacks never fire | ✅ Fixed |
+| 4 | Cache key mismatch in `SettingsManager` — `_load_settings` uses caller-supplied key, `save_settings` derives its own | ✅ Fixed |
+| 5 | `browse_project_folder` always resets text field to home instead of selected folder | ✅ Fixed |
+| 6 | Non-atomic file writes in `hooks_tab.py` and `preferences_tab.py` — crash mid-write truncates settings | ✅ Fixed |
+| 7 | `apply_theme_change` wipes ALL per-widget stylesheets — widgets unstyled after theme switch until restart | ✅ Fixed |
+| 8 | `setFixedWidth` on `QPushButton` in 4 files (violates project standard) | ✅ Fixed |
+| 9 | Silent `except: pass` at module level in `skills_tab.py` swallows config load failures | ✅ Fixed |
+| 10 | `sys.path.insert` in 46 files — global path mutation at import time | ✅ Fixed |
+| 11 | `print()` used instead of `logging` in 25+ locations — bypasses file logging entirely | ✅ Fixed |
+| 12 | Bare `except` blocks in `github_client.py`, `mcp_tab.py`, `preferences_tab.py` | ✅ Fixed |
+| 13 | MCP config path wrong — app reads `~/.claude/.mcp.json`; correct paths are `~/.claude.json` (user) and `<proj>/.mcp.json` | ✅ Fixed |
+| 14 | 17 hook events missing — app had 9, docs define 26 | ✅ Fixed — all 26 now present |
+| 15 | Hook timeout default 60s — Claude Code default is 600s | ✅ Fixed |
+| 16 | Hook handler types `http`, `prompt`, `agent` not exposed — app only offered `command` | ✅ Fixed |
+
+### MEDIUM
+
+| # | Issue | Status |
+|---|-------|--------|
+| 17 | Hardcoded window geometry `setGeometry(100,100,1200,800)` — should use `resize()` | ✅ Fixed |
+| 18 | Hardcoded stylesheet hex colours in `main.py` | ✅ Fixed |
+| 19 | Config file path repeated in 5 modules with different depth counts | ✅ Fixed |
+| 20 | Module-level config reads at import time in `agents_tab.py`, `skills_tab.py` | ✅ Fixed |
+| 21 | Paths from config not expanded with `expanduser`/`expandvars` | ✅ Fixed |
+| 22 | Skill `name` field incorrectly required — docs say it's optional | ✅ Fixed |
+| 23 | 11 of 13 skill frontmatter fields not validated or exposed (`argument-hint`, `model`, etc.) | ⚠️ Partial — `argument-hint` and `model` added to dialogs; remaining 9 fields still not exposed |
+| 24 | Agent frontmatter has non-standard fields (`displayName`, `category`) and is missing 11 documented fields | ✅ Fixed — non-standard fields removed; standard fields corrected |
+| 25 | Agent model field missing `inherit` option and full model IDs | ✅ Fixed |
+| 26 | `defaultMode` permission setting not exposed anywhere in app | ⏳ Pending |
+| 27 | Redundant `import json` / `from utils import theme` inside method body in `main.py` | ✅ Fixed |
+| 28 | Hook exit code tooltip misleading — exit 2 behaviour differs per event type | ⏳ Pending |
+
+### LOW
+
+| # | Issue | Status |
+|---|-------|--------|
+| 29 | Shebang uses `python3` — project rule says use `python` | ✅ Fixed |
+| 30 | Docs URL buttons point to old domain `docs.claude.com` | ✅ Fixed |
+| 31 | `mcp_validator.py` whitelists `python3` instead of `python` | ✅ Fixed |
+| 32 | Agent `color` field missing `pink` | ✅ Fixed |
+| 33 | Commands/skills merge not explained in UI | ⏳ Pending |
+
+---
+
+## Feature Gap Analysis (39 Items)
+
+After the code review, a gap analysis against current Claude Code docs produced 39 items.
+The user confirmed: implement all of them.
+
+### Hook Events — 17 missing events added (#1–17)
+
+| # | Feature | Status |
 |---|---------|--------|
-| 1 | UI compactness — tighten spacing, make the app more compact and professional | ⏳ Pending — not yet implemented |
-| 2 | Hooks tab — expand hook events list to match current Claude Code docs (was only 9 events) | ✅ Done — expanded to 26 events across all 3 hook files |
-| 3 | Info/help labels — verify all help text against current docs at code.claude.com/docs/en | ⏳ Pending — not yet verified/updated |
-| 4 | CLI Reference tab — add missing flags and subcommands from current docs | ✅ Done — added 12+ flags, config/doctor/bug/update subcommands, slash commands, pipe/JSON patterns |
-| 5 | File structure — verify .claude/ directory structure shown in app against official docs | ⏳ Pending — not yet verified |
-| 6 | User Settings — add new settings keys (autoMemoryEnabled, autoMemoryDirectory, claudeMdExcludes, agentsAllowed) | ✅ Done — new Advanced Settings section in user_settings_subtab.py |
-| 7 | Rules tab — create a new tab to manage .claude/rules/ files with frontmatter support | ✅ Done — rules_tab.py (435 lines), registered in main.py |
-| 8 | Skills Discover — make source repos pane resizable | ✅ Done — QSplitter (horizontal + vertical) in _create_source_repos_tab() |
-| 9 | Hardcoded colours — replace hex values with theme variables across all files | ✅ Done — 8 files updated, 10 hex values replaced |
+| 1 | `PostToolUseFailure` event | ✅ Done |
+| 2 | `PostCompact` event | ✅ Done |
+| 3 | `SubagentStart` event | ✅ Done |
+| 4 | `InstructionsLoaded` event | ✅ Done |
+| 5 | `PermissionRequest` event | ✅ Done |
+| 6 | `PermissionDenied` event | ✅ Done |
+| 7 | `TaskCreated` event | ✅ Done |
+| 8 | `TaskCompleted` event | ✅ Done |
+| 9 | `StopFailure` event | ✅ Done |
+| 10 | `TeammateIdle` event | ✅ Done |
+| 11 | `CwdChanged` event | ✅ Done |
+| 12 | `FileChanged` event | ✅ Done |
+| 13 | `ConfigChange` event | ✅ Done |
+| 14 | `WorktreeCreate` event | ✅ Done |
+| 15 | `WorktreeRemove` event | ✅ Done |
+| 16 | `Elicitation` event | ✅ Done |
+| 17 | `ElicitationResult` event | ✅ Done |
 
-**Additional items completed in the same session:**
-- Skills dialogs: added `argument-hint` and `model` fields; removed non-standard `display_name`
-- Agents dialogs: removed `Display Name`/`Category`; corrected model list to `["inherit", "sonnet", "opus", "haiku"]`; added pink to colour picker
-- Version system: created `src/version.py`; pre-commit hook auto-increments patch number
-- Model list updated to include Claude 4.6 Sonnet/Opus/Haiku 4.5
+### Hook Handler Types — 3 missing types documented (#18–20)
+
+| # | Feature | Status |
+|---|---------|--------|
+| 18 | `http` handler type | ✅ Done — documented in info panel and templates |
+| 19 | `prompt` handler type | ✅ Done |
+| 20 | `agent` handler type | ✅ Done |
+
+### Settings Keys — 4 new keys (#21–24)
+
+| # | Feature | Status |
+|---|---------|--------|
+| 21 | `autoMemoryEnabled` setting | ✅ Done |
+| 22 | `autoMemoryDirectory` setting | ✅ Done |
+| 23 | `claudeMdExcludes` setting | ✅ Done |
+| 24 | `agentsAllowed` setting | ✅ Done |
+
+### New Features / Tabs (#25–29)
+
+| # | Feature | Status |
+|---|---------|--------|
+| 25 | Rules Manager tab — `.claude/rules/` with frontmatter and `paths:` scoping | ✅ Done — `rules_tab.py` |
+| 26 | CLAUDE.local.md editor — create/edit UI (currently info-text only) | ⏳ Pending |
+| 27 | Worktrees tab — create/list/remove git worktrees | ⏳ Pending |
+| 28 | Agent Teams UI — multi-agent orchestration config | ⏳ Pending |
+| 29 | Remote Control — configure remote Claude Code access via API | ⏳ Pending |
+
+### CLI Reference — Missing Flags (#30–39)
+
+| # | Feature | Status |
+|---|---------|--------|
+| 30 | `--system-prompt` flag | ✅ Done |
+| 31 | `--no-markdown` flag | ✅ Done |
+| 32 | `--ide` flag | ✅ Done |
+| 33 | `--debug` flag | ✅ Done |
+| 34 | `--mcp-config <path>` flag | ✅ Done |
+| 35 | `--permission-prompt-tool` flag | ✅ Done |
+| 36 | `claude config get/set/list` subcommand | ✅ Done |
+| 37 | `claude doctor` subcommand | ✅ Done |
+| 38 | `claude bug` subcommand | ✅ Done |
+| 39 | Slash commands reference (`/help`, `/clear`, `/compact`, etc.) | ✅ Done |
+
+---
+
+### Still Pending (from all sessions)
+
+| Item | Description |
+|------|-------------|
+| Review #23 | Remaining 9 skill frontmatter fields not exposed in dialogs |
+| Review #26 | `defaultMode` permission setting UI |
+| Review #28 | Hook exit code tooltip accuracy |
+| Review #33 | Commands/skills merge explanation in UI |
+| Feature #26 | CLAUDE.local.md editor |
+| Feature #27 | Worktrees tab |
+| Feature #28 | Agent Teams UI |
+| Feature #29 | Remote Control tab |
+| Original #5 | Deeper UI compactness / spacing pass |
 
 ---
 
