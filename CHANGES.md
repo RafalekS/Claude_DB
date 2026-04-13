@@ -85,6 +85,52 @@ Full code review produced 33 findings. Status of each:
 
 ---
 
+## Follow-Up Prompt — 9 Points
+
+> 1.) themes and their application - has this been looked at and improved? Also need you to have a serious look at trying to compact the UI. There is a lot of clutter on the screen.
+>
+> 2.) what about styles, formats, fonts, colors, visual elements? have you checked if anything is hardcoded or not?
+> have you checked if they are uniform and look the same throughout the application?
+> I can already tell that for example all the widgets displaying json, variables, parameters, list of files, contents of files, etc. look different in almost every window, tab, module, etc.!
+>
+> 3.) all the info in widgets, labels, etc. explaining settings, explaining claude config, etc. - was all this verified against changed documentation from
+> https://code.claude.com/docs/en
+> and further
+> https://code.claude.com/docs/en/features-overview
+>
+> 4.) have you added any new things from the website like rules?
+> https://code.claude.com/docs/en/memory#organize-rules-with-claude/rules/
+> what about subagents? Have you added any of this to the application?
+> https://code.claude.com/docs/en/sub-agents
+> what about settings - very important - have you verified this against the program?
+> https://code.claude.com/docs/en/settings
+>
+> 5.) Have you verified ever changing file structure from
+> https://code.claude.com/docs/en/claude-directory
+>
+> 6.) Find all of the new things in claude that are not in the program, give me a list and I will tell you which ones to add.
+>
+> 7.) Have you verified tab CLI Reference against the website?
+> We cannot have outdated info if this program is to be a source of help for users of claude code!
+>
+> 8.) were all the tables verified against coding skill? format persistence, etc.
+>
+> 9.) skill sources widget in Preferences/Skills need to have an option to change its height (needs a draggable divider at the end)
+
+| Point | Status |
+|-------|--------|
+| 1 — UI compactness / theme application | ⏳ Pending |
+| 2 — Hardcoded styles, fonts, colors; widget uniformity | ⚠️ Partial — hex colours replaced with theme vars across 8 files; widget uniformity pass not done |
+| 3 — Verify all info labels against docs | ⏳ Pending |
+| 4 — New features: Rules tab, subagents, settings keys | ✅ Done — Rules tab added; autoMemoryEnabled/Directory, claudeMdExcludes, agentsAllowed added to settings UI |
+| 5 — Verify .claude/ file structure against docs | ⏳ Pending |
+| 6 — List new Claude features not in app | ✅ Done — 39-item gap analysis produced (see below) |
+| 7 — Verify CLI Reference tab against docs | ✅ Done — 12+ flags, subcommands, slash commands added |
+| 8 — Table state persistence against coding skill | ✅ Done — UIStateManager wired to all tables via BaseLibraryDialog |
+| 9 — Resizable skill sources widget | ✅ Done — QSplitter (horizontal + vertical) in skills_tab.py |
+
+---
+
 ## Feature Gap Analysis (39 Items)
 
 After the code review, a gap analysis against current Claude Code docs produced 39 items.
