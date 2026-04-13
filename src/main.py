@@ -66,6 +66,9 @@ from tabs.preferences_tab import PreferencesTab
 from tabs.user_config_tab import UserConfigTab
 from tabs.project_config_tab import ProjectConfigTab
 from tabs.rules_tab import RulesTab
+from tabs.worktrees_tab import WorktreesTab
+from tabs.agent_teams_tab import AgentTeamsTab
+from tabs.remote_control_tab import RemoteControlTab
 
 from utils.config_manager import ConfigManager
 from utils.backup_manager import BackupManager
@@ -168,6 +171,9 @@ class ClaudeDBApp(QMainWindow):
             "plugins": ("🧩 Plugins", PluginsTab(self.config_manager, self.backup_manager)),
             "hooks": ("🪝 Hooks", HooksTab(self.config_manager, self.backup_manager)),
             "rules": ("📋 Rules", RulesTab(self.config_manager, self.backup_manager)),
+            "worktrees": ("🌿 Worktrees", WorktreesTab(self.config_manager, self.backup_manager)),
+            "agentteams": ("🤝 Agent Teams", AgentTeamsTab(self.config_manager, self.backup_manager)),
+            "remotecontrol": ("📡 Remote Control", RemoteControlTab(self.config_manager, self.backup_manager)),
             "statusline": ("📊 Statusline", StatuslineTab(self.config_manager, self.backup_manager)),
             "memory": ("💾 Memory", MemoryTab(self.config_manager, self.backup_manager)),
             "usage": ("📈 Usage & Analytics", UsageTab(self.config_manager, self.backup_manager)),
@@ -186,8 +192,9 @@ class ClaudeDBApp(QMainWindow):
         default_row1 = ["userconfig", "projectconfig", "settings", "claudemd", "claudelocalmd",
                         "agents", "commands", "skills", "prompts", "mcp", "plugins", "hooks",
                         "rules", "statusline"]
-        default_row2 = ["memory", "permissions", "usage", "modelconfig", "clireference", "styles",
-                        "claudekit", "tools", "projects", "about", "preferences"]
+        default_row2 = ["memory", "permissions", "usage", "worktrees", "agentteams", "remotecontrol",
+                        "modelconfig", "clireference", "styles", "claudekit", "tools", "projects",
+                        "about", "preferences"]
 
         # Load custom tab configuration from config
         row1_tabs, row2_tabs = self.load_tab_configuration(self.all_tabs, default_row1, default_row2)
