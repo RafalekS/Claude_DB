@@ -1435,7 +1435,7 @@ class {class_name}Tab(QWidget):
                     padding: 15px;
                     background-color: {theme_colors["background"]};
                     color: {theme_colors["foreground"]};
-                    border: 2px solid {theme_colors["brightBluef"]};
+                    border: 2px solid {theme_colors["brightBlue"]};
                     border-radius: 3px;
                     font-size: {theme.FONT_SIZE_NORMAL}px;
                 }}

@@ -20,10 +20,11 @@ env/
 *.swp
 *.swo
 
-# Claude_DB runtime files
+# Claude_DB runtime files — written by the app, user-specific
 cache/
 logs/
 config/ui_state.json
+config/config.json
 
 # Backups — generated locally, never commit
 backup/
