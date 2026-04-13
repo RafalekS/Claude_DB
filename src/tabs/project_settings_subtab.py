@@ -226,10 +226,14 @@ class ProjectSettingsSubTab(QWidget):
 
         model_combo = QComboBox()
         model_combo.addItems([
-            "claude-sonnet-4-5-20250929 (Sonnet 4.5 - Best for complex coding)",
-            "claude-haiku-4-5-20251001 (Haiku 4.5 - Fastest, near-frontier)",
-            "claude-opus-4-1-20250805 (Opus 4.1 - Exceptional reasoning)",
-            "claude-sonnet-3-5-v2@20241022 (Sonnet 3.5 v2)",
+            # Claude 4.x (latest)
+            "claude-sonnet-4-6 (Sonnet 4.6 — Best coding model)",
+            "claude-opus-4-6 (Opus 4.6 — Deepest reasoning)",
+            "claude-haiku-4-5-20251001 (Haiku 4.5 — Fastest, cost-efficient)",
+            # Claude 4.5
+            "claude-sonnet-4-5-20250929 (Sonnet 4.5)",
+            "claude-opus-4-5 (Opus 4.5 — Extended thinking)",
+            # Claude 3.5
             "claude-3-5-sonnet-20241022 (Sonnet 3.5)",
             "claude-3-5-haiku-20241022 (Haiku 3.5)",
         ])
@@ -627,7 +631,7 @@ class ProjectSettingsSubTab(QWidget):
 
             # Load model
             if scope in self.model_combos:
-                model_id = settings.get("model", "claude-sonnet-4-5-20250929")
+                model_id = settings.get("model", "claude-sonnet-4-6")
                 for i in range(self.model_combos[scope].count()):
                     if model_id in self.model_combos[scope].itemText(i):
                         self.model_combos[scope].setCurrentIndex(i)

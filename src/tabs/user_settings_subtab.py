@@ -581,7 +581,7 @@ class UserSettingsSubTab(QWidget):
             settings = self.settings_manager.get_user_settings()
 
             # Load model
-            model_id = settings.get("model", "claude-sonnet-4-5-20250929")
+            model_id = settings.get("model", "claude-sonnet-4-6")
             for i in range(self.model_combo.count()):
                 if model_id in self.model_combo.itemText(i):
                     self.model_combo.setCurrentIndex(i)

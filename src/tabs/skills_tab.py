@@ -969,33 +969,38 @@ class SkillsTab(QWidget):
             dialog = EditSkillDialog(skill_name, content, self)
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 new_data = dialog.get_skill_data()
-                # Regenerate content with frontmatter
                 fm_lines = [
                     "---",
                     f"name: {skill_name}",
                     f"description: {new_data['description']}",
-                    f"allowed-tools: {new_data['allowed_tools']}",
                 ]
+                if new_data.get('allowed_tools'):
+                    fm_lines.append(f"allowed-tools: {new_data['allowed_tools']}")
                 if new_data.get('argument_hint'):
                     fm_lines.append(f"argument-hint: {new_data['argument_hint']}")
                 if new_data.get('model'):
                     fm_lines.append(f"model: {new_data['model']}")
+                if new_data.get('effort'):
+                    fm_lines.append(f"effort: {new_data['effort']}")
+                if new_data.get('paths'):
+                    fm_lines.append(f"paths: {new_data['paths']}")
+                if new_data.get('context'):
+                    fm_lines.append(f"context: {new_data['context']}")
+                if new_data.get('user_invocable'):
+                    fm_lines.append("user-invocable: true")
+                if new_data.get('disable_model_invocation'):
+                    fm_lines.append("disable-model-invocation: true")
+                if new_data.get('agent'):
+                    fm_lines.append("agent: true")
+                if new_data.get('shell'):
+                    fm_lines.append("shell: true")
+                if new_data.get('hooks'):
+                    fm_lines.append(f"hooks:\n{new_data['hooks']}")
                 fm_lines.append("---")
                 new_frontmatter = "\n".join(fm_lines)
-                new_content = f"""{new_frontmatter}
-
-# {skill_name}
-
-{new_data['description']}
-
-## Usage
-
-Describe how to use this skill.
-
-## Examples
-
-Provide examples of using this skill.
-"""
+                # Preserve existing body content
+                body = new_data.get('body', '')
+                new_content = f"{new_frontmatter}\n{body}"
                 with open(skill_md, 'w', encoding='utf-8') as f:
                     f.write(new_content)
                 self.load_skills()
@@ -1029,12 +1034,29 @@ Provide examples of using this skill.
                 "---",
                 f"name: {skill_name}",
                 f"description: {skill_data['description']}",
-                f"allowed-tools: {skill_data['allowed_tools']}",
             ]
+            if skill_data.get('allowed_tools'):
+                fm_lines.append(f"allowed-tools: {skill_data['allowed_tools']}")
             if skill_data.get('argument_hint'):
                 fm_lines.append(f"argument-hint: {skill_data['argument_hint']}")
             if skill_data.get('model'):
                 fm_lines.append(f"model: {skill_data['model']}")
+            if skill_data.get('effort'):
+                fm_lines.append(f"effort: {skill_data['effort']}")
+            if skill_data.get('paths'):
+                fm_lines.append(f"paths: {skill_data['paths']}")
+            if skill_data.get('context'):
+                fm_lines.append(f"context: {skill_data['context']}")
+            if skill_data.get('user_invocable'):
+                fm_lines.append("user-invocable: true")
+            if skill_data.get('disable_model_invocation'):
+                fm_lines.append("disable-model-invocation: true")
+            if skill_data.get('agent'):
+                fm_lines.append("agent: true")
+            if skill_data.get('shell'):
+                fm_lines.append("shell: true")
+            if skill_data.get('hooks'):
+                fm_lines.append(f"hooks:\n{skill_data['hooks']}")
             fm_lines.append("---")
             frontmatter = "\n".join(fm_lines)
             content = f"""{frontmatter}
@@ -1258,69 +1280,105 @@ class NewSkillDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Create New Skill")
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(560)
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
 
         form = QFormLayout()
-        form.setSpacing(8)
+        form.setSpacing(6)
 
-        # Name field
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., my-awesome-skill")
         form.addRow("Skill Name*:", self.name_edit)
 
-        # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText("Use when you need to... / Helps with...")
-        self.description_edit.setMinimumHeight(80)
-        self.description_edit.setMaximumHeight(120)
+        self.description_edit.setMinimumHeight(70)
+        self.description_edit.setMaximumHeight(100)
         form.addRow("Description*:", self.description_edit)
 
-        # Argument hint (shown as CLI hint when invoking the skill)
         self.argument_hint_edit = QLineEdit()
-        self.argument_hint_edit.setPlaceholderText("e.g., <file-path> or <query> (optional)")
+        self.argument_hint_edit.setPlaceholderText("e.g., <file-path> (optional)")
         form.addRow("Argument Hint:", self.argument_hint_edit)
 
-        # Model override
         self.model_combo = QComboBox()
         self.model_combo.addItems(["(default)", "claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"])
         form.addRow("Model:", self.model_combo)
 
+        self.effort_combo = QComboBox()
+        self.effort_combo.addItems(["(default)", "low", "normal", "high"])
+        self.effort_combo.setToolTip("Thinking effort / token budget for this skill")
+        form.addRow("Effort:", self.effort_combo)
+
+        self.paths_edit = QLineEdit()
+        self.paths_edit.setPlaceholderText("e.g., src/**/*.py, tests/ (comma-separated globs, optional)")
+        self.paths_edit.setToolTip("Limit this skill to specific file paths (glob patterns)")
+        form.addRow("Paths:", self.paths_edit)
+
+        self.context_edit = QLineEdit()
+        self.context_edit.setPlaceholderText("Path to context file or brief context note (optional)")
+        self.context_edit.setToolTip("Additional context file path or description")
+        form.addRow("Context:", self.context_edit)
+
         layout.addLayout(form)
 
-        # Tools checkboxes
+        # Boolean flags
+        flags_label = QLabel("Flags:")
+        flags_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
+        layout.addWidget(flags_label)
+
+        flags_layout = QHBoxLayout()
+        flags_layout.setSpacing(16)
+        self.user_invocable_cb = QCheckBox("user-invocable")
+        self.user_invocable_cb.setToolTip("Users can invoke this skill directly with /skill-name")
+        self.disable_model_cb = QCheckBox("disable-model-invocation")
+        self.disable_model_cb.setToolTip("Disable model calls within this skill")
+        self.agent_cb = QCheckBox("agent")
+        self.agent_cb.setToolTip("Run this skill as an agent subagent")
+        self.shell_cb = QCheckBox("shell")
+        self.shell_cb.setToolTip("Allow shell command execution in this skill")
+        for cb in (self.user_invocable_cb, self.disable_model_cb, self.agent_cb, self.shell_cb):
+            cb.setStyleSheet(f"color: {theme.FG_PRIMARY};")
+            flags_layout.addWidget(cb)
+        flags_layout.addStretch()
+        layout.addLayout(flags_layout)
+
+        # Hooks field
+        hooks_label = QLabel("Hooks (YAML, optional):")
+        hooks_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
+        layout.addWidget(hooks_label)
+        self.hooks_edit = QTextEdit()
+        self.hooks_edit.setPlaceholderText("PreToolUse:\n  - command: echo pre-tool")
+        self.hooks_edit.setMaximumHeight(70)
+        self.hooks_edit.setStyleSheet(theme.get_text_edit_style())
+        layout.addWidget(self.hooks_edit)
+
+        # Allowed Tools checkboxes
         tools_label = QLabel("Allowed Tools (optional):")
         tools_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
         layout.addWidget(tools_label)
 
         self.tool_checkboxes = {}
         tools_grid = QGridLayout()
-        tools_grid.setSpacing(5)
-
-        # Create checkboxes in a 3-column grid - default Read, Grep, Glob checked
+        tools_grid.setSpacing(4)
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
             checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
-            # Default to Read, Grep, Glob checked
             if tool in ["Read", "Grep", "Glob"]:
                 checkbox.setChecked(True)
             self.tool_checkboxes[tool] = checkbox
-            row = idx // 3
-            col = idx % 3
-            tools_grid.addWidget(checkbox, row, col)
+            tools_grid.addWidget(checkbox, idx // 4, idx % 4)
 
         tools_widget = QWidget()
         tools_widget.setLayout(tools_grid)
-        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;")
+        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: 6px; border-radius: 3px;")
         layout.addWidget(tools_widget)
 
-        info_label = QLabel("* Required fields\n\nThe skill will be created with YAML frontmatter.")
-        info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
+        info_label = QLabel("* Required fields. The skill will be created with YAML frontmatter.")
+        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -1339,17 +1397,23 @@ class NewSkillDialog(QDialog):
         self.accept()
 
     def get_skill_data(self):
-        # Collect checked tools
-        selected_tools = [tool for tool, checkbox in self.tool_checkboxes.items() if checkbox.isChecked()]
-        tools_str = ", ".join(selected_tools) if selected_tools else ""
-
+        selected_tools = [t for t, cb in self.tool_checkboxes.items() if cb.isChecked()]
         model_val = self.model_combo.currentText()
+        effort_val = self.effort_combo.currentText()
         return {
             'name': self.name_edit.text().strip(),
             'description': self.description_edit.toPlainText().strip(),
             'argument_hint': self.argument_hint_edit.text().strip(),
             'model': "" if model_val == "(default)" else model_val,
-            'allowed_tools': tools_str
+            'effort': "" if effort_val == "(default)" else effort_val,
+            'paths': self.paths_edit.text().strip(),
+            'context': self.context_edit.text().strip(),
+            'allowed_tools': ", ".join(selected_tools),
+            'user_invocable': self.user_invocable_cb.isChecked(),
+            'disable_model_invocation': self.disable_model_cb.isChecked(),
+            'agent': self.agent_cb.isChecked(),
+            'shell': self.shell_cb.isChecked(),
+            'hooks': self.hooks_edit.toPlainText().strip(),
         }
 
 
@@ -1360,93 +1424,135 @@ class EditSkillDialog(QDialog):
         super().__init__(parent)
         self.skill_name = skill_name
         self.setWindowTitle(f"Edit Skill: {skill_name}")
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(560)
+        # Preserve original body (everything after closing ---)
+        import re
+        body_match = re.search(r'^---\s*\n.*?\n---\s*\n(.*)', content, re.DOTALL)
+        self._body = body_match.group(1) if body_match else content
         self.init_ui(content)
 
     def init_ui(self, content):
         layout = QVBoxLayout(self)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
 
-        # Parse YAML frontmatter
         import re
         frontmatter_match = re.search(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
-        if frontmatter_match:
-            frontmatter_text = frontmatter_match.group(1)
-            desc_match = re.search(r'description:\s*(.+)', frontmatter_text)
-            tools_match = re.search(r'allowed-tools:\s*(.+)', frontmatter_text)
-            arg_hint_match = re.search(r'argument-hint:\s*(.+)', frontmatter_text)
-            model_match = re.search(r'model:\s*(.+)', frontmatter_text)
+        fm = frontmatter_match.group(1) if frontmatter_match else ""
 
-            parsed_desc = desc_match.group(1).strip() if desc_match else ""
-            parsed_tools = tools_match.group(1).strip() if tools_match else "Read, Grep, Glob"
-            parsed_arg_hint = arg_hint_match.group(1).strip() if arg_hint_match else ""
-            parsed_model = model_match.group(1).strip() if model_match else ""
-        else:
-            parsed_desc = ""
-            parsed_tools = "Read, Grep, Glob"
-            parsed_arg_hint = ""
-            parsed_model = ""
+        def _get(pattern, default=""):
+            m = re.search(pattern, fm)
+            return m.group(1).strip() if m else default
+
+        def _getbool(key):
+            m = re.search(rf'{key}:\s*(true|false)', fm, re.IGNORECASE)
+            return m.group(1).lower() == "true" if m else False
+
+        parsed_desc = _get(r'description:\s*(.+)')
+        parsed_arg_hint = _get(r'argument-hint:\s*(.+)')
+        parsed_model = _get(r'model:\s*(.+)')
+        parsed_effort = _get(r'effort:\s*(.+)')
+        parsed_paths = _get(r'paths:\s*(.+)')
+        parsed_context = _get(r'context:\s*(.+)')
+        parsed_tools = _get(r'allowed-tools:\s*(.+)')
+        parsed_hooks_m = re.search(r'hooks:\s*\n((?:  .+\n?)+)', fm)
+        parsed_hooks = parsed_hooks_m.group(1) if parsed_hooks_m else ""
 
         form = QFormLayout()
-        form.setSpacing(8)
+        form.setSpacing(6)
 
-        # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
-        self.description_edit.setMinimumHeight(80)
-        self.description_edit.setMaximumHeight(120)
+        self.description_edit.setMinimumHeight(70)
+        self.description_edit.setMaximumHeight(100)
         form.addRow("Description*:", self.description_edit)
 
-        # Argument hint
         self.argument_hint_edit = QLineEdit()
         self.argument_hint_edit.setText(parsed_arg_hint)
-        self.argument_hint_edit.setPlaceholderText("e.g., <file-path> or <query> (optional)")
+        self.argument_hint_edit.setPlaceholderText("e.g., <file-path> (optional)")
         form.addRow("Argument Hint:", self.argument_hint_edit)
 
-        # Model override
         self.model_combo = QComboBox()
         self.model_combo.addItems(["(default)", "claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"])
-        current_model = parsed_model if parsed_model else "(default)"
-        idx = self.model_combo.findText(current_model)
+        idx = self.model_combo.findText(parsed_model if parsed_model else "(default)")
         self.model_combo.setCurrentIndex(idx if idx >= 0 else 0)
         form.addRow("Model:", self.model_combo)
 
+        self.effort_combo = QComboBox()
+        self.effort_combo.addItems(["(default)", "low", "normal", "high"])
+        self.effort_combo.setToolTip("Thinking effort / token budget")
+        eidx = self.effort_combo.findText(parsed_effort if parsed_effort else "(default)")
+        self.effort_combo.setCurrentIndex(eidx if eidx >= 0 else 0)
+        form.addRow("Effort:", self.effort_combo)
+
+        self.paths_edit = QLineEdit()
+        self.paths_edit.setText(parsed_paths)
+        self.paths_edit.setPlaceholderText("e.g., src/**/*.py, tests/ (comma-separated globs)")
+        self.paths_edit.setToolTip("Limit this skill to specific file paths")
+        form.addRow("Paths:", self.paths_edit)
+
+        self.context_edit = QLineEdit()
+        self.context_edit.setText(parsed_context)
+        self.context_edit.setPlaceholderText("Path to context file or note (optional)")
+        form.addRow("Context:", self.context_edit)
+
         layout.addLayout(form)
 
-        # Tools checkboxes
+        flags_label = QLabel("Flags:")
+        flags_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
+        layout.addWidget(flags_label)
+
+        flags_layout = QHBoxLayout()
+        flags_layout.setSpacing(16)
+        self.user_invocable_cb = QCheckBox("user-invocable")
+        self.user_invocable_cb.setToolTip("Users can invoke directly with /skill-name")
+        self.user_invocable_cb.setChecked(_getbool("user-invocable"))
+        self.disable_model_cb = QCheckBox("disable-model-invocation")
+        self.disable_model_cb.setToolTip("Disable model calls within this skill")
+        self.disable_model_cb.setChecked(_getbool("disable-model-invocation"))
+        self.agent_cb = QCheckBox("agent")
+        self.agent_cb.setToolTip("Run as an agent subagent")
+        self.agent_cb.setChecked(_getbool("agent"))
+        self.shell_cb = QCheckBox("shell")
+        self.shell_cb.setToolTip("Allow shell command execution")
+        self.shell_cb.setChecked(_getbool("shell"))
+        for cb in (self.user_invocable_cb, self.disable_model_cb, self.agent_cb, self.shell_cb):
+            cb.setStyleSheet(f"color: {theme.FG_PRIMARY};")
+            flags_layout.addWidget(cb)
+        flags_layout.addStretch()
+        layout.addLayout(flags_layout)
+
+        hooks_label = QLabel("Hooks (YAML, optional):")
+        hooks_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
+        layout.addWidget(hooks_label)
+        self.hooks_edit = QTextEdit()
+        self.hooks_edit.setPlainText(parsed_hooks)
+        self.hooks_edit.setPlaceholderText("PreToolUse:\n  - command: echo pre-tool")
+        self.hooks_edit.setMaximumHeight(70)
+        self.hooks_edit.setStyleSheet(theme.get_text_edit_style())
+        layout.addWidget(self.hooks_edit)
+
         tools_label = QLabel("Allowed Tools (optional):")
         tools_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
         layout.addWidget(tools_label)
 
+        existing_tools = {t.strip() for t in parsed_tools.split(',')} if parsed_tools else set()
         self.tool_checkboxes = {}
         tools_grid = QGridLayout()
-        tools_grid.setSpacing(5)
-
-        # Parse existing tools (comma-separated) and create set for lookup
-        existing_tools = set()
-        if parsed_tools:
-            existing_tools = {tool.strip() for tool in parsed_tools.split(',')}
-
-        # Create checkboxes in a 3-column grid
-        for idx, tool in enumerate(AVAILABLE_TOOLS):
+        tools_grid.setSpacing(4)
+        for i, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
             checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
-            # Check if this tool was in the parsed list
-            if tool in existing_tools:
-                checkbox.setChecked(True)
+            checkbox.setChecked(tool in existing_tools)
             self.tool_checkboxes[tool] = checkbox
-            row = idx // 3
-            col = idx % 3
-            tools_grid.addWidget(checkbox, row, col)
+            tools_grid.addWidget(checkbox, i // 4, i % 4)
 
         tools_widget = QWidget()
         tools_widget.setLayout(tools_grid)
-        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;")
+        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: 6px; border-radius: 3px;")
         layout.addWidget(tools_widget)
 
-        info_label = QLabel("* Required fields")
-        info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
+        info_label = QLabel("* Required fields. Skill body content is preserved.")
+        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -1462,14 +1568,21 @@ class EditSkillDialog(QDialog):
         self.accept()
 
     def get_skill_data(self):
-        # Collect checked tools
-        selected_tools = [tool for tool, checkbox in self.tool_checkboxes.items() if checkbox.isChecked()]
-        tools_str = ", ".join(selected_tools) if selected_tools else ""
-
+        selected_tools = [t for t, cb in self.tool_checkboxes.items() if cb.isChecked()]
         model_val = self.model_combo.currentText()
+        effort_val = self.effort_combo.currentText()
         return {
             'description': self.description_edit.toPlainText().strip(),
             'argument_hint': self.argument_hint_edit.text().strip(),
             'model': "" if model_val == "(default)" else model_val,
-            'allowed_tools': tools_str
+            'effort': "" if effort_val == "(default)" else effort_val,
+            'paths': self.paths_edit.text().strip(),
+            'context': self.context_edit.text().strip(),
+            'allowed_tools': ", ".join(selected_tools),
+            'user_invocable': self.user_invocable_cb.isChecked(),
+            'disable_model_invocation': self.disable_model_cb.isChecked(),
+            'agent': self.agent_cb.isChecked(),
+            'shell': self.shell_cb.isChecked(),
+            'hooks': self.hooks_edit.toPlainText().strip(),
+            'body': self._body,
         }
