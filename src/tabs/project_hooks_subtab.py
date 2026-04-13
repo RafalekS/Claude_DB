@@ -297,7 +297,7 @@ class ProjectHooksSubTab(QWidget):
             <p><b>Elicitation / ElicitationResult</b> — When Claude asks user / response received</p>
 
             <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Agent Lifecycle</h3>
-            <p><b>Stop</b> — Agent finishes • <b>StopFailure</b> — Stop hook error</p>
+            <p><b>Stop</b> — Agent finishes (exit 2 prevents stopping) • <b>StopFailure</b> — Turn ends due to API error</p>
             <p><b>SubagentStart / SubagentStop</b> — Subagent begins/ends</p>
             <p><b>TeammateIdle</b> — Agent team member is idle</p>
 
@@ -319,7 +319,7 @@ class ProjectHooksSubTab(QWidget):
             <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Handler Types</h3>
             <p><b>command</b> — Shell command</p>
             <p><b>http</b> — HTTP endpoint call</p>
-            <p><b>prompt</b> — Inject text into conversation</p>
+            <p><b>prompt</b> — Send prompt to a Claude model for yes/no evaluation</p>
             <p><b>agent</b> — Invoke a subagent</p>
 
             <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Example</h3>
@@ -336,7 +336,7 @@ class ProjectHooksSubTab(QWidget):
   }}
 }}</pre>
             <p style="font-size: 11px; color: {theme.FG_SECONDARY};">
-            Exit codes: 0=success, 2=blocking, other=non-blocking • Default timeout: 600s
+            Exit codes: 0=success, 2=blocking, other=non-blocking • Timeouts: command=600s, http/prompt=30s, agent=60s
             </p>
         </body>
         </html>

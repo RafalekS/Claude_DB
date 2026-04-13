@@ -389,7 +389,7 @@ class RulesTab(QWidget):
         docs_btn = QPushButton("📖 Rules Docs")
         docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://code.claude.com/en/docs/claude-code/memory#rules-directory")
+            QUrl("https://code.claude.com/docs/en/memory#organize-rules-with-claude/rules/")
         ))
         header_row.addWidget(header)
         header_row.addStretch()

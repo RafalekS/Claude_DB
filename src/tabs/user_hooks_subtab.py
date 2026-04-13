@@ -228,7 +228,8 @@ class UserHooksSubTab(QWidget):
             "PreCompact, PostCompact, InstructionsLoaded, PermissionRequest/Denied, TaskCreated/Completed, "
             "Elicitation, WorktreeCreate/Remove, TeammateIdle, and more • "
             "<b>Handler types:</b> command, http, prompt, agent • "
-            "<b>Exit codes:</b> 0=success, 2=blocking, other=non-blocking • <b>Default timeout:</b> 600s"
+            "<b>Exit codes:</b> 0=success, 2=blocking, other=non-blocking • "
+            "<b>Default timeouts:</b> command=600s, http=30s, prompt=30s, agent=60s"
         )
         footer.setWordWrap(True)
         footer.setStyleSheet(
@@ -257,8 +258,8 @@ class UserHooksSubTab(QWidget):
             <p><b>ElicitationResult</b> — After elicitation gets a response</p>
 
             <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Agent Lifecycle</h3>
-            <p><b>Stop</b> — Agent finishes a response</p>
-            <p><b>StopFailure</b> — A Stop hook returned non-zero</p>
+            <p><b>Stop</b> — Agent finishes a response (exit 2 prevents stopping)</p>
+            <p><b>StopFailure</b> — Turn ends due to an API error</p>
             <p><b>SubagentStart</b> — A subagent begins</p>
             <p><b>SubagentStop</b> — A subagent finishes</p>
             <p><b>TeammateIdle</b> — An agent team member is idle</p>
@@ -290,7 +291,7 @@ class UserHooksSubTab(QWidget):
             <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Handler Types</h3>
             <p><b>command</b> — Run a shell command</p>
             <p><b>http</b> — Call an HTTP endpoint</p>
-            <p><b>prompt</b> — Inject text into the conversation</p>
+            <p><b>prompt</b> — Send prompt to a Claude model for yes/no evaluation</p>
             <p><b>agent</b> — Invoke a subagent</p>
 
             <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Example</h3>

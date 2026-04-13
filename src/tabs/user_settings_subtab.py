@@ -277,15 +277,16 @@ class UserSettingsSubTab(QWidget):
         self.auto_memory_check = QCheckBox("Enable auto memory")
         self.auto_memory_check.setStyleSheet(f"color: {theme.FG_PRIMARY};")
         self.auto_memory_check.setToolTip(
-            "When enabled, Claude automatically saves and recalls user preferences,\n"
-            "project context, and feedback across sessions.\n"
-            "Settings key: autoMemoryEnabled"
+            "When enabled, Claude automatically saves notes across sessions:\n"
+            "build commands, debugging insights, code style preferences, and workflow habits.\n"
+            "Stored in ~/.claude/projects/<project>/memory/MEMORY.md\n"
+            "Settings key: autoMemoryEnabled (default: true)"
         )
         auto_mem_lbl = QLabel("Auto Memory:")
         auto_mem_lbl.setStyleSheet(lbl_style)
         layout.addRow(auto_mem_lbl, self.auto_memory_check)
 
-        auto_mem_desc = QLabel("Saves user preferences, feedback, and project context across sessions")
+        auto_mem_desc = QLabel("Claude saves build commands, debugging insights, code style preferences, and workflow habits across sessions")
         auto_mem_desc.setStyleSheet(sub_style)
         auto_mem_desc.setWordWrap(True)
         layout.addRow("", auto_mem_desc)
@@ -294,7 +295,7 @@ class UserSettingsSubTab(QWidget):
         mem_dir_lbl = QLabel("Memory Directory:")
         mem_dir_lbl.setStyleSheet(lbl_style)
         self.memory_dir_edit = QLineEdit()
-        self.memory_dir_edit.setPlaceholderText("~/.claude/memory/ (default)")
+        self.memory_dir_edit.setPlaceholderText("~/.claude/projects/<project>/memory/ (default)")
         self.memory_dir_edit.setStyleSheet(f"""
             QLineEdit {{
                 padding: 5px;
@@ -305,7 +306,11 @@ class UserSettingsSubTab(QWidget):
                 font-family: 'Consolas', monospace;
             }}
         """)
-        self.memory_dir_edit.setToolTip("Custom directory for auto memory files.\nSettings key: autoMemoryDirectory")
+        self.memory_dir_edit.setToolTip(
+            "Custom directory for auto memory files.\n"
+            "Accepts ~/expanded paths. Not accepted in project settings.\n"
+            "Settings key: autoMemoryDirectory"
+        )
         layout.addRow(mem_dir_lbl, self.memory_dir_edit)
 
         # claudeMdExcludes
@@ -338,7 +343,10 @@ class UserSettingsSubTab(QWidget):
         self.agents_allowed_check = QCheckBox("Allow agent invocations")
         self.agents_allowed_check.setChecked(True)
         self.agents_allowed_check.setStyleSheet(f"color: {theme.FG_PRIMARY};")
-        self.agents_allowed_check.setToolTip("Allow Claude to spawn subagents.\nSettings key: agentsAllowed")
+        self.agents_allowed_check.setToolTip(
+            "Note: 'agentsAllowed' is not an official Claude Code settings key.\n"
+            "To restrict subagent spawning, use permissions.deny: [\"Task\"] instead."
+        )
         agents_lbl = QLabel("Agents Allowed:")
         agents_lbl.setStyleSheet(lbl_style)
         layout.addRow(agents_lbl, self.agents_allowed_check)

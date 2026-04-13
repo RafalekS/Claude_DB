@@ -36,6 +36,7 @@ class ProjectPermissionsSubTab(QWidget):
         self.settings_manager = settings_manager
         self.project_context = project_context
         self.tables = {}
+        self.mode_combos = {}
         self.init_ui()
 
         # Connect to project changes
@@ -99,6 +100,35 @@ class ProjectPermissionsSubTab(QWidget):
         path_label = QLabel(f"File: .claude/{file_name}")
         path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(path_label)
+
+        # defaultMode row
+        mode_row = QHBoxLayout()
+        mode_label = QLabel("Default Permission Mode:")
+        mode_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px;")
+        default_mode_combo = QComboBox()
+        default_mode_combo.setStyleSheet(theme.get_combo_style())
+        default_mode_combo.setMaximumWidth(200)
+        default_mode_combo.addItems([
+            "default", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
+        ])
+        default_mode_combo.setToolTip(
+            "default — normal prompting\n"
+            "acceptEdits — auto-accept file edits\n"
+            "plan — plan mode, no execution\n"
+            "auto — auto-accept all\n"
+            "dontAsk — skip permission prompts\n"
+            "bypassPermissions — bypass all checks (use with caution)"
+        )
+        default_mode_combo.currentTextChanged.connect(lambda m, s=scope: self.save_default_mode(s, m))
+        mode_hint = QLabel("permissions.defaultMode in settings.json")
+        mode_hint.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
+        mode_row.addWidget(mode_label)
+        mode_row.addWidget(default_mode_combo)
+        mode_row.addSpacing(10)
+        mode_row.addWidget(mode_hint)
+        mode_row.addStretch()
+        layout.addLayout(mode_row)
+        self.mode_combos[scope] = default_mode_combo
 
         # Table
         perm_table = QTableWidget()
@@ -198,6 +228,16 @@ class ProjectPermissionsSubTab(QWidget):
                 logger.warning("%s permissions in wrong format (array). Converting to proper format.", scope)
                 permissions = {"allow": [], "deny": [], "ask": []}
 
+            # Load defaultMode
+            default_mode = permissions.get("defaultMode", "default")
+            combo = self.mode_combos.get(scope)
+            if combo:
+                idx = combo.findText(default_mode)
+                if idx >= 0:
+                    combo.blockSignals(True)
+                    combo.setCurrentIndex(idx)
+                    combo.blockSignals(False)
+
             for level in ["allow", "deny", "ask"]:
                 perms = permissions.get(level, [])
                 for perm_string in perms:
@@ -206,6 +246,30 @@ class ProjectPermissionsSubTab(QWidget):
 
         except Exception as e:
             logger.error("Error loading %s permissions: %s", scope, e)
+
+    def save_default_mode(self, scope: str, mode: str):
+        """Save defaultMode for a project scope"""
+        if not self.project_context or not self.project_context.has_project():
+            return
+        try:
+            project_path = self.project_context.get_project()
+            if scope == "shared":
+                settings_path = project_path / ".claude" / "settings.json"
+                settings = self.settings_manager.get_project_shared_settings(project_path)
+            else:
+                settings_path = project_path / ".claude" / "settings.local.json"
+                settings = self.settings_manager.get_project_local_settings(project_path)
+            permissions = settings.get("permissions", {})
+            if isinstance(permissions, list):
+                permissions = {}
+            if mode == "default":
+                permissions.pop("defaultMode", None)
+            else:
+                permissions["defaultMode"] = mode
+            settings["permissions"] = permissions
+            self.settings_manager.save_settings(settings_path, settings)
+        except Exception as e:
+            logger.error("Error saving defaultMode for %s: %s", scope, e)
 
     def parse_permission_string(self, perm_string):
         """Parse permission string into type and pattern"""

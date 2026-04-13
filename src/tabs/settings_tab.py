@@ -59,7 +59,7 @@ class SettingsTab(QWidget):
         # Best Practices Tip
         tip_label = QLabel(
             "💡 <b>Settings Hierarchy:</b> "
-            "Enterprise Policy (system-wide) → Project (./CLAUDE.md) → User (~/.claude/CLAUDE.md) → Local (./CLAUDE.local.md) • "
+            "Managed (system-wide) → CLI args → Local (.claude/settings.local.json) → Project (.claude/settings.json) → User (~/.claude/settings.json) • "
             "<br><b>Key Config Commands:</b> "
             "<code>claude config set &lt;key&gt; &lt;value&gt;</code> | "
             "<code>claude config get &lt;key&gt;</code> | "

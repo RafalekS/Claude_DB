@@ -637,8 +637,8 @@ class MCPTab(QWidget):
             "Memory: <code>npx @modelcontextprotocol/server-memory</code>"
             "<br><b>Scopes:</b> "
             "User (~/.claude.json) affects all projects • "
-            "Local (~/.claude/.mcp.json) affects current user • "
-            "Project (./.mcp.json) is shared with team • "
+            "Local (per-project in ~/.claude.json) affects current user • "
+            "Project (.mcp.json at project root) is shared with team • "
             "Use <code>-s user/project</code> flag to specify scope • "
             "Use <code>claude mcp list</code> to check server status"
         )

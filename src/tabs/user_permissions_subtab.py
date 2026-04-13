@@ -403,6 +403,34 @@ class UserPermissionsSubTab(QWidget):
         path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(path_label)
 
+        # defaultMode row
+        mode_row = QHBoxLayout()
+        mode_label = QLabel("Default Permission Mode:")
+        mode_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px;")
+        self.default_mode_combo = QComboBox()
+        self.default_mode_combo.setStyleSheet(theme.get_combo_style())
+        self.default_mode_combo.setMaximumWidth(200)
+        self.default_mode_combo.addItems([
+            "default", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
+        ])
+        self.default_mode_combo.setToolTip(
+            "default — normal prompting\n"
+            "acceptEdits — auto-accept file edits\n"
+            "plan — plan mode, no execution\n"
+            "auto — auto-accept all (--dangerously-skip-permissions)\n"
+            "dontAsk — skip permission prompts\n"
+            "bypassPermissions — bypass all checks (use with caution)"
+        )
+        self.default_mode_combo.currentTextChanged.connect(self.save_default_mode)
+        mode_hint = QLabel("Controls session-wide permission behaviour (settings.json: permissions.defaultMode)")
+        mode_hint.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
+        mode_row.addWidget(mode_label)
+        mode_row.addWidget(self.default_mode_combo)
+        mode_row.addSpacing(10)
+        mode_row.addWidget(mode_hint)
+        mode_row.addStretch()
+        layout.addLayout(mode_row)
+
         # Table
         self.perm_table = QTableWidget()
         self.perm_table.setColumnCount(3)
@@ -462,6 +490,14 @@ class UserPermissionsSubTab(QWidget):
                 logger.warning("User permissions in wrong format (array). Converting to proper format.")
                 permissions = {"allow": [], "deny": [], "ask": []}
 
+            # Load defaultMode
+            default_mode = permissions.get("defaultMode", "default")
+            idx = self.default_mode_combo.findText(default_mode)
+            if idx >= 0:
+                self.default_mode_combo.blockSignals(True)
+                self.default_mode_combo.setCurrentIndex(idx)
+                self.default_mode_combo.blockSignals(False)
+
             for level in ["allow", "deny", "ask"]:
                 perms = permissions.get(level, [])
                 for perm_string in perms:
@@ -470,6 +506,22 @@ class UserPermissionsSubTab(QWidget):
 
         except Exception as e:
             logger.error("Error loading permissions: %s", e)
+
+    def save_default_mode(self, mode: str):
+        """Save defaultMode to settings.json"""
+        try:
+            settings = self.settings_manager.get_user_settings()
+            permissions = settings.get("permissions", {})
+            if isinstance(permissions, list):
+                permissions = {}
+            if mode == "default":
+                permissions.pop("defaultMode", None)
+            else:
+                permissions["defaultMode"] = mode
+            settings["permissions"] = permissions
+            self.settings_manager.save_settings(self.settings_manager.user_settings_path, settings)
+        except Exception as e:
+            logger.error("Error saving defaultMode: %s", e)
 
     def parse_permission_string(self, perm_string):
         """Parse permission string into type and pattern"""

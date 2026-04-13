@@ -117,7 +117,8 @@ class HooksTab(QWidget):
             "PermissionRequest/Denied, TaskCreated/Completed, SessionStart/End, "
             "CwdChanged, FileChanged, ConfigChange, WorktreeCreate/Remove, TeammateIdle, Elicitation/Result"
             "<br><b>Handler types:</b> command • http • prompt • agent"
-            "<br><b>Exit codes:</b> 0=success • 2=blocking (stderr→Claude) • other=non-blocking"
+            "<br><b>Exit codes:</b> 0=success • 2=blocking error for PreToolUse/UserPromptSubmit (stderr→Claude) • "
+            "2=non-blocking for PostToolUse (tool already ran) • ignored for PermissionDenied/InstructionsLoaded"
             "<br><b>Default timeout:</b> 600s • "
             "<b>MCP pattern:</b> <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>"
         )

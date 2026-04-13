@@ -82,6 +82,9 @@ class CommandsTab(QWidget):
             "User commands (~/.claude/commands/) are global • "
             "Project commands (./.claude/commands/) are shared via git • "
             "Use <code>/command-name</code> to invoke"
+            "<br><b>Note:</b> Commands and Skills are equivalent — "
+            "<code>.claude/commands/deploy.md</code> and <code>.claude/skills/deploy/SKILL.md</code> both work. "
+            "Skills take precedence when both exist for the same name."
         )
         tip_label.setWordWrap(True)
         tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
