@@ -7,7 +7,8 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QScrollArea, QTextEdit, QMessageBox, QComboBox,
-    QSpinBox, QFormLayout, QListWidget, QListWidgetItem, QInputDialog
+    QSpinBox, QFormLayout, QListWidget, QListWidgetItem, QInputDialog,
+    QCheckBox, QLineEdit
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
@@ -72,11 +73,15 @@ class UserSettingsSubTab(QWidget):
         theme_group = self.create_theme_section()
         scroll_layout.addWidget(theme_group)
 
-        # Section 3: Environment Variables
+        # Section 3: Advanced Settings
+        advanced_group = self.create_advanced_section()
+        scroll_layout.addWidget(advanced_group)
+
+        # Section 4: Environment Variables
         env_group = self.create_env_vars_section()
         scroll_layout.addWidget(env_group)
 
-        # Section 4: JSON Preview
+        # Section 5: JSON Preview
         preview_group = self.create_preview_section()
         scroll_layout.addWidget(preview_group)
 
@@ -145,9 +150,14 @@ class UserSettingsSubTab(QWidget):
 
         self.model_combo = QComboBox()
         self.model_combo.addItems([
-            "claude-sonnet-4-5-20250929 (Sonnet 4.5 - Best for complex coding)",
-            "claude-haiku-4-5-20251001 (Haiku 4.5 - Fastest, near-frontier)",
-            "claude-opus-4-1-20250805 (Opus 4.1 - Exceptional reasoning)",
+            # Claude 4.x (latest)
+            "claude-sonnet-4-6 (Sonnet 4.6 — Best coding model)",
+            "claude-opus-4-6 (Opus 4.6 — Deepest reasoning)",
+            "claude-haiku-4-5-20251001 (Haiku 4.5 — Fastest, cost-efficient)",
+            # Claude 4.5
+            "claude-sonnet-4-5-20250929 (Sonnet 4.5)",
+            "claude-opus-4-5 (Opus 4.5 — Extended thinking)",
+            # Claude 3.5
             "claude-sonnet-3-5-v2@20241022 (Sonnet 3.5 v2)",
             "claude-3-5-sonnet-20241022 (Sonnet 3.5)",
             "claude-3-5-haiku-20241022 (Haiku 3.5)",
@@ -233,6 +243,105 @@ class UserSettingsSubTab(QWidget):
         theme_label = QLabel("Theme:")
         theme_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
         layout.addRow(theme_label, self.theme_combo)
+
+        group.setLayout(layout)
+        return group
+
+    def create_advanced_section(self) -> QGroupBox:
+        """Create advanced settings section (memory, rules, etc.)"""
+        group = QGroupBox("Advanced Settings")
+        group.setStyleSheet(f"""
+            QGroupBox {{
+                font-weight: bold;
+                border: 1px solid {theme.BG_LIGHT};
+                border-radius: 5px;
+                margin-top: 10px;
+                padding-top: 10px;
+                color: {theme.FG_PRIMARY};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }}
+        """)
+
+        layout = QFormLayout()
+        layout.setSpacing(10)
+        layout.setContentsMargins(10, 15, 10, 10)
+
+        lbl_style = f"color: {theme.FG_PRIMARY}; font-weight: bold;"
+        sub_style = f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;"
+
+        # autoMemoryEnabled
+        self.auto_memory_check = QCheckBox("Enable auto memory")
+        self.auto_memory_check.setStyleSheet(f"color: {theme.FG_PRIMARY};")
+        self.auto_memory_check.setToolTip(
+            "When enabled, Claude automatically saves and recalls user preferences,\n"
+            "project context, and feedback across sessions.\n"
+            "Settings key: autoMemoryEnabled"
+        )
+        auto_mem_lbl = QLabel("Auto Memory:")
+        auto_mem_lbl.setStyleSheet(lbl_style)
+        layout.addRow(auto_mem_lbl, self.auto_memory_check)
+
+        auto_mem_desc = QLabel("Saves user preferences, feedback, and project context across sessions")
+        auto_mem_desc.setStyleSheet(sub_style)
+        auto_mem_desc.setWordWrap(True)
+        layout.addRow("", auto_mem_desc)
+
+        # autoMemoryDirectory
+        mem_dir_lbl = QLabel("Memory Directory:")
+        mem_dir_lbl.setStyleSheet(lbl_style)
+        self.memory_dir_edit = QLineEdit()
+        self.memory_dir_edit.setPlaceholderText("~/.claude/memory/ (default)")
+        self.memory_dir_edit.setStyleSheet(f"""
+            QLineEdit {{
+                padding: 5px;
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
+                border-radius: 3px;
+                font-family: 'Consolas', monospace;
+            }}
+        """)
+        self.memory_dir_edit.setToolTip("Custom directory for auto memory files.\nSettings key: autoMemoryDirectory")
+        layout.addRow(mem_dir_lbl, self.memory_dir_edit)
+
+        # claudeMdExcludes
+        excludes_lbl = QLabel("CLAUDE.md Excludes:")
+        excludes_lbl.setStyleSheet(lbl_style)
+        self.claude_md_excludes_edit = QLineEdit()
+        self.claude_md_excludes_edit.setPlaceholderText("e.g. vendor/**, node_modules/** (comma-separated globs)")
+        self.claude_md_excludes_edit.setStyleSheet(f"""
+            QLineEdit {{
+                padding: 5px;
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
+                border-radius: 3px;
+                font-family: 'Consolas', monospace;
+            }}
+        """)
+        self.claude_md_excludes_edit.setToolTip(
+            "Glob patterns for paths whose CLAUDE.md files should NOT be loaded.\n"
+            "Comma-separated. Settings key: claudeMdExcludes"
+        )
+        layout.addRow(excludes_lbl, self.claude_md_excludes_edit)
+
+        excludes_desc = QLabel("Prevent CLAUDE.md from being loaded in matching paths (e.g. vendor/**)")
+        excludes_desc.setStyleSheet(sub_style)
+        excludes_desc.setWordWrap(True)
+        layout.addRow("", excludes_desc)
+
+        # agentsAllowed
+        self.agents_allowed_check = QCheckBox("Allow agent invocations")
+        self.agents_allowed_check.setChecked(True)
+        self.agents_allowed_check.setStyleSheet(f"color: {theme.FG_PRIMARY};")
+        self.agents_allowed_check.setToolTip("Allow Claude to spawn subagents.\nSettings key: agentsAllowed")
+        agents_lbl = QLabel("Agents Allowed:")
+        agents_lbl.setStyleSheet(lbl_style)
+        layout.addRow(agents_lbl, self.agents_allowed_check)
 
         group.setLayout(layout)
         return group
@@ -476,6 +585,16 @@ class UserSettingsSubTab(QWidget):
             if index >= 0:
                 self.theme_combo.setCurrentIndex(index)
 
+            # Load advanced settings
+            self.auto_memory_check.setChecked(settings.get("autoMemoryEnabled", False))
+            self.memory_dir_edit.setText(settings.get("autoMemoryDirectory", ""))
+            excludes = settings.get("claudeMdExcludes", [])
+            if isinstance(excludes, list):
+                self.claude_md_excludes_edit.setText(", ".join(excludes))
+            else:
+                self.claude_md_excludes_edit.setText(str(excludes))
+            self.agents_allowed_check.setChecked(settings.get("agentsAllowed", True))
+
             # Load environment variables
             self.load_env_vars(settings)
 
@@ -497,6 +616,23 @@ class UserSettingsSubTab(QWidget):
 
             # Update theme
             settings["theme"] = self.theme_combo.currentText()
+
+            # Update advanced settings
+            settings["autoMemoryEnabled"] = self.auto_memory_check.isChecked()
+
+            mem_dir = self.memory_dir_edit.text().strip()
+            if mem_dir:
+                settings["autoMemoryDirectory"] = mem_dir
+            elif "autoMemoryDirectory" in settings:
+                del settings["autoMemoryDirectory"]
+
+            excludes_text = self.claude_md_excludes_edit.text().strip()
+            if excludes_text:
+                settings["claudeMdExcludes"] = [p.strip() for p in excludes_text.split(",") if p.strip()]
+            elif "claudeMdExcludes" in settings:
+                del settings["claudeMdExcludes"]
+
+            settings["agentsAllowed"] = self.agents_allowed_check.isChecked()
 
             # Save
             self.settings_manager.save_user_settings(settings)

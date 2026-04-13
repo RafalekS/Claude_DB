@@ -95,94 +95,123 @@ class CLIReferenceTab(QWidget):
             <h2>Core Commands</h2>
 
             <h3>Interactive Sessions</h3>
-            <p><code>claude</code> - Start interactive REPL</p>
-            <p><code>claude "query"</code> - Launch REPL with initial prompt</p>
+            <p><code>claude</code> — Start interactive REPL</p>
+            <p><code>claude "query"</code> — Launch REPL with initial prompt</p>
             <pre>claude "explain this project"</pre>
 
-            <p><code>claude -p "query"</code> - Query via SDK, then exit (headless mode)</p>
+            <p><code>claude -p "query"</code> (or <code>--print</code>) — Query via SDK, then exit (headless/non-interactive mode)</p>
             <pre>claude -p "explain this function"</pre>
 
-            <p><code>claude -c</code> - Continue most recent conversation</p>
+            <p><code>claude -c</code> (or <code>--continue</code>) — Continue most recent conversation</p>
 
-            <p><code>claude -r &lt;session-id&gt; "query"</code> - Resume specific session by ID</p>
+            <p><code>claude -r &lt;session-id&gt; "query"</code> (or <code>--resume</code>) — Resume specific session by ID</p>
             <pre>claude -r "abc123" "Finish this PR"</pre>
 
-            <h3>System Commands</h3>
-            <p><code>claude update</code> - Update to latest version</p>
-            <p><code>claude mcp</code> - Configure Model Context Protocol servers</p>
+            <h3>Config & Diagnostics</h3>
+            <p><code>claude config get &lt;key&gt;</code> — Get a config value</p>
+            <pre>claude config get model</pre>
+            <p><code>claude config set &lt;key&gt; &lt;value&gt;</code> — Set a config value</p>
+            <pre>claude config set theme dark</pre>
+            <p><code>claude config list</code> — List all config values</p>
+            <p><code>claude doctor</code> — Diagnose environment and configuration issues</p>
+            <p><code>claude update</code> — Update to latest version</p>
+            <p><code>claude bug</code> — File a bug report</p>
+            <p><code>claude mcp</code> — Configure Model Context Protocol servers</p>
 
             <hr>
 
-            <h2>Key Flags</h2>
+            <h2>Flags</h2>
 
-            <h3>Model & Behavior</h3>
-            <p><code>--model</code> - Set model with alias (<code>sonnet</code>, <code>opus</code>) or full name</p>
+            <h3>Model &amp; Behavior</h3>
+            <p><code>--model &lt;alias|id&gt;</code> — Set model. Aliases: <code>sonnet</code>, <code>opus</code>, <code>haiku</code></p>
             <pre>claude --model opus "complex task"</pre>
 
-            <p><code>--max-turns</code> - Limit agentic turns in non-interactive mode</p>
+            <p><code>--max-turns &lt;n&gt;</code> — Limit agentic turns in non-interactive mode</p>
             <pre>claude -p "task" --max-turns 5</pre>
 
-            <p><code>--verbose</code> - Enable detailed turn-by-turn output</p>
+            <p><code>--verbose</code> — Enable detailed turn-by-turn output</p>
+            <p><code>--debug</code> — Enable debug logging</p>
+            <p><code>--no-markdown</code> — Disable markdown rendering in terminal output</p>
+
+            <h3>System Prompt</h3>
+            <p><code>--system-prompt "text"</code> — Set the system prompt directly (replaces default)</p>
+            <pre>claude -p "task" --system-prompt "You are a code reviewer"</pre>
+
+            <p><code>--append-system-prompt "text"</code> — Append to the existing system prompt</p>
+            <pre>claude --append-system-prompt "Always use 2-space indentation"</pre>
 
             <h3>Input/Output</h3>
-            <p><code>--output-format</code> - Specify format: <code>text</code>, <code>json</code>, <code>stream-json</code></p>
+            <p><code>--output-format &lt;format&gt;</code> — Output format: <code>text</code>, <code>json</code>, <code>stream-json</code></p>
             <pre>claude -p "query" --output-format json</pre>
 
-            <p><code>--input-format</code> - Specify input type: <code>text</code>, <code>stream-json</code></p>
+            <p><code>--input-format &lt;format&gt;</code> — Input format: <code>text</code>, <code>stream-json</code></p>
+            <p><code>--include-partial-messages</code> — Include streaming partial events (requires <code>--print</code> + <code>stream-json</code>)</p>
 
-            <p><code>--include-partial-messages</code> - Include streaming events (requires <code>--print</code> and <code>stream-json</code>)</p>
-
-            <h3>Permissions & Tools</h3>
-            <p><code>--allowedTools</code> - Pre-approve specific tools without prompting</p>
+            <h3>Permissions &amp; Tools</h3>
+            <p><code>--allowedTools &lt;list&gt;</code> — Pre-approve tools (comma-separated)</p>
             <pre>claude --allowedTools Read,Write,Bash</pre>
 
-            <p><code>--disallowedTools</code> - Block specific tools without prompting</p>
+            <p><code>--disallowedTools &lt;list&gt;</code> — Block tools (comma-separated)</p>
             <pre>claude --disallowedTools WebFetch,WebSearch</pre>
 
-            <p><code>--permission-mode</code> - Begin in specified permission mode</p>
+            <p><code>--permission-mode &lt;mode&gt;</code> — Start in a permission mode</p>
             <pre>claude --permission-mode auto</pre>
 
-            <p><code>--dangerously-skip-permissions</code> - Skip all permission prompts (use with caution!)</p>
+            <p><code>--permission-prompt-tool &lt;tool&gt;</code> — MCP tool to handle permission prompts in headless mode</p>
+            <pre>claude -p "task" --permission-prompt-tool mcp__my_server__ask_permission</pre>
 
-            <h3>Additional Options</h3>
-            <p><code>--add-dir</code> - Add working directories for file access</p>
-            <pre>claude --add-dir /path/to/project</pre>
+            <p><code>--dangerously-skip-permissions</code> — Skip all permission prompts (headless automation only)</p>
 
-            <p><code>--append-system-prompt</code> - Add custom instructions (with <code>--print</code>)</p>
-            <pre>claude --append-system-prompt "Always format code with 2 spaces"</pre>
+            <h3>Workspace &amp; MCP</h3>
+            <p><code>--add-dir &lt;path&gt;</code> — Add a working directory (can be used multiple times)</p>
+            <pre>claude --add-dir /project1 --add-dir /project2</pre>
 
-            <p><code>--agents</code> - Define custom subagents dynamically via JSON</p>
-            <pre>claude --agents '[{{"description":"Custom agent","prompt":"System prompt"}}]'</pre>
+            <p><code>--mcp-config &lt;path&gt;</code> — Load MCP server config from a specific file</p>
+            <pre>claude --mcp-config /path/to/mcp.json</pre>
 
-            <hr>
+            <p><code>--ide</code> — Launch in IDE integration mode</p>
 
-            <h2>Subagents Flag Format</h2>
-            <p>Define custom agents using <code>--agents</code> with JSON containing:</p>
-            <ul>
-                <li><strong>description</strong> (required) - When to invoke the agent</li>
-                <li><strong>prompt</strong> (required) - System prompt guiding behavior</li>
-                <li><strong>tools</strong> (optional) - Specific allowed tools</li>
-                <li><strong>model</strong> (optional) - Model alias to use</li>
-            </ul>
+            <h3>Subagents</h3>
+            <p><code>--agents &lt;json&gt;</code> — Define custom subagents dynamically</p>
+            <pre>claude --agents '[{{"description":"Code reviewer","prompt":"Review for bugs","model":"haiku"}}]'</pre>
+            <p>Agent object keys: <code>description</code> (required), <code>prompt</code> (required), <code>tools</code> (optional), <code>model</code> (optional)</p>
 
             <hr>
 
-            <h2>Common Usage Patterns</h2>
+            <h2>Slash Commands (in REPL)</h2>
+            <p>Type these in the interactive REPL:</p>
+            <p><code>/help</code> — Show help</p>
+            <p><code>/clear</code> — Clear conversation history</p>
+            <p><code>/compact</code> — Compact context window</p>
+            <p><code>/status</code> — Show session status</p>
+            <p><code>/exit</code> (or <code>/quit</code>) — Exit the REPL</p>
+            <p><code>/cost</code> — Show token usage and cost for this session</p>
+            <p><code>/model &lt;alias&gt;</code> — Switch model mid-session</p>
+            <p><code>/allowed-tools</code> — List allowed tools</p>
+            <p><code>/bug</code> — File a bug report</p>
+            <p><code>! &lt;command&gt;</code> — Run a shell command in the current session</p>
+
+            <hr>
+
+            <h2>Common Patterns</h2>
 
             <h3>Headless Automation</h3>
             <pre>claude -p "migrate codebase" --output-format json --dangerously-skip-permissions</pre>
 
-            <h3>Interactive with Model Override</h3>
-            <pre>claude --model opus --verbose</pre>
+            <h3>Pipe input</h3>
+            <pre>cat file.py | claude -p "review this code"</pre>
 
-            <h3>Restricted Tool Access</h3>
+            <h3>JSON output for scripting</h3>
+            <pre>claude -p "list all TODO comments" --output-format json | jq '.result'</pre>
+
+            <h3>Resume session with new model</h3>
+            <pre>claude -r abc123 --model opus "continue"</pre>
+
+            <h3>Restricted tool access</h3>
             <pre>claude --allowedTools Read,Grep,Glob --disallowedTools Bash</pre>
 
-            <h3>Custom Workspace</h3>
-            <pre>claude --add-dir /project1 --add-dir /project2</pre>
-
             <p style="margin-top: 20px; padding: 10px; background-color: {theme.BG_MEDIUM}; border-left: 3px solid {theme.ACCENT_SECONDARY};">
-                <strong>💡 Tip:</strong> For full documentation and latest updates, visit the
+                <strong>💡 Tip:</strong> For the complete up-to-date reference, see the
                 <a href="https://code.claude.com/en/docs/claude-code/cli-reference" style="color: {theme.ACCENT_SECONDARY};">official CLI reference</a>.
             </p>
         </body>

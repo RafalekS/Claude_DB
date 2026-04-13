@@ -64,6 +64,7 @@ from tabs.preferences_tab import PreferencesTab
 # New refactored tabs (Phase 4)
 from tabs.user_config_tab import UserConfigTab
 from tabs.project_config_tab import ProjectConfigTab
+from tabs.rules_tab import RulesTab
 
 from utils.config_manager import ConfigManager
 from utils.backup_manager import BackupManager
@@ -164,6 +165,7 @@ class ClaudeDBApp(QMainWindow):
             "prompts": ("💬 Prompts", PromptsTab(self.config_manager, self.backup_manager)),
             "plugins": ("🧩 Plugins", PluginsTab(self.config_manager, self.backup_manager)),
             "hooks": ("🪝 Hooks", HooksTab(self.config_manager, self.backup_manager)),
+            "rules": ("📋 Rules", RulesTab(self.config_manager, self.backup_manager)),
             "statusline": ("📊 Statusline", StatuslineTab(self.config_manager, self.backup_manager)),
             "memory": ("💾 Memory", MemoryTab(self.config_manager, self.backup_manager)),
             "usage": ("📈 Usage & Analytics", UsageTab(self.config_manager, self.backup_manager)),
@@ -180,7 +182,7 @@ class ClaudeDBApp(QMainWindow):
         # Default tab order (using keys)
         # NEW tabs at front, OLD tabs kept for comparison
         default_row1 = ["userconfig", "projectconfig", "settings", "claudemd", "agents", "commands",
-                        "skills", "prompts", "mcp", "plugins", "hooks", "statusline"]
+                        "skills", "prompts", "mcp", "plugins", "hooks", "rules", "statusline"]
         default_row2 = ["memory", "permissions", "usage", "modelconfig", "clireference", "styles",
                         "claudekit", "tools", "projects", "about", "preferences"]
 
@@ -218,7 +220,7 @@ class ClaudeDBApp(QMainWindow):
 
         # Right-side GitHub rate-limit indicator (hidden until first API call)
         self._github_label = QLabel("")
-        self._github_label.setStyleSheet("color: #999; font-size: 11px; margin-right: 8px;")
+        self._github_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: 11px; margin-right: 8px;")
         self._github_label.hide()
         self.status_bar.addPermanentWidget(self._github_label)
 
@@ -287,7 +289,7 @@ class ClaudeDBApp(QMainWindow):
             timeout:  Auto-clear delay in milliseconds (0 = permanent until next call).
         """
         if is_error:
-            self.status_bar.setStyleSheet("QStatusBar { color: #fb4934; }")
+            self.status_bar.setStyleSheet(f"QStatusBar {{ color: {theme.ERROR_COLOR}; }}")
             timeout = max(timeout, 8000)
         else:
             self.status_bar.setStyleSheet("")

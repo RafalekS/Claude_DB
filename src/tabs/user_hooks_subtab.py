@@ -20,15 +20,42 @@ class UserHooksSubTab(QWidget):
 
     # All available hook events (EVENT-BASED, not name-based)
     HOOK_EVENTS = [
+        # Core tool lifecycle
         "PreToolUse",
         "PostToolUse",
+        "PostToolUseFailure",
+        # User interaction
         "Notification",
         "UserPromptSubmit",
+        "Elicitation",
+        "ElicitationResult",
+        # Agent lifecycle
         "Stop",
+        "StopFailure",
+        "SubagentStart",
         "SubagentStop",
+        # Context & memory
         "PreCompact",
+        "PostCompact",
+        "InstructionsLoaded",
+        # Permissions
+        "PermissionRequest",
+        "PermissionDenied",
+        # Tasks
+        "TaskCreated",
+        "TaskCompleted",
+        # Session
         "SessionStart",
-        "SessionEnd"
+        "SessionEnd",
+        # Environment
+        "CwdChanged",
+        "FileChanged",
+        "ConfigChange",
+        # Worktrees
+        "WorktreeCreate",
+        "WorktreeRemove",
+        # Agent teams
+        "TeammateIdle",
     ]
 
     def __init__(self, config_manager, backup_manager, settings_manager):
@@ -197,8 +224,11 @@ class UserHooksSubTab(QWidget):
 
         # Info footer
         footer = QLabel(
-            "💡 <b>Hook Events:</b> PreToolUse, PostToolUse, UserPromptSubmit, Stop, SessionStart, etc. • "
-            "<b>Exit Codes:</b> 0=Success, 2=Blocking error, Other=Non-blocking"
+            "💡 <b>26 Hook Events</b> — PreToolUse, PostToolUse, PostToolUseFailure, Stop, SubagentStart/Stop, "
+            "PreCompact, PostCompact, InstructionsLoaded, PermissionRequest/Denied, TaskCreated/Completed, "
+            "Elicitation, WorktreeCreate/Remove, TeammateIdle, and more • "
+            "<b>Handler types:</b> command, http, prompt, agent • "
+            "<b>Exit codes:</b> 0=success, 2=blocking, other=non-blocking • <b>Default timeout:</b> 600s"
         )
         footer.setWordWrap(True)
         footer.setStyleSheet(
@@ -215,18 +245,55 @@ class UserHooksSubTab(QWidget):
         html = f"""
         <html>
         <body style="color: {theme.FG_PRIMARY};">
-            <h3 style="color: {theme.ACCENT_PRIMARY};">Hook Events</h3>
-            <p><b>PreToolUse</b> - Before tool execution</p>
-            <p><b>PostToolUse</b> - After tool execution</p>
-            <p><b>Notification</b> - On notifications</p>
-            <p><b>UserPromptSubmit</b> - When user submits prompt</p>
-            <p><b>Stop</b> - When agent finishes</p>
-            <p><b>SubagentStop</b> - When subagent finishes</p>
-            <p><b>PreCompact</b> - Before context compaction</p>
-            <p><b>SessionStart</b> - Session startup</p>
-            <p><b>SessionEnd</b> - Session termination</p>
+            <h3 style="color: {theme.ACCENT_PRIMARY};">Tool Lifecycle</h3>
+            <p><b>PreToolUse</b> — Before a tool executes (can block/modify)</p>
+            <p><b>PostToolUse</b> — After a tool succeeds</p>
+            <p><b>PostToolUseFailure</b> — After a tool fails</p>
 
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Example</h3>
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">User Interaction</h3>
+            <p><b>Notification</b> — When Claude sends a notification</p>
+            <p><b>UserPromptSubmit</b> — Before a user prompt is processed</p>
+            <p><b>Elicitation</b> — When Claude needs to ask the user something</p>
+            <p><b>ElicitationResult</b> — After elicitation gets a response</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Agent Lifecycle</h3>
+            <p><b>Stop</b> — Agent finishes a response</p>
+            <p><b>StopFailure</b> — A Stop hook returned non-zero</p>
+            <p><b>SubagentStart</b> — A subagent begins</p>
+            <p><b>SubagentStop</b> — A subagent finishes</p>
+            <p><b>TeammateIdle</b> — An agent team member is idle</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Context &amp; Memory</h3>
+            <p><b>PreCompact</b> — Before context compaction</p>
+            <p><b>PostCompact</b> — After context compaction completes</p>
+            <p><b>InstructionsLoaded</b> — After CLAUDE.md instructions are loaded</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Permissions</h3>
+            <p><b>PermissionRequest</b> — Claude requests a permission</p>
+            <p><b>PermissionDenied</b> — A permission is denied</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Tasks</h3>
+            <p><b>TaskCreated</b> — A TodoWrite task is created</p>
+            <p><b>TaskCompleted</b> — A task is marked complete</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Session &amp; Environment</h3>
+            <p><b>SessionStart</b> — Session begins</p>
+            <p><b>SessionEnd</b> — Session ends</p>
+            <p><b>CwdChanged</b> — Working directory changes</p>
+            <p><b>FileChanged</b> — A watched file changes</p>
+            <p><b>ConfigChange</b> — Claude Code config changes</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Worktrees</h3>
+            <p><b>WorktreeCreate</b> — A git worktree is created</p>
+            <p><b>WorktreeRemove</b> — A git worktree is removed</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Handler Types</h3>
+            <p><b>command</b> — Run a shell command</p>
+            <p><b>http</b> — Call an HTTP endpoint</p>
+            <p><b>prompt</b> — Inject text into the conversation</p>
+            <p><b>agent</b> — Invoke a subagent</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Example</h3>
             <pre style="background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;">{{
   "hooks": {{
     "PostToolUse": [{{
@@ -234,11 +301,15 @@ class UserHooksSubTab(QWidget):
       "hooks": [{{
         "type": "command",
         "command": "echo 'File written'",
-        "timeout": 60
+        "timeout": 600
       }}]
     }}]
   }}
 }}</pre>
+            <p style="font-size: 11px; color: {theme.FG_SECONDARY};">
+            Exit codes: 0=success, 2=blocking error, other=non-blocking<br>
+            Default timeout: 600s
+            </p>
         </body>
         </html>
         """
@@ -388,7 +459,7 @@ class UserHooksSubTab(QWidget):
                 {
                     "type": "command",
                     "command": "echo 'Hook triggered'",
-                    "timeout": 60
+                    "timeout": 600
                 }
             ]
         }

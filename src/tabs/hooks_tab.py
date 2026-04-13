@@ -18,17 +18,44 @@ from utils import theme
 class HooksTab(QWidget):
     """Tab for managing Claude Code hooks"""
 
-    # All available hook events
+    # All available hook events (26 total)
     HOOK_EVENTS = [
+        # Core tool lifecycle
         "PreToolUse",
         "PostToolUse",
+        "PostToolUseFailure",
+        # User interaction
         "Notification",
         "UserPromptSubmit",
+        "Elicitation",
+        "ElicitationResult",
+        # Agent lifecycle
         "Stop",
+        "StopFailure",
+        "SubagentStart",
         "SubagentStop",
+        # Context & memory
         "PreCompact",
+        "PostCompact",
+        "InstructionsLoaded",
+        # Permissions
+        "PermissionRequest",
+        "PermissionDenied",
+        # Tasks
+        "TaskCreated",
+        "TaskCompleted",
+        # Session
         "SessionStart",
-        "SessionEnd"
+        "SessionEnd",
+        # Environment
+        "CwdChanged",
+        "FileChanged",
+        "ConfigChange",
+        # Worktrees
+        "WorktreeCreate",
+        "WorktreeRemove",
+        # Agent teams
+        "TeammateIdle",
     ]
 
     def __init__(self, config_manager, backup_manager):
@@ -84,22 +111,15 @@ class HooksTab(QWidget):
 
         # Info tip with event types and exit codes
         tip_label = QLabel(
-            "💡 <b>Hook Events:</b> "
-            "PreToolUse (before tool execution) • "
-            "PostToolUse (after success) • "
-            "UserPromptSubmit (before processing) • "
-            "Stop/SubagentStop (response complete) • "
-            "SessionStart (initialization) • "
-            "Notification (alerts)"
-            "<br><b>Exit Code Behavior:</b> "
-            "0 = Success • "
-            "2 = Blocking error (stderr sent to Claude) • "
-            "Other = Non-blocking error (shown to user)"
-            "<br><b>MCP Tool Patterns:</b> "
-            "<code>mcp__&lt;server&gt;__&lt;tool&gt;</code> (e.g., <code>mcp__github__*</code> for all GitHub tools)"
-            "<br><b>Security:</b> "
-            "Always review hook commands before deployment • "
-            "Hooks run with your user permissions"
+            "💡 <b>26 Hook Events:</b> "
+            "PreToolUse, PostToolUse, PostToolUseFailure, Notification, UserPromptSubmit, "
+            "Stop, StopFailure, SubagentStart/Stop, PreCompact, PostCompact, InstructionsLoaded, "
+            "PermissionRequest/Denied, TaskCreated/Completed, SessionStart/End, "
+            "CwdChanged, FileChanged, ConfigChange, WorktreeCreate/Remove, TeammateIdle, Elicitation/Result"
+            "<br><b>Handler types:</b> command • http • prompt • agent"
+            "<br><b>Exit codes:</b> 0=success • 2=blocking (stderr→Claude) • other=non-blocking"
+            "<br><b>Default timeout:</b> 600s • "
+            "<b>MCP pattern:</b> <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>"
         )
         tip_label.setWordWrap(True)
         tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")

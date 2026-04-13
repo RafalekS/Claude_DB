@@ -450,14 +450,17 @@ class SkillsTab(QWidget):
 
     def _create_source_repos_tab(self) -> QWidget:
         widget = QWidget()
-        layout = QHBoxLayout(widget)
-        layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(6)
+        outer = QVBoxLayout(widget)
+        outer.setContentsMargins(6, 6, 6, 6)
+        outer.setSpacing(0)
+
+        # Horizontal splitter: source list | results+preview
+        h_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left: source list
         left = QWidget()
         left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setContentsMargins(0, 0, 4, 0)
         left_layout.setSpacing(4)
         lbl = QLabel("Curated Sources")
         lbl.setStyleSheet(f"font-weight: bold; color: {theme.ACCENT_PRIMARY};")
@@ -478,14 +481,16 @@ class SkillsTab(QWidget):
         fetch_btn.setStyleSheet(theme.get_button_style())
         fetch_btn.clicked.connect(self._fetch_source_skills)
         left_layout.addWidget(fetch_btn)
-        left.setMinimumWidth(200)
-        layout.addWidget(left)
+        left.setMinimumWidth(160)
+        h_splitter.addWidget(left)
 
-        # Right: results + preview
+        # Right: vertical splitter — results on top, preview on bottom (resizable)
         right = QWidget()
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(4)
+
+        v_splitter = QSplitter(Qt.Orientation.Vertical)
 
         self._source_results = QTableWidget()
         self._source_results.setColumnCount(4)
@@ -505,12 +510,16 @@ class SkillsTab(QWidget):
         from utils.ui_state_manager import UIStateManager
         UIStateManager.instance().connect_table("skills.source_results", self._source_results)
 
-        right_layout.addWidget(self._source_results, 2)
+        v_splitter.addWidget(self._source_results)
 
-        # Preview
+        # Preview pane (draggable divider above)
+        preview_widget = QWidget()
+        preview_layout = QVBoxLayout(preview_widget)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
+        preview_layout.setSpacing(2)
         prev_lbl = QLabel("Preview")
         prev_lbl.setStyleSheet(f"font-weight: bold; color: {theme.FG_SECONDARY};")
-        right_layout.addWidget(prev_lbl)
+        preview_layout.addWidget(prev_lbl)
         self._source_preview = QTextEdit()
         self._source_preview.setReadOnly(True)
         self._source_preview.setStyleSheet(f"""
@@ -521,7 +530,11 @@ class SkillsTab(QWidget):
                 border: 1px solid {theme.BG_LIGHT};
             }}
         """)
-        right_layout.addWidget(self._source_preview, 1)
+        preview_layout.addWidget(self._source_preview)
+        v_splitter.addWidget(preview_widget)
+        v_splitter.setSizes([300, 150])
+
+        right_layout.addWidget(v_splitter, 1)
 
         # Bottom row
         bot = QHBoxLayout()
@@ -535,7 +548,10 @@ class SkillsTab(QWidget):
         bot.addWidget(import_btn)
         right_layout.addLayout(bot)
 
-        layout.addWidget(right)
+        h_splitter.addWidget(right)
+        h_splitter.setSizes([200, 600])
+
+        outer.addWidget(h_splitter)
         return widget
 
     def _on_source_selected(self, item):

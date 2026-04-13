@@ -57,7 +57,7 @@ class TabEditorDialog(QDialog):
 
         # Info label
         info = QLabel("Reorder tabs with Up/Down/Move buttons, or double-click a tab to rename it")
-        info.setStyleSheet(f"font-size: 12px; color: #999; font-style: italic;")
+        info.setStyleSheet(f"font-size: 12px; color: {theme.FG_SECONDARY}; font-style: italic;")
         info.setWordWrap(True)
         layout.addWidget(info)
 
@@ -75,7 +75,7 @@ class TabEditorDialog(QDialog):
             }}
             QListWidget::item {{
                 padding: 8px;
-                border-bottom: 1px solid #444;
+                border-bottom: 1px solid {theme.BG_LIGHT};
             }}
         """)
         for tab_name in tabs_row1:
@@ -97,14 +97,14 @@ class TabEditorDialog(QDialog):
         to_row2_btn.setStyleSheet(f"""
             QPushButton {{
                 padding: 10px;
-                background-color: #f39c12;
+                background-color: {theme.WARNING_COLOR};
                 color: white;
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 150px;
             }}
             QPushButton:hover {{
-                background-color: #e67e22;
+                background-color: {theme.WARNING_COLOR};
             }}
         """)
 
@@ -134,7 +134,7 @@ class TabEditorDialog(QDialog):
             }}
             QListWidget::item {{
                 padding: 8px;
-                border-bottom: 1px solid #444;
+                border-bottom: 1px solid {theme.BG_LIGHT};
             }}
         """)
         for tab_name in tabs_row2:
@@ -156,14 +156,14 @@ class TabEditorDialog(QDialog):
         to_row1_btn.setStyleSheet(f"""
             QPushButton {{
                 padding: 10px;
-                background-color: #f39c12;
+                background-color: {theme.WARNING_COLOR};
                 color: white;
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 150px;
             }}
             QPushButton:hover {{
-                background-color: #e67e22;
+                background-color: {theme.WARNING_COLOR};
             }}
         """)
 
@@ -670,14 +670,14 @@ class PreferencesTab(QWidget):
         self.restart_btn.setStyleSheet(f"""
             QPushButton {{
                 padding: 10px;
-                background-color: #e74c3c;
+                background-color: {theme.ERROR_COLOR};
                 color: white;
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 150px;
             }}
             QPushButton:hover {{
-                background-color: #c0392b;
+                background-color: {theme.ERROR_COLOR};
             }}
         """)
         self.restart_btn.clicked.connect(self.restart_application)
@@ -1435,7 +1435,7 @@ class {class_name}Tab(QWidget):
                     padding: 15px;
                     background-color: {theme_colors["background"]};
                     color: {theme_colors["foreground"]};
-                    border: 2px solid {theme_colors["brightBlue"]};
+                    border: 2px solid {theme_colors["brightBluef"]};
                     border-radius: 3px;
                     font-size: {theme.FONT_SIZE_NORMAL}px;
                 }}

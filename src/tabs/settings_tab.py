@@ -33,7 +33,7 @@ class SettingsTab(QWidget):
         header_layout.setSpacing(3)
 
         header = QLabel("Settings")
-        header.setStyleSheet("font-size: 12px; font-weight: bold; color: #667eea;")
+        header.setStyleSheet(f"font-size: 12px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
         header_layout.addWidget(header)
         header_layout.addStretch()
 
@@ -91,7 +91,7 @@ class SettingsTab(QWidget):
         btn_layout.setSpacing(3)
 
         info_label = QLabel(str(file_path))
-        info_label.setStyleSheet("color: #999; font-size: 9px;")
+        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: 9px;")
 
         load_btn = QPushButton("Reload")
         load_btn.setToolTip("Reload settings from file (discards unsaved changes)")
@@ -167,7 +167,7 @@ class SettingsTab(QWidget):
         folder_layout.setSpacing(5)
 
         folder_label = QLabel("Project Folder:")
-        folder_label.setStyleSheet("color: #ddd; font-weight: bold;")
+        folder_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
 
         self.project_folder_edit = QLineEdit()
         self.project_folder_edit.setText(str(Path.home()))
@@ -222,7 +222,7 @@ class SettingsTab(QWidget):
 
         # Path label
         path_label = QLabel(str(file_path))
-        path_label.setStyleSheet("color: #999; font-size: 9px;")
+        path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: 9px;")
 
         # Create buttons
         load_btn = QPushButton("Reload")

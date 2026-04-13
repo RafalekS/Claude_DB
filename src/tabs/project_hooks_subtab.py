@@ -20,15 +20,42 @@ class ProjectHooksSubTab(QWidget):
 
     # All available hook events (EVENT-BASED, not name-based)
     HOOK_EVENTS = [
+        # Core tool lifecycle
         "PreToolUse",
         "PostToolUse",
+        "PostToolUseFailure",
+        # User interaction
         "Notification",
         "UserPromptSubmit",
+        "Elicitation",
+        "ElicitationResult",
+        # Agent lifecycle
         "Stop",
+        "StopFailure",
+        "SubagentStart",
         "SubagentStop",
+        # Context & memory
         "PreCompact",
+        "PostCompact",
+        "InstructionsLoaded",
+        # Permissions
+        "PermissionRequest",
+        "PermissionDenied",
+        # Tasks
+        "TaskCreated",
+        "TaskCompleted",
+        # Session
         "SessionStart",
-        "SessionEnd"
+        "SessionEnd",
+        # Environment
+        "CwdChanged",
+        "FileChanged",
+        "ConfigChange",
+        # Worktrees
+        "WorktreeCreate",
+        "WorktreeRemove",
+        # Agent teams
+        "TeammateIdle",
     ]
 
     def __init__(self, config_manager, backup_manager, settings_manager, project_context):
@@ -92,7 +119,9 @@ class ProjectHooksSubTab(QWidget):
         footer = QLabel(
             "💡 <b>Shared:</b> Team-shared hooks (committed to git) • "
             "<b>Local:</b> User-specific overrides (gitignored) • "
-            "<b>Hook Events:</b> PreToolUse, PostToolUse, UserPromptSubmit, Stop, SessionStart, etc."
+            "<b>26 hook events</b> incl. PostToolUseFailure, PostCompact, InstructionsLoaded, "
+            "PermissionRequest/Denied, TaskCreated/Completed, WorktreeCreate/Remove, TeammateIdle • "
+            "<b>Handler types:</b> command, http, prompt, agent"
         )
         footer.setWordWrap(True)
         footer.setStyleSheet(
@@ -257,18 +286,43 @@ class ProjectHooksSubTab(QWidget):
         html = f"""
         <html>
         <body style="color: {theme.FG_PRIMARY};">
-            <h3 style="color: {theme.ACCENT_PRIMARY};">Hook Events</h3>
-            <p><b>PreToolUse</b> - Before tool execution</p>
-            <p><b>PostToolUse</b> - After tool execution</p>
-            <p><b>Notification</b> - On notifications</p>
-            <p><b>UserPromptSubmit</b> - When user submits prompt</p>
-            <p><b>Stop</b> - When agent finishes</p>
-            <p><b>SubagentStop</b> - When subagent finishes</p>
-            <p><b>PreCompact</b> - Before context compaction</p>
-            <p><b>SessionStart</b> - Session startup</p>
-            <p><b>SessionEnd</b> - Session termination</p>
+            <h3 style="color: {theme.ACCENT_PRIMARY};">Tool Lifecycle</h3>
+            <p><b>PreToolUse</b> — Before a tool executes (can block/modify)</p>
+            <p><b>PostToolUse</b> — After a tool succeeds</p>
+            <p><b>PostToolUseFailure</b> — After a tool fails</p>
 
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Example</h3>
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">User Interaction</h3>
+            <p><b>Notification</b> — When Claude sends a notification</p>
+            <p><b>UserPromptSubmit</b> — Before a user prompt is processed</p>
+            <p><b>Elicitation / ElicitationResult</b> — When Claude asks user / response received</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Agent Lifecycle</h3>
+            <p><b>Stop</b> — Agent finishes • <b>StopFailure</b> — Stop hook error</p>
+            <p><b>SubagentStart / SubagentStop</b> — Subagent begins/ends</p>
+            <p><b>TeammateIdle</b> — Agent team member is idle</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Context &amp; Memory</h3>
+            <p><b>PreCompact / PostCompact</b> — Before/after context compaction</p>
+            <p><b>InstructionsLoaded</b> — After CLAUDE.md is loaded</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Permissions</h3>
+            <p><b>PermissionRequest / PermissionDenied</b></p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Tasks &amp; Session</h3>
+            <p><b>TaskCreated / TaskCompleted</b> — TodoWrite task events</p>
+            <p><b>SessionStart / SessionEnd</b></p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Environment &amp; Worktrees</h3>
+            <p><b>CwdChanged / FileChanged / ConfigChange</b></p>
+            <p><b>WorktreeCreate / WorktreeRemove</b></p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Handler Types</h3>
+            <p><b>command</b> — Shell command</p>
+            <p><b>http</b> — HTTP endpoint call</p>
+            <p><b>prompt</b> — Inject text into conversation</p>
+            <p><b>agent</b> — Invoke a subagent</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Example</h3>
             <pre style="background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;">{{
   "hooks": {{
     "PostToolUse": [{{
@@ -276,11 +330,14 @@ class ProjectHooksSubTab(QWidget):
       "hooks": [{{
         "type": "command",
         "command": "echo 'File written'",
-        "timeout": 60
+        "timeout": 600
       }}]
     }}]
   }}
 }}</pre>
+            <p style="font-size: 11px; color: {theme.FG_SECONDARY};">
+            Exit codes: 0=success, 2=blocking, other=non-blocking • Default timeout: 600s
+            </p>
         </body>
         </html>
         """
@@ -460,7 +517,7 @@ class ProjectHooksSubTab(QWidget):
                 {
                     "type": "command",
                     "command": "echo 'Hook triggered'",
-                    "timeout": 60
+                    "timeout": 600
                 }
             ]
         }

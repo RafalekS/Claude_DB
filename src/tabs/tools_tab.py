@@ -245,14 +245,14 @@ class ToolsConfigDialog(QDialog):
         section_button_style = f"""
             QPushButton {{
                 padding: 8px;
-                background-color: #e67e22;
+                background-color: {theme.WARNING_COLOR};
                 color: white;
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 80px;
             }}
             QPushButton:hover {{
-                background-color: #d35400;
+                background-color: {theme.WARNING_COLOR};
             }}
         """
 
@@ -342,7 +342,7 @@ class ToolsConfigDialog(QDialog):
                 min-width: 100px;
             }}
             QPushButton:hover {{
-                background-color: #27ae60;
+                background-color: {theme.SUCCESS_COLOR};
             }}
         """
 

@@ -222,7 +222,7 @@ class AddServerDialog(QDialog):
 
         # Info label
         info = QLabel("* Required fields. Environment and Headers are optional.")
-        info.setStyleSheet("color: #999; font-size: 11px;")
+        info.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: 11px;")
         layout.addWidget(info)
 
         # Buttons

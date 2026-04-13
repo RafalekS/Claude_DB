@@ -495,7 +495,7 @@ class ProjectConfigTab(QWidget):
                 f"font-size: {theme.FONT_SIZE_SMALL}px; "
                 f"padding: 5px; "
                 f"background-color: {theme.BG_MEDIUM}; "
-                f"border-left: 3px solid #4ade80; "
+                f"border-left: 3px solid {theme.SUCCESS_COLOR}; "
                 f"border-radius: 3px;"
             )
         else:
@@ -505,6 +505,6 @@ class ProjectConfigTab(QWidget):
                 f"font-size: {theme.FONT_SIZE_SMALL}px; "
                 f"padding: 5px; "
                 f"background-color: {theme.BG_MEDIUM}; "
-                f"border-left: 3px solid #f0ad4e; "
+                f"border-left: 3px solid {theme.WARNING_COLOR}; "
                 f"border-radius: 3px;"
             )
