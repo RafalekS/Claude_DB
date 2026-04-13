@@ -3,6 +3,7 @@ About Tab - Information and resources
 """
 
 import json
+from version import __version__
 import logging
 import os
 from pathlib import Path
@@ -291,7 +292,7 @@ class AboutTab(QWidget):
 
         # Compact Header with all buttons
         header_layout = QHBoxLayout()
-        header = QLabel("Claude_DB v2.0.0")
+        header = QLabel(f"Claude_DB v{__version__}")
         header.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
         header_layout.addWidget(header)
 
