@@ -446,6 +446,16 @@ class ClaudeDBApp(QMainWindow):
                 if not row1_tabs and not row2_tabs:
                     return self._build_default_tabs(all_tabs, default_row1, default_row2)
 
+                # Auto-add any newly registered tabs that aren't in the saved config
+                configured_keys = set()
+                for tab_info in row1_config + row2_config:
+                    configured_keys.add(tab_info.get("key"))
+                for key in default_row1 + default_row2:
+                    if key not in configured_keys and key in all_tabs:
+                        default_name, widget = all_tabs[key]
+                        row2_tabs.append((default_name, widget))
+                        logger.info("Auto-added new tab to row 2: %s", key)
+
                 return row1_tabs, row2_tabs
             else:
                 logger.info("No config file found, using default tab configuration")

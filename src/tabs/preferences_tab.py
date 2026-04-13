@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QSpinBox, QPushButton, QMessageBox, QGroupBox, QFormLayout,
     QDialog, QListWidget, QLineEdit, QTextEdit, QListWidgetItem, QInputDialog,
     QApplication, QTabWidget, QCheckBox, QAbstractItemView, QFileDialog,
-    QTableWidget, QTableWidgetItem, QHeaderView
+    QTableWidget, QTableWidgetItem, QHeaderView, QSplitter
 )
 from PyQt6.QtCore import pyqtSignal, QProcess, Qt
 from utils import theme
@@ -980,10 +980,12 @@ class PreferencesTab(QWidget):
         dir_layout.addRow("Project skills dir:", proj_row)
         layout.addWidget(dir_group)
 
-        # ── Skill sources ────────────────────────────────────────────────
+        # ── Skill sources (resizable via splitter) ───────────────────────
         src_group = QGroupBox("Skill Sources (config/skill_sources.json)")
         src_group.setStyleSheet(group_style)
         src_layout = QVBoxLayout(src_group)
+        src_layout.setContentsMargins(4, 4, 4, 4)
+        src_layout.setSpacing(4)
 
         self._skill_sources_table = QTableWidget()
         self._skill_sources_table.setColumnCount(4)
@@ -993,13 +995,15 @@ class PreferencesTab(QWidget):
         hdr.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
         hdr.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
         hdr.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
+        self._skill_sources_table.setMinimumHeight(80)
         UIStateManager.instance().restore_table_state("prefs.skill_sources", self._skill_sources_table)
         UIStateManager.instance().connect_table("prefs.skill_sources", self._skill_sources_table)
         self._skill_sources_table.verticalHeader().hide()
         self._skill_sources_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        src_layout.addWidget(self._skill_sources_table)
 
-        src_btns = QHBoxLayout()
+        src_btns_widget = QWidget()
+        src_btns = QHBoxLayout(src_btns_widget)
+        src_btns.setContentsMargins(0, 0, 0, 0)
         for label, slot in [
             ("Add", self._add_skill_source),
             ("Remove", self._remove_skill_source),
@@ -1010,14 +1014,19 @@ class PreferencesTab(QWidget):
             btn.clicked.connect(slot)
             src_btns.addWidget(btn)
         src_btns.addStretch()
-        src_layout.addLayout(src_btns)
-        layout.addWidget(src_group)
+
+        src_splitter = QSplitter(Qt.Orientation.Vertical)
+        src_splitter.addWidget(self._skill_sources_table)
+        src_splitter.addWidget(src_btns_widget)
+        src_splitter.setSizes([200, 36])
+        src_splitter.setChildrenCollapsible(False)
+        src_layout.addWidget(src_splitter)
+        layout.addWidget(src_group, 1)  # stretch=1 so it fills available space
 
         save_btn = QPushButton("Save Skills Settings")
         save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self._save_skills_settings)
         layout.addWidget(save_btn)
-        layout.addStretch()
 
         self.subtabs.addTab(widget, "🛠 Skills")
 
