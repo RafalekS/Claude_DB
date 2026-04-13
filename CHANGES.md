@@ -4,6 +4,44 @@ All significant changes made across the full refactor and feature update session
 
 ---
 
+## Original Requirements (from CLAUDE.md)
+
+These were the 5 tasks specified in the project's CLAUDE.md:
+
+| # | Request | Status |
+|---|---------|--------|
+| 1 | Review codebase — scan for bugs, hardcoded values, dead code, unused/duplicate modules; move config to config files | ✅ Done — Phases 1–2, v2.0.1–2.0.2 |
+| 2 | Skills tab — review and merge with [skills_builder](https://github.com/RafalekS/skills_builder) project | ✅ Done — Phase 4 |
+| 3 | MCP tab — review and merge with [MCP_Search](https://github.com/RafalekS/MCP_Search) project | ✅ Done — Phase 3 |
+| 4 | Refactor code using Coding skill; use updated docs from code.claude.com/docs/en | ✅ Done — Phases 1–5 |
+| 5 | Compact the UI, make it modern and professional | ⚠️ Partially done — tab bar layout improved, dual-row tabs, theme system; deeper spacing/compactness pass still pending |
+
+---
+
+## 9-Point Follow-Up Review
+
+These were 9 specific items raised in a follow-up session after the initial refactor:
+
+| # | Request | Status |
+|---|---------|--------|
+| 1 | UI compactness — tighten spacing, make the app more compact and professional | ⏳ Pending — not yet implemented |
+| 2 | Hooks tab — expand hook events list to match current Claude Code docs (was only 9 events) | ✅ Done — expanded to 26 events across all 3 hook files |
+| 3 | Info/help labels — verify all help text against current docs at code.claude.com/docs/en | ⏳ Pending — not yet verified/updated |
+| 4 | CLI Reference tab — add missing flags and subcommands from current docs | ✅ Done — added 12+ flags, config/doctor/bug/update subcommands, slash commands, pipe/JSON patterns |
+| 5 | File structure — verify .claude/ directory structure shown in app against official docs | ⏳ Pending — not yet verified |
+| 6 | User Settings — add new settings keys (autoMemoryEnabled, autoMemoryDirectory, claudeMdExcludes, agentsAllowed) | ✅ Done — new Advanced Settings section in user_settings_subtab.py |
+| 7 | Rules tab — create a new tab to manage .claude/rules/ files with frontmatter support | ✅ Done — rules_tab.py (435 lines), registered in main.py |
+| 8 | Skills Discover — make source repos pane resizable | ✅ Done — QSplitter (horizontal + vertical) in _create_source_repos_tab() |
+| 9 | Hardcoded colours — replace hex values with theme variables across all files | ✅ Done — 8 files updated, 10 hex values replaced |
+
+**Additional items completed in the same session:**
+- Skills dialogs: added `argument-hint` and `model` fields; removed non-standard `display_name`
+- Agents dialogs: removed `Display Name`/`Category`; corrected model list to `["inherit", "sonnet", "opus", "haiku"]`; added pink to colour picker
+- Version system: created `src/version.py`; pre-commit hook auto-increments patch number
+- Model list updated to include Claude 4.6 Sonnet/Opus/Haiku 4.5
+
+---
+
 ## Version 2.0.3 — Feature Update (9-Point Review)
 
 ### Hooks — Expanded from 9 to 26 Events
