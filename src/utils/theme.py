@@ -145,7 +145,7 @@ def get_button_style():
     """Get button stylesheet"""
     return f"""
         QPushButton {{
-            padding: 6px 12px;
+            padding: 4px 10px;
             background-color: {ACCENT_PRIMARY};
             color: {BG_DARK};
             border-radius: 4px;
@@ -165,7 +165,7 @@ def get_button_danger_style():
     """Destructive button style (Delete, Remove, Reset — red accent)."""
     return f"""
         QPushButton {{
-            padding: 6px 12px;
+            padding: 4px 10px;
             background-color: {ERROR_COLOR};
             color: {BG_DARK};
             border-radius: {BORDER_RADIUS}px;
@@ -190,7 +190,7 @@ def get_button_neutral_style():
     """Neutral / secondary button style (Cancel, Refresh — muted)."""
     return f"""
         QPushButton {{
-            padding: 6px 12px;
+            padding: 4px 10px;
             background-color: {BG_MEDIUM};
             color: {FG_PRIMARY};
             border-radius: {BORDER_RADIUS}px;
@@ -381,7 +381,7 @@ def get_table_style():
             gridline-color: {BG_LIGHT};
         }}
         QTableWidget::item {{
-            padding: 5px;
+            padding: 3px 5px;
         }}
         QTableWidget::item:selected {{
             background-color: {GRUVBOX.get("selection", "#504945")};
@@ -422,7 +422,7 @@ def generate_app_stylesheet():
 
         /* Buttons */
         QPushButton {{
-            padding: 6px 12px;
+            padding: 4px 10px;
             background-color: {ACCENT_PRIMARY};
             color: {BG_DARK};
             border-radius: 4px;
@@ -444,11 +444,11 @@ def generate_app_stylesheet():
         /* Text Editors */
         QTextEdit, QPlainTextEdit {{
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: {FONT_SIZE_NORMAL}px;
+            font-size: {FONT_SIZE_SMALL}px;
             background-color: {BG_DARK};
             color: {FG_PRIMARY};
             border: 1px solid {BG_LIGHT};
-            padding: 8px;
+            padding: 4px;
             selection-background-color: {GRUVBOX.get("selection", "#504945")};
         }}
 
@@ -457,8 +457,8 @@ def generate_app_stylesheet():
             background-color: {BG_DARK};
             color: {FG_PRIMARY};
             border: 1px solid {BG_LIGHT};
-            padding: 10px;
-            font-size: {FONT_SIZE_NORMAL}px;
+            padding: 6px;
+            font-size: {FONT_SIZE_SMALL}px;
             selection-background-color: {GRUVBOX.get("selection", "#504945")};
         }}
 
@@ -467,7 +467,7 @@ def generate_app_stylesheet():
             background-color: {BG_DARK};
             color: {FG_PRIMARY};
             border: 1px solid {BG_LIGHT};
-            padding: 6px;
+            padding: 4px;
             font-size: {FONT_SIZE_NORMAL}px;
             selection-background-color: {GRUVBOX.get("selection", "#504945")};
         }}
@@ -480,7 +480,7 @@ def generate_app_stylesheet():
             background-color: {BG_DARK};
             color: {FG_PRIMARY};
             border: 1px solid {BG_LIGHT};
-            padding: 6px;
+            padding: 4px;
             font-size: {FONT_SIZE_NORMAL}px;
         }}
         QComboBox:hover {{
@@ -512,7 +512,7 @@ def generate_app_stylesheet():
             background-color: {BG_DARK};
             color: {FG_PRIMARY};
             border: 1px solid {BG_LIGHT};
-            padding: 6px;
+            padding: 4px;
             font-size: {FONT_SIZE_NORMAL}px;
         }}
         QSpinBox::up-button, QSpinBox::down-button {{
@@ -545,7 +545,7 @@ def generate_app_stylesheet():
             gridline-color: {BG_LIGHT};
         }}
         QTableWidget::item {{
-            padding: 5px;
+            padding: 3px 5px;
         }}
         QTableWidget::item:selected {{
             background-color: {GRUVBOX.get("selection", "#504945")};
@@ -592,16 +592,16 @@ def generate_app_stylesheet():
         QGroupBox {{
             font-weight: bold;
             border: 1px solid {BG_LIGHT};
-            border-radius: 5px;
-            margin-top: 10px;
-            padding-top: 10px;
+            border-radius: 4px;
+            margin-top: 8px;
+            padding-top: 6px;
             color: {FG_PRIMARY};
             background-color: {BG_MEDIUM};
         }}
         QGroupBox::title {{
             subcontrol-origin: margin;
-            left: 10px;
-            padding: 0 5px 0 5px;
+            left: 8px;
+            padding: 0 4px 0 4px;
             background-color: {BG_MEDIUM};
         }}
 
