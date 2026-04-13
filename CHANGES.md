@@ -69,9 +69,9 @@ Full code review produced 33 findings. Status of each:
 | 23 | 11 of 13 skill frontmatter fields not validated or exposed (`argument-hint`, `model`, etc.) | ⚠️ Partial — `argument-hint` and `model` added to dialogs; remaining 9 fields still not exposed |
 | 24 | Agent frontmatter has non-standard fields (`displayName`, `category`) and is missing 11 documented fields | ✅ Fixed — non-standard fields removed; standard fields corrected |
 | 25 | Agent model field missing `inherit` option and full model IDs | ✅ Fixed |
-| 26 | `defaultMode` permission setting not exposed anywhere in app | ⏳ Pending |
+| 26 | `defaultMode` permission setting not exposed anywhere in app | ✅ Fixed — dropdown added to both user and project permissions subtabs |
 | 27 | Redundant `import json` / `from utils import theme` inside method body in `main.py` | ✅ Fixed |
-| 28 | Hook exit code tooltip misleading — exit 2 behaviour differs per event type | ⏳ Pending |
+| 28 | Hook exit code tooltip misleading — exit 2 behaviour differs per event type | ✅ Fixed — hooks_tab.py tip now correctly differentiates PreToolUse vs PostToolUse vs ignored events |
 
 ### LOW
 
@@ -81,7 +81,7 @@ Full code review produced 33 findings. Status of each:
 | 30 | Docs URL buttons point to old domain `docs.claude.com` | ✅ Fixed |
 | 31 | `mcp_validator.py` whitelists `python3` instead of `python` | ✅ Fixed |
 | 32 | Agent `color` field missing `pink` | ✅ Fixed |
-| 33 | Commands/skills merge not explained in UI | ⏳ Pending |
+| 33 | Commands/skills merge not explained in UI | ✅ Fixed — note added to commands_tab.py footer |
 
 ---
 
@@ -119,11 +119,11 @@ Full code review produced 33 findings. Status of each:
 
 | Point | Status |
 |-------|--------|
-| 1 — UI compactness / theme application | ⏳ Pending |
+| 1 — UI compactness / theme application | ✅ Done — global stylesheet padding tightened; outer margins reduced across 37+ files; redundant per-widget stylesheet calls removed |
 | 2 — Hardcoded styles, fonts, colors; widget uniformity | ⚠️ Partial — hex colours replaced with theme vars across 8 files; widget uniformity pass not done |
-| 3 — Verify all info labels against docs | ⏳ Pending |
+| 3 — Verify all info labels against docs | ✅ Done — 13 corrections made across hooks, MCP, settings, rules tabs |
 | 4 — New features: Rules tab, subagents, settings keys | ✅ Done — Rules tab added; autoMemoryEnabled/Directory, claudeMdExcludes, agentsAllowed added to settings UI |
-| 5 — Verify .claude/ file structure against docs | ⏳ Pending |
+| 5 — Verify .claude/ file structure against docs | ✅ Done — verified correct; one MCP label bug fixed in mcp_tab.py |
 | 6 — List new Claude features not in app | ✅ Done — 39-item gap analysis produced (see below) |
 | 7 — Verify CLI Reference tab against docs | ✅ Done — 12+ flags, subcommands, slash commands added |
 | 8 — Table state persistence against coding skill | ✅ Done — UIStateManager wired to all tables via BaseLibraryDialog |
@@ -180,10 +180,10 @@ The user confirmed: implement all of them.
 | # | Feature | Status |
 |---|---------|--------|
 | 25 | Rules Manager tab — `.claude/rules/` with frontmatter and `paths:` scoping | ✅ Done — `rules_tab.py` |
-| 26 | CLAUDE.local.md editor — create/edit UI (currently info-text only) | ⏳ Pending |
-| 27 | Worktrees tab — create/list/remove git worktrees | ⏳ Pending |
-| 28 | Agent Teams UI — multi-agent orchestration config | ⏳ Pending |
-| 29 | Remote Control — configure remote Claude Code access via API | ⏳ Pending |
+| 26 | CLAUDE.local.md editor — create/edit UI (currently info-text only) | ✅ Done — claude_local_md_tab.py |
+| 27 | Worktrees tab — create/list/remove git worktrees | ✅ Done — worktrees_tab.py |
+| 28 | Agent Teams UI — multi-agent orchestration config | ✅ Done — agent_teams_tab.py |
+| 29 | Remote Control — configure remote Claude Code access via API | ✅ Done — remote_control_tab.py |
 
 ### CLI Reference — Missing Flags (#30–39)
 
@@ -206,15 +206,8 @@ The user confirmed: implement all of them.
 
 | Item | Description |
 |------|-------------|
-| Review #23 | Remaining 9 skill frontmatter fields not exposed in dialogs |
-| Review #26 | `defaultMode` permission setting UI |
-| Review #28 | Hook exit code tooltip accuracy |
-| Review #33 | Commands/skills merge explanation in UI |
-| Feature #26 | CLAUDE.local.md editor |
-| Feature #27 | Worktrees tab |
-| Feature #28 | Agent Teams UI |
-| Feature #29 | Remote Control tab |
-| Original #5 | Deeper UI compactness / spacing pass |
+| Review #23 | Remaining 9 skill frontmatter fields not exposed in dialogs (`disable-model-invocation`, `user-invocable`, `allowed-tools`, `effort`, `context`, `agent`, `hooks`, `paths`, `shell`) |
+| 9-Point #2 | Widget uniformity — all content viewers use consistent monospace font now, but visual styling pass across all dialogs not yet fully done |
 
 ---
 
