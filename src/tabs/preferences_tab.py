@@ -98,7 +98,7 @@ class TabEditorDialog(QDialog):
             QPushButton {{
                 padding: 10px;
                 background-color: {theme.WARNING_COLOR};
-                color: white;
+                color: {theme.BG_DARK};
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 150px;
@@ -157,7 +157,7 @@ class TabEditorDialog(QDialog):
             QPushButton {{
                 padding: 10px;
                 background-color: {theme.WARNING_COLOR};
-                color: white;
+                color: {theme.BG_DARK};
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 150px;
@@ -531,7 +531,7 @@ class PreferencesTab(QWidget):
             QPushButton {{
                 padding: 10px;
                 background-color: {theme.ERROR_COLOR};
-                color: white;
+                color: {theme.BG_DARK};
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 150px;
@@ -1231,7 +1231,7 @@ class {class_name}Tab(QWidget):
                 border: 1px solid {{theme.BG_LIGHT}};
                 border-radius: 3px;
                 padding: 15px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {{theme.FONT_SIZE_NORMAL}}px;
             }}
         """)

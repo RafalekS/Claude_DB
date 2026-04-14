@@ -55,7 +55,7 @@ class CLIReferenceTab(QWidget):
                 border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 15px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
             }}
             QTextBrowser h2 {{
@@ -73,7 +73,7 @@ class CLIReferenceTab(QWidget):
                 color: {theme.SUCCESS_COLOR};
                 padding: 2px 6px;
                 border-radius: 3px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
             }}
             QTextBrowser pre {{
                 background-color: {theme.BG_MEDIUM};

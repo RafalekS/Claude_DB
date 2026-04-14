@@ -134,7 +134,7 @@ class RuleEditorWidget(QWidget):
         self._dir_label = QLabel("(no directory)")
         self._dir_label.setStyleSheet(
             f"color: {theme.ACCENT_PRIMARY}; font-size: {theme.FONT_SIZE_SMALL}px; "
-            f"font-family: 'Consolas', monospace;"
+            f"font-family: {theme.FONT_FAMILY_MONO};"
         )
         self._dir_label.setWordWrap(True)
         left_layout.addWidget(self._dir_label)
@@ -196,7 +196,7 @@ class RuleEditorWidget(QWidget):
                 border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
             }}
         """)

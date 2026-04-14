@@ -174,7 +174,7 @@ class PromptsTab(QWidget):
         self.editor = QTextEdit()
         self.editor.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
@@ -934,7 +934,7 @@ class GitHubImportDialog(QDialog):
             # Status
             if is_conflict:
                 status_item = QTableWidgetItem("⚠️ Conflict")
-                status_item.setForeground(QColor("#e67e22"))
+                status_item.setForeground(QColor(theme.WARNING_COLOR))
             else:
                 status_item = QTableWidgetItem("✓ New")
                 status_item.setForeground(QColor(theme.SUCCESS_COLOR))

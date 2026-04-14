@@ -230,7 +230,7 @@ class ProjectSettingsSubTab(QWidget):
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
             }}
             QComboBox::drop-down {{
                 border: none;
@@ -321,7 +321,7 @@ class ProjectSettingsSubTab(QWidget):
                 border-radius: 3px;
                 padding: 3px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
             }}
         """)
         layout.addWidget(env_list)
@@ -372,7 +372,7 @@ class ProjectSettingsSubTab(QWidget):
         preview_text.setMaximumHeight(200)
         preview_text.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};

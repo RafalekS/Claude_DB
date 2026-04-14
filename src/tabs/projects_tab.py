@@ -90,7 +90,7 @@ class ProjectsTab(QWidget):
         # Project Info viewer
         self.info_viewer = QTextEdit()
         self.info_viewer.setReadOnly(True)
-        self.info_viewer.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
+        self.info_viewer.setFont(QFont(theme.FONT_MONOSPACE, theme.FONT_SIZE_SMALL))
 
         return self.info_viewer
 

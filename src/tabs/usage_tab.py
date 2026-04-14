@@ -175,7 +175,7 @@ class UsageTab(QWidget):
         self.output_display.setPlaceholderText("Click a report button to view usage statistics...")
         self.output_display.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};

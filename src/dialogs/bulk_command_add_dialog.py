@@ -78,7 +78,7 @@ class BulkCommandAddDialog(QDialog):
 
         self.preview_text = QTextEdit()
         self.preview_text.setReadOnly(True)
-        self.preview_text.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
+        self.preview_text.setFont(QFont(theme.FONT_MONOSPACE, theme.FONT_SIZE_SMALL))
         layout.addWidget(self.preview_text)
 
     def parse_and_preview(self):

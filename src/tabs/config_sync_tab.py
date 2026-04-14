@@ -57,7 +57,7 @@ class ConfigSyncTab(QWidget):
         self.log_viewer.setReadOnly(True)
         self.log_viewer.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
@@ -472,7 +472,7 @@ class ConfigSyncTab(QWidget):
         diff_viewer.setReadOnly(True)
         diff_viewer.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};

@@ -108,7 +108,7 @@ class MCPToolsDialog(QDialog):
         self.details_text = QTextEdit()
         self.details_text.setReadOnly(True)
         self.details_text.setMaximumHeight(200)
-        self.details_text.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
+        self.details_text.setFont(QFont(theme.FONT_MONOSPACE, theme.FONT_SIZE_SMALL))
         details_layout.addWidget(self.details_text)
 
         details_widget = QLabel()  # Dummy widget to hold layout
@@ -182,7 +182,7 @@ class MCPToolsDialog(QDialog):
         for row, tool in enumerate(self.tools):
             # Tool name
             name_item = QTableWidgetItem(tool.get('name', 'Unknown'))
-            name_item.setForeground(QColor("#667eea"))
+            name_item.setForeground(QColor(theme.ACCENT_PRIMARY))
             self.table.setItem(row, 0, name_item)
 
             # Description

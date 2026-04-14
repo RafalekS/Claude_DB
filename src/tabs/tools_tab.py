@@ -245,7 +245,7 @@ class ToolsConfigDialog(QDialog):
             QPushButton {{
                 padding: 8px;
                 background-color: {theme.WARNING_COLOR};
-                color: white;
+                color: {theme.BG_DARK};
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 80px;
@@ -267,7 +267,7 @@ class ToolsConfigDialog(QDialog):
             }}
             QPushButton:hover {{
                 background-color: {theme.ACCENT_PRIMARY};
-                color: white;
+                color: {theme.BG_DARK};
             }}
         """
 
@@ -334,7 +334,7 @@ class ToolsConfigDialog(QDialog):
             QPushButton {{
                 padding: 8px;
                 background-color: {theme.SUCCESS_COLOR};
-                color: white;
+                color: {theme.BG_DARK};
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 100px;
@@ -356,7 +356,7 @@ class ToolsConfigDialog(QDialog):
             }}
             QPushButton:hover {{
                 background-color: {theme.SUCCESS_COLOR};
-                color: white;
+                color: {theme.BG_DARK};
             }}
         """
 

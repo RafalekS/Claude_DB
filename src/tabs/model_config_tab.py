@@ -66,7 +66,7 @@ class ModelConfigTab(QWidget):
             }}
             QTabBar::tab:selected {{
                 background-color: {theme.ACCENT_PRIMARY};
-                color: white;
+                color: {theme.BG_DARK};
             }}
             QTabBar::tab:hover {{
                 background-color: {theme.BG_LIGHT};
@@ -203,7 +203,7 @@ class ModelConfigTab(QWidget):
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
             }}
         """)
         model_layout.addRow("Model:", model_combo)
@@ -224,7 +224,7 @@ class ModelConfigTab(QWidget):
                 border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
         """)

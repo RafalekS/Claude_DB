@@ -61,7 +61,7 @@ class MemoryTab(QWidget):
             }}
             QTabBar::tab:selected {{
                 background-color: {theme.ACCENT_PRIMARY};
-                color: white;
+                color: {theme.BG_DARK};
             }}
             QTabBar::tab:hover {{
                 background-color: {theme.BG_LIGHT};
@@ -155,10 +155,10 @@ class MemoryTab(QWidget):
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
-            QListWidget::item:selected {{ background-color: {theme.ACCENT_PRIMARY}; color: white; }}
+            QListWidget::item:selected {{ background-color: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}
         """)
         self.history_list.itemClicked.connect(self.load_history_content)
 
@@ -192,10 +192,10 @@ class MemoryTab(QWidget):
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
-            QListWidget::item:selected {{ background-color: {theme.ACCENT_PRIMARY}; color: white; }}
+            QListWidget::item:selected {{ background-color: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}
         """)
         self.file_history_list.itemClicked.connect(self.load_file_history_content)
 
@@ -229,10 +229,10 @@ class MemoryTab(QWidget):
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
-            QListWidget::item:selected {{ background-color: {theme.ACCENT_PRIMARY}; color: white; }}
+            QListWidget::item:selected {{ background-color: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}
         """)
         self.shell_list.itemClicked.connect(self.load_shell_content)
 
@@ -264,12 +264,12 @@ class MemoryTab(QWidget):
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
             QListWidget::item:selected {{
                 background-color: {theme.ACCENT_PRIMARY};
-                color: white;
+                color: {theme.BG_DARK};
             }}
         """)
         self.projects_list.itemClicked.connect(self.load_project_session)

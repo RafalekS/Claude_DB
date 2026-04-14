@@ -385,7 +385,7 @@ class PluginMarketplaceBrowserDialog(QDialog):
         self.details_viewer = QTextEdit()
         self.details_viewer.setReadOnly(True)
         self.details_viewer.setMaximumHeight(200)
-        self.details_viewer.setFont(QFont("Consolas", theme.FONT_SIZE_SMALL))
+        self.details_viewer.setFont(QFont(theme.FONT_MONOSPACE, theme.FONT_SIZE_SMALL))
         self.details_viewer.setPlaceholderText("Select a plugin to view details...")
 
         splitter.addWidget(self.details_viewer)

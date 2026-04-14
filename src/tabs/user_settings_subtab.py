@@ -226,7 +226,7 @@ class UserSettingsSubTab(QWidget):
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
-                font-family: 'Consolas', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
             }}
         """)
         self.memory_dir_edit.setToolTip(
@@ -248,7 +248,7 @@ class UserSettingsSubTab(QWidget):
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
-                font-family: 'Consolas', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
             }}
         """)
         self.claude_md_excludes_edit.setToolTip(
@@ -295,7 +295,7 @@ class UserSettingsSubTab(QWidget):
                 border-radius: 3px;
                 padding: 3px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
             }}
         """)
         layout.addWidget(self.env_list)
@@ -341,7 +341,7 @@ class UserSettingsSubTab(QWidget):
         self.preview_text.setMaximumHeight(200)
         self.preview_text.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};

@@ -341,7 +341,7 @@ class AboutTab(QWidget):
         sdk_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
 
         cmd_label = QLabel("npm install @anthropic-ai/claude-agent-sdk")
-        cmd_label.setStyleSheet(f"background: {theme.BG_DARK}; padding: 5px; color: {theme.FG_PRIMARY}; font-family: 'Consolas', 'Monaco', monospace; border-radius: 3px;")
+        cmd_label.setStyleSheet(f"background: {theme.BG_DARK}; padding: 5px; color: {theme.FG_PRIMARY}; font-family: {theme.FONT_FAMILY_MONO}; border-radius: 3px;")
 
         copy_sdk_btn = QPushButton("📋 Copy")
         copy_sdk_btn.setStyleSheet(theme.get_button_style())

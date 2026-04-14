@@ -801,7 +801,7 @@ class MCPTab(QWidget):
                 border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
             }}
         """)

@@ -350,7 +350,7 @@ class SkillsTab(QWidget):
         self.editor = QTextEdit()
         self.editor.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
@@ -504,7 +504,7 @@ class SkillsTab(QWidget):
         self._source_preview.setReadOnly(True)
         self._source_preview.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
                 background: {theme.BG_DARK}; color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
@@ -628,7 +628,7 @@ class SkillsTab(QWidget):
         self._gh_preview.setReadOnly(True)
         self._gh_preview.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', monospace; font-size: {theme.FONT_SIZE_SMALL}px;
+                font-family: {theme.FONT_FAMILY_MONO}; font-size: {theme.FONT_SIZE_SMALL}px;
                 background: {theme.BG_DARK}; color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
             }}
@@ -726,7 +726,7 @@ class SkillsTab(QWidget):
         self._url_preview.setReadOnly(True)
         self._url_preview.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', monospace; font-size: {theme.FONT_SIZE_SMALL}px;
+                font-family: {theme.FONT_FAMILY_MONO}; font-size: {theme.FONT_SIZE_SMALL}px;
                 background: {theme.BG_DARK}; color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
             }}

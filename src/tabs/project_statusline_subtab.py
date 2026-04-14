@@ -136,7 +136,7 @@ class ProjectStatuslineSubTab(QWidget):
         json_preview.setMaximumHeight(120)
         json_preview.setStyleSheet(f"""
             QTextEdit {{
-                font-family: 'Consolas', 'Monaco', monospace;
+                font-family: {theme.FONT_FAMILY_MONO};
                 background-color: {theme.BG_DARK};
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};

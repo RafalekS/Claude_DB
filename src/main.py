@@ -115,7 +115,7 @@ class ClaudeDBApp(QMainWindow):
             }}
             QTabBar::tab:selected {{
                 background: {theme.ACCENT_PRIMARY};
-                color: white;
+                color: {theme.BG_DARK};
                 font-weight: bold;
             }}
             QTabBar::tab:hover {{

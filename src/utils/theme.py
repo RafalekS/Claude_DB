@@ -59,6 +59,10 @@ FONT_SIZE_SMALL = 12
 FONT_SIZE_TINY = 11
 FONT_SIZE_TAB = 13
 
+# Monospace font constants (immutable - font stack, not theme-specific)
+FONT_MONOSPACE = "Consolas"
+FONT_FAMILY_MONO = "'Consolas', 'Monaco', 'Courier New', monospace"
+
 # UI spacing constants (consistent across all widgets)
 MARGIN_SM = 3
 MARGIN_MD = 6
@@ -161,6 +165,58 @@ def get_button_style():
         }}
     """
 
+def get_monospace_font(size=None):
+    """Return a QFont for monospace display (Consolas stack)."""
+    from PyQt6.QtGui import QFont
+    return QFont(FONT_MONOSPACE, size if size is not None else FONT_SIZE_SMALL)
+
+
+def get_warning_button_style():
+    """Warning action button style (yellow background, dark text)."""
+    return f"""
+        QPushButton {{
+            padding: 4px 10px;
+            background-color: {WARNING_COLOR};
+            color: {BG_DARK};
+            border-radius: {BORDER_RADIUS}px;
+            font-size: {FONT_SIZE_NORMAL}px;
+            font-weight: bold;
+            border: none;
+        }}
+        QPushButton:hover {{
+            background-color: {ACCENT_SECONDARY};
+            color: {BG_DARK};
+        }}
+        QPushButton:disabled {{
+            background-color: {BG_MEDIUM};
+            color: {FG_DIM};
+        }}
+    """
+
+
+def get_success_button_style():
+    """Success/positive action button style (green background, dark text)."""
+    return f"""
+        QPushButton {{
+            padding: 4px 10px;
+            background-color: {SUCCESS_COLOR};
+            color: {BG_DARK};
+            border-radius: {BORDER_RADIUS}px;
+            font-size: {FONT_SIZE_NORMAL}px;
+            font-weight: bold;
+            border: none;
+        }}
+        QPushButton:hover {{
+            background-color: {ACCENT_PRIMARY};
+            color: {BG_DARK};
+        }}
+        QPushButton:disabled {{
+            background-color: {BG_MEDIUM};
+            color: {FG_DIM};
+        }}
+    """
+
+
 def get_button_danger_style():
     """Destructive button style (Delete, Remove, Reset — red accent)."""
     return f"""
@@ -213,7 +269,7 @@ def get_text_edit_style():
     """Get text editor stylesheet"""
     return f"""
         QTextEdit, QPlainTextEdit {{
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-family: {FONT_FAMILY_MONO};
             font-size: {FONT_SIZE_NORMAL}px;
             background-color: {BG_DARK};
             color: {FG_PRIMARY};
@@ -443,7 +499,7 @@ def generate_app_stylesheet():
 
         /* Text Editors */
         QTextEdit, QPlainTextEdit {{
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-family: {FONT_FAMILY_MONO};
             font-size: {FONT_SIZE_SMALL}px;
             background-color: {BG_DARK};
             color: {FG_PRIMARY};
