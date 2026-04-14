@@ -13,7 +13,7 @@ from pathlib import Path
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout,
-    QHBoxLayout, QPushButton, QLabel, QMessageBox, QStatusBar,
+    QHBoxLayout, QPushButton, QLabel, QMessageBox,
     QTabBar, QStackedWidget
 )
 from PyQt6.QtCore import Qt, QTimer
@@ -104,10 +104,6 @@ class ClaudeDBApp(QMainWindow):
         main_layout.setContentsMargins(5, 5, 5, 5)
         main_layout.setSpacing(5)
 
-        # Add header
-        header = self.create_header()
-        main_layout.addWidget(header)
-
         # Tab bar style — built from theme variables so it updates on theme change
         tab_bar_style = f"""
             QTabBar::tab {{
@@ -191,17 +187,9 @@ class ClaudeDBApp(QMainWindow):
         toolbar = self.create_toolbar()
         main_layout.addLayout(toolbar)
 
-        # Status bar
-        self.status_bar = QStatusBar()
-        self.setStatusBar(self.status_bar)
-
-        # Right-side GitHub rate-limit indicator (hidden until first API call)
+        # GitHub rate-limit indicator shown in window title when active
         self._github_label = QLabel("")
-        self._github_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: 11px; margin-right: 8px;")
-        self._github_label.hide()
-        self.status_bar.addPermanentWidget(self._github_label)
-
-        self.status_bar.showMessage("Ready")
+        self._github_label.hide()  # kept for API compatibility but not displayed
 
         # Connect preferences theme-change signal → instant theme refresh
         prefs_widget = self.all_tabs.get("preferences")
@@ -258,25 +246,12 @@ class ClaudeDBApp(QMainWindow):
     # ── Status bar helpers ────────────────────────────────────────────────
 
     def set_status(self, message: str, is_error: bool = False, timeout: int = 5000) -> None:
-        """Show a status-bar message. Called by any tab via self.window().set_status(...)
-
-        Args:
-            message:  Text to display.
-            is_error: If True, text is shown in red with an 8-second timeout.
-            timeout:  Auto-clear delay in milliseconds (0 = permanent until next call).
-        """
-        if is_error:
-            self.status_bar.setStyleSheet(f"QStatusBar {{ color: {theme.ERROR_COLOR}; }}")
-            timeout = max(timeout, 8000)
-        else:
-            self.status_bar.setStyleSheet("")
-        self.status_bar.showMessage(message, timeout)
+        """Log a status message (status bar removed — kept for tab API compatibility)."""
         logger.debug(f"Status: {message}")
 
     def update_github_status(self, remaining: int) -> None:
-        """Update the GitHub rate-limit indicator in the right of the status bar."""
-        self._github_label.setText(f"GitHub API: {remaining} remaining")
-        self._github_label.show()
+        """No-op — status bar removed."""
+        pass
 
     # ── Theme switching ───────────────────────────────────────────────────
 
@@ -323,21 +298,18 @@ class ClaudeDBApp(QMainWindow):
     def create_backup(self):
         """Create backup of all configuration files"""
         try:
-            self.status_bar.showMessage("Creating backup...")
             backup_path = self.backup_manager.create_full_backup()
             QMessageBox.information(
                 self,
                 "Backup Created",
                 f"Configuration backup successfully created:\n{backup_path}"
             )
-            self.status_bar.showMessage(f"Backup created: {backup_path}", 5000)
         except Exception as e:
             QMessageBox.critical(
                 self,
                 "Backup Failed",
                 f"Failed to create backup:\n{str(e)}"
             )
-            self.status_bar.showMessage("Backup failed", 5000)
 
     def backup_program_files(self):
         """Launch backup script in a terminal (cross-platform)."""
