@@ -222,11 +222,15 @@ class SkillsTab(QWidget):
 
         info_layout = QVBoxLayout()
         info_text = QLabel(
-            "Skills are directory-based, NOT stored in JSON files.\n"
-            "• User Skills: ~/.claude/skills/ - Personal skills available across all projects\n"
-            "• Project Skills: ./.claude/skills/ - Shared with team via git\n"
-            "• Each skill is a directory containing a SKILL.md file\n"
-            "• Skills are automatically discovered when Claude Code runs"
+            "Skills are directory-based (a directory with SKILL.md), discovered automatically at startup and on file change.\n"
+            "• User skills: ~/.claude/skills/ — personal, all projects\n"
+            "• Project skills: ./.claude/skills/ — team-shared via git\n"
+            "• Plugin skills: installed via 'claude plugin install'\n"
+            "Priority (highest first): Enterprise > Personal > Project > Plugin\n"
+            "\n"
+            "Bundled skills: simplify · batch · debug · loop · claude-api\n"
+            "Description cap: ~1,024 chars (shown to model; trim for best adherence)\n"
+            "Substitutions in body: $ARGUMENTS[N] / $N · ${CLAUDE_SKILL_DIR}"
         )
         info_text.setWordWrap(True)
         info_text.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; padding: 5px;")

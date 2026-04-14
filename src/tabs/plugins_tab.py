@@ -177,6 +177,28 @@ class PluginsTab(QWidget):
         extra_marketplaces_group.setLayout(extra_marketplaces_layout)
         layout.addWidget(extra_marketplaces_group)
 
+        # CLI reference footer
+        cli_footer = QLabel(
+            "<b>CLI commands:</b> "
+            "<code>claude plugin install &lt;id&gt;@&lt;marketplace&gt;</code> · "
+            "<code>claude plugin uninstall &lt;id&gt; [--keep-data]</code> · "
+            "<code>claude plugin enable/disable &lt;id&gt;</code> · "
+            "<code>claude plugin update &lt;id&gt;</code> · "
+            "<code>claude plugin validate</code> &nbsp;|&nbsp; "
+            "<b>Scopes:</b> user (default) · project (git) · local (gitignored) · managed (org, read-only) &nbsp;|&nbsp; "
+            "<b>Cache:</b> <code>~/.claude/plugins/cache/</code>"
+        )
+        cli_footer.setWordWrap(True)
+        cli_footer.setOpenExternalLinks(False)
+        cli_footer.setStyleSheet(
+            f"font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"padding: {theme.PADDING_SM}px {theme.PADDING_MD}px; "
+            f"background: {theme.BG_MEDIUM}; "
+            f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
+            f"border-radius: {theme.BORDER_RADIUS}px;"
+        )
+        layout.addWidget(cli_footer)
+
         # Store data
         self.settings_data = {}
         self.plugins_config_data = {}
