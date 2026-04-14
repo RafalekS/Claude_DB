@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from utils import theme
+from utils.ui_state_manager import UIStateManager
 
 logger = logging.getLogger(__name__)
 
@@ -324,25 +325,11 @@ class AboutTab(QWidget):
         marketplaces_group, self.content_widgets['marketplaces'] = self.create_link_group("Plugin Marketplaces", self.marketplaces_links)
         splitter.addWidget(marketplaces_group)
 
+        mgr = UIStateManager.instance()
+        mgr.restore_splitter_state("about.links_splitter", splitter)
+        mgr.connect_splitter("about.links_splitter", splitter)
+
         layout.addWidget(splitter, 1)
-
-        # Claude Agent SDK Installation - compact
-        sdk_layout = QHBoxLayout()
-        sdk_label = QLabel("SDK:")
-        sdk_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
-
-        cmd_label = QLabel("npm install @anthropic-ai/claude-agent-sdk")
-        cmd_label.setStyleSheet(f"background: {theme.BG_DARK}; padding: 5px; color: {theme.FG_PRIMARY}; font-family: {theme.FONT_FAMILY_MONO}; border-radius: 3px;")
-
-        copy_sdk_btn = QPushButton("📋 Copy")
-        copy_sdk_btn.setMinimumWidth(80)
-        copy_sdk_btn.clicked.connect(self.copy_sdk_command)
-
-        sdk_layout.addWidget(sdk_label)
-        sdk_layout.addWidget(cmd_label)
-        sdk_layout.addWidget(copy_sdk_btn)
-        sdk_layout.addStretch()
-        layout.addLayout(sdk_layout)
 
         # Developer Info - compact
         dev_info = QLabel("Rafal Staska | r.staska@gmail.com | GitHub: RafalekS")
@@ -413,13 +400,3 @@ class AboutTab(QWidget):
                 f"Documentation file not found at:\n{docs_path}"
             )
 
-    def copy_sdk_command(self):
-        """Copy SDK installation command to clipboard"""
-        from PyQt6.QtWidgets import QApplication
-        clipboard = QApplication.clipboard()
-        clipboard.setText("npm install @anthropic-ai/claude-agent-sdk")
-        QMessageBox.information(
-            self,
-            "Copied",
-            "SDK installation command copied to clipboard!"
-        )

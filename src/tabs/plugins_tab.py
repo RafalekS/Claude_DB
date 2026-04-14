@@ -37,32 +37,23 @@ class PluginsTab(QWidget):
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
-        # Header with combined info
-        header = QLabel("Plugins Management")
+        # Header
+        header = QLabel("Plugins")
         header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
         layout.addWidget(header)
 
-        # Combined info label
+        # Compact file locations bar
         from PyQt6.QtGui import QDesktopServices
         from PyQt6.QtCore import QUrl
 
         info_label = QLabel(
-            f"<b>File Locations:</b><br>"
-            f"Settings: {self.settings_file}<br>"
-            f"Plugins Directory: {self.plugins_dir}<br>"
-            f"Installed Plugins: {self.plugins_config_file}<br>"
-            f"Known Marketplaces: {self.plugins_marketplaces_file}<br><br>"
-            f"<b>How Plugins Work:</b><br>"
-            f"• Configuration exists in TWO locations: settings.json (enabledPlugins, extraKnownMarketplaces) and ~/.claude/plugins/ (config.json, known_marketplaces.json)<br>"
-            f"• Plugins bundle commands, agents, skills, hooks, and MCP servers together<br>"
-            f"• Use /plugin command in Claude Code terminal to browse and install<br><br>"
-            f"🌐 <b>Browse Online:</b> "
-            f'<a href="https://claudemarketplaces.com/">Claude Marketplaces</a> | '
-            f'<a href="https://claudecodemarketplace.com/">Claude Code Marketplace</a>'
+            f"Settings: <code>{self.settings_file}</code> &nbsp;|&nbsp; "
+            f"Plugins dir: <code>{self.plugins_dir}</code> &nbsp;|&nbsp; "
+            f'<a href="https://claudemarketplaces.com/">Browse Marketplaces</a>'
         )
         info_label.setOpenExternalLinks(True)
         info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 8px; border-radius: 3px;")
+        info_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 4px;")
         layout.addWidget(info_label)
 
         # Quick Actions Section

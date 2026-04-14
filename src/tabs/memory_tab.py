@@ -12,6 +12,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from utils import theme
+from utils.ui_state_manager import UIStateManager
+
 class MemoryTab(QWidget):
     """Tab for memory and checkpointing info"""
 
@@ -155,6 +157,10 @@ class MemoryTab(QWidget):
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
 
+        mgr = UIStateManager.instance()
+        mgr.restore_splitter_state("memory.history_splitter", splitter)
+        mgr.connect_splitter("memory.history_splitter", splitter)
+
         layout.addWidget(splitter)
 
         return widget
@@ -187,6 +193,10 @@ class MemoryTab(QWidget):
         splitter.addWidget(self.file_history_viewer)
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
+
+        mgr = UIStateManager.instance()
+        mgr.restore_splitter_state("memory.file_history_splitter", splitter)
+        mgr.connect_splitter("memory.file_history_splitter", splitter)
 
         layout.addWidget(splitter)
 
@@ -221,6 +231,10 @@ class MemoryTab(QWidget):
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
 
+        mgr = UIStateManager.instance()
+        mgr.restore_splitter_state("memory.shell_splitter", splitter)
+        mgr.connect_splitter("memory.shell_splitter", splitter)
+
         layout.addWidget(splitter)
 
         return widget
@@ -243,6 +257,10 @@ class MemoryTab(QWidget):
         splitter.addWidget(self.projects_viewer)
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
+
+        mgr = UIStateManager.instance()
+        mgr.restore_splitter_state("memory.projects_splitter", splitter)
+        mgr.connect_splitter("memory.projects_splitter", splitter)
 
         layout.addWidget(splitter)
         return widget

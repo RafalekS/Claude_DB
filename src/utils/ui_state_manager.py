@@ -13,8 +13,8 @@ Usage:
 import json
 import logging
 from pathlib import Path
-from PyQt6.QtWidgets import QTableWidget, QListWidget
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QTableWidget, QListWidget, QSplitter
+from PyQt6.QtCore import Qt, QTimer
 
 logger = logging.getLogger(__name__)
 
@@ -123,3 +123,43 @@ class UIStateManager:
         vbar = widget.verticalScrollBar()
         if vbar:
             vbar.setValue(data.get("scroll", 0))
+
+    # ── Splitters ──────────────────────────────────────────────────────────
+
+    def save_splitter_state(self, splitter_id: str, splitter: QSplitter) -> None:
+        """Save splitter sizes.
+
+        Args:
+            splitter_id: Unique string key e.g. "memory.history_splitter"
+            splitter: The QSplitter to save
+        """
+        self._state[splitter_id] = {"sizes": splitter.sizes()}
+        self.save()
+
+    def restore_splitter_state(self, splitter_id: str, splitter: QSplitter) -> None:
+        """Restore splitter sizes.
+
+        Args:
+            splitter_id: Same key used in save_splitter_state
+            splitter: The QSplitter to restore
+        """
+        data = self._state.get(splitter_id)
+        if not data:
+            return
+        sizes: list = data.get("sizes", [])
+        if sizes and len(sizes) == splitter.count():
+            splitter.setSizes(sizes)
+
+    def connect_splitter(self, splitter_id: str, splitter: QSplitter) -> None:
+        """Auto-save on splitter move with 400 ms debounce.
+
+        Args:
+            splitter_id: Same key used in save/restore
+            splitter: The QSplitter to monitor
+        """
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(lambda: self.save_splitter_state(splitter_id, splitter))
+        splitter.splitterMoved.connect(lambda _pos, _idx: timer.start(400))
+        # Keep timer alive as long as splitter lives
+        splitter._ui_state_timer = timer

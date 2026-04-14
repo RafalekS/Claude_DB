@@ -40,12 +40,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import tab modules
-from tabs.claude_md_tab import ClaudeMDTab
 from tabs.prompts_tab import PromptsTab
 from tabs.plugins_tab import PluginsTab
 from tabs.memory_tab import MemoryTab
 from tabs.usage_tab import UsageTab
-from tabs.cli_reference_tab import CLIReferenceTab
+from tabs.documentation_tab import DocumentationTab
 from tabs.styles_workflows_tab import StylesWorkflowsTab
 from tabs.claudekit_tab import ClaudeKitTab
 from tabs.tools_tab import ToolsTab
@@ -141,12 +140,11 @@ class ClaudeDBApp(QMainWindow):
         self.all_tabs = {
             "userconfig": ("👤 User Config", UserConfigTab(self.config_manager, self.backup_manager, self.settings_manager)),
             "projectconfig": ("📁 Project Config", ProjectConfigTab(self.config_manager, self.backup_manager, self.settings_manager, self.project_context)),
-            "claudemd": ("📝 CLAUDE.md", ClaudeMDTab(self.config_manager, self.backup_manager)),
             "prompts": ("💬 Prompts", PromptsTab(self.config_manager, self.backup_manager)),
             "plugins": ("🧩 Plugins", PluginsTab(self.config_manager, self.backup_manager)),
             "memory": ("💾 Memory", MemoryTab(self.config_manager, self.backup_manager)),
             "usage": ("📈 Usage & Analytics", UsageTab(self.config_manager, self.backup_manager)),
-            "clireference": ("📖 CLI Reference", CLIReferenceTab()),
+            "docs": ("📚 Documentation", DocumentationTab()),
             "styles": ("🔄 Workflows", StylesWorkflowsTab(self.config_manager, self.backup_manager)),
             "claudekit": ("🛠️ ClaudeKit", ClaudeKitTab()),
             "tools": ("🔧 Tools", ToolsTab()),
@@ -155,8 +153,8 @@ class ClaudeDBApp(QMainWindow):
         }
 
         # Default tab order (using keys)
-        default_row1 = ["userconfig", "projectconfig", "claudemd", "prompts", "plugins", "memory"]
-        default_row2 = ["usage", "clireference", "styles", "claudekit", "tools", "about", "preferences"]
+        default_row1 = ["userconfig", "projectconfig", "prompts", "plugins", "memory"]
+        default_row2 = ["usage", "docs", "styles", "claudekit", "tools", "about", "preferences"]
 
         # Load custom tab configuration from config
         row1_tabs, row2_tabs = self.load_tab_configuration(self.all_tabs, default_row1, default_row2)

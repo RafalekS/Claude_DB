@@ -30,6 +30,7 @@ from tabs.mcp_tab import MCPTab
 from tabs.skills_tab import SkillsTab
 from tabs.rules_tab import RulesTab
 from tabs.claude_local_md_tab import ClaudeLocalMDTab
+from tabs.claude_md_tab import ClaudeMDTab
 from tabs.agent_teams_tab import AgentTeamsTab
 from tabs.remote_control_tab import RemoteControlTab
 
@@ -135,6 +136,10 @@ class UserConfigTab(QWidget):
         # Rules sub-tab
         rules_tab = RulesTab(self.config_manager, self.backup_manager)
         self.sub_tabs.addTab(rules_tab, "📋 Rules")
+
+        # CLAUDE.md sub-tab (editor for ~/.claude/CLAUDE.md)
+        claude_md_tab = ClaudeMDTab(self.config_manager, self.backup_manager)
+        self.sub_tabs.addTab(claude_md_tab, "📝 CLAUDE.md")
 
         # CLAUDE.local.md sub-tab
         local_md_tab = ClaudeLocalMDTab(self.config_manager, self.backup_manager)
