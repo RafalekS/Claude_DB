@@ -110,12 +110,12 @@ class ProjectPermissionsSubTab(QWidget):
             "default", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
         ])
         default_mode_combo.setToolTip(
-            "default — normal prompting\n"
-            "acceptEdits — auto-accept file edits\n"
-            "plan — plan mode, no execution\n"
-            "auto — auto-accept all\n"
-            "dontAsk — skip permission prompts\n"
-            "bypassPermissions — bypass all checks (use with caution)"
+            "default — normal prompting (Shift+Tab to cycle modes)\n"
+            "acceptEdits — auto-approve file edits + common filesystem commands (git, npm, etc.)\n"
+            "plan — plan mode only, no execution\n"
+            "auto — background classifier; requires Team/Enterprise + Sonnet4.6/Opus4.6\n"
+            "dontAsk — skip all permission prompts, pre-approved tools only (CI use)\n"
+            "bypassPermissions — bypass all checks; containers/VMs only (managed: disableBypassPermissionsMode)"
         )
         default_mode_combo.currentTextChanged.connect(lambda m, s=scope: self.save_default_mode(s, m))
         mode_hint = QLabel("permissions.defaultMode in settings.json")
@@ -162,6 +162,29 @@ class ProjectPermissionsSubTab(QWidget):
         btn_layout.addWidget(refresh_btn)
         btn_layout.addStretch()
         layout.addLayout(btn_layout)
+
+        # Permission modes reference footer
+        footer = QLabel(
+            "<b>Modes:</b> "
+            "<b>default</b> — normal prompting &nbsp;| "
+            "<b>acceptEdits</b> — auto-approve edits + filesystem commands &nbsp;| "
+            "<b>auto</b> — background classifier (Team/Enterprise only) &nbsp;| "
+            "<b>dontAsk</b> — skip prompts, CI use &nbsp;| "
+            "<b>bypassPermissions</b> — containers/VMs only &nbsp;&nbsp; "
+            "• <b>Shift+Tab</b> cycles modes &nbsp;&nbsp; "
+            "• Protected: <code>~/.ssh</code> <code>~/.aws</code> <code>/etc/passwd</code> &nbsp;&nbsp; "
+            "• Managed flags: <code>disableAutoMode</code>, <code>disableBypassPermissionsMode</code>"
+        )
+        footer.setWordWrap(True)
+        footer.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"padding: {theme.PADDING_MD}px; "
+            f"background-color: {theme.BG_MEDIUM}; "
+            f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
+            f"border-radius: {theme.BORDER_RADIUS}px;"
+        )
+        layout.addWidget(footer)
 
         # Store table reference
         self.tables[scope] = perm_table

@@ -404,12 +404,12 @@ class UserPermissionsSubTab(QWidget):
             "default", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
         ])
         self.default_mode_combo.setToolTip(
-            "default — normal prompting\n"
-            "acceptEdits — auto-accept file edits\n"
-            "plan — plan mode, no execution\n"
-            "auto — auto-accept all (--dangerously-skip-permissions)\n"
-            "dontAsk — skip permission prompts\n"
-            "bypassPermissions — bypass all checks (use with caution)"
+            "default — normal prompting (Shift+Tab to cycle modes)\n"
+            "acceptEdits — auto-approve file edits + common filesystem commands (git, npm, etc.)\n"
+            "plan — plan mode only, no execution\n"
+            "auto — background classifier; requires Team/Enterprise + Sonnet4.6/Opus4.6\n"
+            "dontAsk — skip all permission prompts, pre-approved tools only (CI use)\n"
+            "bypassPermissions — bypass all checks; containers/VMs only (managed: disableBypassPermissionsMode)"
         )
         self.default_mode_combo.currentTextChanged.connect(self.save_default_mode)
         mode_hint = QLabel("Controls session-wide permission behaviour (settings.json: permissions.defaultMode)")
@@ -455,6 +455,30 @@ class UserPermissionsSubTab(QWidget):
         btn_layout.addWidget(refresh_btn)
         btn_layout.addStretch()
         layout.addLayout(btn_layout)
+
+        # Permission modes reference footer
+        footer = QLabel(
+            "<b>Modes:</b> "
+            "<b>default</b> — normal prompting &nbsp;| "
+            "<b>acceptEdits</b> — auto-approve edits + filesystem commands &nbsp;| "
+            "<b>auto</b> — background classifier (Team/Enterprise only) &nbsp;| "
+            "<b>dontAsk</b> — skip prompts, CI use &nbsp;| "
+            "<b>bypassPermissions</b> — containers/VMs only &nbsp;&nbsp; "
+            "• <b>Shift+Tab</b> cycles modes during a session &nbsp;&nbsp; "
+            "• Protected paths (always restricted): <code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.gnupg</code>, "
+            "<code>/etc/passwd</code>, <code>/etc/shadow</code> &nbsp;&nbsp; "
+            "• Managed flags: <code>disableAutoMode</code>, <code>disableBypassPermissionsMode</code>"
+        )
+        footer.setWordWrap(True)
+        footer.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"padding: {theme.PADDING_MD}px; "
+            f"background-color: {theme.BG_MEDIUM}; "
+            f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
+            f"border-radius: {theme.BORDER_RADIUS}px;"
+        )
+        layout.addWidget(footer)
 
     def refresh_permissions(self):
         """Refresh permissions (clears cache and reloads from disk)"""

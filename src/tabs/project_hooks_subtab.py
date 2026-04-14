@@ -300,10 +300,24 @@ class ProjectHooksSubTab(QWidget):
             <p><b>WorktreeCreate / WorktreeRemove</b></p>
 
             <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Handler Types</h3>
-            <p><b>command</b> — Shell command</p>
-            <p><b>http</b> — HTTP endpoint call</p>
-            <p><b>prompt</b> — Send prompt to a Claude model for yes/no evaluation</p>
-            <p><b>agent</b> — Invoke a subagent</p>
+            <p><b>command</b> — Shell command (stdin: JSON event data)</p>
+            <p><b>http</b> — POST JSON to a URL (fields: url, headers, allowedEnvVars, timeout)</p>
+            <p><b>prompt</b> — Claude model evaluates yes/no (fields: model, prompt, timeout)</p>
+            <p><b>agent</b> — Invoke a subagent (fields: agent, model, timeout)</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Hook Fields</h3>
+            <p><b>timeout</b> — seconds (default: command=600, http=30, prompt=30, agent=60)</p>
+            <p><b>async</b> — true/false — run without blocking Claude (default false)</p>
+            <p><b>asyncRewake</b> — true/false — wake Claude when async hook completes</p>
+            <p><b>statusMessage</b> — string shown in UI while hook runs</p>
+            <p><b>once</b> — true/false — fire only once per session</p>
+            <p><b>if</b> — expression string for conditional execution</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Output Keys</h3>
+            <p><b>hookSpecificOutput</b> — arbitrary data passed back to Claude</p>
+            <p><b>updatedInput</b> — modified tool input (PreToolUse only)</p>
+            <p><b>additionalContext</b> — extra context appended to Claude's context</p>
+            <p><b>permissionDecision</b> — allow | deny (PermissionRequest only)</p>
 
             <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Example</h3>
             <pre style="background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;">{{
@@ -313,13 +327,15 @@ class ProjectHooksSubTab(QWidget):
       "hooks": [{{
         "type": "command",
         "command": "echo 'File written'",
-        "timeout": 600
+        "timeout": 600,
+        "async": false,
+        "statusMessage": "Running post-write hook"
       }}]
     }}]
   }}
 }}</pre>
             <p style="font-size: 11px; color: {theme.FG_SECONDARY};">
-            Exit codes: 0=success, 2=blocking, other=non-blocking • Timeouts: command=600s, http/prompt=30s, agent=60s
+            Exit codes: 0=success, 2=blocking, other=non-blocking
             </p>
         </body>
         </html>
@@ -477,6 +493,35 @@ class ProjectHooksSubTab(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
+    HOOK_TEMPLATES = {
+        "command": {
+            "type": "command",
+            "command": "echo 'Hook triggered'",
+            "timeout": 600,
+            "async": False,
+            "statusMessage": ""
+        },
+        "http": {
+            "type": "http",
+            "url": "https://example.com/webhook",
+            "headers": {"Content-Type": "application/json"},
+            "allowedEnvVars": [],
+            "timeout": 30
+        },
+        "prompt": {
+            "type": "prompt",
+            "model": "claude-haiku-4-5-20251001",
+            "prompt": "Should this action proceed? Reply with only yes or no.",
+            "timeout": 30
+        },
+        "agent": {
+            "type": "agent",
+            "agent": "code-reviewer",
+            "model": "claude-haiku-4-5-20251001",
+            "timeout": 60
+        }
+    }
+
     def add_hook(self, scope: str):
         """Add a new hook for selected event"""
         if not self.project_context.has_project():
@@ -493,27 +538,27 @@ class ProjectHooksSubTab(QWidget):
 
         event_name = selected_items[0].data(Qt.ItemDataRole.UserRole)
 
-        # Create a template hook entry
-        template_hook = {
-            "matcher": "ToolName",  # or * for all tools
-            "hooks": [
-                {
-                    "type": "command",
-                    "command": "echo 'Hook triggered'",
-                    "timeout": 600
-                }
-            ]
-        }
+        from PyQt6.QtWidgets import QInputDialog
+        hook_type, ok = QInputDialog.getItem(
+            self,
+            "Hook Handler Type",
+            f"Select handler type for '{event_name}':",
+            ["command", "http", "prompt", "agent"],
+            0,
+            False
+        )
+        if not ok:
+            return
 
-        # Add to hooks config
+        handler = dict(self.HOOK_TEMPLATES[hook_type])
+        template_hook = {"matcher": "*", "hooks": [handler]}
+
         hooks_config = editor_data['hooks_config']
         if event_name not in hooks_config:
             hooks_config[event_name] = []
-
         hooks_config[event_name].append(template_hook)
         editor_data['hooks_config'] = hooks_config
 
-        # Update editor
         formatted_json = json.dumps({"hooks": hooks_config}, indent=2)
         editor_data['editor'].setPlainText(formatted_json)
         self.update_events_list(scope)
@@ -521,7 +566,7 @@ class ProjectHooksSubTab(QWidget):
         QMessageBox.information(
             self,
             "Hook Added",
-            f"Template hook added to '{event_name}' event.\n\nEdit the matcher and command as needed, then Save."
+            f"{hook_type} hook template added to '{event_name}'.\n\nEdit the fields as needed, then Save."
         )
 
     def edit_hook(self, scope: str):

@@ -8,7 +8,8 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QScrollArea, QTextEdit, QMessageBox, QTabWidget,
-    QComboBox, QFormLayout, QListWidget, QListWidgetItem, QInputDialog
+    QComboBox, QFormLayout, QListWidget, QListWidgetItem, QInputDialog,
+    QLineEdit
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont
@@ -30,6 +31,8 @@ class ProjectSettingsSubTab(QWidget):
         self.theme_combos = {}
         self.env_lists = {}
         self.preview_texts = {}
+        self.excludes_edits = {}
+        self.plugins_lists = {}
 
         self.init_ui()
 
@@ -136,11 +139,15 @@ class ProjectSettingsSubTab(QWidget):
         theme_group = self.create_theme_section(scope)
         scroll_layout.addWidget(theme_group)
 
-        # Section 3: Environment Variables
+        # Section 3: Advanced
+        advanced_group = self.create_advanced_section(scope)
+        scroll_layout.addWidget(advanced_group)
+
+        # Section 4: Environment Variables
         env_group = self.create_env_vars_section(scope)
         scroll_layout.addWidget(env_group)
 
-        # Section 4: JSON Preview
+        # Section 5: JSON Preview
         preview_group = self.create_preview_section(scope)
         scroll_layout.addWidget(preview_group)
 
@@ -265,6 +272,86 @@ class ProjectSettingsSubTab(QWidget):
         self.theme_combos[scope] = theme_combo
 
         return group
+
+    def create_advanced_section(self, scope: str) -> QGroupBox:
+        """Create advanced settings section (claudeMdExcludes, enabledPlugins)"""
+        group = QGroupBox("Advanced")
+        layout = QVBoxLayout()
+        layout.setSpacing(8)
+
+        # claudeMdExcludes
+        excludes_label = QLabel("CLAUDE.md Excludes (glob patterns, comma-separated):")
+        excludes_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
+        layout.addWidget(excludes_label)
+
+        excludes_edit = QLineEdit()
+        excludes_edit.setPlaceholderText("e.g. tests/**, docs/**")
+        excludes_edit.setToolTip(
+            "Glob patterns for files/directories excluded from CLAUDE.md context loading"
+        )
+        layout.addWidget(excludes_edit)
+
+        excludes_tip = QLabel(
+            "💡 Glob patterns that prevent CLAUDE.md files in matching paths from being loaded"
+        )
+        excludes_tip.setWordWrap(True)
+        excludes_tip.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        layout.addWidget(excludes_tip)
+
+        # enabledPlugins
+        plugins_label = QLabel("Enabled Plugins:")
+        plugins_label.setStyleSheet(
+            f"color: {theme.FG_PRIMARY}; font-weight: bold; margin-top: {theme.MARGIN_SM}px;"
+        )
+        layout.addWidget(plugins_label)
+
+        plugins_list = QListWidget()
+        plugins_list.setMaximumHeight(100)
+        layout.addWidget(plugins_list)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(4)
+        add_plugin_btn = QPushButton("➕ Add")
+        add_plugin_btn.setToolTip("Add plugin name")
+        remove_plugin_btn = QPushButton("🗑 Remove")
+        remove_plugin_btn.setToolTip("Remove selected plugin")
+        add_plugin_btn.clicked.connect(lambda: self._add_plugin(scope))
+        remove_plugin_btn.clicked.connect(lambda: self._remove_plugin(scope))
+        btn_row.addWidget(add_plugin_btn)
+        btn_row.addWidget(remove_plugin_btn)
+        btn_row.addStretch()
+        layout.addLayout(btn_row)
+
+        plugins_tip = QLabel(
+            "💡 Plugin names to enable for this project (overrides user-level enabledPlugins)"
+        )
+        plugins_tip.setWordWrap(True)
+        plugins_tip.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        layout.addWidget(plugins_tip)
+
+        group.setLayout(layout)
+
+        self.excludes_edits[scope] = excludes_edit
+        self.plugins_lists[scope] = plugins_list
+
+        return group
+
+    def _add_plugin(self, scope: str):
+        """Add a plugin name to the enabled plugins list"""
+        name, ok = QInputDialog.getText(self, "Add Plugin", "Plugin name:")
+        if ok and name.strip():
+            self.plugins_lists[scope].addItem(name.strip())
+
+    def _remove_plugin(self, scope: str):
+        """Remove selected plugin from the list"""
+        lst = self.plugins_lists[scope]
+        row = lst.currentRow()
+        if row >= 0:
+            lst.takeItem(row)
 
     def create_env_vars_section(self, scope: str) -> QGroupBox:
         """Create environment variables section"""
@@ -543,6 +630,17 @@ class ProjectSettingsSubTab(QWidget):
                 if index >= 0:
                     self.theme_combos[scope].setCurrentIndex(index)
 
+            # Load claudeMdExcludes
+            if scope in self.excludes_edits:
+                excludes = settings.get("claudeMdExcludes", [])
+                self.excludes_edits[scope].setText(", ".join(excludes))
+
+            # Load enabledPlugins
+            if scope in self.plugins_lists:
+                self.plugins_lists[scope].clear()
+                for plugin in settings.get("enabledPlugins", []):
+                    self.plugins_lists[scope].addItem(plugin)
+
             # Load environment variables
             self.load_env_vars(settings, scope)
 
@@ -581,6 +679,24 @@ class ProjectSettingsSubTab(QWidget):
             # Update theme
             if scope in self.theme_combos:
                 settings["theme"] = self.theme_combos[scope].currentText()
+
+            # Update claudeMdExcludes
+            if scope in self.excludes_edits:
+                raw = self.excludes_edits[scope].text().strip()
+                excludes = [p.strip() for p in raw.split(",") if p.strip()]
+                if excludes:
+                    settings["claudeMdExcludes"] = excludes
+                elif "claudeMdExcludes" in settings:
+                    del settings["claudeMdExcludes"]
+
+            # Update enabledPlugins
+            if scope in self.plugins_lists:
+                lst = self.plugins_lists[scope]
+                plugins = [lst.item(i).text() for i in range(lst.count())]
+                if plugins:
+                    settings["enabledPlugins"] = plugins
+                elif "enabledPlugins" in settings:
+                    del settings["enabledPlugins"]
 
             # Save
             if scope == "shared":
