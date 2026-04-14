@@ -14,7 +14,6 @@ from PyQt6.QtGui import QFont
 from utils import theme
 from utils.terminal_utils import run_in_terminal
 
-
 class ProjectsTab(QWidget):
     """Tab for managing Claude Code projects"""
 
@@ -63,12 +62,11 @@ class ProjectsTab(QWidget):
     def create_selector_group(self):
         """Create project selector group"""
         group = QGroupBox("Select Project")
-        group.setStyleSheet(theme.get_groupbox_style())
         layout = QHBoxLayout()
 
         # Project dropdown
         self.project_combo = QComboBox()
-        self.project_combo.setStyleSheet(theme.get_line_edit_style() + "QComboBox { combobox-popup: 0; }")
+        self.project_combo.setStyleSheet("QComboBox { combobox-popup: 0; }")
         self.project_combo.setMaxVisibleItems(10)
         # Limit dropdown height
         self.project_combo.view().setStyleSheet("QListView { max-height: 300px; }")
@@ -77,7 +75,6 @@ class ProjectsTab(QWidget):
 
         # Refresh button
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.setToolTip("Reload projects list")
         refresh_btn.clicked.connect(self.load_projects)
         layout.addWidget(refresh_btn)
@@ -97,7 +94,6 @@ class ProjectsTab(QWidget):
     def create_command_group(self):
         """Create command executor group"""
         group = QGroupBox("Execute Commands")
-        group.setStyleSheet(theme.get_groupbox_style())
         layout = QVBoxLayout()
 
         # Info commands row
@@ -112,7 +108,6 @@ class ProjectsTab(QWidget):
 
         for label, cmd, tooltip in commands_info:
             btn = QPushButton(label)
-            btn.setStyleSheet(theme.get_button_style())
             btn.setToolTip(tooltip)
             btn.clicked.connect(lambda checked, c=cmd: self.execute_command(c))
             info_layout.addWidget(btn)
@@ -131,7 +126,6 @@ class ProjectsTab(QWidget):
 
         for label, cmd, tooltip in commands_session:
             btn = QPushButton(label)
-            btn.setStyleSheet(theme.get_button_style())
             btn.setToolTip(tooltip)
             btn.clicked.connect(lambda checked, c=cmd: self.execute_command(c))
             session_layout.addWidget(btn)
@@ -148,7 +142,6 @@ class ProjectsTab(QWidget):
 
         for label, cmd, tooltip in commands_config:
             btn = QPushButton(label)
-            btn.setStyleSheet(theme.get_button_style())
             btn.setToolTip(tooltip)
             btn.clicked.connect(lambda checked, c=cmd: self.execute_command(c))
             config_layout.addWidget(btn)
@@ -161,7 +154,6 @@ class ProjectsTab(QWidget):
     def create_terminal_group(self):
         """Create terminal actions group"""
         group = QGroupBox("Terminal Actions")
-        group.setStyleSheet(theme.get_groupbox_style())
         layout = QHBoxLayout()
 
         # Dangerous permissions checkbox
@@ -175,7 +167,6 @@ class ProjectsTab(QWidget):
 
         # Open in terminal button
         open_terminal_btn = QPushButton("🖥️ Open in Terminal")
-        open_terminal_btn.setStyleSheet(theme.get_button_style())
         open_terminal_btn.setToolTip("Open project directory in Windows Terminal")
         open_terminal_btn.clicked.connect(self.open_in_terminal)
         layout.addWidget(open_terminal_btn)

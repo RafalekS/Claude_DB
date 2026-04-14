@@ -11,7 +11,6 @@ from PyQt6.QtGui import QDesktopServices
 
 from utils import theme
 
-
 class CLIReferenceTab(QWidget):
     """Tab displaying CLI reference documentation"""
 
@@ -33,7 +32,6 @@ class CLIReferenceTab(QWidget):
         header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         docs_btn = QPushButton("📖 Open Full Docs")
-        docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official CLI reference documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
             QUrl("https://code.claude.com/en/docs/claude-code/cli-reference")
@@ -50,37 +48,26 @@ class CLIReferenceTab(QWidget):
         self.browser.setOpenExternalLinks(True)
         self.browser.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 15px;
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
             }}
             QTextBrowser h2 {{
-                color: {theme.ACCENT_PRIMARY};
-                border-bottom: 2px solid {theme.ACCENT_PRIMARY};
                 padding-bottom: 5px;
                 margin-top: 15px;
             }}
             QTextBrowser h3 {{
-                color: {theme.ACCENT_SECONDARY};
                 margin-top: 10px;
             }}
             QTextBrowser code {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.SUCCESS_COLOR};
                 padding: 2px 6px;
                 border-radius: 3px;
                 font-family: {theme.FONT_FAMILY_MONO};
             }}
             QTextBrowser pre {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
                 padding: 10px;
                 border-radius: 3px;
-                border-left: 3px solid {theme.ACCENT_PRIMARY};
             }}
         """)
 

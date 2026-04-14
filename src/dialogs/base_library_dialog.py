@@ -12,7 +12,6 @@ from utils import theme
 from utils.template_manager import get_template_manager
 from utils.ui_state_manager import UIStateManager
 
-
 class BaseLibraryDialog(QDialog):
     """Base dialog for managing template libraries (skills, commands, MCP servers).
 
@@ -95,7 +94,6 @@ class BaseLibraryDialog(QDialog):
         nav_layout = QHBoxLayout()
 
         self.back_btn = QPushButton("Back")
-        self.back_btn.setStyleSheet(theme.get_button_style())
         self.back_btn.clicked.connect(self.go_back)
         self.back_btn.setVisible(False)
         nav_layout.addWidget(self.back_btn)
@@ -128,12 +126,10 @@ class BaseLibraryDialog(QDialog):
         # Select/Deselect row
         select_layout = QHBoxLayout()
         select_all_btn = QPushButton("Select All")
-        select_all_btn.setStyleSheet(theme.get_button_style())
         select_all_btn.clicked.connect(self.select_all)
         select_layout.addWidget(select_all_btn)
 
         deselect_all_btn = QPushButton("Deselect All")
-        deselect_all_btn.setStyleSheet(theme.get_button_style())
         deselect_all_btn.clicked.connect(self.deselect_all)
         select_layout.addWidget(deselect_all_btn)
 
@@ -169,54 +165,40 @@ class BaseLibraryDialog(QDialog):
         table.doubleClicked.connect(self.on_double_click)
         table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
             QHeaderView::section {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
                 padding: 5px;
-                border: 1px solid {theme.BG_LIGHT};
             }}
-            QHeaderView::section:hover {{
-                background-color: {theme.BG_LIGHT};
-            }}
+            
         """)
         return table
 
     def _add_base_manage_buttons(self, layout):
         """Add buttons common to all library dialogs."""
         add_btn = QPushButton("Add Template")
-        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.clicked.connect(self.add_template)
         layout.addWidget(add_btn)
 
         edit_btn = QPushButton("Edit Selected")
-        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.clicked.connect(self.edit_template)
         layout.addWidget(edit_btn)
 
         bulk_cls = self.get_bulk_add_class()
         if bulk_cls is not None:
             bulk_btn = QPushButton("Bulk Add")
-            bulk_btn.setStyleSheet(theme.get_button_style())
             bulk_btn.clicked.connect(self._open_bulk_add)
             layout.addWidget(bulk_btn)
 
         delete_btn = QPushButton("Delete Selected")
-        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.clicked.connect(self.delete_selected)
         layout.addWidget(delete_btn)
 
         refresh_btn = QPushButton("Refresh")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.clicked.connect(self.refresh_templates)
         layout.addWidget(refresh_btn)
 
         open_folder_btn = QPushButton("Open Folder")
-        open_folder_btn.setStyleSheet(theme.get_button_style())
         open_folder_btn.clicked.connect(self.open_folder)
         layout.addWidget(open_folder_btn)
 

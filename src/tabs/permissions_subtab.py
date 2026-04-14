@@ -115,9 +115,6 @@ class PermissionsSubtab(QWidget):
         refresh_btn = QPushButton("🔄 Refresh")
         refresh_btn.setToolTip("Reload the permissions list")
 
-        for btn in [new_btn, edit_btn, del_btn, refresh_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         new_btn.clicked.connect(self.create_new_permission)
         edit_btn.clicked.connect(self.edit_permission)
         del_btn.clicked.connect(self.delete_permission)
@@ -150,9 +147,6 @@ class PermissionsSubtab(QWidget):
         backup_save_btn.setToolTip("Create timestamped backup before saving permission")
         revert_btn = QPushButton("Revert")
         revert_btn.setToolTip("Revert to saved version (discards unsaved changes)")
-
-        for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         save_btn.clicked.connect(self.save_permission)
         backup_save_btn.clicked.connect(self.backup_and_save_permission)

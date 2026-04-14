@@ -14,7 +14,6 @@ from PyQt6.QtGui import QColor
 from utils import theme
 from utils.terminal_utils import run_in_terminal
 
-
 class PluginsTab(QWidget):
     """Tab for managing Claude Code plugins from both settings.json and ~/.claude/plugins/"""
 
@@ -69,39 +68,32 @@ class PluginsTab(QWidget):
         # Quick Actions Section
         quick_actions_group = QGroupBox("Quick Actions - Browse & Install Plugins")
 
-
         quick_actions_layout = QHBoxLayout()
         quick_actions_layout.setSpacing(10)
 
         # Marketplace management buttons (FIRST)
         self.add_known_marketplace_btn = QPushButton("➕ Add Marketplace")
-        self.add_known_marketplace_btn.setStyleSheet(theme.get_button_style())
         self.add_known_marketplace_btn.setToolTip("Add a new marketplace from GitHub/URL/path")
         self.add_known_marketplace_btn.clicked.connect(self.add_known_marketplace)
 
         self.remove_known_marketplace_btn = QPushButton("🗑 Remove Marketplace")
-        self.remove_known_marketplace_btn.setStyleSheet(theme.get_button_style())
         self.remove_known_marketplace_btn.setToolTip("Remove selected marketplace")
         self.remove_known_marketplace_btn.clicked.connect(self.remove_known_marketplace)
 
         # Plugin browsing/installation buttons
         browse_marketplace_btn = QPushButton("🛒 Browse Marketplace (GUI)")
-        browse_marketplace_btn.setStyleSheet(theme.get_button_style())
         browse_marketplace_btn.setToolTip("Browse and install plugins from marketplaces in GUI")
         browse_marketplace_btn.clicked.connect(self.open_marketplace_browser)
 
         browse_plugin_btn = QPushButton("📦 Browse in Terminal")
-        browse_plugin_btn.setStyleSheet(theme.get_button_style())
         browse_plugin_btn.setToolTip("Open Claude with /plugin command to browse available plugins")
         browse_plugin_btn.clicked.connect(self.browse_plugins)
 
         install_plugin_btn = QPushButton("⬇️ Install Plugin")
-        install_plugin_btn.setStyleSheet(theme.get_button_style())
         install_plugin_btn.setToolTip("Install a plugin by name (e.g., formatter@your-org)")
         install_plugin_btn.clicked.connect(self.install_plugin_dialog)
 
         refresh_all_btn = QPushButton("🔄 Refresh All")
-        refresh_all_btn.setStyleSheet(theme.get_button_style())
         refresh_all_btn.setToolTip("Reload all plugin data from files")
         refresh_all_btn.clicked.connect(self.load_all_data)
 
@@ -119,7 +111,6 @@ class PluginsTab(QWidget):
         # Known Marketplaces Section (moved here right after Quick Actions)
         known_marketplaces_group = QGroupBox("Known Marketplaces (from ~/.claude/plugins/known_marketplaces.json)")
 
-
         known_marketplaces_layout = QVBoxLayout()
         self.known_marketplaces_list = QListWidget()
         self.known_marketplaces_list.setMinimumHeight(150)  # Make it taller
@@ -129,7 +120,6 @@ class PluginsTab(QWidget):
 
         # Enabled Plugins Section (from settings.json)
         enabled_plugins_group = QGroupBox("Enabled Plugins (from settings.json)")
-
 
         enabled_plugins_layout = QVBoxLayout()
         self.enabled_plugins_list = QListWidget()
@@ -147,9 +137,6 @@ class PluginsTab(QWidget):
         self.remove_enabled_plugin_btn = QPushButton("🗑 Remove Plugin")
         self.remove_enabled_plugin_btn.setToolTip("Remove plugin from enabledPlugins in settings.json")
 
-        for btn in [self.add_enabled_plugin_btn, self.toggle_enabled_plugin_btn, self.remove_enabled_plugin_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         self.add_enabled_plugin_btn.clicked.connect(self.add_enabled_plugin)
         self.toggle_enabled_plugin_btn.clicked.connect(self.toggle_enabled_plugin)
         self.remove_enabled_plugin_btn.clicked.connect(self.remove_enabled_plugin)
@@ -166,7 +153,6 @@ class PluginsTab(QWidget):
         # Installed Plugins Section (from ~/.claude/plugins/config.json)
         installed_plugins_group = QGroupBox("Installed Plugins (from ~/.claude/plugins/config.json)")
 
-
         installed_plugins_layout = QVBoxLayout()
         self.installed_plugins_list = QListWidget()
         installed_plugins_layout.addWidget(self.installed_plugins_list)
@@ -175,7 +161,6 @@ class PluginsTab(QWidget):
 
         # Extra Known Marketplaces Section (from settings.json)
         extra_marketplaces_group = QGroupBox("Extra Known Marketplaces (from settings.json)")
-
 
         extra_marketplaces_layout = QVBoxLayout()
         self.extra_marketplaces_list = QListWidget()
@@ -189,9 +174,6 @@ class PluginsTab(QWidget):
 
         self.remove_extra_marketplace_btn = QPushButton("🗑 Remove Marketplace")
         self.remove_extra_marketplace_btn.setToolTip("Remove marketplace from extraKnownMarketplaces in settings.json")
-
-        for btn in [self.add_extra_marketplace_btn, self.remove_extra_marketplace_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         self.add_extra_marketplace_btn.clicked.connect(self.add_extra_marketplace)
         self.remove_extra_marketplace_btn.clicked.connect(self.remove_extra_marketplace)

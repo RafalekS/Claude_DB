@@ -11,7 +11,6 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 logger = logging.getLogger(__name__)
 
-
 class ProjectContext(QObject):
     """Manages current project context and provides helper methods for project paths"""
 

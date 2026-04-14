@@ -18,7 +18,6 @@ from utils import theme
 
 logger = logging.getLogger(__name__)
 
-
 class AgentTeamsTab(QWidget):
     """
     Agent Teams tab — reference and config UI for Claude Code multi-agent orchestration.

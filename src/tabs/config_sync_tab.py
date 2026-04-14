@@ -14,7 +14,6 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from utils import theme
 
-
 class ConfigSyncTab(QWidget):
     """Tab for managing Claude Code configuration sync with GitHub via git"""
 
@@ -50,7 +49,6 @@ class ConfigSyncTab(QWidget):
 
         # Log viewer
         log_group = QGroupBox("Sync Log")
-        log_group.setStyleSheet(theme.get_groupbox_style())
         log_layout = QVBoxLayout()
 
         self.log_viewer = QTextEdit()
@@ -59,9 +57,6 @@ class ConfigSyncTab(QWidget):
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
             }}
@@ -73,7 +68,6 @@ class ConfigSyncTab(QWidget):
     def create_status_group(self):
         """Create status display group"""
         group = QGroupBox("Sync Status")
-        group.setStyleSheet(theme.get_groupbox_style())
         layout = QVBoxLayout()
 
         # Status labels
@@ -88,7 +82,6 @@ class ConfigSyncTab(QWidget):
 
         # Refresh button
         refresh_btn = QPushButton("🔄 Refresh Status")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.setToolTip("Reload sync status from git repository")
         refresh_btn.clicked.connect(self.load_status)
         layout.addWidget(refresh_btn)
@@ -99,13 +92,11 @@ class ConfigSyncTab(QWidget):
     def create_actions_group(self):
         """Create actions group"""
         group = QGroupBox("Sync Actions")
-        group.setStyleSheet(theme.get_groupbox_style())
         layout = QVBoxLayout()
 
         # Initialize sync
         init_layout = QHBoxLayout()
         init_btn = QPushButton("🚀 Initialize Sync")
-        init_btn.setStyleSheet(theme.get_button_style())
         init_btn.setToolTip("Set up GitHub sync repository")
         init_btn.clicked.connect(self.initialize_sync)
         init_layout.addWidget(init_btn)
@@ -115,12 +106,10 @@ class ConfigSyncTab(QWidget):
         sync_layout = QHBoxLayout()
 
         pull_btn = QPushButton("📥 Pull from Remote")
-        pull_btn.setStyleSheet(theme.get_button_style())
         pull_btn.setToolTip("Download latest config from GitHub")
         pull_btn.clicked.connect(self.pull_config)
 
         push_btn = QPushButton("📤 Push to Remote")
-        push_btn.setStyleSheet(theme.get_button_style())
         push_btn.setToolTip("Upload local changes to GitHub")
         push_btn.clicked.connect(self.push_config)
 
@@ -474,8 +463,6 @@ class ConfigSyncTab(QWidget):
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
             }}
         """)
 

@@ -39,12 +39,10 @@ except (OSError, json.JSONDecodeError) as _cfg_err:
         "AskUserQuestion", "Skill", "SlashCommand"
     ]
 
-
 # ── Skill frontmatter validation ────────────────────────────────────────────
 
 _NAME_RE = re.compile(r'^[a-z0-9][a-z0-9-]*[a-z0-9]$')
 _TRIGGER_WORDS = ("use when", "when user", "when you", "helps with", "useful for")
-
 
 def _validate_skill_content(content: str) -> tuple[list[str], list[str]]:
     """
@@ -113,7 +111,6 @@ def _validate_skill_content(content: str) -> tuple[list[str], list[str]]:
 
     return errors, warnings
 
-
 # ── Background workers ───────────────────────────────────────────────────────
 
 class _SourceRepoWorker(QThread):
@@ -134,7 +131,6 @@ class _SourceRepoWorker(QThread):
         except Exception as e:
             self.error.emit(str(e))
 
-
 class _GHSearchWorker(QThread):
     results_ready = pyqtSignal(list)
     error = pyqtSignal(str)
@@ -150,7 +146,6 @@ class _GHSearchWorker(QThread):
             self.results_ready.emit(results)
         except Exception as e:
             self.error.emit(str(e))
-
 
 class _FetchUrlWorker(QThread):
     content_ready = pyqtSignal(str)
@@ -170,7 +165,6 @@ class _FetchUrlWorker(QThread):
                 self.error.emit("No content returned. Check the URL and try again.")
         except Exception as e:
             self.error.emit(str(e))
-
 
 class SkillsTab(QWidget):
     """Tab for managing Claude Code skills (directory-based)"""
@@ -225,7 +219,6 @@ class SkillsTab(QWidget):
 
         # Info section at bottom
         info_group = QGroupBox("About Skills")
-
 
         info_layout = QVBoxLayout()
         info_text = QLabel(
@@ -292,8 +285,6 @@ class SkillsTab(QWidget):
         library_btn = QPushButton("📚 Skill Library")
         library_btn.setToolTip("Browse and add skills from library templates")
 
-        for btn in [new_btn, edit_btn, refresh_btn, library_btn]:
-            btn.setStyleSheet(theme.get_button_style())
         del_btn.setStyleSheet(theme.get_button_danger_style())
 
         new_btn.clicked.connect(self.create_new_skill)
@@ -331,9 +322,6 @@ class SkillsTab(QWidget):
         revert_btn = QPushButton("Revert")
         revert_btn.setToolTip("Revert to saved version")
 
-        for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         save_btn.clicked.connect(self.save_skill)
         backup_save_btn.clicked.connect(self.backup_and_save_skill)
         revert_btn.clicked.connect(self.revert_skill)
@@ -352,9 +340,6 @@ class SkillsTab(QWidget):
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
             }}
@@ -459,7 +444,6 @@ class SkillsTab(QWidget):
         left_layout.addWidget(self._source_list)
 
         fetch_btn = QPushButton("Fetch Skills")
-        fetch_btn.setStyleSheet(theme.get_button_style())
         fetch_btn.clicked.connect(self._fetch_source_skills)
         left_layout.addWidget(fetch_btn)
         left.setMinimumWidth(160)
@@ -506,8 +490,6 @@ class SkillsTab(QWidget):
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
-                background: {theme.BG_DARK}; color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
             }}
         """)
         preview_layout.addWidget(self._source_preview)
@@ -523,7 +505,6 @@ class SkillsTab(QWidget):
         bot.addWidget(self._source_status)
         bot.addStretch()
         import_btn = QPushButton("Import Selected")
-        import_btn.setStyleSheet(theme.get_button_style())
         import_btn.clicked.connect(lambda: self._import_skill_result(self._source_results, self._source_preview))
         bot.addWidget(import_btn)
         right_layout.addLayout(bot)
@@ -598,7 +579,6 @@ class SkillsTab(QWidget):
         self._gh_search_input.returnPressed.connect(self._do_gh_search)
         row.addWidget(self._gh_search_input)
         search_btn = QPushButton("Search")
-        search_btn.setStyleSheet(theme.get_button_style())
         search_btn.clicked.connect(self._do_gh_search)
         row.addWidget(search_btn)
         layout.addLayout(row)
@@ -629,8 +609,6 @@ class SkillsTab(QWidget):
         self._gh_preview.setStyleSheet(f"""
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO}; font-size: {theme.FONT_SIZE_SMALL}px;
-                background: {theme.BG_DARK}; color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
             }}
         """)
         layout.addWidget(self._gh_preview, 1)
@@ -641,7 +619,6 @@ class SkillsTab(QWidget):
         bot.addWidget(self._gh_status)
         bot.addStretch()
         import_btn = QPushButton("Import Selected")
-        import_btn.setStyleSheet(theme.get_button_style())
         import_btn.clicked.connect(lambda: self._import_skill_result(self._gh_results, self._gh_preview))
         bot.addWidget(import_btn)
         layout.addLayout(bot)
@@ -714,7 +691,6 @@ class SkillsTab(QWidget):
         )
         row.addWidget(self._url_input)
         fetch_btn = QPushButton("Fetch")
-        fetch_btn.setStyleSheet(theme.get_button_style())
         fetch_btn.clicked.connect(self._fetch_url_skill)
         row.addWidget(fetch_btn)
         layout.addLayout(row)
@@ -727,8 +703,6 @@ class SkillsTab(QWidget):
         self._url_preview.setStyleSheet(f"""
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO}; font-size: {theme.FONT_SIZE_SMALL}px;
-                background: {theme.BG_DARK}; color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
             }}
         """)
         layout.addWidget(self._url_preview, 1)
@@ -739,7 +713,6 @@ class SkillsTab(QWidget):
         bot.addWidget(self._url_status)
         bot.addStretch()
         import_btn = QPushButton("Import")
-        import_btn.setStyleSheet(theme.get_button_style())
         import_btn.clicked.connect(self._import_from_url)
         bot.addWidget(import_btn)
         layout.addLayout(bot)
@@ -865,7 +838,6 @@ class SkillsTab(QWidget):
             if not self.project_context or not self.project_context.has_project():
                 return None
             return self.project_context.get_project() / ".claude" / "skills"
-
 
     def load_skills(self):
         """Load all skills from the scope's directory"""
@@ -1257,7 +1229,6 @@ Provide examples of using this skill.
             msg += f"\nSkipped {skipped_count} (already exist)"
         QMessageBox.information(self, "Deploy Complete", msg)
 
-
 class NewSkillDialog(QDialog):
     """Dialog for creating a new skill with proper YAML frontmatter"""
 
@@ -1325,7 +1296,6 @@ class NewSkillDialog(QDialog):
         self.shell_cb = QCheckBox("shell")
         self.shell_cb.setToolTip("Allow shell command execution in this skill")
         for cb in (self.user_invocable_cb, self.disable_model_cb, self.agent_cb, self.shell_cb):
-            cb.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             flags_layout.addWidget(cb)
         flags_layout.addStretch()
         layout.addLayout(flags_layout)
@@ -1337,7 +1307,6 @@ class NewSkillDialog(QDialog):
         self.hooks_edit = QTextEdit()
         self.hooks_edit.setPlaceholderText("PreToolUse:\n  - command: echo pre-tool")
         self.hooks_edit.setMaximumHeight(70)
-        self.hooks_edit.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.hooks_edit)
 
         # Allowed Tools checkboxes
@@ -1350,7 +1319,6 @@ class NewSkillDialog(QDialog):
         tools_grid.setSpacing(4)
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             if tool in ["Read", "Grep", "Glob"]:
                 checkbox.setChecked(True)
             self.tool_checkboxes[tool] = checkbox
@@ -1366,7 +1334,6 @@ class NewSkillDialog(QDialog):
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -1399,7 +1366,6 @@ class NewSkillDialog(QDialog):
             'shell': self.shell_cb.isChecked(),
             'hooks': self.hooks_edit.toPlainText().strip(),
         }
-
 
 class EditSkillDialog(QDialog):
     """Dialog for editing a skill with form fields"""
@@ -1500,7 +1466,6 @@ class EditSkillDialog(QDialog):
         self.shell_cb.setToolTip("Allow shell command execution")
         self.shell_cb.setChecked(_getbool("shell"))
         for cb in (self.user_invocable_cb, self.disable_model_cb, self.agent_cb, self.shell_cb):
-            cb.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             flags_layout.addWidget(cb)
         flags_layout.addStretch()
         layout.addLayout(flags_layout)
@@ -1512,7 +1477,6 @@ class EditSkillDialog(QDialog):
         self.hooks_edit.setPlainText(parsed_hooks)
         self.hooks_edit.setPlaceholderText("PreToolUse:\n  - command: echo pre-tool")
         self.hooks_edit.setMaximumHeight(70)
-        self.hooks_edit.setStyleSheet(theme.get_text_edit_style())
         layout.addWidget(self.hooks_edit)
 
         tools_label = QLabel("Allowed Tools (optional):")
@@ -1525,7 +1489,6 @@ class EditSkillDialog(QDialog):
         tools_grid.setSpacing(4)
         for i, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             checkbox.setChecked(tool in existing_tools)
             self.tool_checkboxes[tool] = checkbox
             tools_grid.addWidget(checkbox, i // 4, i % 4)
@@ -1540,7 +1503,6 @@ class EditSkillDialog(QDialog):
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)

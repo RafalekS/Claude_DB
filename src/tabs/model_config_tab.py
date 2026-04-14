@@ -13,7 +13,6 @@ from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 from utils import theme
 
-
 class ModelConfigTab(QWidget):
     """Tab for model configuration"""
 
@@ -38,7 +37,6 @@ class ModelConfigTab(QWidget):
         header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         docs_btn = QPushButton("📖 Model Docs")
-        docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official models documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
             QUrl("https://code.claude.com/en/docs/about-claude/models/overview")
@@ -53,24 +51,13 @@ class ModelConfigTab(QWidget):
         # Main tab widget for User / Project scope
         self.scope_tabs = QTabWidget()
         self.scope_tabs.setStyleSheet(f"""
-            QTabWidget::pane {{
-                border: 1px solid {theme.BG_LIGHT};
-                background-color: {theme.BG_MEDIUM};
-            }}
+            
             QTabBar::tab {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
                 padding: 8px 16px;
                 margin-right: 2px;
-                border: 1px solid {theme.BG_LIGHT};
             }}
-            QTabBar::tab:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
-            QTabBar::tab:hover {{
-                background-color: {theme.BG_LIGHT};
-            }}
+            
+            
         """)
 
         # User scope tab
@@ -92,7 +79,6 @@ class ModelConfigTab(QWidget):
 
         # Inner tabs for Model Selector and Info
         inner_tabs = QTabWidget()
-        inner_tabs.setStyleSheet(theme.get_tab_widget_style())
 
         inner_tabs.addTab(self.create_model_selector_tab("user"), "Model Selector")
         inner_tabs.addTab(self.create_model_info_tab(), "Model Information")
@@ -121,15 +107,11 @@ class ModelConfigTab(QWidget):
         self.project_folder_edit.setStyleSheet(f"""
             QLineEdit {{
                 padding: 6px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
         """)
 
         browse_btn = QPushButton("📁 Browse...")
-        browse_btn.setStyleSheet(theme.get_button_style())
         browse_btn.setToolTip("Select project folder")
         browse_btn.clicked.connect(self.browse_project_folder)
 
@@ -141,7 +123,6 @@ class ModelConfigTab(QWidget):
 
         # Inner tabs for settings.json and settings.local.json
         self.project_inner_tabs = QTabWidget()
-        self.project_inner_tabs.setStyleSheet(theme.get_tab_widget_style())
 
         self.project_inner_tabs.addTab(self.create_model_selector_tab("project"), "Shared (settings.json)")
         self.project_inner_tabs.addTab(self.create_model_selector_tab("local"), "Local (settings.local.json)")
@@ -199,9 +180,6 @@ class ModelConfigTab(QWidget):
         model_combo.setStyleSheet(f"""
             QComboBox {{
                 padding: 8px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 font-family: {theme.FONT_FAMILY_MONO};
             }}
@@ -219,9 +197,6 @@ class ModelConfigTab(QWidget):
         config_editor = QTextEdit()
         config_editor.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
                 font-family: {theme.FONT_FAMILY_MONO};
@@ -240,9 +215,6 @@ class ModelConfigTab(QWidget):
         save_btn.setToolTip("Save model configuration to settings file")
         backup_btn = QPushButton("📦 Backup & Save")
         backup_btn.setToolTip("Create timestamped backup before saving")
-
-        for btn in [reload_btn, save_btn, backup_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         reload_btn.clicked.connect(lambda: self.load_model_config(scope, model_combo, config_editor))
         save_btn.clicked.connect(lambda: self.save_model_config(scope, model_combo, config_editor))
@@ -279,9 +251,6 @@ class ModelConfigTab(QWidget):
         info_browser.setOpenExternalLinks(True)
         info_browser.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 10px;
                 font-size: {theme.FONT_SIZE_SMALL}px;

@@ -17,7 +17,6 @@ from pathlib import Path
 from utils.mcp_inspector import inspect_server
 from utils import theme
 
-
 class MCPToolsFetchThread(QThread):
     """Background thread for fetching MCP tools"""
     finished = pyqtSignal(list)  # List of tools
@@ -45,7 +44,6 @@ class MCPToolsFetchThread(QThread):
 
         except Exception as e:
             self.error.emit(str(e))
-
 
 class MCPToolsDialog(QDialog):
     """Dialog for displaying MCP server tools"""
@@ -123,13 +121,11 @@ class MCPToolsDialog(QDialog):
 
         # Export button
         self.export_json_btn = QPushButton("📄 Export to JSON")
-        self.export_json_btn.setStyleSheet(theme.get_button_style())
         self.export_json_btn.clicked.connect(self.export_to_json)
         self.export_json_btn.setEnabled(False)
         button_layout.addWidget(self.export_json_btn)
 
         self.export_md_btn = QPushButton("📝 Export to Markdown")
-        self.export_md_btn.setStyleSheet(theme.get_button_style())
         self.export_md_btn.clicked.connect(self.export_to_markdown)
         self.export_md_btn.setEnabled(False)
         button_layout.addWidget(self.export_md_btn)
@@ -138,7 +134,6 @@ class MCPToolsDialog(QDialog):
 
         # Close button
         close_btn = QPushButton("Close")
-        close_btn.setStyleSheet(theme.get_button_style())
         close_btn.clicked.connect(self.accept)
         button_layout.addWidget(close_btn)
 

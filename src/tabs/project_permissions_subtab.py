@@ -25,7 +25,6 @@ from utils import theme
 from tabs.user_permissions_subtab import AddPermissionDialog
 from utils.ui_state_manager import UIStateManager
 
-
 class ProjectPermissionsSubTab(QWidget):
     """Project permissions tab with Shared/Local subtabs"""
 
@@ -106,7 +105,6 @@ class ProjectPermissionsSubTab(QWidget):
         mode_label = QLabel("Default Permission Mode:")
         mode_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px;")
         default_mode_combo = QComboBox()
-        default_mode_combo.setStyleSheet(theme.get_combo_style())
         default_mode_combo.setMaximumWidth(200)
         default_mode_combo.addItems([
             "default", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
@@ -143,22 +141,18 @@ class ProjectPermissionsSubTab(QWidget):
         # Buttons
         btn_layout = QHBoxLayout()
         add_btn = QPushButton("➕ Add")
-        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.setMinimumWidth(90)
         add_btn.clicked.connect(lambda: self.add_permission(scope))
 
         edit_btn = QPushButton("✏️ Edit")
-        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.setMinimumWidth(90)
         edit_btn.clicked.connect(lambda: self.edit_permission(scope))
 
         delete_btn = QPushButton("🗑️ Delete")
-        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.setMinimumWidth(90)
         delete_btn.clicked.connect(lambda: self.delete_permission(scope))
 
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.setMinimumWidth(90)
         refresh_btn.clicked.connect(lambda: self.refresh_permissions(scope))
 

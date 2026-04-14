@@ -15,7 +15,6 @@ from PyQt6.QtCore import Qt, QProcess
 from utils import theme
 from utils.terminal_utils import run_in_terminal
 
-
 class ButtonEditorDialog(QDialog):
     """Dialog for editing button configuration"""
 
@@ -125,7 +124,6 @@ class ButtonEditorDialog(QDialog):
 
         return config
 
-
 class ToolsConfigDialog(QDialog):
     """Dialog for managing tools configuration"""
 
@@ -197,9 +195,6 @@ class ToolsConfigDialog(QDialog):
 
         bottom_layout.addWidget(save_btn)
         bottom_layout.addWidget(cancel_btn)
-
-        for btn in [import_btn, export_btn, save_btn, cancel_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         layout.addLayout(bottom_layout)
 
@@ -783,7 +778,6 @@ class ToolsConfigDialog(QDialog):
                 f"Failed to restart application:\n{str(e)}\n\nPlease restart manually."
             )
 
-
 class ToolsTab(QWidget):
     """Tab for external tool integration - loads commands from config"""
 
@@ -821,7 +815,6 @@ class ToolsTab(QWidget):
 
         manage_btn = QPushButton("⚙️ Manage Tools")
         manage_btn.setToolTip("Open configuration manager to add/edit/remove tools")
-        manage_btn.setStyleSheet(theme.get_button_style())
         manage_btn.clicked.connect(self.open_config_manager)
 
         header_layout.addWidget(header)
@@ -870,7 +863,6 @@ class ToolsTab(QWidget):
             btn = QPushButton(button_text)
             btn.setToolTip(tooltip)
             btn.clicked.connect(lambda checked, cfg=tool_config: self.handle_command(cfg))
-            btn.setStyleSheet(theme.get_button_style())
 
             grid.addWidget(btn, row, col)
 

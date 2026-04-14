@@ -13,7 +13,6 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from utils import theme
 
-
 class EnvVarsTab(QWidget):
     """Tab for managing environment variables from settings.json"""
 
@@ -48,7 +47,6 @@ class EnvVarsTab(QWidget):
 
         # Environment Variables Section
         env_vars_group = QGroupBox("Environment Variables (from settings.json)")
-
 
         env_vars_layout = QVBoxLayout()
 
@@ -88,9 +86,6 @@ class EnvVarsTab(QWidget):
         self.refresh_btn = QPushButton("🔄 Refresh")
         self.refresh_btn.setToolTip("Reload from settings.json")
 
-        for btn in [self.add_btn, self.edit_btn, self.remove_btn, self.refresh_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         self.add_btn.clicked.connect(self.add_env_var)
         self.edit_btn.clicked.connect(self.edit_env_var)
         self.remove_btn.clicked.connect(self.remove_env_var)
@@ -108,7 +103,6 @@ class EnvVarsTab(QWidget):
 
         # Info section
         info_group = QGroupBox("About Environment Variables")
-
 
         info_layout = QVBoxLayout()
         info_text = QLabel(

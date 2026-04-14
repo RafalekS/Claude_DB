@@ -22,7 +22,6 @@ except ImportError:
     StdioServerParameters = None
     stdio_client = None
 
-
 class MCPInspector:
     """MCP client for inspecting server capabilities and tools."""
 
@@ -150,7 +149,6 @@ class MCPInspector:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Cleanup when exiting async context."""
         await self.disconnect()
-
 
 async def inspect_server(server_config: Dict[str, Any], server_name: str) -> List[Dict[str, Any]]:
     """Convenience function to inspect a server and get its tools.

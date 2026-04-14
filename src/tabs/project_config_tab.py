@@ -34,7 +34,6 @@ from tabs.worktrees_tab import WorktreesTab
 from tabs.agent_teams_tab import AgentTeamsTab
 from tabs.remote_control_tab import RemoteControlTab
 
-
 class ProjectClaudeMDSubTab(QWidget):
     """Simple CLAUDE.md viewer/editor for project context"""
 
@@ -57,12 +56,10 @@ class ProjectClaudeMDSubTab(QWidget):
         self.file_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         self.save_btn = QPushButton("💾 Save")
-        self.save_btn.setStyleSheet(theme.get_button_style())
         self.save_btn.clicked.connect(self.save_content)
         self.save_btn.setEnabled(False)  # Disabled until project selected
 
         self.reload_btn = QPushButton("🔄 Reload")
-        self.reload_btn.setStyleSheet(theme.get_button_style())
         self.reload_btn.clicked.connect(self.load_content)
         self.reload_btn.setEnabled(False)
 
@@ -75,7 +72,6 @@ class ProjectClaudeMDSubTab(QWidget):
 
         # Editor
         self.editor = QTextEdit()
-        self.editor.setStyleSheet(theme.get_text_edit_style())
         self.editor.setPlaceholderText("No project selected. CLAUDE.md will appear here when a project is selected.")
         layout.addWidget(self.editor, 1)
 
@@ -123,7 +119,6 @@ class ProjectClaudeMDSubTab(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save CLAUDE.md:\n{str(e)}")
 
-
 class ProjectPromptSubTab(QWidget):
     """Simple PROMPT.md viewer/editor for project context"""
 
@@ -146,12 +141,10 @@ class ProjectPromptSubTab(QWidget):
         self.file_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         self.save_btn = QPushButton("💾 Save")
-        self.save_btn.setStyleSheet(theme.get_button_style())
         self.save_btn.clicked.connect(self.save_content)
         self.save_btn.setEnabled(False)
 
         self.reload_btn = QPushButton("🔄 Reload")
-        self.reload_btn.setStyleSheet(theme.get_button_style())
         self.reload_btn.clicked.connect(self.load_content)
         self.reload_btn.setEnabled(False)
 
@@ -164,7 +157,6 @@ class ProjectPromptSubTab(QWidget):
 
         # Editor
         self.editor = QTextEdit()
-        self.editor.setStyleSheet(theme.get_text_edit_style())
         self.editor.setPlaceholderText("No project selected. PROMPT.md will appear here when a project is selected.")
         layout.addWidget(self.editor, 1)
 
@@ -214,7 +206,6 @@ class ProjectPromptSubTab(QWidget):
             QMessageBox.information(self, "Success", "PROMPT.md saved successfully!")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save PROMPT.md:\n{str(e)}")
-
 
 class ProjectConfigTab(QWidget):
     """Container tab for all project-level configuration with centralized folder picker"""
@@ -286,12 +277,10 @@ class ProjectConfigTab(QWidget):
 
         browse_btn = QPushButton("📁 Browse")
         browse_btn.setToolTip("Select project folder")
-        browse_btn.setStyleSheet(theme.get_button_style())
         browse_btn.clicked.connect(self.browse_project_folder)
 
         clear_btn = QPushButton("✖ Clear")
         clear_btn.setToolTip("Clear current project")
-        clear_btn.setStyleSheet(theme.get_button_style())
         clear_btn.clicked.connect(self.clear_project)
 
         picker_layout.addWidget(self.project_path_input)

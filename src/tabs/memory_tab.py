@@ -35,7 +35,6 @@ class MemoryTab(QWidget):
         header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.setToolTip("Refresh all memory and history data")
         refresh_btn.clicked.connect(self.refresh_all)
 
@@ -48,24 +47,13 @@ class MemoryTab(QWidget):
         # Tab widget for different memory types
         self.tab_widget = QTabWidget()
         self.tab_widget.setStyleSheet(f"""
-            QTabWidget::pane {{
-                border: 1px solid {theme.BG_LIGHT};
-                background-color: {theme.BG_MEDIUM};
-            }}
+            
             QTabBar::tab {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
                 padding: 8px 16px;
                 margin-right: 2px;
-                border: 1px solid {theme.BG_LIGHT};
             }}
-            QTabBar::tab:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
-            QTabBar::tab:hover {{
-                background-color: {theme.BG_LIGHT};
-            }}
+            
+            
         """)
 
         # Create tabs
@@ -134,7 +122,6 @@ class MemoryTab(QWidget):
             <p>Claude Code persists <code>TodoWrite</code> task lists in <code>~/.claude/todos/</code>
             and task outputs in <code>~/.claude/tasks/</code>.</p>
         """)
-        info.setStyleSheet(theme.get_text_browser_style())
         layout.addWidget(info)
 
         return widget
@@ -152,9 +139,6 @@ class MemoryTab(QWidget):
         self.history_list = QListWidget()
         self.history_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
@@ -165,7 +149,6 @@ class MemoryTab(QWidget):
         # Content viewer
         self.history_viewer = QTextEdit()
         self.history_viewer.setReadOnly(True)
-        self.history_viewer.setStyleSheet(theme.get_text_edit_style())
 
         splitter.addWidget(self.history_list)
         splitter.addWidget(self.history_viewer)
@@ -189,9 +172,6 @@ class MemoryTab(QWidget):
         self.file_history_list = QListWidget()
         self.file_history_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
@@ -202,7 +182,6 @@ class MemoryTab(QWidget):
         # Content viewer
         self.file_history_viewer = QTextEdit()
         self.file_history_viewer.setReadOnly(True)
-        self.file_history_viewer.setStyleSheet(theme.get_text_edit_style())
 
         splitter.addWidget(self.file_history_list)
         splitter.addWidget(self.file_history_viewer)
@@ -226,9 +205,6 @@ class MemoryTab(QWidget):
         self.shell_list = QListWidget()
         self.shell_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
@@ -239,7 +215,6 @@ class MemoryTab(QWidget):
         # Content viewer
         self.shell_viewer = QTextEdit()
         self.shell_viewer.setReadOnly(True)
-        self.shell_viewer.setStyleSheet(theme.get_text_edit_style())
 
         splitter.addWidget(self.shell_list)
         splitter.addWidget(self.shell_viewer)
@@ -259,24 +234,10 @@ class MemoryTab(QWidget):
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
         self.projects_list = QListWidget()
-        self.projects_list.setStyleSheet(theme.get_list_style() if hasattr(theme, 'get_list_style') else f"""
-            QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
-                font-family: {theme.FONT_FAMILY_MONO};
-                font-size: {theme.FONT_SIZE_SMALL}px;
-            }}
-            QListWidget::item:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
-        """)
         self.projects_list.itemClicked.connect(self.load_project_session)
 
         self.projects_viewer = QTextEdit()
         self.projects_viewer.setReadOnly(True)
-        self.projects_viewer.setStyleSheet(theme.get_text_edit_style())
 
         splitter.addWidget(self.projects_list)
         splitter.addWidget(self.projects_viewer)

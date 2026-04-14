@@ -40,7 +40,6 @@ except (OSError, json.JSONDecodeError) as _cfg_err:
         "AskUserQuestion", "Skill", "SlashCommand"
     ]
 
-
 class NewAgentDialog(QDialog):
     """Dialog for creating a new agent with proper YAML frontmatter"""
 
@@ -104,7 +103,6 @@ class NewAgentDialog(QDialog):
         # Create checkboxes in a 3-column grid
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             self.tool_checkboxes[tool] = checkbox
             row = idx // 3
             col = idx % 3
@@ -129,7 +127,6 @@ class NewAgentDialog(QDialog):
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -159,7 +156,6 @@ class NewAgentDialog(QDialog):
             'tools': tools_str
         }
 
-
 def get_combo_box_style():
     """Get combo box style"""
     return f"""
@@ -186,7 +182,6 @@ def get_combo_box_style():
             border: 1px solid {theme.BG_LIGHT};
         }}
     """
-
 
 class AgentsTab(QWidget):
     """Tab for managing Claude Code agents (single-scope)"""
@@ -305,9 +300,6 @@ class AgentsTab(QWidget):
         library_btn = QPushButton("📚 Agent Library")
         library_btn.setToolTip("Browse and add agents from library templates")
 
-        for btn in [new_btn, edit_btn, del_btn, refresh_btn, library_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         new_btn.clicked.connect(self.create_new_agent)
         edit_btn.clicked.connect(self.edit_agent_metadata)
         del_btn.clicked.connect(self.delete_agent)
@@ -343,9 +335,6 @@ class AgentsTab(QWidget):
         revert_btn = QPushButton("Revert")
         revert_btn.setToolTip("Revert to saved version (discards unsaved changes)")
 
-        for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         save_btn.clicked.connect(self.save_agent)
         backup_save_btn.clicked.connect(self.backup_and_save_agent)
         revert_btn.clicked.connect(self.revert_agent)
@@ -359,7 +348,6 @@ class AgentsTab(QWidget):
 
         # Editor
         agent_editor = QTextEdit()
-        agent_editor.setStyleSheet(theme.get_text_edit_style())
         right_layout.addWidget(agent_editor)
 
         splitter.addWidget(right_panel)
@@ -601,7 +589,6 @@ Add detailed instructions for this agent here.
 
             dialog.description_edit.setPlainText(frontmatter.get('description', ''))
 
-
             # Set color combo
             color = frontmatter.get('color', 'blue')
             color_index = dialog.color_combo.findText(color)
@@ -728,7 +715,6 @@ Add detailed instructions for this agent here.
                 msg += f"\nSkipped {skipped_count} (already exist)"
             QMessageBox.information(self, "Deploy Complete", msg)
 
-
 class AgentLibraryDialog(QDialog):
     """Dialog for managing agent templates in config/templates/agents/"""
 
@@ -756,7 +742,6 @@ class AgentLibraryDialog(QDialog):
         nav_layout = QHBoxLayout()
 
         self.back_btn = QPushButton("⬅ Back")
-        self.back_btn.setStyleSheet(theme.get_button_style())
         self.back_btn.clicked.connect(self.go_back)
         self.back_btn.setVisible(False)  # Hidden at root level
         nav_layout.addWidget(self.back_btn)
@@ -789,20 +774,12 @@ class AgentLibraryDialog(QDialog):
         self.table.doubleClicked.connect(self.on_double_click)
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
             QHeaderView::section {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
                 padding: 5px;
-                border: 1px solid {theme.BG_LIGHT};
             }}
-            QHeaderView::section:hover {{
-                background-color: {theme.BG_LIGHT};
-            }}
+            
         """)
 
         self.populate_table()
@@ -812,37 +789,31 @@ class AgentLibraryDialog(QDialog):
         manage_layout = QHBoxLayout()
 
         add_btn = QPushButton("➕ Add Template")
-        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.setToolTip("Create a new agent template with GUI form")
         add_btn.clicked.connect(self.add_template)
         manage_layout.addWidget(add_btn)
 
         edit_btn = QPushButton("✏️ Edit Selected")
-        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.setToolTip("Edit selected template with GUI form")
         edit_btn.clicked.connect(self.edit_template)
         manage_layout.addWidget(edit_btn)
 
         bulk_add_btn = QPushButton("📋 Bulk Add")
-        bulk_add_btn.setStyleSheet(theme.get_button_style())
         bulk_add_btn.setToolTip("Add multiple agents at once by pasting")
         bulk_add_btn.clicked.connect(self.bulk_add_agents)
         manage_layout.addWidget(bulk_add_btn)
 
         delete_btn = QPushButton("🗑️ Delete Selected")
-        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.setToolTip("Delete selected templates from library")
         delete_btn.clicked.connect(self.delete_selected)
         manage_layout.addWidget(delete_btn)
 
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.setToolTip("Reload templates from folder")
         refresh_btn.clicked.connect(self.refresh_templates)
         manage_layout.addWidget(refresh_btn)
 
         open_folder_btn = QPushButton("📁 Open Folder")
-        open_folder_btn.setStyleSheet(theme.get_button_style())
         open_folder_btn.setToolTip("Open templates folder in file explorer")
         open_folder_btn.clicked.connect(self.open_folder)
         manage_layout.addWidget(open_folder_btn)
@@ -853,12 +824,10 @@ class AgentLibraryDialog(QDialog):
         # Select All / Deselect All buttons
         select_layout = QHBoxLayout()
         select_all_btn = QPushButton("✓ Select All")
-        select_all_btn.setStyleSheet(theme.get_button_style())
         select_all_btn.clicked.connect(self.select_all)
         select_layout.addWidget(select_all_btn)
 
         deselect_all_btn = QPushButton("✗ Deselect All")
-        deselect_all_btn.setStyleSheet(theme.get_button_style())
         deselect_all_btn.clicked.connect(self.deselect_all)
         select_layout.addWidget(deselect_all_btn)
 
@@ -1132,7 +1101,6 @@ description: {template_data['description']}"""
         else:
             subprocess.Popen(['xdg-open', str(self.templates_dir)])
 
-
 class BulkAgentAddDialog(QDialog):
     """Dialog for bulk adding agent templates"""
 
@@ -1180,19 +1148,16 @@ class BulkAgentAddDialog(QDialog):
         button_layout = QHBoxLayout()
 
         parse_btn = QPushButton("🔄 Parse & Preview")
-        parse_btn.setStyleSheet(theme.get_button_style())
         parse_btn.clicked.connect(self.parse_and_preview)
         button_layout.addWidget(parse_btn)
 
         button_layout.addStretch()
 
         save_btn = QPushButton("💾 Save to Library")
-        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self.save_to_library)
         button_layout.addWidget(save_btn)
 
         close_btn = QPushButton("✗ Close")
-        close_btn.setStyleSheet(theme.get_button_style())
         close_btn.clicked.connect(self.reject)
         button_layout.addWidget(close_btn)
 
@@ -1279,7 +1244,6 @@ class BulkAgentAddDialog(QDialog):
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save agents:\n{str(e)}")
 
-
 class NewAgentTemplateDialog(QDialog):
     """Dialog for creating a new agent template"""
 
@@ -1300,7 +1264,6 @@ class NewAgentTemplateDialog(QDialog):
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g., code-reviewer or code-quality/code-reviewer")
         form.addRow("Template Name*:", self.name_edit)
-
 
         # Description field
         self.description_edit = QTextEdit()
@@ -1335,7 +1298,6 @@ class NewAgentTemplateDialog(QDialog):
         # Create checkboxes in a 3-column grid
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             self.tool_checkboxes[tool] = checkbox
             row = idx // 3
             col = idx % 3
@@ -1358,7 +1320,6 @@ class NewAgentTemplateDialog(QDialog):
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -1384,7 +1345,6 @@ class NewAgentTemplateDialog(QDialog):
             'model': self.model_combo.currentText(),
             'tools': tools_str
         }
-
 
 class EditAgentTemplateDialog(QDialog):
     """Dialog for editing agent template with form fields"""
@@ -1435,14 +1395,12 @@ class EditAgentTemplateDialog(QDialog):
         self.name_edit.setText(parsed_name)
         form.addRow("Template Name*:", self.name_edit)
 
-
         # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
         self.description_edit.setMinimumHeight(100)
         self.description_edit.setMaximumHeight(150)
         form.addRow("Description*:", self.description_edit)
-
 
         # Color field
         self.color_combo = QComboBox()
@@ -1483,7 +1441,6 @@ class EditAgentTemplateDialog(QDialog):
         # Create checkboxes in a 3-column grid
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             # Check if this tool was in the parsed list
             if tool in existing_tools:
                 checkbox.setChecked(True)
@@ -1505,7 +1462,6 @@ class EditAgentTemplateDialog(QDialog):
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -1564,5 +1520,4 @@ Describe when and how to use this agent.
             'subfolder': self.subfolder_edit.text().strip(),
             'tools': tools_str
         }
-
 

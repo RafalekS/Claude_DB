@@ -21,7 +21,6 @@ _CONFIG_FILE = Path(__file__).parent.parent.parent / "config" / "config.json"
 _CACHE_DIR = Path(__file__).parent.parent.parent / "cache"
 _CACHE_DB = _CACHE_DIR / "mcp_search.db"
 
-
 @dataclass
 class MCPResult:
     """A single MCP server search result."""
@@ -33,7 +32,6 @@ class MCPResult:
     url: str = ""
     extra: dict = field(default_factory=dict)
 
-
 def _load_config() -> dict:
     try:
         with open(_CONFIG_FILE) as f:
@@ -41,7 +39,6 @@ def _load_config() -> dict:
     except Exception as e:
         logger.warning(f"Could not load config: {e}")
         return {}
-
 
 class MCPSearchClient:
     """Search for MCP servers across multiple sources.

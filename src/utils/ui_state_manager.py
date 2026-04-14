@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 _STATE_FILE = Path(__file__).parent.parent.parent / "config" / "ui_state.json"
 
-
 class UIStateManager:
     """Singleton that saves/restores table and list widget state."""
 

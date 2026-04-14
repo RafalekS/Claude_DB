@@ -18,7 +18,6 @@ from utils.ui_state_manager import UIStateManager
 
 logger = logging.getLogger(__name__)
 
-
 class NewWorktreeDialog(QDialog):
     """Dialog for creating a new git worktree"""
 
@@ -38,7 +37,6 @@ class NewWorktreeDialog(QDialog):
 
         self.path_edit = QLineEdit()
         self.path_edit.setPlaceholderText("/path/to/worktree  or  ../feature-branch")
-        self.path_edit.setStyleSheet(theme.get_line_edit_style())
 
         browse_btn = QPushButton("Browse…")
         browse_btn.setStyleSheet(theme.get_button_neutral_style())
@@ -49,11 +47,9 @@ class NewWorktreeDialog(QDialog):
 
         self.branch_edit = QLineEdit()
         self.branch_edit.setPlaceholderText("branch-name  (leave blank to use detached HEAD)")
-        self.branch_edit.setStyleSheet(theme.get_line_edit_style())
 
         self.new_branch_edit = QLineEdit()
         self.new_branch_edit.setPlaceholderText("new-branch-name  (leave blank to use existing branch)")
-        self.new_branch_edit.setStyleSheet(theme.get_line_edit_style())
 
         form.addRow("Path:", path_row)
         form.addRow("Existing branch:", self.branch_edit)
@@ -86,7 +82,6 @@ class NewWorktreeDialog(QDialog):
             "branch": self.branch_edit.text().strip(),
             "new_branch": self.new_branch_edit.text().strip(),
         }
-
 
 class WorktreesTab(QWidget):
     """Tab for managing git worktrees used by Claude Code"""
@@ -151,7 +146,6 @@ class WorktreesTab(QWidget):
         btn_row.setSpacing(5)
 
         add_btn = QPushButton("➕ Add Worktree")
-        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.clicked.connect(self.add_worktree)
 
         remove_btn = QPushButton("🗑️ Remove")

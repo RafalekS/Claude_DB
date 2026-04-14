@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import List, Dict, Optional
 import re
 
-
 class TemplateManager:
     """Manages templates from config/templates folder structure"""
 
@@ -271,10 +270,8 @@ class TemplateManager:
 
         return content
 
-
 # Singleton instance
 _template_manager = None
-
 
 def get_template_manager() -> TemplateManager:
     """Get singleton instance of TemplateManager"""

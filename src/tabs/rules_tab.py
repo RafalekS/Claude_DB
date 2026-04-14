@@ -16,9 +16,7 @@ from PyQt6.QtGui import QDesktopServices
 
 from utils import theme
 
-
 _FRONTMATTER_RE = re.compile(r'^---\s*\n(.*?)\n---\s*\n', re.DOTALL)
-
 
 def _parse_frontmatter(content: str) -> dict:
     """Extract frontmatter keys from a rule file."""
@@ -32,12 +30,10 @@ def _parse_frontmatter(content: str) -> dict:
             result[k.strip()] = v.strip().strip('"').strip("'")
     return result
 
-
 def _strip_frontmatter(content: str) -> str:
     """Return body text after frontmatter."""
     m = _FRONTMATTER_RE.match(content)
     return content[m.end():] if m else content
-
 
 class NewRuleDialog(QDialog):
     """Dialog for creating a new rule file."""
@@ -103,7 +99,6 @@ class NewRuleDialog(QDialog):
         paths = [p.strip() for p in paths_text.split(",") if p.strip()] if paths_text else []
         return {"name": name, "description": desc, "paths": paths}
 
-
 class RuleEditorWidget(QWidget):
     """Editor panel for a single scope (user or project)."""
 
@@ -150,14 +145,11 @@ class RuleEditorWidget(QWidget):
         # File action buttons
         btn_row = QHBoxLayout()
         new_btn = QPushButton("➕ New")
-        new_btn.setStyleSheet(theme.get_button_style())
         new_btn.clicked.connect(self._new_rule)
         delete_btn = QPushButton("🗑 Delete")
-        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.clicked.connect(self._delete_rule)
         refresh_btn = QPushButton("🔄")
         refresh_btn.setFixedWidth(30)
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.clicked.connect(self.refresh)
         btn_row.addWidget(new_btn)
         btn_row.addWidget(delete_btn)
@@ -191,9 +183,6 @@ class RuleEditorWidget(QWidget):
         self._editor = QTextEdit()
         self._editor.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
                 font-family: {theme.FONT_FAMILY_MONO};
@@ -213,7 +202,6 @@ class RuleEditorWidget(QWidget):
 
         save_row = QHBoxLayout()
         save_btn = QPushButton("💾 Save")
-        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self._save_rule)
         save_row.addStretch()
         save_row.addWidget(save_btn)
@@ -355,7 +343,6 @@ class RuleEditorWidget(QWidget):
             self._file_label.setText("Select a rule file to edit")
             self.refresh()
 
-
 class RulesTab(QWidget):
     """Tab for managing Claude Code rules files."""
 
@@ -387,7 +374,6 @@ class RulesTab(QWidget):
             f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};"
         )
         docs_btn = QPushButton("📖 Rules Docs")
-        docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
             QUrl("https://code.claude.com/docs/en/memory#organize-rules-with-claude/rules/")
         ))

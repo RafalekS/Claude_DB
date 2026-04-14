@@ -18,7 +18,6 @@ from utils import theme
 
 logger = logging.getLogger(__name__)
 
-
 class LinkEditDialog(QDialog):
     """Proper dialog for adding/editing a link"""
 
@@ -65,7 +64,6 @@ class LinkEditDialog(QDialog):
         """Return the entered data"""
         return self.url_input.toPlainText().strip(), self.title_input.text().strip()
 
-
 class LinkManagerDialog(QDialog):
     """Unified dialog for managing all links"""
 
@@ -99,17 +97,14 @@ class LinkManagerDialog(QDialog):
         btn_layout = QHBoxLayout()
 
         add_btn = QPushButton("➕ Add Link")
-        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.setMinimumWidth(100)
         add_btn.clicked.connect(self.add_link)
 
         edit_btn = QPushButton("✏️ Edit Link")
-        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.setMinimumWidth(100)
         edit_btn.clicked.connect(self.edit_link)
 
         delete_btn = QPushButton("🗑️ Delete Link")
-        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.setMinimumWidth(100)
         delete_btn.clicked.connect(self.delete_link)
 
@@ -122,7 +117,6 @@ class LinkManagerDialog(QDialog):
 
         # Close button
         close_btn = QPushButton("Close")
-        close_btn.setStyleSheet(theme.get_button_style())
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn)
 
@@ -199,7 +193,6 @@ class LinkManagerDialog(QDialog):
             del self.all_links[self.current_category][index]
             self.load_links()
             QMessageBox.information(self, "Success", "Link deleted!")
-
 
 class AboutTab(QWidget):
     """Tab with information and resource links"""
@@ -298,14 +291,12 @@ class AboutTab(QWidget):
 
         # Link management button
         manage_btn = QPushButton("🔗 Manage Links")
-        manage_btn.setStyleSheet(theme.get_button_style())
         manage_btn.setMinimumWidth(110)
         manage_btn.clicked.connect(self.manage_links)
         header_layout.addWidget(manage_btn)
 
         # Documentation Button
         docs_button = QPushButton("📚 Docs")
-        docs_button.setStyleSheet(theme.get_button_style())
         docs_button.setToolTip("Open Claude_DB.html")
         docs_button.setMinimumWidth(80)
         docs_button.clicked.connect(self.open_local_docs)
@@ -344,7 +335,6 @@ class AboutTab(QWidget):
         cmd_label.setStyleSheet(f"background: {theme.BG_DARK}; padding: 5px; color: {theme.FG_PRIMARY}; font-family: {theme.FONT_FAMILY_MONO}; border-radius: 3px;")
 
         copy_sdk_btn = QPushButton("📋 Copy")
-        copy_sdk_btn.setStyleSheet(theme.get_button_style())
         copy_sdk_btn.setMinimumWidth(80)
         copy_sdk_btn.clicked.connect(self.copy_sdk_command)
 
@@ -365,7 +355,6 @@ class AboutTab(QWidget):
         """Create a group of clickable links"""
         group = QGroupBox(title)
 
-
         group_layout = QVBoxLayout()
 
         # Links display
@@ -380,9 +369,6 @@ class AboutTab(QWidget):
         content.setHtml(html)
         content.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: none;
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
         """)

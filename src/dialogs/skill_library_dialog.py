@@ -35,7 +35,6 @@ except Exception:
         "AskUserQuestion", "Skill", "SlashCommand"
     ]
 
-
 class SkillLibraryDialog(BaseLibraryDialog):
     """Dialog for managing skill templates in config/templates/skills/"""
 
@@ -195,7 +194,6 @@ How to use this skill.
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to save template:\n{str(e)}")
 
-
 class NewSkillTemplateDialog(QDialog):
     """Dialog for creating a new skill template"""
 
@@ -234,7 +232,6 @@ class NewSkillTemplateDialog(QDialog):
 
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             if tool in ["Read", "Grep", "Glob"]:
                 checkbox.setChecked(True)
             self.tool_checkboxes[tool] = checkbox
@@ -251,7 +248,6 @@ class NewSkillTemplateDialog(QDialog):
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -272,7 +268,6 @@ class NewSkillTemplateDialog(QDialog):
             'description': self.description_edit.toPlainText().strip(),
             'allowed_tools': ", ".join(selected_tools) if selected_tools else ""
         }
-
 
 class EditSkillTemplateDialog(QDialog):
     """Dialog for editing a skill template with form fields"""
@@ -330,7 +325,6 @@ class EditSkillTemplateDialog(QDialog):
 
         for idx, tool in enumerate(AVAILABLE_TOOLS):
             checkbox = QCheckBox(tool)
-            checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             checkbox.setChecked(tool in existing_tools)
             self.tool_checkboxes[tool] = checkbox
             tools_grid.addWidget(checkbox, idx // 3, idx % 3)
@@ -346,7 +340,6 @@ class EditSkillTemplateDialog(QDialog):
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)

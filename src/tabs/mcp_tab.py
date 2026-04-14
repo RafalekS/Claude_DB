@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 from dialogs.mcp_tools_dialog import MCPToolsDialog
 from dialogs.mcp_library_dialog import MCPLibraryDialog
 
-
 class KeyValueTableWidget(QWidget):
     """Reusable widget for editing key-value pairs"""
 
@@ -47,12 +46,10 @@ class KeyValueTableWidget(QWidget):
         header_layout.addStretch()
 
         add_btn = QPushButton("➕ Add Row")
-        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.clicked.connect(self.add_row)
         header_layout.addWidget(add_btn)
 
         remove_btn = QPushButton("➖ Remove Row")
-        remove_btn.setStyleSheet(theme.get_button_style())
         remove_btn.clicked.connect(self.remove_row)
         header_layout.addWidget(remove_btn)
 
@@ -67,16 +64,10 @@ class KeyValueTableWidget(QWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
             QHeaderView::section {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
                 padding: 5px;
-                border: 1px solid {theme.BG_LIGHT};
             }}
         """)
         layout.addWidget(self.table)
@@ -112,7 +103,6 @@ class KeyValueTableWidget(QWidget):
                 if key:  # Only add non-empty keys
                     data[key] = value
         return data
-
 
 class AddServerDialog(QDialog):
     """Dialog for adding/editing MCP servers"""
@@ -193,7 +183,6 @@ class AddServerDialog(QDialog):
         # Windows cmd wrapper checkbox
         self.wrap_cmd_checkbox = QCheckBox("Wrap with cmd /c (Windows)")
         self.wrap_cmd_checkbox.setToolTip("Windows requires 'cmd /c' wrapper to execute npx commands")
-        self.wrap_cmd_checkbox.setStyleSheet(f"color: {theme.FG_PRIMARY};")
         self.wrap_cmd_checkbox.stateChanged.connect(self.on_wrap_cmd_changed)
         form.addRow("", self.wrap_cmd_checkbox)
 
@@ -444,7 +433,6 @@ class AddServerDialog(QDialog):
 
         return self.name_input.text().strip(), config
 
-
 class CustomRenameDialog(QDialog):
     """Dialog for custom renaming of conflicting servers"""
 
@@ -475,16 +463,10 @@ class CustomRenameDialog(QDialog):
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
             QHeaderView::section {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
                 padding: 5px;
-                border: 1px solid {theme.BG_LIGHT};
             }}
         """)
 
@@ -547,7 +529,6 @@ class CustomRenameDialog(QDialog):
         """Get the rename mapping"""
         return self.rename_map
 
-
 class MCPSearchWorker(QThread):
     """Background worker for MCP server search."""
 
@@ -567,7 +548,6 @@ class MCPSearchWorker(QThread):
             self.results_ready.emit(results)
         except Exception as e:
             self.error.emit(str(e))
-
 
 class MCPTab(QWidget):
     """Tab for managing MCP servers"""
@@ -687,9 +667,6 @@ class MCPTab(QWidget):
         self.server_list = QListWidget()
         self.server_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 5px;
                 font-size: {theme.FONT_SIZE_NORMAL}px;
@@ -697,10 +674,7 @@ class MCPTab(QWidget):
             QListWidget::item {{
                 padding: 5px;
             }}
-            QListWidget::item:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
+            
         """)
         self.server_list.itemClicked.connect(self.on_server_selected)
         left_layout.addWidget(self.server_list)
@@ -726,8 +700,6 @@ class MCPTab(QWidget):
         autofix_btn = QPushButton("🔧 Auto-Fix")
         autofix_btn.setToolTip("Auto-fix MCP configuration for Windows (adds cmd /c wrapper)")
 
-        for btn in [add_btn, edit_btn, refresh_btn, library_btn, tools_btn, validate_btn, autofix_btn]:
-            btn.setStyleSheet(theme.get_button_style())
         remove_btn.setStyleSheet(theme.get_button_danger_style())
 
         add_btn.clicked.connect(self.add_server)
@@ -778,9 +750,6 @@ class MCPTab(QWidget):
         revert_btn = QPushButton("Revert")
         revert_btn.setToolTip("Revert to saved version")
 
-        for btn in [save_btn, backup_btn, revert_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         save_btn.clicked.connect(self.save_mcp_config)
         backup_btn.clicked.connect(self.backup_and_save)
         revert_btn.clicked.connect(self.revert_mcp_config)
@@ -796,9 +765,6 @@ class MCPTab(QWidget):
         self.editor = QTextEdit()
         self.editor.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
                 font-family: {theme.FONT_FAMILY_MONO};
@@ -833,7 +799,6 @@ class MCPTab(QWidget):
         search_layout.addWidget(self._discover_search)
 
         self._discover_search_btn = QPushButton("Search")
-        self._discover_search_btn.setStyleSheet(theme.get_button_style())
         self._discover_search_btn.clicked.connect(self._do_discover_search)
         search_layout.addWidget(self._discover_search_btn)
         layout.addLayout(search_layout)
@@ -853,7 +818,6 @@ class MCPTab(QWidget):
         ]:
             cb = QCheckBox(label)
             cb.setChecked(True)
-            cb.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             self._source_checks[key] = cb
             sources_layout.addWidget(cb)
         sources_layout.addStretch()
@@ -897,7 +861,6 @@ class MCPTab(QWidget):
         bottom_layout.addWidget(self._discover_rate_label)
 
         add_btn = QPushButton("Add to Config")
-        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.clicked.connect(self._add_discover_to_config)
         bottom_layout.addWidget(add_btn)
         layout.addLayout(bottom_layout)
@@ -1232,7 +1195,6 @@ class MCPTab(QWidget):
 
             # Reset label when loading fresh config
             self.server_name_label.setText("No server selected")
-
 
         except FileNotFoundError:
             # File doesn't exist yet - create empty config

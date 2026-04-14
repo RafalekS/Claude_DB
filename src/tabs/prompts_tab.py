@@ -19,7 +19,6 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from utils import theme
 
-
 class PromptsTab(QWidget):
     """Tab for managing Claude Code prompts from promptInfo.json"""
 
@@ -57,13 +56,11 @@ class PromptsTab(QWidget):
 
         # Link to Anthropic Prompt Library
         library_btn = QPushButton("📚 Prompt Library")
-        library_btn.setStyleSheet(theme.get_button_style())
         library_btn.setToolTip("Open Anthropic Prompt Library for inspiration")
         library_btn.clicked.connect(lambda: self.open_url("https://code.claude.com/en/resources/prompt-library/library"))
 
         # Import from GitHub button
         import_btn = QPushButton("📥 Import from GitHub")
-        import_btn.setStyleSheet(theme.get_button_style())
         import_btn.setToolTip("Import prompts from a GitHub repository")
         import_btn.clicked.connect(self.import_from_github)
 
@@ -108,9 +105,6 @@ class PromptsTab(QWidget):
         self.del_btn.setToolTip("Delete selected prompt")
         self.refresh_btn = QPushButton("🔄 Refresh")
         self.refresh_btn.setToolTip("Reload prompts from file")
-
-        for btn in [self.new_btn, self.del_btn, self.refresh_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         self.new_btn.clicked.connect(self.create_new_prompt)
         self.del_btn.clicked.connect(self.delete_prompt)
@@ -176,9 +170,6 @@ class PromptsTab(QWidget):
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
             }}
@@ -196,9 +187,6 @@ class PromptsTab(QWidget):
         self.save_btn.setToolTip("Save changes to promptInfo.json")
         self.backup_btn = QPushButton("📦 Backup")
         self.backup_btn.setToolTip("Create backup of promptInfo.json")
-
-        for btn in [self.copy_btn, self.save_btn, self.backup_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         self.copy_btn.clicked.connect(self.copy_to_clipboard)
         self.save_btn.clicked.connect(self.save_prompts)
@@ -220,7 +208,6 @@ class PromptsTab(QWidget):
 
         # Info section at bottom
         info_group = QGroupBox("About Prompts")
-
 
         info_layout = QVBoxLayout()
         info_text = QLabel(
@@ -835,7 +822,6 @@ class PromptsTab(QWidget):
 
         return added, updated, skipped
 
-
 class GitHubImportDialog(QDialog):
     """Dialog for selecting prompts to import from GitHub"""
 
@@ -884,11 +870,9 @@ class GitHubImportDialog(QDialog):
 
         select_all_btn = QPushButton("✓ Select All")
         select_all_btn.clicked.connect(self.select_all)
-        select_all_btn.setStyleSheet(theme.get_button_style())
 
         deselect_all_btn = QPushButton("✗ Deselect All")
         deselect_all_btn.clicked.connect(self.deselect_all)
-        deselect_all_btn.setStyleSheet(theme.get_button_style())
 
         btn_layout.addWidget(select_all_btn)
         btn_layout.addWidget(deselect_all_btn)
@@ -948,9 +932,6 @@ class GitHubImportDialog(QDialog):
                 resolution_combo.setStyleSheet(f"""
                     QComboBox {{
                         padding: 4px;
-                        background-color: {theme.BG_DARK};
-                        color: {theme.FG_PRIMARY};
-                        border: 1px solid {theme.ACCENT_PRIMARY};
                         border-radius: 3px;
                     }}
                 """)

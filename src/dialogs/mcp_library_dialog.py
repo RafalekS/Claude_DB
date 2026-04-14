@@ -17,7 +17,6 @@ from utils import theme
 logger = logging.getLogger(__name__)
 from utils.template_manager import get_template_manager
 
-
 class AddHTTPServerDialog(QDialog):
     """Simple dialog for adding HTTP MCP server templates"""
 
@@ -55,12 +54,10 @@ class AddHTTPServerDialog(QDialog):
         self.http_radio = QPushButton("HTTP")
         self.http_radio.setCheckable(True)
         self.http_radio.setChecked(True)
-        self.http_radio.setStyleSheet(theme.get_button_style())
         self.http_radio.clicked.connect(lambda: self.set_type("http"))
 
         self.sse_radio = QPushButton("SSE")
         self.sse_radio.setCheckable(True)
-        self.sse_radio.setStyleSheet(theme.get_button_style())
         self.sse_radio.clicked.connect(lambda: self.set_type("sse"))
 
         type_layout.addWidget(self.http_radio)
@@ -137,7 +134,6 @@ class AddHTTPServerDialog(QDialog):
         }
         return server_name, server_config
 
-
 class MCPLibraryDialog(QDialog):
     """Dialog for managing MCP server templates in config/templates/mcp/"""
 
@@ -164,7 +160,6 @@ class MCPLibraryDialog(QDialog):
         nav_layout = QHBoxLayout()
 
         self.back_btn = QPushButton("⬅ Back")
-        self.back_btn.setStyleSheet(theme.get_button_style())
         self.back_btn.clicked.connect(self.go_back)
         self.back_btn.setVisible(False)  # Hidden at root level
         nav_layout.addWidget(self.back_btn)
@@ -196,20 +191,12 @@ class MCPLibraryDialog(QDialog):
         self.table.setTextElideMode(Qt.TextElideMode.ElideNone)
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
             QHeaderView::section {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
                 padding: 5px;
-                border: 1px solid {theme.BG_LIGHT};
             }}
-            QHeaderView::section:hover {{
-                background-color: {theme.BG_LIGHT};
-            }}
+            
         """)
 
         self.populate_table()
@@ -218,39 +205,32 @@ class MCPLibraryDialog(QDialog):
         manage_layout = QHBoxLayout()
 
         add_btn = QPushButton("➕ Add Template")
-        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.setToolTip("Add stdio/command-based MCP server template")
         add_btn.clicked.connect(self.add_template)
         manage_layout.addWidget(add_btn)
 
         add_http_btn = QPushButton("🌐 Add HTTP Template")
-        add_http_btn.setStyleSheet(theme.get_button_style())
         add_http_btn.setToolTip("Add HTTP/SSE-based MCP server template")
         add_http_btn.clicked.connect(self.add_http_template)
         manage_layout.addWidget(add_http_btn)
 
         edit_btn = QPushButton("✏️ Edit Selected")
-        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.clicked.connect(self.edit_template)
         manage_layout.addWidget(edit_btn)
 
         bulk_add_btn = QPushButton("📋 Bulk Add")
-        bulk_add_btn.setStyleSheet(theme.get_button_style())
         bulk_add_btn.clicked.connect(self.bulk_add_mcps)
         manage_layout.addWidget(bulk_add_btn)
 
         delete_btn = QPushButton("🗑️ Delete Selected")
-        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.clicked.connect(self.delete_selected)
         manage_layout.addWidget(delete_btn)
 
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.clicked.connect(self.refresh_templates)
         manage_layout.addWidget(refresh_btn)
 
         open_folder_btn = QPushButton("📁 Open Folder")
-        open_folder_btn.setStyleSheet(theme.get_button_style())
         open_folder_btn.clicked.connect(self.open_folder)
         manage_layout.addWidget(open_folder_btn)
 
@@ -259,12 +239,10 @@ class MCPLibraryDialog(QDialog):
 
         select_layout = QHBoxLayout()
         select_all_btn = QPushButton("✓ Select All")
-        select_all_btn.setStyleSheet(theme.get_button_style())
         select_all_btn.clicked.connect(self.select_all)
         select_layout.addWidget(select_all_btn)
 
         deselect_all_btn = QPushButton("✗ Deselect All")
-        deselect_all_btn.setStyleSheet(theme.get_button_style())
         deselect_all_btn.clicked.connect(self.deselect_all)
         select_layout.addWidget(deselect_all_btn)
 

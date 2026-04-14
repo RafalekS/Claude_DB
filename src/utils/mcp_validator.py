@@ -8,7 +8,6 @@ import platform
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
-
 class MCPValidator:
     """Validates and fixes MCP server configurations for Windows"""
 
@@ -282,19 +281,16 @@ class MCPValidator:
         template = templates.get(server_type, templates['npx'])
         return json.dumps(template, indent=2)
 
-
 # Convenience functions
 def validate_mcp_file(mcp_path: Path) -> Tuple[bool, List[str], List[str]]:
     """Quick validation of MCP file"""
     validator = MCPValidator()
     return validator.validate_mcp_json(mcp_path)
 
-
 def auto_fix_mcp_file(mcp_path: Path) -> Tuple[bool, str, List[str]]:
     """Quick auto-fix of MCP file"""
     validator = MCPValidator()
     return validator.auto_fix_windows(mcp_path)
-
 
 def get_validation_report(mcp_path: Path) -> str:
     """Quick validation report"""

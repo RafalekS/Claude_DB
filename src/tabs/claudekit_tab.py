@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
 )
 from utils import theme
 
-
 class ClaudeKitTab(QWidget):
     """Tab for ClaudeKit tools - loads commands from config"""
 
@@ -53,12 +52,7 @@ class ClaudeKitTab(QWidget):
         # Create scrollable area for all command groups
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(f"""
-            QScrollArea {{
-                border: none;
-                background-color: {theme.BG_DARK};
-            }}
-        """)
+        scroll
 
         scroll_widget = QWidget()
         scroll_widget.setStyleSheet(f"background-color: {theme.BG_DARK};")
@@ -86,7 +80,6 @@ class ClaudeKitTab(QWidget):
     def create_context_selector(self):
         """Create working directory context selector"""
         group = QGroupBox("Working Directory Context")
-
 
         layout = QVBoxLayout()
         layout.setSpacing(8)
@@ -122,7 +115,6 @@ class ClaudeKitTab(QWidget):
         browse_btn.setEnabled(False)
         browse_btn.setToolTip("Browse for project folder (enabled when Project radio button is selected)")
         browse_btn.clicked.connect(self.browse_project_folder)
-        browse_btn.setStyleSheet(theme.get_button_style())
 
         # Connect radio button to enable/disable project path controls
         self.radio_global.toggled.connect(lambda checked: self.project_path_edit.setEnabled(not checked))
@@ -185,7 +177,6 @@ class ClaudeKitTab(QWidget):
         """Create a group of command buttons from config data"""
         group = QGroupBox(title)
 
-
         grid = QGridLayout()
         grid.setSpacing(8)
         grid.setContentsMargins(6, 6, 6, 6)
@@ -199,7 +190,6 @@ class ClaudeKitTab(QWidget):
             btn = QPushButton(button_text)
             btn.setToolTip(tooltip)
             btn.clicked.connect(lambda checked, cfg=cmd_config: self.handle_command(cfg))
-            btn.setStyleSheet(theme.get_button_style())
 
             grid.addWidget(btn, row, col)
 

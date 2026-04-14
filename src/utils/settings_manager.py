@@ -14,7 +14,6 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 logger = logging.getLogger(__name__)
 
-
 class SettingsManager(QObject):
     """Centralized manager for all settings.json files (User, Project Shared, Project Local)"""
 

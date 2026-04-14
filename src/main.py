@@ -60,7 +60,6 @@ from utils.settings_manager import SettingsManager
 from utils.project_context import ProjectContext
 from utils import theme
 
-
 class ClaudeDBApp(QMainWindow):
     """Main application window for Claude_DB"""
 
@@ -474,7 +473,6 @@ class ClaudeDBApp(QMainWindow):
             if app:
                 app.setStyleSheet(theme.generate_app_stylesheet())
 
-
 def main():
     """Main application entry point"""
     app = QApplication(sys.argv)
@@ -490,7 +488,6 @@ def main():
     window.show()
 
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     main()

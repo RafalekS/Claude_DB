@@ -14,7 +14,6 @@ from PyQt6.QtGui import QDesktopServices
 
 from utils import theme
 
-
 class ProjectHooksSubTab(QWidget):
     """Dedicated subtab for project-level hooks configuration (Shared/Local)"""
 
@@ -90,7 +89,6 @@ class ProjectHooksSubTab(QWidget):
         )
 
         docs_btn = QPushButton("📖 Hooks Docs")
-        docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official hooks documentation")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
             QUrl("https://code.claude.com/docs/en/hooks")
@@ -165,9 +163,6 @@ class ProjectHooksSubTab(QWidget):
         events_list = QListWidget()
         events_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 5px;
                 font-size: {theme.FONT_SIZE_NORMAL}px;
@@ -175,10 +170,7 @@ class ProjectHooksSubTab(QWidget):
             QListWidget::item {{
                 padding: 5px;
             }}
-            QListWidget::item:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
+            
         """)
         events_list.itemClicked.connect(lambda item: self.on_event_selected(scope, item))
         left_layout.addWidget(events_list)
@@ -192,9 +184,6 @@ class ProjectHooksSubTab(QWidget):
         info_browser.setOpenExternalLinks(True)
         info_browser.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
@@ -218,9 +207,6 @@ class ProjectHooksSubTab(QWidget):
         editor = QTextEdit()
         editor.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
                 font-family: {theme.FONT_FAMILY_MONO};
@@ -249,9 +235,6 @@ class ProjectHooksSubTab(QWidget):
         save_btn.setToolTip("Save hooks configuration to settings.json")
         validate_btn = QPushButton("✓ Validate JSON")
         validate_btn.setToolTip("Validate hooks configuration JSON syntax")
-
-        for btn in [add_btn, edit_btn, remove_btn, reload_btn, save_btn, validate_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         add_btn.clicked.connect(lambda: self.add_hook(scope))
         edit_btn.clicked.connect(lambda: self.edit_hook(scope))

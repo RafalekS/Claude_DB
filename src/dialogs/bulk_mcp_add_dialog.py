@@ -10,7 +10,6 @@ import json
 from utils import theme
 from utils.template_manager import get_template_manager
 
-
 class BulkMCPAddDialog(QDialog):
     """Dialog for bulk adding MCP server templates"""
 
@@ -57,19 +56,16 @@ class BulkMCPAddDialog(QDialog):
         button_layout = QHBoxLayout()
 
         parse_btn = QPushButton("🔄 Parse & Preview")
-        parse_btn.setStyleSheet(theme.get_button_style())
         parse_btn.clicked.connect(self.parse_and_preview)
         button_layout.addWidget(parse_btn)
 
         button_layout.addStretch()
 
         save_btn = QPushButton("💾 Save to Library")
-        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self.save_to_library)
         button_layout.addWidget(save_btn)
 
         close_btn = QPushButton("✗ Close")
-        close_btn.setStyleSheet(theme.get_button_style())
         close_btn.clicked.connect(self.reject)
         button_layout.addWidget(close_btn)
 

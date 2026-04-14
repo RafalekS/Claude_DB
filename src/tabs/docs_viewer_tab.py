@@ -51,7 +51,6 @@ class DocsViewerTab(QWidget):
 
         content.setStyleSheet(f"""
             QTextBrowser {{
-                border: 1px solid {theme.BG_LIGHT};
                 padding: 5px;
             }}
         """)

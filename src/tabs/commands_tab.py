@@ -16,7 +16,6 @@ from utils import theme
 from utils.template_manager import get_template_manager
 from dialogs.command_library_dialog import CommandLibraryDialog
 
-
 class CommandsTab(QWidget):
     """Tab for managing Claude Code commands (single-scope)"""
 
@@ -142,9 +141,6 @@ class CommandsTab(QWidget):
         library_btn = QPushButton("📚 Command Library")
         library_btn.setToolTip("Browse and add commands from library templates")
 
-        for btn in [new_btn, edit_btn, del_btn, refresh_btn, library_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         new_btn.clicked.connect(self.create_new_command)
         edit_btn.clicked.connect(self.edit_command)
         del_btn.clicked.connect(self.delete_command)
@@ -180,9 +176,6 @@ class CommandsTab(QWidget):
         revert_btn = QPushButton("Revert")
         revert_btn.setToolTip("Revert to saved version (discards unsaved changes)")
 
-        for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         save_btn.clicked.connect(self.save_command)
         backup_save_btn.clicked.connect(self.backup_and_save_command)
         revert_btn.clicked.connect(self.revert_command)
@@ -196,7 +189,6 @@ class CommandsTab(QWidget):
 
         # Editor
         command_editor = QTextEdit()
-        command_editor.setStyleSheet(theme.get_text_edit_style())
         right_layout.addWidget(command_editor)
 
         splitter.addWidget(right_panel)
@@ -457,7 +449,6 @@ Detailed instructions for the command.
             msg += f"\nSkipped {skipped_count} (already exist)"
         QMessageBox.information(self, "Deploy Complete", msg)
 
-
 class NewCommandDialog(QDialog):
     """Dialog for creating a new command with proper fields"""
 
@@ -501,7 +492,6 @@ class NewCommandDialog(QDialog):
 
         # Button box
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -521,7 +511,6 @@ class NewCommandDialog(QDialog):
             'display_name': self.display_name_edit.text().strip(),
             'description': self.description_edit.toPlainText().strip()
         }
-
 
 class EditCommandDialog(QDialog):
     """Dialog for editing a command with form fields"""
@@ -568,7 +557,6 @@ class EditCommandDialog(QDialog):
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)

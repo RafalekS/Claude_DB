@@ -33,7 +33,6 @@ from tabs.claude_local_md_tab import ClaudeLocalMDTab
 from tabs.agent_teams_tab import AgentTeamsTab
 from tabs.remote_control_tab import RemoteControlTab
 
-
 class UserConfigTab(QWidget):
     """Container tab for all user-level configuration (~/. claude/)"""
 

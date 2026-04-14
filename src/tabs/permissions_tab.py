@@ -59,7 +59,6 @@ class AddPermissionDialog(QDialog):
 
         # Permission Level
         level_group = QGroupBox("Permission Level")
-        level_group.setStyleSheet(theme.get_groupbox_style())
         level_layout = QHBoxLayout()
 
         self.allow_radio = QCheckBox("Allow")
@@ -67,7 +66,6 @@ class AddPermissionDialog(QDialog):
         self.deny_radio = QCheckBox("Deny")
 
         for radio in [self.allow_radio, self.ask_radio, self.deny_radio]:
-            radio.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             radio.toggled.connect(self.on_radio_toggled)
             level_layout.addWidget(radio)
 
@@ -84,7 +82,6 @@ class AddPermissionDialog(QDialog):
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -275,7 +272,6 @@ class AddPermissionDialog(QDialog):
             self.type_combo.setCurrentText("Tool Permission")
             self.tool_name_edit.setText(pattern)
 
-
 class PermissionsTab(QWidget):
     """Tab for managing Claude Code permissions"""
 
@@ -383,7 +379,6 @@ class PermissionsTab(QWidget):
         project_folder_edit.setReadOnly(True)
 
         browse_folder_btn = QPushButton("Browse...")
-        browse_folder_btn.setStyleSheet(theme.get_button_style())
         browse_folder_btn.setToolTip("Select a different project folder")
         browse_folder_btn.clicked.connect(lambda: self.browse_project_folder(scope))
 
@@ -441,15 +436,8 @@ class PermissionsTab(QWidget):
         del_perm_btn = QPushButton("Delete")
         del_perm_btn.setToolTip("Delete selected permission")
 
-        for btn in [add_perm_btn, edit_perm_btn, refresh_perm_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         # Delete button with orange border
-        del_perm_btn.setStyleSheet(theme.get_button_style() + f"""
-            QPushButton {{
-                border: 2px solid {theme.WARNING_COLOR};
-            }}
-        """)
+        del_perm_btn.setStyleSheet(f"QPushButton {{ border: 2px solid {theme.WARNING_COLOR}; }}")
 
         add_perm_btn.clicked.connect(lambda: self.add_permission(scope))
         edit_perm_btn.clicked.connect(lambda: self.edit_permission(scope))
@@ -476,19 +464,9 @@ class PermissionsTab(QWidget):
         UIStateManager.instance().connect_table("permissions.user_table", perm_table)
         perm_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         perm_table.setStyleSheet(f"""
-            QTableWidget {{
-                background: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
-            }}
-            QTableWidget::item:selected {{
-                background: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
+            
+            
             QHeaderView::section {{
-                background: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 padding: 5px;
                 font-weight: bold;
             }}
@@ -513,12 +491,7 @@ class PermissionsTab(QWidget):
         remove_workspace_btn = QPushButton("Remove")
         remove_workspace_btn.setToolTip("Remove selected workspace folder")
 
-        add_workspace_btn.setStyleSheet(theme.get_button_style())
-        remove_workspace_btn.setStyleSheet(theme.get_button_style() + f"""
-            QPushButton {{
-                border: 2px solid {theme.WARNING_COLOR};
-            }}
-        """)
+        remove_workspace_btn.setStyleSheet(f"QPushButton {{ border: 2px solid {theme.WARNING_COLOR}; }}")
 
         add_workspace_btn.clicked.connect(lambda: self.add_workspace_folder(scope))
         remove_workspace_btn.clicked.connect(lambda: self.remove_workspace_folder(scope))

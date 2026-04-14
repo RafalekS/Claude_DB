@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import (
 )
 from utils import theme
 
-
 class TemplatesTab(QWidget):
     """Tab for Claude Code template management - loads commands from config"""
 
@@ -45,7 +44,6 @@ class TemplatesTab(QWidget):
         header.setStyleSheet(f"""
             font-size: {theme.FONT_SIZE_LARGE}px;
             font-weight: bold;
-            color: {theme.ACCENT_PRIMARY};
             padding: 5px;
         """)
         layout.addWidget(header)
@@ -69,7 +67,6 @@ class TemplatesTab(QWidget):
         """Create command buttons grid"""
         group = QGroupBox("Template Commands")
 
-
         grid = QGridLayout()
         grid.setSpacing(10)
         grid.setContentsMargins(8, 8, 8, 8)
@@ -86,21 +83,14 @@ class TemplatesTab(QWidget):
             btn.setStyleSheet(f"""
                 QPushButton {{
                     padding: 10px 15px;
-                    background-color: {theme.ACCENT_PRIMARY};
-                    color: {theme.BG_DARK};
                     border-radius: 5px;
                     font-weight: bold;
                     font-size: {theme.FONT_SIZE_NORMAL}px;
                     min-width: 200px;
                     min-height: 40px;
                 }}
-                QPushButton:hover {{
-                    background-color: {theme.ACCENT_SECONDARY};
-                }}
-                QPushButton:pressed {{
-                    background-color: {theme.BG_LIGHT};
-                    color: {theme.FG_PRIMARY};
-                }}
+                
+                
             """)
 
             grid.addWidget(btn, row, col)

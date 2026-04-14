@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 _SOURCES_FILE = Path(__file__).parent.parent.parent / "config" / "skill_sources.json"
 
-
 @dataclass
 class SkillResult:
     """A single discovered skill."""
@@ -36,7 +35,6 @@ class SkillResult:
     content: str = ""        # Raw SKILL.md text (may be empty until fetched)
     extra: dict = field(default_factory=dict)
 
-
 def load_skill_sources() -> list[dict]:
     """Load curated skill sources from config/skill_sources.json."""
     try:
@@ -45,7 +43,6 @@ def load_skill_sources() -> list[dict]:
     except Exception as e:
         logger.warning(f"Could not load skill_sources.json: {e}")
         return []
-
 
 class SkillSearchClient:
     """Discover Claude Code skills from GitHub."""
@@ -207,7 +204,6 @@ class SkillSearchClient:
             logger.warning(f"fetch_skill_content {owner}/{repo}/{path} failed: {e}")
             return None
 
-
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
 def _extract_description(content: str) -> str:
@@ -224,7 +220,6 @@ def _extract_description(content: str) -> str:
         if in_fm and stripped.startswith("description:"):
             return stripped[len("description:"):].strip().strip('"').strip("'")
     return ""
-
 
 def _to_raw_url(url: str) -> str:
     """Convert a github.com blob URL to a raw.githubusercontent.com URL."""

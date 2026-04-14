@@ -104,9 +104,6 @@ class SettingsTab(QWidget):
         set_notif_btn = QPushButton("🔔 Set Notification")
         set_notif_btn.setToolTip("Set notification channel to terminal_bell")
 
-        for btn in [load_btn, save_btn, backup_save_btn, validate_btn, set_notif_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         btn_layout.addWidget(info_label)
         btn_layout.addWidget(set_notif_btn)
         btn_layout.addStretch()
@@ -173,7 +170,6 @@ class SettingsTab(QWidget):
         self.project_folder_edit.setReadOnly(True)
 
         browse_folder_btn = QPushButton("Browse...")
-        browse_folder_btn.setStyleSheet(theme.get_button_style())
         browse_folder_btn.setToolTip("Select a different project folder")
         browse_folder_btn.clicked.connect(self.browse_project_folder)
 
@@ -231,9 +227,6 @@ class SettingsTab(QWidget):
         backup_save_btn.setToolTip("Create timestamped backup before saving project settings")
         validate_btn = QPushButton("Validate")
         validate_btn.setToolTip("Check if JSON syntax is valid")
-
-        for btn in [load_btn, save_btn, backup_save_btn, validate_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         btn_layout.addWidget(path_label)
         btn_layout.addStretch()
@@ -391,9 +384,6 @@ class SettingsTab(QWidget):
         env_list.setMaximumHeight(150)
         env_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 3px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
@@ -413,7 +403,6 @@ class SettingsTab(QWidget):
         refresh_btn.setToolTip("Refresh list")
 
         for btn in [add_btn, edit_btn, remove_btn, refresh_btn]:
-            btn.setStyleSheet(theme.get_button_style())
             btn.setMaximumWidth(80)
 
         btn_layout.addWidget(add_btn)

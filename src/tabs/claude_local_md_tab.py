@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
 )
 from utils import theme
 
-
 class ClaudeLocalMDTab(QWidget):
     """Tab for editing CLAUDE.local.md — the gitignored local instructions override"""
 
@@ -42,9 +41,6 @@ class ClaudeLocalMDTab(QWidget):
         self.delete_btn.setToolTip("Delete CLAUDE.local.md from disk")
         self.delete_btn.setStyleSheet(theme.get_button_danger_style())
 
-        for btn in [self.save_btn, self.backup_save_btn, self.revert_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         self.save_btn.clicked.connect(self.save_content)
         self.backup_save_btn.clicked.connect(self.backup_and_save)
         self.revert_btn.clicked.connect(self.load_content)
@@ -61,10 +57,7 @@ class ClaudeLocalMDTab(QWidget):
         # Status bar
         self.stats_label = QLabel()
         self.stats_label.setStyleSheet(f"""
-            background-color: {theme.BG_MEDIUM};
-            color: {theme.FG_SECONDARY};
             padding: 6px 8px;
-            border: 1px solid {theme.BG_LIGHT};
             border-radius: 3px;
             font-size: {theme.FONT_SIZE_SMALL}px;
         """)
@@ -72,7 +65,6 @@ class ClaudeLocalMDTab(QWidget):
 
         # Editor
         self.editor = QTextEdit()
-        self.editor.setStyleSheet(theme.get_text_edit_style())
         self.editor.textChanged.connect(self._update_stats)
         layout.addWidget(self.editor, 1)
 

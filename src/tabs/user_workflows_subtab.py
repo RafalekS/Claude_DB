@@ -11,7 +11,6 @@ from PyQt6.QtGui import QDesktopServices
 
 from utils import theme
 
-
 class UserWorkflowsSubTab(QWidget):
     """Workflows guide interface for user-level configuration"""
 
@@ -36,7 +35,6 @@ class UserWorkflowsSubTab(QWidget):
         header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         docs_btn = QPushButton("📖 Workflows Docs")
-        docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official common workflows documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
             QUrl("https://code.claude.com/en/docs/claude-code/common-workflows")
@@ -57,10 +55,7 @@ class UserWorkflowsSubTab(QWidget):
         deprecation_notice.setWordWrap(True)
         deprecation_notice.setStyleSheet(f"""
             QLabel {{
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
                 padding: 10px;
-                border-left: 3px solid {theme.WARNING_COLOR};
                 border-radius: 3px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
@@ -72,9 +67,6 @@ class UserWorkflowsSubTab(QWidget):
         workflows_browser.setOpenExternalLinks(True)
         workflows_browser.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 15px;
                 font-size: {theme.FONT_SIZE_SMALL}px;

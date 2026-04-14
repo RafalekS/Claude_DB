@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 _CONFIG_FILE = Path(__file__).parent.parent.parent / "config" / "config.json"
 
-
 def _get_terminal_command() -> str:
     """Return user-configured terminal command, or empty string for auto-detect."""
     try:
@@ -27,7 +26,6 @@ def _get_terminal_command() -> str:
         return cfg.get("terminal", {}).get("command", "")
     except Exception:
         return ""
-
 
 def _build_launch_args(command: str, title: str, cwd: str = None) -> list:
     """Build OS-specific argv list to run *command* in a new terminal window.
@@ -85,7 +83,6 @@ def _build_launch_args(command: str, title: str, cwd: str = None) -> list:
 
     return None
 
-
 def run_in_terminal(
     command: str,
     title: str = "Command",
@@ -125,7 +122,6 @@ def run_in_terminal(
         if show_error and parent_widget:
             QMessageBox.critical(parent_widget, "Terminal Error", f"Failed to launch terminal:\n{e}")
         return False
-
 
 def run_command_silent(
     command,

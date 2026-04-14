@@ -14,7 +14,6 @@ from PyQt6.QtGui import QDesktopServices
 
 from utils import theme
 
-
 class StatuslineTab(QWidget):
     """Tab for managing Claude Code statusline"""
 
@@ -39,7 +38,6 @@ class StatuslineTab(QWidget):
         header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
 
         docs_btn = QPushButton("📖 Statusline Docs")
-        docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official statusline documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
             QUrl("https://code.claude.com/en/docs/claude-code/statusline")
@@ -117,9 +115,6 @@ class StatuslineTab(QWidget):
         info_browser.setOpenExternalLinks(True)
         info_browser.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 10px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
@@ -142,9 +137,6 @@ class StatuslineTab(QWidget):
         save_btn.setToolTip("Save statusline configuration to settings file")
         backup_btn = QPushButton("📦 Backup & Save")
         backup_btn.setToolTip("Create backup of settings file before saving")
-
-        for btn in [enable_btn, disable_btn, reload_btn, save_btn, backup_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         enable_btn.clicked.connect(lambda: self.enable_statusline(scope))
         disable_btn.clicked.connect(lambda: self.disable_statusline(scope))
@@ -185,7 +177,6 @@ class StatuslineTab(QWidget):
         self.project_folder_edit.setReadOnly(True)
 
         browse_folder_btn = QPushButton("Browse...")
-        browse_folder_btn.setStyleSheet(theme.get_button_style())
         browse_folder_btn.setToolTip("Select a different project folder")
         browse_folder_btn.clicked.connect(self.browse_project_folder)
 
@@ -227,9 +218,6 @@ class StatuslineTab(QWidget):
         info_browser.setOpenExternalLinks(True)
         info_browser.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 10px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
@@ -252,9 +240,6 @@ class StatuslineTab(QWidget):
         save_btn.setToolTip("Save statusline configuration to settings file")
         backup_btn = QPushButton("📦 Backup & Save")
         backup_btn.setToolTip("Create backup of settings file before saving")
-
-        for btn in [enable_btn, disable_btn, reload_btn, save_btn, backup_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         enable_btn.clicked.connect(lambda: self.enable_statusline("project"))
         disable_btn.clicked.connect(lambda: self.disable_statusline("project"))

@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 _CONFIG_FILE = Path(__file__).parent.parent.parent / "config" / "config.json"
 _CACHE_DIR = Path(__file__).parent.parent.parent / "cache"
 
-
 def _load_github_config() -> dict:
     try:
         with open(_CONFIG_FILE) as f:
@@ -26,7 +25,6 @@ def _load_github_config() -> dict:
     except Exception as e:
         logger.warning(f"Could not load github config: {e}")
         return {}
-
 
 class GitHubClient:
     """Reusable GitHub API client with SQLite result cache.

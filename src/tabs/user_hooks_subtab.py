@@ -14,7 +14,6 @@ from PyQt6.QtGui import QDesktopServices
 
 from utils import theme
 
-
 class UserHooksSubTab(QWidget):
     """Dedicated subtab for user-level hooks configuration"""
 
@@ -84,7 +83,6 @@ class UserHooksSubTab(QWidget):
         )
 
         docs_btn = QPushButton("📖 Hooks Docs")
-        docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official hooks documentation")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
             QUrl("https://code.claude.com/docs/en/hooks")
@@ -117,9 +115,6 @@ class UserHooksSubTab(QWidget):
         self.events_list = QListWidget()
         self.events_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 5px;
                 font-size: {theme.FONT_SIZE_NORMAL}px;
@@ -127,10 +122,7 @@ class UserHooksSubTab(QWidget):
             QListWidget::item {{
                 padding: 5px;
             }}
-            QListWidget::item:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
+            
         """)
         self.events_list.itemClicked.connect(self.on_event_selected)
         left_layout.addWidget(self.events_list)
@@ -144,9 +136,6 @@ class UserHooksSubTab(QWidget):
         info_browser.setOpenExternalLinks(True)
         info_browser.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
@@ -170,9 +159,6 @@ class UserHooksSubTab(QWidget):
         self.hooks_editor = QTextEdit()
         self.hooks_editor.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
                 font-family: {theme.FONT_FAMILY_MONO};
@@ -201,9 +187,6 @@ class UserHooksSubTab(QWidget):
         save_btn.setToolTip("Save hooks configuration to settings.json")
         validate_btn = QPushButton("✓ Validate JSON")
         validate_btn.setToolTip("Validate hooks configuration JSON syntax")
-
-        for btn in [add_btn, edit_btn, remove_btn, reload_btn, save_btn, validate_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         add_btn.clicked.connect(self.add_hook)
         edit_btn.clicked.connect(self.edit_hook)

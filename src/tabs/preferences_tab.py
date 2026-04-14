@@ -5,6 +5,7 @@ Preferences Tab - Application settings and theme management
 import json
 import logging
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 
@@ -22,7 +23,6 @@ from tabs.config_sync_tab import ConfigSyncTab
 
 logger = logging.getLogger(__name__)
 
-
 def _atomic_json_write(path: Path, data: dict) -> None:
     """Write *data* as JSON to *path* atomically (temp-file + rename)."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -34,10 +34,8 @@ def _atomic_json_write(path: Path, data: dict) -> None:
         tmp_path = tmp.name
     shutil.move(tmp_path, path)
 
-
 # Load themes from config file
 THEMES = theme.AVAILABLE_THEMES
-
 
 class TabEditorDialog(QDialog):
     """Unified dialog for reordering and renaming tabs"""
@@ -75,7 +73,6 @@ class TabEditorDialog(QDialog):
             }}
             QListWidget::item {{
                 padding: 8px;
-                border-bottom: 1px solid {theme.BG_LIGHT};
             }}
         """)
         for tab_name in tabs_row1:
@@ -91,21 +88,14 @@ class TabEditorDialog(QDialog):
         to_row2_btn = QPushButton("➡️ Move to Row 2")
         rename1_btn = QPushButton("✏️ Rename Selected")
 
-        up1_btn.setStyleSheet(theme.get_button_style())
-        down1_btn.setStyleSheet(theme.get_button_style())
-        rename1_btn.setStyleSheet(theme.get_button_style())
         to_row2_btn.setStyleSheet(f"""
             QPushButton {{
                 padding: 10px;
-                background-color: {theme.WARNING_COLOR};
-                color: {theme.BG_DARK};
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 150px;
             }}
-            QPushButton:hover {{
-                background-color: {theme.WARNING_COLOR};
-            }}
+            
         """)
 
         up1_btn.clicked.connect(lambda: self.move_item_up(self.row1_list))
@@ -134,7 +124,6 @@ class TabEditorDialog(QDialog):
             }}
             QListWidget::item {{
                 padding: 8px;
-                border-bottom: 1px solid {theme.BG_LIGHT};
             }}
         """)
         for tab_name in tabs_row2:
@@ -150,21 +139,14 @@ class TabEditorDialog(QDialog):
         to_row1_btn = QPushButton("⬅️ Move to Row 1")
         rename2_btn = QPushButton("✏️ Rename Selected")
 
-        up2_btn.setStyleSheet(theme.get_button_style())
-        down2_btn.setStyleSheet(theme.get_button_style())
-        rename2_btn.setStyleSheet(theme.get_button_style())
         to_row1_btn.setStyleSheet(f"""
             QPushButton {{
                 padding: 10px;
-                background-color: {theme.WARNING_COLOR};
-                color: {theme.BG_DARK};
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 150px;
             }}
-            QPushButton:hover {{
-                background-color: {theme.WARNING_COLOR};
-            }}
+            
         """)
 
         up2_btn.clicked.connect(lambda: self.move_item_up(self.row2_list))
@@ -185,8 +167,6 @@ class TabEditorDialog(QDialog):
         cancel_btn = QPushButton("Cancel")
         save_btn.clicked.connect(self.accept)
         cancel_btn.clicked.connect(self.reject)
-        save_btn.setStyleSheet(theme.get_button_style())
-        cancel_btn.setStyleSheet(theme.get_button_style())
         button_layout.addStretch()
         button_layout.addWidget(save_btn)
         button_layout.addWidget(cancel_btn)
@@ -270,7 +250,6 @@ class TabEditorDialog(QDialog):
         """Get the rename mapping"""
         return self.rename_map
 
-
 class AddNewTabDialog(QDialog):
     """Dialog for adding a new empty tab"""
 
@@ -321,8 +300,6 @@ class AddNewTabDialog(QDialog):
         cancel_btn = QPushButton("Cancel")
         create_btn.clicked.connect(self.validate_and_accept)
         cancel_btn.clicked.connect(self.reject)
-        create_btn.setStyleSheet(theme.get_button_style())
-        cancel_btn.setStyleSheet(theme.get_button_style())
         button_layout.addStretch()
         button_layout.addWidget(create_btn)
         button_layout.addWidget(cancel_btn)
@@ -349,7 +326,6 @@ class AddNewTabDialog(QDialog):
             "row": row,
             "content": content
         }
-
 
 class PreferencesTab(QWidget):
     """Tab for application preferences and theme management"""
@@ -404,12 +380,10 @@ class PreferencesTab(QWidget):
 
         self.edit_tabs_btn = QPushButton("🔀 Edit Tabs")
         self.edit_tabs_btn.setToolTip("Reorder and rename tabs in one dialog")
-        self.edit_tabs_btn.setStyleSheet(theme.get_button_style())
         self.edit_tabs_btn.clicked.connect(self.open_tab_editor_dialog)
 
         self.add_tab_btn = QPushButton("➕ Add New Tab")
         self.add_tab_btn.setToolTip("Create a new empty tab")
-        self.add_tab_btn.setStyleSheet(theme.get_button_style())
         self.add_tab_btn.clicked.connect(self.open_add_tab_dialog)
 
         tab_mgmt_layout.addWidget(self.edit_tabs_btn)
@@ -494,9 +468,6 @@ class PreferencesTab(QWidget):
         self.preview_label.setStyleSheet(f"""
             QLabel {{
                 padding: 15px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.ACCENT_PRIMARY};
                 border-radius: 3px;
                 font-size: {theme.FONT_SIZE_NORMAL}px;
             }}
@@ -513,32 +484,25 @@ class PreferencesTab(QWidget):
         self.apply_btn = QPushButton("Apply Theme")
         self.apply_btn.setToolTip("Apply theme changes to the current session")
         self.apply_btn.clicked.connect(self.apply_preferences)
-        self.apply_btn.setStyleSheet(theme.get_button_style())
 
         self.save_btn = QPushButton("Save Preferences")
         self.save_btn.setToolTip("Save preferences to config file")
         self.save_btn.clicked.connect(self.save_preferences)
-        self.save_btn.setStyleSheet(theme.get_button_style())
 
         self.reset_btn = QPushButton("Reset to Gruvbox Dark")
         self.reset_btn.setToolTip("Reset theme to default Gruvbox Dark")
         self.reset_btn.clicked.connect(self.reset_to_default)
-        self.reset_btn.setStyleSheet(theme.get_button_style())
 
         self.restart_btn = QPushButton("🔄 Restart Application")
         self.restart_btn.setToolTip("Restart the application to apply all changes")
         self.restart_btn.setStyleSheet(f"""
             QPushButton {{
                 padding: 10px;
-                background-color: {theme.ERROR_COLOR};
-                color: {theme.BG_DARK};
                 border-radius: 4px;
                 font-weight: bold;
                 min-width: 150px;
             }}
-            QPushButton:hover {{
-                background-color: {theme.ERROR_COLOR};
-            }}
+            
         """)
         self.restart_btn.clicked.connect(self.restart_application)
 
@@ -567,12 +531,10 @@ class PreferencesTab(QWidget):
 
         self.full_backup_btn = QPushButton("📦 Create Full Backup")
         self.full_backup_btn.setToolTip("Create backup of all Claude Code configuration files")
-        self.full_backup_btn.setStyleSheet(theme.get_button_style())
         self.full_backup_btn.clicked.connect(self.create_full_backup)
 
         self.program_backup_btn = QPushButton("💾 Backup Program Files")
         self.program_backup_btn.setToolTip("Create backup of Claude_DB program files")
-        self.program_backup_btn.setStyleSheet(theme.get_button_style())
         self.program_backup_btn.clicked.connect(self.backup_program_files)
 
         backup_layout.addWidget(self.full_backup_btn)
@@ -615,7 +577,6 @@ class PreferencesTab(QWidget):
         show_btn = QPushButton("👁")
         show_btn.setMaximumWidth(40)
         show_btn.setCheckable(True)
-        show_btn.setStyleSheet(theme.get_button_style())
         show_btn.toggled.connect(
             lambda on: self._github_token_input.setEchoMode(
                 QLineEdit.EchoMode.Normal if on else QLineEdit.EchoMode.Password
@@ -624,7 +585,6 @@ class PreferencesTab(QWidget):
         token_row.addWidget(show_btn)
 
         test_btn = QPushButton("Test")
-        test_btn.setStyleSheet(theme.get_button_style())
         test_btn.clicked.connect(self._test_github_token)
         token_row.addWidget(test_btn)
         github_layout.addRow("Token:", token_row)
@@ -666,7 +626,6 @@ class PreferencesTab(QWidget):
         ]:
             cb = QCheckBox(label)
             cb.setChecked(True)
-            cb.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             self._mcp_source_checks[key] = cb
             mcp_layout.addWidget(cb)
 
@@ -680,7 +639,6 @@ class PreferencesTab(QWidget):
         self._mcp_cache_spin.setSuffix(" h")
         mcp_cache_row.addWidget(self._mcp_cache_spin)
         clear_btn = QPushButton("Clear MCP Cache")
-        clear_btn.setStyleSheet(theme.get_button_style())
         clear_btn.clicked.connect(self._clear_mcp_cache)
         mcp_cache_row.addWidget(clear_btn)
         mcp_cache_row.addStretch()
@@ -689,7 +647,6 @@ class PreferencesTab(QWidget):
 
         # Save button
         save_btn = QPushButton("Save Search Settings")
-        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self._save_search_settings)
         layout.addWidget(save_btn)
         layout.addStretch()
@@ -780,7 +737,6 @@ class PreferencesTab(QWidget):
         self._skills_user_dir.setPlaceholderText("Leave blank for ~/.claude/skills/")
         user_row.addWidget(self._skills_user_dir)
         user_browse = QPushButton("Browse")
-        user_browse.setStyleSheet(theme.get_button_style())
         user_browse.clicked.connect(lambda: self._browse_skills_dir(self._skills_user_dir))
         user_row.addWidget(user_browse)
         dir_layout.addRow("User skills dir:", user_row)
@@ -790,7 +746,6 @@ class PreferencesTab(QWidget):
         self._skills_proj_dir.setPlaceholderText("Leave blank for .claude/skills/ in current project")
         proj_row.addWidget(self._skills_proj_dir)
         proj_browse = QPushButton("Browse")
-        proj_browse.setStyleSheet(theme.get_button_style())
         proj_browse.clicked.connect(lambda: self._browse_skills_dir(self._skills_proj_dir))
         proj_row.addWidget(proj_browse)
         dir_layout.addRow("Project skills dir:", proj_row)
@@ -828,7 +783,6 @@ class PreferencesTab(QWidget):
             ("Reset to Defaults", self._reset_skill_sources),
         ]:
             btn = QPushButton(label)
-            btn.setStyleSheet(theme.get_button_style())
             btn.clicked.connect(slot)
             src_btns.addWidget(btn)
         src_btns.addStretch()
@@ -836,7 +790,6 @@ class PreferencesTab(QWidget):
 
         # Save button
         save_btn = QPushButton("Save Skills Settings")
-        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self._save_skills_settings)
 
         # Outer splitter: dirs group on top, [src_group + save] on bottom — draggable
@@ -1201,7 +1154,6 @@ from PyQt6.QtCore import Qt
 
 from utils import theme
 
-
 class {class_name}Tab(QWidget):
     """Custom tab: {tab_data["name"]}"""
 
@@ -1226,9 +1178,6 @@ class {class_name}Tab(QWidget):
         self.browser.setOpenExternalLinks(True)
         self.browser.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {{theme.BG_DARK}};
-                color: {{theme.FG_PRIMARY}};
-                border: 1px solid {{theme.BG_LIGHT}};
                 border-radius: 3px;
                 padding: 15px;
                 font-family: {theme.FONT_FAMILY_MONO};
@@ -1265,9 +1214,6 @@ class {class_name}Tab(QWidget):
             self.preview_label.setStyleSheet(f"""
                 QLabel {{
                     padding: 15px;
-                    background-color: {theme_colors["background"]};
-                    color: {theme_colors["foreground"]};
-                    border: 2px solid {theme_colors["brightBlue"]};
                     border-radius: 3px;
                     font-size: {theme.FONT_SIZE_NORMAL}px;
                 }}

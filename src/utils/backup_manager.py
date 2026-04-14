@@ -8,7 +8,6 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
-
 class BackupManager:
     """Manages backup and restore operations for Claude Code configurations"""
 

@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextBrowser
 
 from utils import theme
 
-
 class UserModelInfoSubTab(QWidget):
     """Model Information interface for user-level configuration"""
 
@@ -27,9 +26,6 @@ class UserModelInfoSubTab(QWidget):
         info_browser.setOpenExternalLinks(True)
         info_browser.setStyleSheet(f"""
             QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 10px;
                 font-size: {theme.FONT_SIZE_SMALL}px;

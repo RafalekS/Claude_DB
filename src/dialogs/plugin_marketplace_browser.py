@@ -14,7 +14,6 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
 from utils import theme
 
-
 class MarketplaceFetcherThread(QThread):
     """Background thread to fetch marketplace data"""
     finished = pyqtSignal(dict)  # Emits {success: bool, data: dict/str}
@@ -277,7 +276,6 @@ class MarketplaceFetcherThread(QThread):
         except Exception as e:
             self.finished.emit({'success': False, 'error': str(e)})
 
-
 class PluginMarketplaceBrowserDialog(QDialog):
     """Dialog for browsing and installing plugins from marketplaces"""
 
@@ -334,7 +332,6 @@ class PluginMarketplaceBrowserDialog(QDialog):
         selector_layout.addWidget(self.marketplace_combo, 1)
 
         self.refresh_btn = QPushButton("🔄 Refresh")
-        self.refresh_btn.setStyleSheet(theme.get_button_style())
         self.refresh_btn.setToolTip("Reload marketplace data")
         self.refresh_btn.clicked.connect(self.load_current_marketplace)
         selector_layout.addWidget(self.refresh_btn)
@@ -398,7 +395,6 @@ class PluginMarketplaceBrowserDialog(QDialog):
         button_layout.setSpacing(10)
 
         self.install_selected_btn = QPushButton("⬇️ Install Selected Plugin")
-        self.install_selected_btn.setStyleSheet(theme.get_button_style())
         self.install_selected_btn.setEnabled(False)
         self.install_selected_btn.clicked.connect(self.install_selected_plugin)
         button_layout.addWidget(self.install_selected_btn)
@@ -406,7 +402,6 @@ class PluginMarketplaceBrowserDialog(QDialog):
         button_layout.addStretch()
 
         close_btn = QPushButton("Close")
-        close_btn.setStyleSheet(theme.get_button_style())
         close_btn.clicked.connect(self.close)
         button_layout.addWidget(close_btn)
 
@@ -559,7 +554,6 @@ class PluginMarketplaceBrowserDialog(QDialog):
 
             # Install button
             install_btn = QPushButton("⬇️ Install")
-            install_btn.setStyleSheet(theme.get_button_style())
             install_btn.clicked.connect(lambda checked, p=plugin: self.install_plugin(p))
             self.plugins_table.setCellWidget(row, 4, install_btn)
 

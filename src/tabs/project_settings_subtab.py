@@ -15,7 +15,6 @@ from PyQt6.QtGui import QColor, QFont
 
 from utils import theme
 
-
 class ProjectSettingsSubTab(QWidget):
     """Settings interface for Model, Theme, and Environment Variables (project-level settings.json)"""
 
@@ -60,25 +59,16 @@ class ProjectSettingsSubTab(QWidget):
         self.settings_tabs = QTabWidget()
         self.settings_tabs.setStyleSheet(f"""
             QTabWidget::pane {{
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
-                background-color: {theme.BG_DARK};
             }}
             QTabBar::tab {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
                 padding: 6px 12px;
                 margin-right: 2px;
                 border-top-left-radius: 3px;
                 border-top-right-radius: 3px;
             }}
-            QTabBar::tab:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
-            QTabBar::tab:hover {{
-                background-color: {theme.BG_LIGHT};
-            }}
+            
+            
         """)
 
         # Shared settings tab
@@ -131,12 +121,7 @@ class ProjectSettingsSubTab(QWidget):
         # Scroll area for sections
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(f"""
-            QScrollArea {{
-                border: none;
-                background-color: {theme.BG_DARK};
-            }}
-        """)
+        scroll
 
         scroll_widget = QWidget()
         scroll_layout = QVBoxLayout(scroll_widget)
@@ -170,22 +155,18 @@ class ProjectSettingsSubTab(QWidget):
 
         refresh_btn = QPushButton("🔄 Reload")
         refresh_btn.setToolTip(f"Reload {scope} settings from file")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.clicked.connect(lambda: self.load_settings(scope))
 
         save_btn = QPushButton("💾 Save")
         save_btn.setToolTip(f"Save {scope} settings to file")
-        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(lambda: self.save_settings(scope))
 
         backup_save_btn = QPushButton("📦 Backup & Save")
         backup_save_btn.setToolTip(f"Create backup before saving {scope} settings")
-        backup_save_btn.setStyleSheet(theme.get_button_style())
         backup_save_btn.clicked.connect(lambda: self.backup_and_save(scope))
 
         notif_btn = QPushButton("🔔 Set Notification")
         notif_btn.setToolTip("Set notification channel to terminal_bell")
-        notif_btn.setStyleSheet(theme.get_button_style())
         notif_btn.clicked.connect(lambda: self.set_notification_channel(scope))
 
         button_layout.addWidget(refresh_btn)
@@ -201,7 +182,6 @@ class ProjectSettingsSubTab(QWidget):
     def create_model_section(self, scope: str) -> QGroupBox:
         """Create model configuration section"""
         group = QGroupBox("Model Configuration")
-
 
         layout = QVBoxLayout()
         layout.setSpacing(8)
@@ -226,20 +206,12 @@ class ProjectSettingsSubTab(QWidget):
         model_combo.setStyleSheet(f"""
             QComboBox {{
                 padding: 8px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 font-family: {theme.FONT_FAMILY_MONO};
             }}
             QComboBox::drop-down {{
-                border: none;
             }}
-            QComboBox QAbstractItemView {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                selection-background-color: {theme.ACCENT_PRIMARY};
-            }}
+            QComboBox 
         """)
 
         model_label = QLabel("Default Model:")
@@ -265,7 +237,6 @@ class ProjectSettingsSubTab(QWidget):
         """Create theme configuration section"""
         group = QGroupBox("Theme & Appearance")
 
-
         layout = QFormLayout()
         layout.setSpacing(10)
 
@@ -279,16 +250,9 @@ class ProjectSettingsSubTab(QWidget):
         theme_combo.setStyleSheet(f"""
             QComboBox {{
                 padding: 6px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
             }}
-            QComboBox QAbstractItemView {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                selection-background-color: {theme.ACCENT_PRIMARY};
-            }}
+            QComboBox 
         """)
 
         theme_label = QLabel("Theme:")
@@ -306,7 +270,6 @@ class ProjectSettingsSubTab(QWidget):
         """Create environment variables section"""
         group = QGroupBox("Environment Variables")
 
-
         layout = QVBoxLayout()
         layout.setSpacing(5)
 
@@ -315,9 +278,6 @@ class ProjectSettingsSubTab(QWidget):
         env_list.setMaximumHeight(150)
         env_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 3px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
@@ -336,7 +296,6 @@ class ProjectSettingsSubTab(QWidget):
         remove_btn.setToolTip("Remove selected variable")
 
         for btn in [add_btn, edit_btn, remove_btn]:
-            btn.setStyleSheet(theme.get_button_style())
             btn.setMaximumWidth(80)
 
         add_btn.clicked.connect(lambda: self.add_env_var(scope))
@@ -360,7 +319,6 @@ class ProjectSettingsSubTab(QWidget):
         """Create JSON preview section"""
         group = QGroupBox("JSON Preview")
 
-
         layout = QVBoxLayout()
 
         info = QLabel(f"Real-time preview of {scope} settings.json")
@@ -373,9 +331,6 @@ class ProjectSettingsSubTab(QWidget):
         preview_text.setStyleSheet(f"""
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO};
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 5px;
                 font-size: {theme.FONT_SIZE_SMALL}px;

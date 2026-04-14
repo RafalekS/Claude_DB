@@ -22,8 +22,6 @@ from PyQt6.QtGui import QDesktopServices, QColor
 from utils import theme
 from utils.ui_state_manager import UIStateManager
 
-
-
 class AddPermissionDialog(QDialog):
     """Dialog for adding or editing a permission with improved UX"""
 
@@ -122,7 +120,6 @@ class AddPermissionDialog(QDialog):
 
         # Advanced mode checkbox
         self.advanced_mode_cb = QCheckBox("Advanced Mode (Manual Entry)")
-        self.advanced_mode_cb.setStyleSheet(f"color: {theme.FG_PRIMARY};")
         self.advanced_mode_cb.toggled.connect(self.toggle_advanced_mode)
         layout.addWidget(self.advanced_mode_cb)
 
@@ -163,7 +160,6 @@ class AddPermissionDialog(QDialog):
 
         # Common patterns group
         self.patterns_group = QGroupBox("Common Patterns (click to use)")
-        self.patterns_group.setStyleSheet(theme.get_groupbox_style())
         self.patterns_layout = QHBoxLayout()
         self.patterns_layout.setSpacing(5)
         self.patterns_group.setLayout(self.patterns_layout)
@@ -209,7 +205,6 @@ class AddPermissionDialog(QDialog):
 
         # Permission Level
         level_group = QGroupBox("Permission Level")
-        level_group.setStyleSheet(theme.get_groupbox_style())
         level_layout = QHBoxLayout()
 
         self.allow_radio = QRadioButton("Allow")
@@ -217,7 +212,6 @@ class AddPermissionDialog(QDialog):
         self.deny_radio = QRadioButton("Deny")
 
         for radio in [self.allow_radio, self.ask_radio, self.deny_radio]:
-            radio.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             level_layout.addWidget(radio)
 
         self.allow_radio.setChecked(True)  # Default to Allow
@@ -229,7 +223,6 @@ class AddPermissionDialog(QDialog):
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -275,7 +268,6 @@ class AddPermissionDialog(QDialog):
         examples = tool_info.get("examples", [])
         for example in examples:
             btn = QPushButton(example)
-            btn.setStyleSheet(theme.get_button_style())
             btn.setFixedHeight(25)
             btn.clicked.connect(lambda checked, text=example: self.pattern_edit.setText(text))
             self.patterns_layout.addWidget(btn)
@@ -368,7 +360,6 @@ class AddPermissionDialog(QDialog):
             self.advanced_mode_cb.setChecked(True)
             self.advanced_edit.setText(pattern)
 
-
 class UserPermissionsSubTab(QWidget):
     """User permissions tab with table UI"""
 
@@ -408,7 +399,6 @@ class UserPermissionsSubTab(QWidget):
         mode_label = QLabel("Default Permission Mode:")
         mode_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px;")
         self.default_mode_combo = QComboBox()
-        self.default_mode_combo.setStyleSheet(theme.get_combo_style())
         self.default_mode_combo.setMaximumWidth(200)
         self.default_mode_combo.addItems([
             "default", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
@@ -444,22 +434,18 @@ class UserPermissionsSubTab(QWidget):
         # Buttons
         btn_layout = QHBoxLayout()
         add_btn = QPushButton("➕ Add")
-        add_btn.setStyleSheet(theme.get_button_style())
         add_btn.setMinimumWidth(90)
         add_btn.clicked.connect(self.add_permission)
 
         edit_btn = QPushButton("✏️ Edit")
-        edit_btn.setStyleSheet(theme.get_button_style())
         edit_btn.setMinimumWidth(90)
         edit_btn.clicked.connect(self.edit_permission)
 
         delete_btn = QPushButton("🗑️ Delete")
-        delete_btn.setStyleSheet(theme.get_button_style())
         delete_btn.setMinimumWidth(90)
         delete_btn.clicked.connect(self.delete_permission)
 
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.setMinimumWidth(90)
         refresh_btn.clicked.connect(self.refresh_permissions)
 

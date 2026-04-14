@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 from utils.template_manager import get_template_manager
 from dialogs.base_library_dialog import BaseLibraryDialog
 
-
 class CommandLibraryDialog(BaseLibraryDialog):
     """Dialog for managing command templates in config/templates/commands/"""
 
@@ -168,7 +167,6 @@ class CommandLibraryDialog(BaseLibraryDialog):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to save template:\n{str(e)}")
 
-
 class NewCommandTemplateDialog(QDialog):
     """Dialog for creating a new command template"""
 
@@ -223,7 +221,6 @@ class NewCommandTemplateDialog(QDialog):
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -252,7 +249,6 @@ class NewCommandTemplateDialog(QDialog):
             'examples': self.examples_edit.toPlainText().strip(),
             'notes': self.notes_edit.toPlainText().strip()
         }
-
 
 class EditCommandTemplateDialog(QDialog):
     """Dialog for editing a command template with form fields"""
@@ -343,7 +339,6 @@ class EditCommandTemplateDialog(QDialog):
         layout.addWidget(info_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.setStyleSheet(theme.get_button_style())
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)

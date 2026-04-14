@@ -115,9 +115,6 @@ class StatuslineSubtab(QWidget):
         refresh_btn = QPushButton("🔄 Refresh")
         refresh_btn.setToolTip("Reload the statuslines list")
 
-        for btn in [new_btn, edit_btn, del_btn, refresh_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         new_btn.clicked.connect(self.create_new_statusline)
         edit_btn.clicked.connect(self.edit_statusline)
         del_btn.clicked.connect(self.delete_statusline)
@@ -150,9 +147,6 @@ class StatuslineSubtab(QWidget):
         backup_save_btn.setToolTip("Create timestamped backup before saving statusline")
         revert_btn = QPushButton("Revert")
         revert_btn.setToolTip("Revert to saved version (discards unsaved changes)")
-
-        for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(theme.get_button_style())
 
         save_btn.clicked.connect(self.save_statusline)
         backup_save_btn.clicked.connect(self.backup_and_save_statusline)

@@ -15,7 +15,6 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from utils import theme
 
-
 class UsageTab(QWidget):
     """Tab for viewing usage and analytics"""
 
@@ -45,7 +44,6 @@ class UsageTab(QWidget):
         # Quick Stats Display Section
         stats_group = QGroupBox("Quick Stats")
 
-
         stats_layout = QGridLayout()
         stats_layout.setSpacing(8)
 
@@ -57,7 +55,6 @@ class UsageTab(QWidget):
         stats_layout.addWidget(self.sessions_card, 0, 1)
 
         refresh_stats_btn = QPushButton("🔄 Refresh Stats")
-        refresh_stats_btn.setStyleSheet(theme.get_button_style())
         refresh_stats_btn.setToolTip("Refresh usage statistics from configuration")
         refresh_stats_btn.clicked.connect(self.refresh_stats)
         stats_layout.addWidget(refresh_stats_btn, 0, 2)
@@ -68,29 +65,23 @@ class UsageTab(QWidget):
         # Real-time Monitoring Section
         monitoring_group = QGroupBox("Real-time Monitoring")
 
-
         monitoring_layout = QHBoxLayout()
         monitoring_layout.setSpacing(5)
 
         # View mode selector
         view_label = QLabel("View:")
-        view_label.setStyleSheet(f"color: {theme.FG_PRIMARY};")
 
         self.view_combo = QComboBox()
         self.view_combo.addItems(["realtime", "daily", "monthly", "session"])
         self.view_combo.setStyleSheet(f"""
             QComboBox {{
                 padding: 6px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.ACCENT_PRIMARY};
                 border-radius: 3px;
             }}
         """)
 
         self.ccmonitor_btn = QPushButton("🖥️ Launch ccmonitor")
         self.ccmonitor_btn.setToolTip("Launch real-time token usage monitor")
-        self.ccmonitor_btn.setStyleSheet(theme.get_button_style())
         self.ccmonitor_btn.clicked.connect(self.launch_ccmonitor)
 
         monitoring_layout.addWidget(view_label)
@@ -104,7 +95,6 @@ class UsageTab(QWidget):
         # ccusage Commands Section
         ccusage_group = QGroupBox("ccusage - Usage Reports")
 
-
         ccusage_layout = QVBoxLayout()
 
         # Options row
@@ -112,15 +102,12 @@ class UsageTab(QWidget):
         options_layout.setSpacing(5)
 
         self.breakdown_check = QCheckBox("Show Breakdown")
-        self.breakdown_check.setStyleSheet(f"color: {theme.FG_PRIMARY};")
         self.breakdown_check.setToolTip("Show per-model cost breakdown")
 
         self.instances_check = QCheckBox("Show Instances")
-        self.instances_check.setStyleSheet(f"color: {theme.FG_PRIMARY};")
         self.instances_check.setToolTip("Show usage breakdown by project/instance")
 
         self.json_check = QCheckBox("JSON Output")
-        self.json_check.setStyleSheet(f"color: {theme.FG_PRIMARY};")
         self.json_check.setToolTip("Output in JSON format")
 
         options_layout.addWidget(self.breakdown_check)
@@ -145,9 +132,6 @@ class UsageTab(QWidget):
         self.blocks_btn = QPushButton("🧱 Blocks Report")
         self.blocks_btn.setToolTip("Show usage report grouped by session billing blocks (ccusage blocks)")
 
-        for btn in [self.daily_btn, self.weekly_btn, self.monthly_btn, self.session_btn, self.blocks_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         self.daily_btn.clicked.connect(lambda: self.run_ccusage("daily"))
         self.weekly_btn.clicked.connect(lambda: self.run_ccusage("weekly"))
         self.monthly_btn.clicked.connect(lambda: self.run_ccusage("monthly"))
@@ -167,7 +151,6 @@ class UsageTab(QWidget):
         # Output Display
         output_group = QGroupBox("Command Output")
 
-
         output_layout = QVBoxLayout()
 
         self.output_display = QTextEdit()
@@ -177,16 +160,12 @@ class UsageTab(QWidget):
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO};
                 font-size: {theme.FONT_SIZE_NORMAL}px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 8px;
             }}
         """)
 
         clear_btn = QPushButton("🗑️ Clear Output")
-        clear_btn.setStyleSheet(theme.get_button_style())
         clear_btn.setToolTip("Clear the output display")
         clear_btn.clicked.connect(lambda: self.output_display.clear())
 
@@ -197,7 +176,6 @@ class UsageTab(QWidget):
 
         # Info section
         info_group = QGroupBox("About Usage & Analytics")
-
 
         info_layout = QVBoxLayout()
         info_text = QLabel(
@@ -288,8 +266,6 @@ class UsageTab(QWidget):
         card = QFrame()
         card.setStyleSheet(f"""
             QFrame {{
-                background-color: {theme.BG_DARK};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 5px;
                 padding: 10px;
             }}

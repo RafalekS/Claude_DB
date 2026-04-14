@@ -115,9 +115,6 @@ class HooksSubtab(QWidget):
         refresh_btn = QPushButton("🔄 Refresh")
         refresh_btn.setToolTip("Reload the hooks list")
 
-        for btn in [new_btn, edit_btn, del_btn, refresh_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         new_btn.clicked.connect(self.create_new_hook)
         edit_btn.clicked.connect(self.edit_hook)
         del_btn.clicked.connect(self.delete_hook)
@@ -151,9 +148,6 @@ class HooksSubtab(QWidget):
         revert_btn = QPushButton("Revert")
         revert_btn.setToolTip("Revert to saved version (discards unsaved changes)")
 
-        for btn in [save_btn, backup_save_btn, revert_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
         save_btn.clicked.connect(self.save_hook)
         backup_save_btn.clicked.connect(self.backup_and_save_hook)
         revert_btn.clicked.connect(self.revert_hook)
@@ -167,7 +161,6 @@ class HooksSubtab(QWidget):
 
         # JSON Editor
         hook_editor = QTextEdit()
-        hook_editor.setStyleSheet(theme.get_text_edit_style())
         hook_editor.setPlaceholderText("Select a hook to edit or create a new one...")
         right_layout.addWidget(hook_editor)
 

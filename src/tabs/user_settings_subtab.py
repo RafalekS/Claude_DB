@@ -15,7 +15,6 @@ from PyQt6.QtGui import QColor, QFont
 
 from utils import theme
 
-
 class UserSettingsSubTab(QWidget):
     """Settings interface for Model, Theme, and Environment Variables (user-level settings.json)"""
 
@@ -53,12 +52,7 @@ class UserSettingsSubTab(QWidget):
         # Scroll area for sections
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(f"""
-            QScrollArea {{
-                border: none;
-                background-color: {theme.BG_DARK};
-            }}
-        """)
+        scroll
 
         scroll_widget = QWidget()
         scroll_layout = QVBoxLayout(scroll_widget)
@@ -96,22 +90,18 @@ class UserSettingsSubTab(QWidget):
 
         refresh_btn = QPushButton("🔄 Reload")
         refresh_btn.setToolTip("Reload settings from file")
-        refresh_btn.setStyleSheet(theme.get_button_style())
         refresh_btn.clicked.connect(self.load_settings)
 
         save_btn = QPushButton("💾 Save")
         save_btn.setToolTip("Save all settings to file")
-        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self.save_settings)
 
         backup_save_btn = QPushButton("📦 Backup & Save")
         backup_save_btn.setToolTip("Create backup before saving")
-        backup_save_btn.setStyleSheet(theme.get_button_style())
         backup_save_btn.clicked.connect(self.backup_and_save)
 
         notif_btn = QPushButton("🔔 Set Notification")
         notif_btn.setToolTip("Set notification channel to terminal_bell")
-        notif_btn.setStyleSheet(theme.get_button_style())
         notif_btn.clicked.connect(self.set_notification_channel)
 
         button_layout.addWidget(refresh_btn)
@@ -198,7 +188,6 @@ class UserSettingsSubTab(QWidget):
 
         # autoMemoryEnabled
         self.auto_memory_check = QCheckBox("Enable auto memory")
-        self.auto_memory_check.setStyleSheet(f"color: {theme.FG_PRIMARY};")
         self.auto_memory_check.setToolTip(
             "When enabled, Claude automatically saves notes across sessions:\n"
             "build commands, debugging insights, code style preferences, and workflow habits.\n"
@@ -222,9 +211,6 @@ class UserSettingsSubTab(QWidget):
         self.memory_dir_edit.setStyleSheet(f"""
             QLineEdit {{
                 padding: 5px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 font-family: {theme.FONT_FAMILY_MONO};
             }}
@@ -244,9 +230,6 @@ class UserSettingsSubTab(QWidget):
         self.claude_md_excludes_edit.setStyleSheet(f"""
             QLineEdit {{
                 padding: 5px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 font-family: {theme.FONT_FAMILY_MONO};
             }}
@@ -265,7 +248,6 @@ class UserSettingsSubTab(QWidget):
         # agentsAllowed
         self.agents_allowed_check = QCheckBox("Allow agent invocations")
         self.agents_allowed_check.setChecked(True)
-        self.agents_allowed_check.setStyleSheet(f"color: {theme.FG_PRIMARY};")
         self.agents_allowed_check.setToolTip(
             "Note: 'agentsAllowed' is not an official Claude Code settings key.\n"
             "To restrict subagent spawning, use permissions.deny: [\"Task\"] instead."
@@ -289,9 +271,6 @@ class UserSettingsSubTab(QWidget):
         self.env_list.setMaximumHeight(150)
         self.env_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 3px;
                 font-size: {theme.FONT_SIZE_SMALL}px;
@@ -310,7 +289,6 @@ class UserSettingsSubTab(QWidget):
         remove_btn.setToolTip("Remove selected variable")
 
         for btn in [add_btn, edit_btn, remove_btn]:
-            btn.setStyleSheet(theme.get_button_style())
             btn.setMaximumWidth(80)
 
         add_btn.clicked.connect(self.add_env_var)
@@ -342,9 +320,6 @@ class UserSettingsSubTab(QWidget):
         self.preview_text.setStyleSheet(f"""
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO};
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 5px;
                 font-size: {theme.FONT_SIZE_SMALL}px;

@@ -14,7 +14,6 @@ from PyQt6.QtGui import QDesktopServices, QFont
 
 from utils import theme
 
-
 class ProjectStatuslineSubTab(QWidget):
     """Dedicated subtab for project-level statusline configuration (Shared/Local)"""
 
@@ -50,7 +49,6 @@ class ProjectStatuslineSubTab(QWidget):
         )
 
         docs_btn = QPushButton("📖 Statusline Docs")
-        docs_btn.setStyleSheet(theme.get_button_style())
         docs_btn.setToolTip("Open official statusline documentation")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
             QUrl("https://code.claude.com/en/docs/claude-code/settings#statusline")
@@ -109,7 +107,6 @@ class ProjectStatuslineSubTab(QWidget):
         # Configuration section
         config_group = QGroupBox("Statusline Configuration")
 
-
         config_layout = QVBoxLayout()
 
         # Form inputs
@@ -137,9 +134,6 @@ class ProjectStatuslineSubTab(QWidget):
         json_preview.setStyleSheet(f"""
             QTextEdit {{
                 font-family: {theme.FONT_FAMILY_MONO};
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
                 border-radius: 3px;
                 padding: 5px;
             }}
@@ -154,19 +148,15 @@ class ProjectStatuslineSubTab(QWidget):
         btn_layout.setSpacing(5)
 
         load_btn = QPushButton("📂 Load")
-        load_btn.setStyleSheet(theme.get_button_style())
         load_btn.clicked.connect(lambda: self.load_statusline(scope))
 
         preview_btn = QPushButton("🔄 Update Preview")
-        preview_btn.setStyleSheet(theme.get_button_style())
         preview_btn.clicked.connect(lambda: self.update_preview(scope))
 
         save_btn = QPushButton("💾 Save")
-        save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(lambda: self.save_statusline(scope))
 
         clear_btn = QPushButton("🗑️ Clear")
-        clear_btn.setStyleSheet(theme.get_button_style())
         clear_btn.clicked.connect(lambda: self.clear_statusline(scope))
 
         btn_layout.addWidget(load_btn)

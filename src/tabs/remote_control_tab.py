@@ -16,7 +16,6 @@ from utils import theme
 
 logger = logging.getLogger(__name__)
 
-
 class RemoteControlTab(QWidget):
     """
     Remote Control tab — reference for Claude Code's --output-format, --print (headless),
