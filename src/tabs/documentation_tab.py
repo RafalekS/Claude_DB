@@ -53,10 +53,6 @@ class DocPage(QWidget):
         # ── Content browser ──────────────────────────────────────────────
         self._browser = QTextBrowser()
         self._browser.setOpenExternalLinks(True)
-        self._browser.setStyleSheet(
-            f"QTextBrowser {{ font-family: {theme.FONT_FAMILY}; "
-            f"font-size: {theme.FONT_SIZE_NORMAL}px; padding: 8px; }}"
-        )
         self._browser.setHtml(self._html)
         layout.addWidget(self._browser, 1)
 
@@ -79,41 +75,47 @@ class DocPage(QWidget):
 
 def _h(level, text):
     color = theme.ACCENT_PRIMARY if level <= 2 else theme.FG_PRIMARY
-    return f"<h{level} style='color:{color};margin-top:12px;margin-bottom:4px;'>{text}</h{level}>"
+    return (f"<h{level} style='color:{color};"
+            f"margin-top:{theme.MARGIN_LG}px;margin-bottom:{theme.MARGIN_SM}px;'>{text}</h{level}>")
 
 
 def _p(text):
-    return f"<p style='color:{theme.FG_PRIMARY};line-height:1.6;'>{text}</p>"
+    return f"<p style='color:{theme.FG_PRIMARY};line-height:1.6;margin:{theme.MARGIN_SM}px 0;'>{text}</p>"
 
 
 def _code(text):
     return (f"<code style='background:{theme.BG_MEDIUM};color:{theme.ACCENT_SECONDARY};"
-            f"padding:1px 4px;border-radius:3px;font-family:{theme.FONT_FAMILY_MONO};'>{text}</code>")
+            f"padding:1px {theme.PADDING_SM}px;border-radius:{theme.BORDER_RADIUS}px;"
+            f"font-family:{theme.FONT_FAMILY_MONO};'>{text}</code>")
 
 
 def _pre(text):
     return (f"<pre style='background:{theme.BG_MEDIUM};color:{theme.FG_PRIMARY};"
-            f"padding:10px;border-radius:4px;font-family:{theme.FONT_FAMILY_MONO};"
+            f"padding:{theme.PADDING_MD}px;border-radius:{theme.BORDER_RADIUS}px;"
+            f"font-family:{theme.FONT_FAMILY_MONO};"
             f"font-size:{theme.FONT_SIZE_SMALL}px;white-space:pre-wrap;'>{text}</pre>")
 
 
 def _table(headers, rows):
-    th = "".join(f"<th style='padding:6px 10px;border-bottom:1px solid {theme.BG_LIGHT};"
+    th = "".join(f"<th style='padding:{theme.PADDING_SM}px {theme.PADDING_MD}px;"
+                 f"border-bottom:1px solid {theme.BG_LIGHT};"
                  f"text-align:left;color:{theme.ACCENT_PRIMARY};'>{h}</th>" for h in headers)
     body = ""
     for i, row in enumerate(rows):
         bg = theme.BG_MEDIUM if i % 2 == 0 else theme.BG_DARK
         body += f"<tr style='background:{bg};'>"
-        body += "".join(f"<td style='padding:5px 10px;color:{theme.FG_PRIMARY};'>{c}</td>" for c in row)
+        body += "".join(
+            f"<td style='padding:{theme.PADDING_SM}px {theme.PADDING_MD}px;"
+            f"color:{theme.FG_PRIMARY};'>{c}</td>" for c in row)
         body += "</tr>"
-    return (f"<table style='border-collapse:collapse;width:100%;margin:8px 0;'>"
+    return (f"<table style='border-collapse:collapse;width:100%;margin:{theme.MARGIN_MD}px 0;'>"
             f"<thead><tr>{th}</tr></thead><tbody>{body}</tbody></table>")
 
 
 def _wrap(*parts):
-    return f"<html><body style='background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"  \
-           f"font-family:{theme.FONT_FAMILY};font-size:{theme.FONT_SIZE_NORMAL}px;"  \
-           f"padding:10px;'>{''.join(parts)}</body></html>"
+    return (f"<html><body style='background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
+            f"font-family:{theme.FONT_FAMILY};font-size:{theme.FONT_SIZE_NORMAL}px;"
+            f"padding:{theme.PADDING_MD}px;'>{''.join(parts)}</body></html>")
 
 
 # ─── Page content builders ────────────────────────────────────────────────────

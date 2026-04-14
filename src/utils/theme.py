@@ -59,9 +59,10 @@ FONT_SIZE_SMALL = 12
 FONT_SIZE_TINY = 11
 FONT_SIZE_TAB = 13
 
-# Monospace font constants (immutable - font stack, not theme-specific)
+# Font constants (immutable - font stacks, not theme-specific)
 FONT_MONOSPACE = "Consolas"
 FONT_FAMILY_MONO = "'Consolas', 'Monaco', 'Courier New', monospace"
+FONT_FAMILY = "'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
 
 # UI spacing constants (consistent across all widgets)
 MARGIN_SM = 3
