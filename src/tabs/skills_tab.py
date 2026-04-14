@@ -1326,7 +1326,7 @@ class NewSkillDialog(QDialog):
 
         tools_widget = QWidget()
         tools_widget.setLayout(tools_grid)
-        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: 6px; border-radius: 3px;")
+        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: {theme.PADDING_MD}px; border-radius: {theme.BORDER_RADIUS}px;")
         layout.addWidget(tools_widget)
 
         info_label = QLabel("* Required fields. The skill will be created with YAML frontmatter.")
@@ -1495,7 +1495,7 @@ class EditSkillDialog(QDialog):
 
         tools_widget = QWidget()
         tools_widget.setLayout(tools_grid)
-        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: 6px; border-radius: 3px;")
+        tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: {theme.PADDING_MD}px; border-radius: {theme.BORDER_RADIUS}px;")
         layout.addWidget(tools_widget)
 
         info_label = QLabel("* Required fields. Skill body content is preserved.")

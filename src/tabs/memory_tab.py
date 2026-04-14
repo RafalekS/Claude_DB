@@ -7,10 +7,10 @@ from pathlib import Path
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QTextBrowser, QHBoxLayout, QPushButton,
-    QMessageBox, QTabWidget, QListWidget, QSplitter, QTextEdit
+    QMessageBox, QTabWidget, QListWidget, QListWidgetItem, QSplitter, QTextEdit
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QColor
 from utils import theme
 from utils.ui_state_manager import UIStateManager
 
@@ -265,8 +265,25 @@ class MemoryTab(QWidget):
         layout.addWidget(splitter)
         return widget
 
+    @staticmethod
+    def _decode_project_path(folder_name: str) -> str:
+        """Decode Claude Code's folder-name encoding back to a readable path.
+
+        Claude Code encodes the absolute project path by replacing each '/' with '-'
+        and prepending '-' for the root '/'.  e.g. /home/pi/myproject → -home-pi-myproject
+        We reverse that: strip the leading '-', re-insert '/', then try to
+        shorten ~/ for the current user's home directory.
+        """
+        import os
+        raw = folder_name.lstrip("-")
+        path = "/" + raw.replace("-", "/")
+        home = os.path.expanduser("~")
+        if path.startswith(home):
+            path = "~" + path[len(home):]
+        return path
+
     def refresh_projects(self):
-        """Refresh project conversations list"""
+        """Refresh project conversations — grouped by project folder."""
         self.projects_list.clear()
         projects_dir = self.config_manager.claude_dir / "projects"
 
@@ -274,29 +291,61 @@ class MemoryTab(QWidget):
             self.projects_list.addItem("No projects directory found")
             return
 
-        all_sessions = []
+        # Collect sessions grouped by project folder
+        by_project: dict[str, list[dict]] = {}
         try:
             for project_dir in projects_dir.iterdir():
-                if project_dir.is_dir():
-                    for jsonl_file in project_dir.glob("*.jsonl"):
-                        all_sessions.append({
-                            'path': jsonl_file,
-                            'project': project_dir.name,
-                            'uuid': jsonl_file.stem,
-                            'mtime': jsonl_file.stat().st_mtime,
-                        })
+                if not project_dir.is_dir():
+                    continue
+                sessions = []
+                for jsonl_file in project_dir.glob("*.jsonl"):
+                    sessions.append({
+                        'path': jsonl_file,
+                        'uuid': jsonl_file.stem,
+                        'mtime': jsonl_file.stat().st_mtime,
+                    })
+                if sessions:
+                    by_project[project_dir.name] = sorted(
+                        sessions, key=lambda x: x['mtime'], reverse=True)
         except Exception as e:
             self.projects_list.addItem(f"Error: {str(e)}")
             return
 
-        all_sessions.sort(key=lambda x: x['mtime'], reverse=True)
-        for s in all_sessions[:100]:  # cap at 100
-            mod_time = datetime.fromtimestamp(s['mtime']).strftime("%Y-%m-%d %H:%M")
-            # Decode project path: replace leading - with / and - with /
-            proj_name = s['project'].replace('-home-', '~/').replace('-', '/')
-            display = f"{mod_time}  {proj_name[:30]}  {s['uuid'][:8]}"
-            item_widget = self.projects_list.addItem(display)
-            self.projects_list.item(self.projects_list.count() - 1).setData(Qt.ItemDataRole.UserRole, str(s['path']))
+        if not by_project:
+            self.projects_list.addItem("No project sessions found")
+            return
+
+        # Sort projects by most-recent session date
+        sorted_projects = sorted(
+            by_project.items(),
+            key=lambda kv: kv[1][0]['mtime'],
+            reverse=True
+        )
+
+        for folder_name, sessions in sorted_projects:
+            readable = self._decode_project_path(folder_name)
+            latest = datetime.fromtimestamp(sessions[0]['mtime']).strftime("%Y-%m-%d")
+
+            # Project header row (non-selectable)
+            header_item = QListWidgetItem(f"📁 {readable}  ({len(sessions)} sessions, latest {latest})")
+            header_item.setFlags(Qt.ItemFlag.NoItemFlags)
+            header_item.setForeground(QColor(theme.ACCENT_PRIMARY))
+            header_item.setFont(QFont(header_item.font().family(), -1, QFont.Weight.Bold))
+            self.projects_list.addItem(header_item)
+
+            # Session rows (selectable), capped at 20 per project
+            for s in sessions[:20]:
+                mod_time = datetime.fromtimestamp(s['mtime']).strftime("%Y-%m-%d %H:%M")
+                session_item = QListWidgetItem(f"    📋 {mod_time}  {s['uuid'][:12]}…")
+                session_item.setData(Qt.ItemDataRole.UserRole, str(s['path']))
+                session_item.setForeground(QColor(theme.FG_SECONDARY))
+                self.projects_list.addItem(session_item)
+
+            if len(sessions) > 20:
+                more_item = QListWidgetItem(f"    … {len(sessions) - 20} more sessions")
+                more_item.setFlags(Qt.ItemFlag.NoItemFlags)
+                more_item.setForeground(QColor(theme.FG_DIM))
+                self.projects_list.addItem(more_item)
 
     def load_project_session(self, item):
         """Load a project session JSONL file"""

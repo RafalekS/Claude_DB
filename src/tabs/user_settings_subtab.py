@@ -245,16 +245,37 @@ class UserSettingsSubTab(QWidget):
         excludes_desc.setWordWrap(True)
         layout.addRow("", excludes_desc)
 
-        # agentsAllowed
-        self.agents_allowed_check = QCheckBox("Allow agent invocations")
-        self.agents_allowed_check.setChecked(True)
-        self.agents_allowed_check.setToolTip(
-            "Note: 'agentsAllowed' is not an official Claude Code settings key.\n"
-            "To restrict subagent spawning, use permissions.deny: [\"Task\"] instead."
+        # alwaysThinkingEnabled
+        self.thinking_check = QCheckBox("Enable extended thinking by default")
+        self.thinking_check.setToolTip(
+            "When enabled, Claude reserves up to 31,999 tokens for internal reasoning.\n"
+            "Toggle in session with Option+T (macOS) or Alt+T (Windows/Linux).\n"
+            "Settings key: alwaysThinkingEnabled"
         )
-        agents_lbl = QLabel("Agents Allowed:")
-        agents_lbl.setStyleSheet(lbl_style)
-        layout.addRow(agents_lbl, self.agents_allowed_check)
+        thinking_lbl = QLabel("Always Thinking:")
+        thinking_lbl.setStyleSheet(lbl_style)
+        layout.addRow(thinking_lbl, self.thinking_check)
+
+        # effortLevel
+        effort_lbl = QLabel("Effort Level:")
+        effort_lbl.setStyleSheet(lbl_style)
+        self.effort_combo = QComboBox()
+        self.effort_combo.addItems(["(default)", "low", "normal", "high", "max"])
+        self.effort_combo.setToolTip(
+            "Default token budget / thinking effort for new sessions.\n"
+            "Settings key: effortLevel"
+        )
+        layout.addRow(effort_lbl, self.effort_combo)
+
+        # disableSkillShellExecution
+        self.disable_skill_shell_check = QCheckBox("Disable shell execution inside skills")
+        self.disable_skill_shell_check.setToolTip(
+            "Prevents skills from running shell commands via 'shell: true' frontmatter.\n"
+            "Settings key: disableSkillShellExecution"
+        )
+        skill_shell_lbl = QLabel("Disable Skill Shell:")
+        skill_shell_lbl.setStyleSheet(lbl_style)
+        layout.addRow(skill_shell_lbl, self.disable_skill_shell_check)
 
         group.setLayout(layout)
         return group
@@ -469,7 +490,11 @@ class UserSettingsSubTab(QWidget):
                 self.claude_md_excludes_edit.setText(", ".join(excludes))
             else:
                 self.claude_md_excludes_edit.setText(str(excludes))
-            self.agents_allowed_check.setChecked(settings.get("agentsAllowed", True))
+            self.thinking_check.setChecked(settings.get("alwaysThinkingEnabled", False))
+            effort = settings.get("effortLevel", "")
+            eidx = self.effort_combo.findText(effort if effort else "(default)")
+            self.effort_combo.setCurrentIndex(eidx if eidx >= 0 else 0)
+            self.disable_skill_shell_check.setChecked(settings.get("disableSkillShellExecution", False))
 
             # Load environment variables
             self.load_env_vars(settings)
@@ -508,7 +533,15 @@ class UserSettingsSubTab(QWidget):
             elif "claudeMdExcludes" in settings:
                 del settings["claudeMdExcludes"]
 
-            settings["agentsAllowed"] = self.agents_allowed_check.isChecked()
+            settings["alwaysThinkingEnabled"] = self.thinking_check.isChecked()
+
+            effort_val = self.effort_combo.currentText()
+            if effort_val and effort_val != "(default)":
+                settings["effortLevel"] = effort_val
+            elif "effortLevel" in settings:
+                del settings["effortLevel"]
+
+            settings["disableSkillShellExecution"] = self.disable_skill_shell_check.isChecked()
 
             # Save
             self.settings_manager.save_user_settings(settings)

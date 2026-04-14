@@ -33,6 +33,7 @@ from tabs.claude_local_md_tab import ClaudeLocalMDTab
 from tabs.claude_md_tab import ClaudeMDTab
 from tabs.agent_teams_tab import AgentTeamsTab
 from tabs.remote_control_tab import RemoteControlTab
+from tabs.env_vars_tab import EnvVarsTab
 
 class UserConfigTab(QWidget):
     """Container tab for all user-level configuration (~/. claude/)"""
@@ -104,6 +105,10 @@ class UserConfigTab(QWidget):
         # Workflows sub-tab
         workflows_tab = UserWorkflowsSubTab(self.config_manager, self.backup_manager, self.settings_manager)
         self.sub_tabs.addTab(workflows_tab, "🔄 Workflows")
+
+        # Env Vars sub-tab
+        env_vars_tab = EnvVarsTab(self.config_manager, self.backup_manager)
+        self.sub_tabs.addTab(env_vars_tab, "🔑 Env Vars")
 
         # Hooks sub-tab (User - uses settings.json)
         hooks_tab = UserHooksSubTab(self.config_manager, self.backup_manager, self.settings_manager)
