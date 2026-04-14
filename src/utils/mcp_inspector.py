@@ -12,8 +12,15 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+try:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    _MCP_AVAILABLE = True
+except ImportError:
+    _MCP_AVAILABLE = False
+    ClientSession = None
+    StdioServerParameters = None
+    stdio_client = None
 
 
 class MCPInspector:
@@ -26,6 +33,8 @@ class MCPInspector:
         self.server_name: Optional[str] = None
 
     async def connect_to_server(self, server_config: Dict[str, Any], server_name: str) -> None:
+        if not _MCP_AVAILABLE:
+            raise RuntimeError("The 'mcp' package is not installed. Run: pip install mcp")
         """Connect to an MCP server using the provided configuration.
 
         Args:
