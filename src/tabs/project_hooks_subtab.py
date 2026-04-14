@@ -103,7 +103,7 @@ class ProjectHooksSubTab(QWidget):
 
         # Nested tabs for Shared vs Local
         self.scope_tabs = QTabWidget()
-        self.scope_tabs.setStyleSheet(theme.get_tab_widget_style())
+        self.scope_tabs
 
         # Shared tab (.claude/settings.json)
         self.shared_editor = self.create_hooks_editor("shared")

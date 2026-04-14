@@ -482,6 +482,7 @@ def generate_app_stylesheet():
             border: 1px solid {BG_LIGHT};
             padding: 4px;
             font-size: {FONT_SIZE_NORMAL}px;
+            combobox-popup: 0;
         }}
         QComboBox:hover {{
             border: 1px solid {ACCENT_PRIMARY};
@@ -591,17 +592,17 @@ def generate_app_stylesheet():
         /* Group Box */
         QGroupBox {{
             font-weight: bold;
-            border: 1px solid {BG_LIGHT};
-            border-radius: 4px;
-            margin-top: 8px;
-            padding-top: 6px;
-            color: {FG_PRIMARY};
+            border: 2px solid {ACCENT_PRIMARY};
+            border-radius: 5px;
+            margin-top: 10px;
+            padding-top: 10px;
+            color: {ACCENT_PRIMARY};
             background-color: {BG_MEDIUM};
         }}
         QGroupBox::title {{
             subcontrol-origin: margin;
-            left: 8px;
-            padding: 0 4px 0 4px;
+            left: 10px;
+            padding: 0 5px 0 5px;
             background-color: {BG_MEDIUM};
         }}
 

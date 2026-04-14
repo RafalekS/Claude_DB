@@ -68,22 +68,7 @@ class PluginsTab(QWidget):
 
         # Quick Actions Section
         quick_actions_group = QGroupBox("Quick Actions - Browse & Install Plugins")
-        quick_actions_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 2px solid {theme.ACCENT_PRIMARY};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.ACCENT_PRIMARY};
-                background-color: {theme.BG_DARK};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-            }}
-        """)
+        quick_actions_group
 
         quick_actions_layout = QHBoxLayout()
         quick_actions_layout.setSpacing(10)
@@ -133,23 +118,7 @@ class PluginsTab(QWidget):
 
         # Known Marketplaces Section (moved here right after Quick Actions)
         known_marketplaces_group = QGroupBox("Known Marketplaces (from ~/.claude/plugins/known_marketplaces.json)")
-        known_marketplaces_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        known_marketplaces_group
 
         known_marketplaces_layout = QVBoxLayout()
         self.known_marketplaces_list = QListWidget()
@@ -160,23 +129,7 @@ class PluginsTab(QWidget):
 
         # Enabled Plugins Section (from settings.json)
         enabled_plugins_group = QGroupBox("Enabled Plugins (from settings.json)")
-        enabled_plugins_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        enabled_plugins_group
 
         enabled_plugins_layout = QVBoxLayout()
         self.enabled_plugins_list = QListWidget()
@@ -212,23 +165,7 @@ class PluginsTab(QWidget):
 
         # Installed Plugins Section (from ~/.claude/plugins/config.json)
         installed_plugins_group = QGroupBox("Installed Plugins (from ~/.claude/plugins/config.json)")
-        installed_plugins_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        installed_plugins_group
 
         installed_plugins_layout = QVBoxLayout()
         self.installed_plugins_list = QListWidget()
@@ -238,23 +175,7 @@ class PluginsTab(QWidget):
 
         # Extra Known Marketplaces Section (from settings.json)
         extra_marketplaces_group = QGroupBox("Extra Known Marketplaces (from settings.json)")
-        extra_marketplaces_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        extra_marketplaces_group
 
         extra_marketplaces_layout = QVBoxLayout()
         self.extra_marketplaces_list = QListWidget()

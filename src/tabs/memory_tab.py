@@ -71,6 +71,7 @@ class MemoryTab(QWidget):
         # Create tabs
         self.tab_widget.addTab(self.create_overview_tab(), "Overview")
         self.tab_widget.addTab(self.create_history_tab(), "Conversation History")
+        self.tab_widget.addTab(self.create_projects_tab(), "Projects")
         self.tab_widget.addTab(self.create_file_history_tab(), "File History")
         self.tab_widget.addTab(self.create_shell_snapshots_tab(), "Shell Snapshots")
 
@@ -89,46 +90,49 @@ class MemoryTab(QWidget):
         info.setHtml(f"""
             <h3 style="color: {theme.ACCENT_PRIMARY};">Claude Code Memory System</h3>
 
-            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Memory Hierarchy (Precedence Order)</h4>
-            <p>Claude Code loads memory from multiple locations with the following precedence:</p>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 12px;">Memory Hierarchy (Highest → Lowest Precedence)</h4>
             <ol style="line-height: 1.8;">
-                <li><b>Enterprise Policy:</b> System-wide (<code>C:\\ProgramData\\ClaudeCode\\CLAUDE.md</code> on Windows)</li>
-                <li><b>Project Memory:</b> <code>./CLAUDE.md</code> (shared with team via git)</li>
-                <li><b>User Memory:</b> <code>~/.claude/CLAUDE.md</code> (personal, all projects)</li>
-                <li><b>Local Project Memory:</b> <code>./CLAUDE.local.md</code> (personal, this project only)</li>
+                <li><b>Enterprise Policy:</b> <code>/etc/claude/CLAUDE.md</code> (Linux) or <code>C:\\ProgramData\\ClaudeCode\\CLAUDE.md</code> (Windows)</li>
+                <li><b>User Memory:</b> <code>~/.claude/CLAUDE.md</code> — personal, applies to all projects</li>
+                <li><b>Project Memory:</b> <code>./CLAUDE.md</code> — checked into git, shared with team</li>
+                <li><b>Local Project Memory:</b> <code>./CLAUDE.local.md</code> — personal, this project only (gitignored)</li>
             </ol>
-            <p><b>Tip:</b> Use <code>/memory</code> to edit CLAUDE.md files • Use <code>#</code> prefix in prompts to quickly add content</p>
+            <p style="color:{theme.FG_SECONDARY};">
+                <b>Quick add:</b> Prefix a prompt with <code>#</code> to save it to memory instantly. &nbsp;|&nbsp;
+                <b>Edit:</b> Use <code>/memory</code> in the REPL to open CLAUDE.md in your editor.
+            </p>
 
-            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Conversation History</h4>
-            <p><b>Location:</b> <code>~/.claude/history.jsonl</code></p>
-            <p>Stores all conversation turns for context persistence across sessions.</p>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 12px;">Auto Memory</h4>
+            <p>When <code>autoMemoryEnabled: true</code> is set in settings, Claude Code automatically extracts
+            and persists important information from conversations to <code>autoMemoryDirectory</code>
+            (default: <code>~/.claude/memory/</code>).</p>
+            <p>Configure in <b>User Config → Settings → Advanced Settings</b>.</p>
 
-            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Checkpointing</h4>
-            <p>Save conversation state and rollback if needed:</p>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 12px;">Context Compaction</h4>
             <ul style="line-height: 1.8;">
-                <li><code>/checkpoint</code> - Create a checkpoint at current state</li>
-                <li><code>/checkpoints</code> - List all available checkpoints</li>
-                <li><code>/restore &lt;id&gt;</code> - Restore to a specific checkpoint</li>
+                <li><code>/compact</code> — Compact conversation history to free context window</li>
+                <li><code>/compact &lt;instructions&gt;</code> — Compact with custom focus instructions</li>
+                <li>Hook: <code>PostCompact</code> fires after compaction completes</li>
             </ul>
 
-            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">File History</h4>
-            <p><b>Location:</b> <code>~/.claude/file-history/</code></p>
-            <p>Tracks all file modifications made during sessions.</p>
-
-            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Project Memory</h4>
-            <p><b>Location:</b> <code>./.claude/</code></p>
-            <p>Project-specific context and settings stored in your project directory.</p>
-
-            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Memory Management</h4>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 12px;">Conversation Storage</h4>
             <ul style="line-height: 1.8;">
-                <li><b>Token Usage:</b> Claude Code tracks context window usage</li>
-                <li><b>Auto Pruning:</b> Automatically manages conversation length</li>
-                <li><b>CLAUDE.md:</b> Persistent project instructions</li>
+                <li><b>Global history:</b> <code>~/.claude/history.jsonl</code> — all recent prompts</li>
+                <li><b>Per-project conversations:</b> <code>~/.claude/projects/&lt;encoded-path&gt;/&lt;uuid&gt;.jsonl</code></li>
+                <li><b>Resume:</b> <code>claude -c</code> (continue last) or <code>claude -r &lt;uuid&gt;</code> (specific session)</li>
             </ul>
 
-            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 15px;">Shell Snapshots</h4>
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 12px;">File History</h4>
+            <p><b>Location:</b> <code>~/.claude/file-history/&lt;conversation-id&gt;/</code></p>
+            <p>Pre-edit snapshots of every file Claude touched — enables per-file undo.</p>
+
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 12px;">Shell Snapshots</h4>
             <p><b>Location:</b> <code>~/.claude/shell-snapshots/</code></p>
-            <p>Snapshots of shell command outputs for reference.</p>
+            <p>Saved shell environment state (env vars, cwd) captured between tool calls.</p>
+
+            <h4 style="color: {theme.ACCENT_PRIMARY}; margin-top: 12px;">Tasks &amp; Todos</h4>
+            <p>Claude Code persists <code>TodoWrite</code> task lists in <code>~/.claude/todos/</code>
+            and task outputs in <code>~/.claude/tasks/</code>.</p>
         """)
         info.setStyleSheet(theme.get_text_browser_style())
         layout.addWidget(info)
@@ -152,26 +156,16 @@ class MemoryTab(QWidget):
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
                 font-family: 'Consolas', 'Monaco', monospace;
+                font-size: {theme.FONT_SIZE_SMALL}px;
             }}
-            QListWidget::item:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: white;
-            }}
+            QListWidget::item:selected {{ background-color: {theme.ACCENT_PRIMARY}; color: white; }}
         """)
         self.history_list.itemClicked.connect(self.load_history_content)
 
         # Content viewer
         self.history_viewer = QTextEdit()
         self.history_viewer.setReadOnly(True)
-        self.history_viewer.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
-                font-family: 'Consolas', 'Monaco', monospace;
-                font-size: {theme.FONT_SIZE_SMALL}px;
-            }}
-        """)
+        self.history_viewer.setStyleSheet(theme.get_text_edit_style())
 
         splitter.addWidget(self.history_list)
         splitter.addWidget(self.history_viewer)
@@ -199,26 +193,16 @@ class MemoryTab(QWidget):
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
                 font-family: 'Consolas', 'Monaco', monospace;
+                font-size: {theme.FONT_SIZE_SMALL}px;
             }}
-            QListWidget::item:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: white;
-            }}
+            QListWidget::item:selected {{ background-color: {theme.ACCENT_PRIMARY}; color: white; }}
         """)
         self.file_history_list.itemClicked.connect(self.load_file_history_content)
 
         # Content viewer
         self.file_history_viewer = QTextEdit()
         self.file_history_viewer.setReadOnly(True)
-        self.file_history_viewer.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
-                font-family: 'Consolas', 'Monaco', monospace;
-                font-size: {theme.FONT_SIZE_SMALL}px;
-            }}
-        """)
+        self.file_history_viewer.setStyleSheet(theme.get_text_edit_style())
 
         splitter.addWidget(self.file_history_list)
         splitter.addWidget(self.file_history_viewer)
@@ -246,26 +230,16 @@ class MemoryTab(QWidget):
                 color: {theme.FG_PRIMARY};
                 border: 1px solid {theme.BG_LIGHT};
                 font-family: 'Consolas', 'Monaco', monospace;
+                font-size: {theme.FONT_SIZE_SMALL}px;
             }}
-            QListWidget::item:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: white;
-            }}
+            QListWidget::item:selected {{ background-color: {theme.ACCENT_PRIMARY}; color: white; }}
         """)
         self.shell_list.itemClicked.connect(self.load_shell_content)
 
         # Content viewer
         self.shell_viewer = QTextEdit()
         self.shell_viewer.setReadOnly(True)
-        self.shell_viewer.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
-                font-family: 'Consolas', 'Monaco', monospace;
-                font-size: {theme.FONT_SIZE_SMALL}px;
-            }}
-        """)
+        self.shell_viewer.setStyleSheet(theme.get_text_edit_style())
 
         splitter.addWidget(self.shell_list)
         splitter.addWidget(self.shell_viewer)
@@ -276,9 +250,111 @@ class MemoryTab(QWidget):
 
         return widget
 
+    def create_projects_tab(self):
+        """Create project conversations browser tab"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        self.projects_list = QListWidget()
+        self.projects_list.setStyleSheet(theme.get_list_style() if hasattr(theme, 'get_list_style') else f"""
+            QListWidget {{
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
+                font-family: 'Consolas', 'Monaco', monospace;
+                font-size: {theme.FONT_SIZE_SMALL}px;
+            }}
+            QListWidget::item:selected {{
+                background-color: {theme.ACCENT_PRIMARY};
+                color: white;
+            }}
+        """)
+        self.projects_list.itemClicked.connect(self.load_project_session)
+
+        self.projects_viewer = QTextEdit()
+        self.projects_viewer.setReadOnly(True)
+        self.projects_viewer.setStyleSheet(theme.get_text_edit_style())
+
+        splitter.addWidget(self.projects_list)
+        splitter.addWidget(self.projects_viewer)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 2)
+
+        layout.addWidget(splitter)
+        return widget
+
+    def refresh_projects(self):
+        """Refresh project conversations list"""
+        self.projects_list.clear()
+        projects_dir = self.config_manager.claude_dir / "projects"
+
+        if not projects_dir.exists():
+            self.projects_list.addItem("No projects directory found")
+            return
+
+        all_sessions = []
+        try:
+            for project_dir in projects_dir.iterdir():
+                if project_dir.is_dir():
+                    for jsonl_file in project_dir.glob("*.jsonl"):
+                        all_sessions.append({
+                            'path': jsonl_file,
+                            'project': project_dir.name,
+                            'uuid': jsonl_file.stem,
+                            'mtime': jsonl_file.stat().st_mtime,
+                        })
+        except Exception as e:
+            self.projects_list.addItem(f"Error: {str(e)}")
+            return
+
+        all_sessions.sort(key=lambda x: x['mtime'], reverse=True)
+        for s in all_sessions[:100]:  # cap at 100
+            mod_time = datetime.fromtimestamp(s['mtime']).strftime("%Y-%m-%d %H:%M")
+            # Decode project path: replace leading - with / and - with /
+            proj_name = s['project'].replace('-home-', '~/').replace('-', '/')
+            display = f"{mod_time}  {proj_name[:30]}  {s['uuid'][:8]}"
+            item_widget = self.projects_list.addItem(display)
+            self.projects_list.item(self.projects_list.count() - 1).setData(Qt.ItemDataRole.UserRole, str(s['path']))
+
+    def load_project_session(self, item):
+        """Load a project session JSONL file"""
+        path = item.data(Qt.ItemDataRole.UserRole)
+        if not path:
+            return
+        file_path = Path(path)
+        if not file_path.exists():
+            self.projects_viewer.setPlainText("File not found")
+            return
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            formatted = [f"Session: {file_path.name}\nProject: {file_path.parent.name}\nEntries: {len(lines)}\n{'='*60}\n\n"]
+            for i, line in enumerate(lines[:50], 1):  # first 50 entries
+                try:
+                    entry = json.loads(line)
+                    ts = entry.get('timestamp', 0)
+                    date_str = datetime.fromtimestamp(ts / 1000).strftime("%H:%M:%S") if ts else ""
+                    role = entry.get('role', entry.get('type', '?'))
+                    content = entry.get('content', '')
+                    if isinstance(content, list):
+                        content = ' '.join(c.get('text', '') if isinstance(c, dict) else str(c) for c in content)
+                    preview = str(content)[:200].replace('\n', ' ')
+                    formatted.append(f"[{i}] {date_str} {role}: {preview}\n")
+                except Exception:
+                    formatted.append(f"[{i}] {line[:100]}\n")
+            if len(lines) > 50:
+                formatted.append(f"\n... {len(lines) - 50} more entries")
+            self.projects_viewer.setPlainText("".join(formatted))
+        except Exception as e:
+            self.projects_viewer.setPlainText(f"Error: {str(e)}")
+
     def refresh_all(self):
         """Refresh all tabs"""
         self.refresh_history()
+        self.refresh_projects()
         self.refresh_file_history()
         self.refresh_shell_snapshots()
 

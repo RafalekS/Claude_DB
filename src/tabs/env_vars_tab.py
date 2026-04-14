@@ -48,23 +48,7 @@ class EnvVarsTab(QWidget):
 
         # Environment Variables Section
         env_vars_group = QGroupBox("Environment Variables (from settings.json)")
-        env_vars_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        env_vars_group
 
         env_vars_layout = QVBoxLayout()
 
@@ -124,23 +108,7 @@ class EnvVarsTab(QWidget):
 
         # Info section
         info_group = QGroupBox("About Environment Variables")
-        info_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 5px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        info_group
 
         info_layout = QVBoxLayout()
         info_text = QLabel(

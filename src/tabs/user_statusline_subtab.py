@@ -61,21 +61,7 @@ class UserStatuslineSubTab(QWidget):
 
         # Configuration section
         config_group = QGroupBox("Statusline Configuration")
-        config_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
+        config_group
 
         config_layout = QVBoxLayout()
 

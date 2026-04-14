@@ -378,9 +378,8 @@ class PreferencesTab(QWidget):
         header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY}; margin-bottom: 10px;")
         layout.addWidget(header)
 
-        # Create subtabs
+        # Create subtabs — uses global app stylesheet, no per-widget override
         self.subtabs = QTabWidget()
-        self.subtabs.setStyleSheet(theme.get_tab_widget_style())
 
         # Create subtabs
         self.create_tab_settings_subtab()
@@ -400,22 +399,6 @@ class PreferencesTab(QWidget):
 
         # Tab Management Group
         tab_mgmt_group = QGroupBox("Tab Management")
-        tab_mgmt_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                font-weight: bold;
-                color: {theme.ACCENT_PRIMARY};
-                border: 2px solid {theme.ACCENT_PRIMARY};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
         tab_mgmt_layout = QHBoxLayout()
         tab_mgmt_layout.setSpacing(10)
 
@@ -448,56 +431,12 @@ class PreferencesTab(QWidget):
 
         # Theme Settings Group
         theme_group = QGroupBox("Theme Settings")
-        theme_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                font-weight: bold;
-                color: {theme.ACCENT_PRIMARY};
-                border: 2px solid {theme.ACCENT_PRIMARY};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
         theme_layout = QFormLayout()
         theme_layout.setSpacing(10)
 
         # Theme selector
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(THEMES.keys())
-        self.theme_combo.setStyleSheet(f"""
-            QComboBox {{
-                padding: 6px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.ACCENT_PRIMARY};
-                border-radius: 3px;
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                combobox-popup: 0;
-            }}
-            QComboBox::drop-down {{
-                border: none;
-            }}
-            QComboBox::down-arrow {{
-                image: none;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid {theme.FG_PRIMARY};
-                margin-right: 5px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                selection-background-color: {theme.ACCENT_PRIMARY};
-                selection-color: {theme.BG_DARK};
-                max-height: 300px;
-            }}
-        """)
         self.theme_combo.currentTextChanged.connect(self.preview_theme)
 
         theme_label = QLabel("Color Theme:")
@@ -509,22 +448,6 @@ class PreferencesTab(QWidget):
 
         # Font Settings Group
         font_group = QGroupBox("Font Settings")
-        font_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                font-weight: bold;
-                color: {theme.ACCENT_PRIMARY};
-                border: 2px solid {theme.ACCENT_PRIMARY};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
         font_layout = QFormLayout()
         font_layout.setSpacing(10)
 
@@ -543,34 +466,6 @@ class PreferencesTab(QWidget):
             "JetBrains Mono",
             "Source Code Pro"
         ])
-        self.font_family_combo.setStyleSheet(f"""
-            QComboBox {{
-                padding: 6px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.ACCENT_PRIMARY};
-                border-radius: 3px;
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                combobox-popup: 0;
-            }}
-            QComboBox::drop-down {{
-                border: none;
-            }}
-            QComboBox::down-arrow {{
-                image: none;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid {theme.FG_PRIMARY};
-                margin-right: 5px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                selection-background-color: {theme.ACCENT_PRIMARY};
-                selection-color: {theme.BG_DARK};
-                max-height: 300px;
-            }}
-        """)
 
         font_family_label = QLabel("Font Family:")
         font_family_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; color: {theme.FG_PRIMARY};")
@@ -581,25 +476,6 @@ class PreferencesTab(QWidget):
         self.font_size_spin.setRange(10, 24)
         self.font_size_spin.setValue(14)
         self.font_size_spin.setSuffix(" px")
-        self.font_size_spin.setStyleSheet(f"""
-            QSpinBox {{
-                padding: 6px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.ACCENT_PRIMARY};
-                border-radius: 3px;
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-            }}
-            QSpinBox::up-button, QSpinBox::down-button {{
-                background-color: {theme.ACCENT_PRIMARY};
-                border: none;
-                width: 20px;
-            }}
-            QSpinBox::up-arrow, QSpinBox::down-arrow {{
-                width: 10px;
-                height: 10px;
-            }}
-        """)
 
         font_label = QLabel("Font Size:")
         font_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; color: {theme.FG_PRIMARY};")
@@ -610,22 +486,6 @@ class PreferencesTab(QWidget):
 
         # Theme Preview
         preview_group = QGroupBox("Theme Preview")
-        preview_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                font-weight: bold;
-                color: {theme.ACCENT_PRIMARY};
-                border: 2px solid {theme.ACCENT_PRIMARY};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
         preview_layout = QVBoxLayout()
 
         self.preview_label = QLabel("Preview of selected theme colors")
@@ -702,22 +562,6 @@ class PreferencesTab(QWidget):
 
         # Backup Management Group
         backup_group = QGroupBox("Backup Management")
-        backup_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                font-weight: bold;
-                color: {theme.ACCENT_PRIMARY};
-                border: 2px solid {theme.ACCENT_PRIMARY};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
         backup_layout = QHBoxLayout()
         backup_layout.setSpacing(10)
 
@@ -757,22 +601,8 @@ class PreferencesTab(QWidget):
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(10)
 
-        group_style = f"""
-            QGroupBox {{
-                font-size: {theme.FONT_SIZE_NORMAL}px; font-weight: bold;
-                color: {theme.ACCENT_PRIMARY};
-                border: 2px solid {theme.ACCENT_PRIMARY};
-                border-radius: 5px;
-                margin-top: 10px; padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin; left: 10px; padding: 0 5px;
-            }}
-        """
-
         # ── GitHub ──────────────────────────────────────────────────────
         github_group = QGroupBox("GitHub API")
-        github_group.setStyleSheet(group_style)
         github_layout = QFormLayout(github_group)
         github_layout.setSpacing(8)
 
@@ -820,7 +650,6 @@ class PreferencesTab(QWidget):
 
         # ── MCP Search sources ───────────────────────────────────────────
         mcp_group = QGroupBox("MCP Server Search")
-        mcp_group.setStyleSheet(group_style)
         mcp_layout = QVBoxLayout(mcp_group)
         mcp_layout.setSpacing(6)
 
@@ -941,21 +770,8 @@ class PreferencesTab(QWidget):
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(10)
 
-        group_style = f"""
-            QGroupBox {{
-                font-size: {theme.FONT_SIZE_NORMAL}px; font-weight: bold;
-                color: {theme.ACCENT_PRIMARY};
-                border: 2px solid {theme.ACCENT_PRIMARY};
-                border-radius: 5px;
-                margin-top: 10px; padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin; left: 10px; padding: 0 5px;
-            }}
-        """
         # ── Skill directories ────────────────────────────────────────────
         dir_group = QGroupBox("Skill Directories")
-        dir_group.setStyleSheet(group_style)
         dir_layout = QFormLayout(dir_group)
         dir_layout.setSpacing(8)
 
@@ -982,7 +798,6 @@ class PreferencesTab(QWidget):
 
         # ── Skill sources (resizable via splitter) ───────────────────────
         src_group = QGroupBox("Skill Sources (config/skill_sources.json)")
-        src_group.setStyleSheet(group_style)
         src_layout = QVBoxLayout(src_group)
         src_layout.setContentsMargins(4, 4, 4, 4)
         src_layout.setSpacing(4)
@@ -1001,9 +816,12 @@ class PreferencesTab(QWidget):
         self._skill_sources_table.verticalHeader().hide()
         self._skill_sources_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
-        src_btns_widget = QWidget()
-        src_btns = QHBoxLayout(src_btns_widget)
+        # Buttons live INSIDE the group, below the table — no splitter between them
+        src_layout.addWidget(self._skill_sources_table, 1)
+
+        src_btns = QHBoxLayout()
         src_btns.setContentsMargins(0, 0, 0, 0)
+        src_btns.setSpacing(5)
         for label, slot in [
             ("Add", self._add_skill_source),
             ("Remove", self._remove_skill_source),
@@ -1014,19 +832,28 @@ class PreferencesTab(QWidget):
             btn.clicked.connect(slot)
             src_btns.addWidget(btn)
         src_btns.addStretch()
+        src_layout.addLayout(src_btns)
 
-        src_splitter = QSplitter(Qt.Orientation.Vertical)
-        src_splitter.addWidget(self._skill_sources_table)
-        src_splitter.addWidget(src_btns_widget)
-        src_splitter.setSizes([200, 36])
-        src_splitter.setChildrenCollapsible(False)
-        src_layout.addWidget(src_splitter)
-        layout.addWidget(src_group, 1)  # stretch=1 so it fills available space
-
+        # Save button
         save_btn = QPushButton("Save Skills Settings")
         save_btn.setStyleSheet(theme.get_button_style())
         save_btn.clicked.connect(self._save_skills_settings)
-        layout.addWidget(save_btn)
+
+        # Outer splitter: dirs group on top, [src_group + save] on bottom — draggable
+        outer_splitter = QSplitter(Qt.Orientation.Vertical)
+        outer_splitter.setChildrenCollapsible(False)
+        outer_splitter.addWidget(dir_group)
+
+        bottom = QWidget()
+        bottom_layout = QVBoxLayout(bottom)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.setSpacing(4)
+        bottom_layout.addWidget(src_group, 1)
+        bottom_layout.addWidget(save_btn)
+        outer_splitter.addWidget(bottom)
+        outer_splitter.setSizes([140, 400])
+
+        layout.addWidget(outer_splitter, 1)
 
         self.subtabs.addTab(widget, "🛠 Skills")
 

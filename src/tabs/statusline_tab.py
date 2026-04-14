@@ -53,7 +53,7 @@ class StatuslineTab(QWidget):
 
         # Main tab widget for User / Project
         self.main_tabs = QTabWidget()
-        self.main_tabs.setStyleSheet(theme.get_tab_widget_style())
+        self.main_tabs
 
         # User tab
         self.user_tab = self.create_statusline_editor("user")
@@ -91,21 +91,7 @@ class StatuslineTab(QWidget):
 
         # Configuration form
         config_group = QGroupBox("Statusline Settings")
-        config_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
+        config_group
         config_layout = QFormLayout()
 
         # Command input
@@ -129,108 +115,7 @@ class StatuslineTab(QWidget):
 
         info_browser = QTextBrowser()
         info_browser.setOpenExternalLinks(True)
-        info_browser.setStyleSheet(f"""
-            QTextBrowser {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 3px;
-                padding: 10px;
-                font-size: {theme.FONT_SIZE_SMALL}px;
-            }}
-        """)
-        self.load_statusline_info(info_browser)
-        layout.addWidget(info_browser, 1)
-
-        # Action buttons
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(5)
-
-        enable_btn = QPushButton("✓ Enable Statusline")
-        enable_btn.setToolTip("Enable statusline with current command and padding settings")
-        disable_btn = QPushButton("✗ Disable Statusline")
-        disable_btn.setToolTip("Disable statusline and clear configuration")
-        reload_btn = QPushButton("🔄 Reload")
-        reload_btn.setToolTip("Reload statusline configuration from settings file")
-        save_btn = QPushButton("💾 Save")
-        save_btn.setToolTip("Save statusline configuration to settings file")
-        backup_btn = QPushButton("📦 Backup & Save")
-        backup_btn.setToolTip("Create backup of settings file before saving")
-
-        for btn in [enable_btn, disable_btn, reload_btn, save_btn, backup_btn]:
-            btn.setStyleSheet(theme.get_button_style())
-
-        enable_btn.clicked.connect(lambda: self.enable_statusline(scope))
-        disable_btn.clicked.connect(lambda: self.disable_statusline(scope))
-        reload_btn.clicked.connect(lambda: self.load_statusline(scope))
-        save_btn.clicked.connect(lambda: self.save_statusline(scope))
-        backup_btn.clicked.connect(lambda: self.backup_and_save(scope))
-
-        button_layout.addWidget(enable_btn)
-        button_layout.addWidget(disable_btn)
-        button_layout.addStretch()
-        button_layout.addWidget(reload_btn)
-        button_layout.addWidget(save_btn)
-        button_layout.addWidget(backup_btn)
-
-        layout.addLayout(button_layout)
-
-        # Load initial data
-        self.load_statusline(scope)
-
-        return widget
-
-    def create_project_statusline_editor(self):
-        """Create project statusline editor with folder picker"""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        # Project folder picker
-        folder_layout = QHBoxLayout()
-        folder_layout.setSpacing(5)
-
-        folder_label = QLabel("Project Folder:")
-        folder_label.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-weight: bold;")
-
-        self.project_folder_edit = QLineEdit()
-        self.project_folder_edit.setText(str(Path.home()))
-        self.project_folder_edit.setReadOnly(True)
-
-        browse_folder_btn = QPushButton("Browse...")
-        browse_folder_btn.setStyleSheet(theme.get_button_style())
-        browse_folder_btn.setToolTip("Select a different project folder")
-        browse_folder_btn.clicked.connect(self.browse_project_folder)
-
-        folder_layout.addWidget(folder_label)
-        folder_layout.addWidget(self.project_folder_edit, 1)
-        folder_layout.addWidget(browse_folder_btn)
-
-        layout.addLayout(folder_layout)
-
-        # File path label
-        self.project_path_label = QLabel(f"File: {self.project_folder / '.claude' / 'settings.json'}")
-        self.project_path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
-        layout.addWidget(self.project_path_label)
-
-        # Configuration form
-        config_group = QGroupBox("Statusline Settings")
-        config_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
+        info_browser
         config_layout = QFormLayout()
 
         # Command input

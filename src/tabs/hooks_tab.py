@@ -93,7 +93,7 @@ class HooksTab(QWidget):
 
         # Main tab widget for User / Project / Local
         self.main_tabs = QTabWidget()
-        self.main_tabs.setStyleSheet(theme.get_tab_widget_style())
+        self.main_tabs
 
         # User tab (~/.claude/settings.json)
         self.user_tab = self.create_hooks_editor("user")

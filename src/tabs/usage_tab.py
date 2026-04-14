@@ -44,23 +44,7 @@ class UsageTab(QWidget):
 
         # Quick Stats Display Section
         stats_group = QGroupBox("Quick Stats")
-        stats_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        stats_group
 
         stats_layout = QGridLayout()
         stats_layout.setSpacing(8)
@@ -83,23 +67,7 @@ class UsageTab(QWidget):
 
         # Real-time Monitoring Section
         monitoring_group = QGroupBox("Real-time Monitoring")
-        monitoring_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        monitoring_group
 
         monitoring_layout = QHBoxLayout()
         monitoring_layout.setSpacing(5)
@@ -110,48 +78,7 @@ class UsageTab(QWidget):
 
         self.view_combo = QComboBox()
         self.view_combo.addItems(["realtime", "daily", "monthly", "session"])
-        self.view_combo.setStyleSheet(f"""
-            QComboBox {{
-                padding: 6px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.ACCENT_PRIMARY};
-                border-radius: 3px;
-            }}
-        """)
-
-        self.ccmonitor_btn = QPushButton("🖥️ Launch ccmonitor")
-        self.ccmonitor_btn.setToolTip("Launch real-time token usage monitor")
-        self.ccmonitor_btn.setStyleSheet(theme.get_button_style())
-        self.ccmonitor_btn.clicked.connect(self.launch_ccmonitor)
-
-        monitoring_layout.addWidget(view_label)
-        monitoring_layout.addWidget(self.view_combo)
-        monitoring_layout.addWidget(self.ccmonitor_btn)
-        monitoring_layout.addStretch()
-
-        monitoring_group.setLayout(monitoring_layout)
-        layout.addWidget(monitoring_group)
-
-        # ccusage Commands Section
-        ccusage_group = QGroupBox("ccusage - Usage Reports")
-        ccusage_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        self.view_combo
 
         ccusage_layout = QVBoxLayout()
 
@@ -214,70 +141,14 @@ class UsageTab(QWidget):
 
         # Output Display
         output_group = QGroupBox("Command Output")
-        output_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        output_group
 
         output_layout = QVBoxLayout()
 
         self.output_display = QTextEdit()
         self.output_display.setReadOnly(True)
         self.output_display.setPlaceholderText("Click a report button to view usage statistics...")
-        self.output_display.setStyleSheet(f"""
-            QTextEdit {{
-                font-family: 'Consolas', 'Monaco', monospace;
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 3px;
-                padding: 8px;
-            }}
-        """)
-
-        clear_btn = QPushButton("🗑️ Clear Output")
-        clear_btn.setStyleSheet(theme.get_button_style())
-        clear_btn.setToolTip("Clear the output display")
-        clear_btn.clicked.connect(lambda: self.output_display.clear())
-
-        output_layout.addWidget(self.output_display)
-        output_layout.addWidget(clear_btn)
-        output_group.setLayout(output_layout)
-        layout.addWidget(output_group, 1)  # Stretch factor
-
-        # Info section
-        info_group = QGroupBox("About Usage & Analytics")
-        info_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 5px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        self.output_display
 
         info_layout = QVBoxLayout()
         info_text = QLabel(

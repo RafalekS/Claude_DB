@@ -53,56 +53,7 @@ class ClaudeKitTab(QWidget):
         # Create scrollable area for all command groups
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(f"""
-            QScrollArea {{
-                border: none;
-                background-color: {theme.BG_DARK};
-            }}
-        """)
-
-        scroll_widget = QWidget()
-        scroll_widget.setStyleSheet(f"background-color: {theme.BG_DARK};")
-        scroll_layout = QVBoxLayout(scroll_widget)
-        scroll_layout.setSpacing(8)
-
-        # Create command groups dynamically from config
-        group_titles = {
-            "setup_installation": "Setup & Installation",
-            "list_show": "List & Show Commands",
-            "diagnostics": "Diagnostics",
-            "linting": "Linting & Validation",
-            "hooks": "Hook Management"
-        }
-
-        for group_key, group_title in group_titles.items():
-            if group_key in self.commands:
-                group = self.create_command_group(group_title, self.commands[group_key])
-                scroll_layout.addWidget(group)
-
-        scroll_layout.addStretch(1)
-        scroll.setWidget(scroll_widget)
-        main_layout.addWidget(scroll, 1)  # Stretch factor to fill space
-
-    def create_context_selector(self):
-        """Create working directory context selector"""
-        group = QGroupBox("Working Directory Context")
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        scroll
 
         layout = QVBoxLayout()
         layout.setSpacing(8)
@@ -200,23 +151,7 @@ class ClaudeKitTab(QWidget):
     def create_command_group(self, title, commands):
         """Create a group of command buttons from config data"""
         group = QGroupBox(title)
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        group
 
         grid = QGridLayout()
         grid.setSpacing(8)

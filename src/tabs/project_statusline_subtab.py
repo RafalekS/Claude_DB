@@ -63,7 +63,7 @@ class ProjectStatuslineSubTab(QWidget):
 
         # Nested tabs for Shared vs Local
         self.scope_tabs = QTabWidget()
-        self.scope_tabs.setStyleSheet(theme.get_tab_widget_style())
+        self.scope_tabs
 
         # Shared tab
         self.shared_editor = self.create_statusline_editor("shared")
@@ -108,21 +108,7 @@ class ProjectStatuslineSubTab(QWidget):
 
         # Configuration section
         config_group = QGroupBox("Statusline Configuration")
-        config_group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: {theme.FG_PRIMARY};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
+        config_group
 
         config_layout = QVBoxLayout()
 

@@ -41,7 +41,7 @@ class SettingsTab(QWidget):
 
         # Tabs for User / Project settings
         self.settings_tabs = QTabWidget()
-        self.settings_tabs.setStyleSheet(theme.get_tab_widget_style())
+        self.settings_tabs
 
         # User settings tab (~/.claude/settings.json)
         self.user_tab = self.create_settings_editor(
@@ -185,7 +185,7 @@ class SettingsTab(QWidget):
 
         # Sub-tabs for settings.json and settings.local.json
         self.project_settings_tabs = QTabWidget()
-        self.project_settings_tabs.setStyleSheet(theme.get_tab_widget_style())
+        self.project_settings_tabs
 
         # Shared project settings (.claude/settings.json)
         self.shared_settings_widget = self.create_project_settings_editor_widget("shared")

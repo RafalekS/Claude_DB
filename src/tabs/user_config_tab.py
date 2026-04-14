@@ -88,30 +88,8 @@ class UserConfigTab(QWidget):
         )
         layout.addWidget(desc)
 
-        # Tab widget for sub-tabs
+        # Tab widget for sub-tabs — uses global app stylesheet, no per-widget override
         self.sub_tabs = QTabWidget()
-        self.sub_tabs.setStyleSheet(f"""
-            QTabWidget::pane {{
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 3px;
-                background-color: {theme.BG_DARK};
-            }}
-            QTabBar::tab {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
-                padding: 8px 16px;
-                margin-right: 2px;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-            }}
-            QTabBar::tab:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
-            QTabBar::tab:hover {{
-                background-color: {theme.BG_LIGHT};
-            }}
-        """)
 
         # Add sub-tabs with actual implementations
 

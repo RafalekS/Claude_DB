@@ -362,23 +362,7 @@ class AboutTab(QWidget):
     def create_link_group(self, title, links):
         """Create a group of clickable links"""
         group = QGroupBox(title)
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 5px;
-                margin-top: 5px;
-                padding-top: 10px;
-                color: {theme.ACCENT_PRIMARY};
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                background: {theme.BG_DARK};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
+        group
 
         group_layout = QVBoxLayout()
 

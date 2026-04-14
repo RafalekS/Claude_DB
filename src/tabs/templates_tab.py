@@ -42,50 +42,7 @@ class TemplatesTab(QWidget):
 
         # Header
         header = QLabel("Claude Code Templates")
-        header.setStyleSheet(f"""
-            font-size: {theme.FONT_SIZE_LARGE}px;
-            font-weight: bold;
-            color: {theme.ACCENT_PRIMARY};
-            padding: 5px;
-        """)
-        layout.addWidget(header)
-
-        # Description
-        desc = QLabel(
-            "Manage Claude Code templates using npx claude-code-templates@latest. "
-            "Templates provide pre-configured setups for agents, commands, hooks, and workflows."
-        )
-        desc.setWordWrap(True)
-        desc.setStyleSheet(theme.get_label_style("normal", "secondary"))
-        layout.addWidget(desc)
-
-        # Commands group
-        commands_group = self.create_commands_group()
-        layout.addWidget(commands_group)
-
-        layout.addStretch()
-
-    def create_commands_group(self):
-        """Create command buttons grid"""
-        group = QGroupBox("Template Commands")
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                border: 2px solid {theme.BG_LIGHT};
-                border-radius: 6px;
-                margin-top: 12px;
-                padding-top: 15px;
-                color: {theme.ACCENT_SECONDARY};
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 8px 0 8px;
-                background-color: {theme.BG_MEDIUM};
-            }}
-        """)
+        header
 
         grid = QGridLayout()
         grid.setSpacing(10)

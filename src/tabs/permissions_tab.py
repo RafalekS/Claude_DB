@@ -306,7 +306,7 @@ class PermissionsTab(QWidget):
 
         # Main tab widget for User / Project (Local) / Project
         self.main_tabs = QTabWidget()
-        self.main_tabs.setStyleSheet(theme.get_tab_widget_style())
+        self.main_tabs
 
         # User tab (~/.claude/settings.json)
         self.user_tab = self.create_permissions_editor("user")

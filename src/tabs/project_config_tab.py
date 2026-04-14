@@ -283,16 +283,6 @@ class ProjectConfigTab(QWidget):
         self.project_path_input = QLineEdit()
         self.project_path_input.setReadOnly(True)
         self.project_path_input.setPlaceholderText("No project selected - click Browse to select")
-        self.project_path_input.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {theme.BG_DARK};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 3px;
-                padding: 8px;
-                font-size: {theme.FONT_SIZE_SMALL}px;
-            }}
-        """)
 
         browse_btn = QPushButton("📁 Browse")
         browse_btn.setToolTip("Select project folder")
@@ -330,35 +320,9 @@ class ProjectConfigTab(QWidget):
         separator.setStyleSheet(f"background-color: {theme.BG_LIGHT};")
         layout.addWidget(separator)
 
-        # Tab widget for sub-tabs
+        # Tab widget for sub-tabs — uses global app stylesheet, no per-widget override
         self.sub_tabs = QTabWidget()
         self.sub_tabs.setEnabled(False)  # Disabled until project is selected
-        self.sub_tabs.setStyleSheet(f"""
-            QTabWidget::pane {{
-                border: 1px solid {theme.BG_LIGHT};
-                border-radius: 3px;
-                background-color: {theme.BG_DARK};
-            }}
-            QTabBar::tab {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
-                padding: 8px 16px;
-                margin-right: 2px;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-            }}
-            QTabBar::tab:selected {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
-            QTabBar::tab:hover {{
-                background-color: {theme.BG_LIGHT};
-            }}
-            QTabBar::tab:disabled {{
-                background-color: {theme.BG_MEDIUM};
-                color: {theme.FG_SECONDARY};
-            }}
-        """)
 
         # Add sub-tabs with actual implementations
 

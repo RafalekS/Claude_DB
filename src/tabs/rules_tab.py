@@ -398,7 +398,7 @@ class RulesTab(QWidget):
 
         # Scope tabs
         scope_tabs = QTabWidget()
-        scope_tabs.setStyleSheet(theme.get_tab_widget_style())
+        scope_tabs
 
         self._user_editor = RuleEditorWidget("user", self._get_user_rules_dir)
         scope_tabs.addTab(self._user_editor, "👤 User (~/.claude/rules/)")

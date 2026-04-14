@@ -76,7 +76,7 @@ class ProjectPermissionsSubTab(QWidget):
 
         # Tabs for Shared and Local
         tabs = QTabWidget()
-        tabs.setStyleSheet(theme.get_tab_widget_style())
+        tabs
 
         # Shared tab
         shared_widget = self.create_permissions_panel("shared")
