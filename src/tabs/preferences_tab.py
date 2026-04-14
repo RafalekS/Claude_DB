@@ -88,15 +88,7 @@ class TabEditorDialog(QDialog):
         to_row2_btn = QPushButton("➡️ Move to Row 2")
         rename1_btn = QPushButton("✏️ Rename Selected")
 
-        to_row2_btn.setStyleSheet(f"""
-            QPushButton {{
-                padding: 10px;
-                border-radius: 4px;
-                font-weight: bold;
-                min-width: 150px;
-            }}
-            
-        """)
+        to_row2_btn.setMinimumWidth(150)
 
         up1_btn.clicked.connect(lambda: self.move_item_up(self.row1_list))
         down1_btn.clicked.connect(lambda: self.move_item_down(self.row1_list))
@@ -139,15 +131,7 @@ class TabEditorDialog(QDialog):
         to_row1_btn = QPushButton("⬅️ Move to Row 1")
         rename2_btn = QPushButton("✏️ Rename Selected")
 
-        to_row1_btn.setStyleSheet(f"""
-            QPushButton {{
-                padding: 10px;
-                border-radius: 4px;
-                font-weight: bold;
-                min-width: 150px;
-            }}
-            
-        """)
+        to_row1_btn.setMinimumWidth(150)
 
         up2_btn.clicked.connect(lambda: self.move_item_up(self.row2_list))
         down2_btn.clicked.connect(lambda: self.move_item_down(self.row2_list))
@@ -495,15 +479,7 @@ class PreferencesTab(QWidget):
 
         self.restart_btn = QPushButton("🔄 Restart Application")
         self.restart_btn.setToolTip("Restart the application to apply all changes")
-        self.restart_btn.setStyleSheet(f"""
-            QPushButton {{
-                padding: 10px;
-                border-radius: 4px;
-                font-weight: bold;
-                min-width: 150px;
-            }}
-            
-        """)
+        self.restart_btn.setMinimumWidth(150)
         self.restart_btn.clicked.connect(self.restart_application)
 
         button_layout.addWidget(self.apply_btn)
@@ -1213,6 +1189,8 @@ class {class_name}Tab(QWidget):
 
             self.preview_label.setStyleSheet(f"""
                 QLabel {{
+                    background-color: {theme_colors["background"]};
+                    color: {theme_colors["foreground"]};
                     padding: 15px;
                     border-radius: 3px;
                     font-size: {theme.FONT_SIZE_NORMAL}px;

@@ -62,7 +62,7 @@ class PluginsTab(QWidget):
         )
         info_label.setOpenExternalLinks(True)
         info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY}; padding: 8px; background: {theme.BG_MEDIUM}; border-radius: 3px;")
+        info_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 8px; border-radius: 3px;")
         layout.addWidget(info_label)
 
         # Quick Actions Section

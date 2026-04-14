@@ -80,18 +80,8 @@ class TemplatesTab(QWidget):
             btn = QPushButton(button_text)
             btn.setToolTip(tooltip)
             btn.clicked.connect(lambda checked, cfg=cmd_config: self.handle_command(cfg))
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    padding: 10px 15px;
-                    border-radius: 5px;
-                    font-weight: bold;
-                    font-size: {theme.FONT_SIZE_NORMAL}px;
-                    min-width: 200px;
-                    min-height: 40px;
-                }}
-                
-                
-            """)
+            btn.setMinimumWidth(200)
+            btn.setMinimumHeight(40)
 
             grid.addWidget(btn, row, col)
 

@@ -215,62 +215,33 @@ class ToolsConfigDialog(QDialog):
         # Buttons with distinct styling for sections
         btn_layout = QHBoxLayout()
 
-        add_section_btn = QPushButton("➕ Section")
-        add_section_btn.setToolTip("Add new section")
-        add_section_btn.clicked.connect(self.add_section)
+        self._sec_add_btn = QPushButton("➕ Section")
+        self._sec_add_btn.setToolTip("Add new section")
+        self._sec_add_btn.clicked.connect(self.add_section)
 
-        rename_section_btn = QPushButton("✏️ Section")
-        rename_section_btn.setToolTip("Rename selected section")
-        rename_section_btn.clicked.connect(self.rename_section)
+        self._sec_rename_btn = QPushButton("✏️ Section")
+        self._sec_rename_btn.setToolTip("Rename selected section")
+        self._sec_rename_btn.clicked.connect(self.rename_section)
 
-        remove_section_btn = QPushButton("🗑 Section")
-        remove_section_btn.setToolTip("Remove selected section and ALL its buttons")
-        remove_section_btn.clicked.connect(self.remove_section)
+        self._sec_remove_btn = QPushButton("🗑 Section")
+        self._sec_remove_btn.setToolTip("Remove selected section and ALL its buttons")
+        self._sec_remove_btn.clicked.connect(self.remove_section)
 
-        up_btn = QPushButton("⬆")
-        up_btn.setToolTip("Move section up")
-        up_btn.clicked.connect(lambda: self.move_section(-1))
+        self._sec_up_btn = QPushButton("⬆")
+        self._sec_up_btn.setToolTip("Move section up")
+        self._sec_up_btn.clicked.connect(lambda: self.move_section(-1))
 
-        down_btn = QPushButton("⬇")
-        down_btn.setToolTip("Move section down")
-        down_btn.clicked.connect(lambda: self.move_section(1))
+        self._sec_down_btn = QPushButton("⬇")
+        self._sec_down_btn.setToolTip("Move section down")
+        self._sec_down_btn.clicked.connect(lambda: self.move_section(1))
 
-        # Style section buttons differently - use orange/red for dangerous operations
-        section_button_style = f"""
-            QPushButton {{
-                padding: 8px;
-                background-color: {theme.WARNING_COLOR};
-                color: {theme.BG_DARK};
-                border-radius: 4px;
-                font-weight: bold;
-                min-width: 80px;
-            }}
-            QPushButton:hover {{
-                background-color: {theme.WARNING_COLOR};
-            }}
-        """
+        add_section_btn = self._sec_add_btn
+        rename_section_btn = self._sec_rename_btn
+        remove_section_btn = self._sec_remove_btn
+        up_btn = self._sec_up_btn
+        down_btn = self._sec_down_btn
 
-        arrow_button_style = f"""
-            QPushButton {{
-                padding: 8px;
-                background-color: {theme.BG_LIGHT};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.ACCENT_PRIMARY};
-                border-radius: 4px;
-                font-weight: bold;
-                min-width: 40px;
-            }}
-            QPushButton:hover {{
-                background-color: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
-            }}
-        """
-
-        add_section_btn.setStyleSheet(section_button_style)
-        rename_section_btn.setStyleSheet(section_button_style)
-        remove_section_btn.setStyleSheet(section_button_style)
-        up_btn.setStyleSheet(arrow_button_style)
-        down_btn.setStyleSheet(arrow_button_style)
+        self._apply_section_btn_styles()
 
         btn_layout.addWidget(add_section_btn)
         btn_layout.addWidget(rename_section_btn)
@@ -324,43 +295,14 @@ class ToolsConfigDialog(QDialog):
         down_btn.setToolTip("Move button down")
         down_btn.clicked.connect(lambda: self.move_button(1))
 
-        # Style button buttons differently - use blue/green for safer operations
-        button_button_style = f"""
-            QPushButton {{
-                padding: 8px;
-                background-color: {theme.SUCCESS_COLOR};
-                color: {theme.BG_DARK};
-                border-radius: 4px;
-                font-weight: bold;
-                min-width: 100px;
-            }}
-            QPushButton:hover {{
-                background-color: {theme.SUCCESS_COLOR};
-            }}
-        """
+        self._btn_add_btn = add_button_btn
+        self._btn_edit_btn = edit_button_btn
+        self._btn_move_btn = move_button_btn
+        self._btn_remove_btn = remove_button_btn
+        self._btn_up_btn = up_btn
+        self._btn_down_btn = down_btn
 
-        arrow_button_style = f"""
-            QPushButton {{
-                padding: 8px;
-                background-color: {theme.BG_LIGHT};
-                color: {theme.FG_PRIMARY};
-                border: 1px solid {theme.SUCCESS_COLOR};
-                border-radius: 4px;
-                font-weight: bold;
-                min-width: 40px;
-            }}
-            QPushButton:hover {{
-                background-color: {theme.SUCCESS_COLOR};
-                color: {theme.BG_DARK};
-            }}
-        """
-
-        add_button_btn.setStyleSheet(button_button_style)
-        edit_button_btn.setStyleSheet(button_button_style)
-        move_button_btn.setStyleSheet(button_button_style)
-        remove_button_btn.setStyleSheet(button_button_style)
-        up_btn.setStyleSheet(arrow_button_style)
-        down_btn.setStyleSheet(arrow_button_style)
+        self._apply_button_btn_styles()
 
         btn_layout.addWidget(add_button_btn)
         btn_layout.addWidget(edit_button_btn)
@@ -372,6 +314,45 @@ class ToolsConfigDialog(QDialog):
         layout.addLayout(btn_layout)
 
         return widget
+
+    def _warning_btn_style(self):
+        return f"""QPushButton {{
+            padding: 8px; background-color: {theme.WARNING_COLOR}; color: {theme.BG_DARK};
+            border-radius: 4px; font-weight: bold; min-width: 80px;
+        }} QPushButton:hover {{ background-color: {theme.ACCENT_SECONDARY}; color: {theme.BG_DARK}; }}"""
+
+    def _success_btn_style(self):
+        return f"""QPushButton {{
+            padding: 8px; background-color: {theme.SUCCESS_COLOR}; color: {theme.BG_DARK};
+            border-radius: 4px; font-weight: bold; min-width: 100px;
+        }} QPushButton:hover {{ background-color: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}"""
+
+    def _arrow_btn_style(self, accent):
+        return f"""QPushButton {{
+            padding: 8px; background-color: {theme.BG_LIGHT}; color: {theme.FG_PRIMARY};
+            border: 1px solid {accent}; border-radius: 4px; font-weight: bold; min-width: 40px;
+        }} QPushButton:hover {{ background-color: {accent}; color: {theme.BG_DARK}; }}"""
+
+    def _apply_section_btn_styles(self):
+        s = self._warning_btn_style()
+        a = self._arrow_btn_style(theme.ACCENT_PRIMARY)
+        for btn in (self._sec_add_btn, self._sec_rename_btn, self._sec_remove_btn):
+            btn.setStyleSheet(s)
+        for btn in (self._sec_up_btn, self._sec_down_btn):
+            btn.setStyleSheet(a)
+
+    def _apply_button_btn_styles(self):
+        s = self._success_btn_style()
+        a = self._arrow_btn_style(theme.SUCCESS_COLOR)
+        for btn in (self._btn_add_btn, self._btn_edit_btn, self._btn_move_btn, self._btn_remove_btn):
+            btn.setStyleSheet(s)
+        for btn in (self._btn_up_btn, self._btn_down_btn):
+            btn.setStyleSheet(a)
+
+    def apply_theme(self):
+        """Re-apply themed button styles after a theme change."""
+        self._apply_section_btn_styles()
+        self._apply_button_btn_styles()
 
     def load_sections(self):
         """Load sections into list"""

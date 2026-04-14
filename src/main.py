@@ -292,6 +292,12 @@ class ClaudeDBApp(QMainWindow):
             f"QStackedWidget {{ border: 1px solid {_theme.BG_LIGHT}; background: {_theme.BG_DARK}; }}"
         )
 
+        # Call apply_theme() on any tab that has custom per-widget theme styling
+        for _tab_widget in self.all_tabs.values():
+            widget = _tab_widget[1] if isinstance(_tab_widget, tuple) else _tab_widget
+            if hasattr(widget, 'apply_theme'):
+                widget.apply_theme()
+
         logger.info(f"Theme changed to '{theme_name}' {font_size}px")
 
     def create_backup(self):

@@ -55,7 +55,6 @@ class ClaudeKitTab(QWidget):
         scroll
 
         scroll_widget = QWidget()
-        scroll_widget.setStyleSheet(f"background-color: {theme.BG_DARK};")
         scroll_layout = QVBoxLayout(scroll_widget)
         scroll_layout.setSpacing(8)
 
