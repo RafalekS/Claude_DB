@@ -362,7 +362,7 @@ class AboutTab(QWidget):
     def create_link_group(self, title, links):
         """Create a group of clickable links"""
         group = QGroupBox(title)
-        group
+
 
         group_layout = QVBoxLayout()
 

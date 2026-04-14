@@ -42,7 +42,33 @@ class TemplatesTab(QWidget):
 
         # Header
         header = QLabel("Claude Code Templates")
-        header
+        header.setStyleSheet(f"""
+            font-size: {theme.FONT_SIZE_LARGE}px;
+            font-weight: bold;
+            color: {theme.ACCENT_PRIMARY};
+            padding: 5px;
+        """)
+        layout.addWidget(header)
+
+        # Description
+        desc = QLabel(
+            "Manage Claude Code templates using npx claude-code-templates@latest. "
+            "Templates provide pre-configured setups for agents, commands, hooks, and workflows."
+        )
+        desc.setWordWrap(True)
+        desc.setStyleSheet(theme.get_label_style("normal", "secondary"))
+        layout.addWidget(desc)
+
+        # Commands group
+        commands_group = self.create_commands_group()
+        layout.addWidget(commands_group)
+
+        layout.addStretch()
+
+    def create_commands_group(self):
+        """Create command buttons grid"""
+        group = QGroupBox("Template Commands")
+
 
         grid = QGridLayout()
         grid.setSpacing(10)

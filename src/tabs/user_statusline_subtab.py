@@ -61,7 +61,7 @@ class UserStatuslineSubTab(QWidget):
 
         # Configuration section
         config_group = QGroupBox("Statusline Configuration")
-        config_group
+
 
         config_layout = QVBoxLayout()
 

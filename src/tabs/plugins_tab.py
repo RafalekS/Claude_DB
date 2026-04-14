@@ -68,7 +68,7 @@ class PluginsTab(QWidget):
 
         # Quick Actions Section
         quick_actions_group = QGroupBox("Quick Actions - Browse & Install Plugins")
-        quick_actions_group
+
 
         quick_actions_layout = QHBoxLayout()
         quick_actions_layout.setSpacing(10)
@@ -118,7 +118,7 @@ class PluginsTab(QWidget):
 
         # Known Marketplaces Section (moved here right after Quick Actions)
         known_marketplaces_group = QGroupBox("Known Marketplaces (from ~/.claude/plugins/known_marketplaces.json)")
-        known_marketplaces_group
+
 
         known_marketplaces_layout = QVBoxLayout()
         self.known_marketplaces_list = QListWidget()
@@ -129,7 +129,7 @@ class PluginsTab(QWidget):
 
         # Enabled Plugins Section (from settings.json)
         enabled_plugins_group = QGroupBox("Enabled Plugins (from settings.json)")
-        enabled_plugins_group
+
 
         enabled_plugins_layout = QVBoxLayout()
         self.enabled_plugins_list = QListWidget()
@@ -165,7 +165,7 @@ class PluginsTab(QWidget):
 
         # Installed Plugins Section (from ~/.claude/plugins/config.json)
         installed_plugins_group = QGroupBox("Installed Plugins (from ~/.claude/plugins/config.json)")
-        installed_plugins_group
+
 
         installed_plugins_layout = QVBoxLayout()
         self.installed_plugins_list = QListWidget()
@@ -175,7 +175,7 @@ class PluginsTab(QWidget):
 
         # Extra Known Marketplaces Section (from settings.json)
         extra_marketplaces_group = QGroupBox("Extra Known Marketplaces (from settings.json)")
-        extra_marketplaces_group
+
 
         extra_marketplaces_layout = QVBoxLayout()
         self.extra_marketplaces_list = QListWidget()

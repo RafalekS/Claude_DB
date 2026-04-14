@@ -172,7 +172,55 @@ class PromptsTab(QWidget):
         right_layout.addWidget(prompt_label)
 
         self.editor = QTextEdit()
-        self.editor
+        self.editor.setStyleSheet(f"""
+            QTextEdit {{
+                font-family: 'Consolas', 'Monaco', monospace;
+                font-size: {theme.FONT_SIZE_NORMAL}px;
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
+                border-radius: 3px;
+                padding: 8px;
+            }}
+        """)
+        self.editor.setPlaceholderText("Select a prompt to view/edit, or create a new one.")
+        right_layout.addWidget(self.editor, 1)  # Stretch factor
+
+        # Save/Backup/Copy buttons
+        save_btn_layout = QHBoxLayout()
+        save_btn_layout.setSpacing(5)
+
+        self.copy_btn = QPushButton("📋 Copy to Clipboard")
+        self.copy_btn.setToolTip("Copy current prompt content to clipboard")
+        self.save_btn = QPushButton("💾 Save")
+        self.save_btn.setToolTip("Save changes to promptInfo.json")
+        self.backup_btn = QPushButton("📦 Backup")
+        self.backup_btn.setToolTip("Create backup of promptInfo.json")
+
+        for btn in [self.copy_btn, self.save_btn, self.backup_btn]:
+            btn.setStyleSheet(theme.get_button_style())
+
+        self.copy_btn.clicked.connect(self.copy_to_clipboard)
+        self.save_btn.clicked.connect(self.save_prompts)
+        self.backup_btn.clicked.connect(self.backup_prompts)
+
+        save_btn_layout.addWidget(self.copy_btn)
+        save_btn_layout.addStretch()
+        save_btn_layout.addWidget(self.save_btn)
+        save_btn_layout.addWidget(self.backup_btn)
+
+        right_layout.addLayout(save_btn_layout)
+
+        splitter.addWidget(right_panel)
+
+        # Set splitter sizes (30% list, 70% editor)
+        splitter.setSizes([300, 700])
+
+        layout.addWidget(splitter, 1)  # Stretch factor
+
+        # Info section at bottom
+        info_group = QGroupBox("About Prompts")
+
 
         info_layout = QVBoxLayout()
         info_text = QLabel(

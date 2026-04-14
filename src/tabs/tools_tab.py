@@ -857,7 +857,7 @@ class ToolsTab(QWidget):
     def create_tool_group(self, title, tools):
         """Create a group of tool buttons from config data"""
         group = QGroupBox(title)
-        group
+
         grid = QGridLayout()
         grid.setSpacing(8)
 

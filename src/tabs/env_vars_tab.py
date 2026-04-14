@@ -48,7 +48,7 @@ class EnvVarsTab(QWidget):
 
         # Environment Variables Section
         env_vars_group = QGroupBox("Environment Variables (from settings.json)")
-        env_vars_group
+
 
         env_vars_layout = QVBoxLayout()
 
@@ -108,7 +108,7 @@ class EnvVarsTab(QWidget):
 
         # Info section
         info_group = QGroupBox("About Environment Variables")
-        info_group
+
 
         info_layout = QVBoxLayout()
         info_text = QLabel(

@@ -214,7 +214,18 @@ class SkillsTab(QWidget):
 
         # Sub-tabs: Skills (editor) | Discover (GitHub search)
         self._sub_tabs = QTabWidget()
-        self._sub_tabs
+        self._sub_tabs.setStyleSheet(f"""
+            QTabWidget::pane {{ border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; }}
+            QTabBar::tab {{ padding: 5px 14px; background: {theme.BG_MEDIUM}; color: {theme.FG_SECONDARY}; }}
+            QTabBar::tab:selected {{ background: {theme.BG_DARK}; color: {theme.FG_PRIMARY}; border-bottom: 2px solid {theme.ACCENT_PRIMARY}; }}
+        """)
+        self._sub_tabs.addTab(self.create_skills_editor(), "Skills")
+        self._sub_tabs.addTab(self.create_discover_tab(), "Discover")
+        layout.addWidget(self._sub_tabs, 1)
+
+        # Info section at bottom
+        info_group = QGroupBox("About Skills")
+
 
         info_layout = QVBoxLayout()
         info_text = QLabel(
