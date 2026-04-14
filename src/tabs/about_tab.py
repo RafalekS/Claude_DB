@@ -11,7 +11,7 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextBrowser, QGroupBox, QPushButton,
     QDialog, QLineEdit, QDialogButtonBox, QMessageBox, QListWidget, QComboBox,
-    QListWidgetItem, QFormLayout, QTextEdit
+    QListWidgetItem, QFormLayout, QTextEdit, QSplitter
 )
 from PyQt6.QtCore import Qt
 from utils import theme
@@ -317,21 +317,23 @@ class AboutTab(QWidget):
         # Store content widgets for refresh
         self.content_widgets = {}
 
-        # Official Documentation
+        # All link groups in a vertical splitter so each section is resizable
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        splitter.setChildrenCollapsible(False)
+
         official_group, self.content_widgets['official'] = self.create_link_group("Official Documentation", self.official_links)
-        layout.addWidget(official_group)
+        splitter.addWidget(official_group)
 
-        # Community Resources
         community_group, self.content_widgets['community'] = self.create_link_group("Community Resources", self.community_links)
-        layout.addWidget(community_group)
+        splitter.addWidget(community_group)
 
-        # Frameworks & Tools
         frameworks_group, self.content_widgets['frameworks'] = self.create_link_group("Frameworks & Tools", self.frameworks_links)
-        layout.addWidget(frameworks_group)
+        splitter.addWidget(frameworks_group)
 
-        # Plugin Marketplaces
         marketplaces_group, self.content_widgets['marketplaces'] = self.create_link_group("Plugin Marketplaces", self.marketplaces_links)
-        layout.addWidget(marketplaces_group)
+        splitter.addWidget(marketplaces_group)
+
+        layout.addWidget(splitter, 1)
 
         # Claude Agent SDK Installation - compact
         sdk_layout = QHBoxLayout()
@@ -384,8 +386,6 @@ class AboutTab(QWidget):
                 font-size: {theme.FONT_SIZE_SMALL}px;
             }}
         """)
-        content.setMaximumHeight(120)
-
         group_layout.addWidget(content)
         group.setLayout(group_layout)
         return group, content
