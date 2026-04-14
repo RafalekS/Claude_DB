@@ -27,6 +27,7 @@ env/
 cache/
 logs/
 config/ui_state.json
+config/config.json
 
 # Claude local config - NEVER push
 .claude/
