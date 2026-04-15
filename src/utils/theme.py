@@ -477,6 +477,7 @@ def generate_app_stylesheet():
             background-color: {BG_DARK};
             color: {FG_PRIMARY};
             font-size: {FONT_SIZE_NORMAL}px;
+            font-family: {FONT_FAMILY_UI};
         }}
 
         /* Labels */
@@ -730,3 +731,14 @@ def generate_app_stylesheet():
             background: {BG_DARK};
         }}
     """
+
+
+def apply_color_overrides(overrides: dict):
+    """Apply custom per-variable color overrides on top of the current theme.
+    Keys are theme module variable names (e.g. 'BG_DARK', 'ACCENT_PRIMARY').
+    Call generate_app_stylesheet() afterwards to propagate changes.
+    """
+    g = globals()
+    for var_name, hex_value in overrides.items():
+        if var_name in g and isinstance(hex_value, str) and hex_value.startswith("#"):
+            g[var_name] = hex_value

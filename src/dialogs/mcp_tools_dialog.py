@@ -93,7 +93,6 @@ class MCPToolsDialog(QDialog):
 
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
-        self.table.setAlternatingRowColors(True)
         self.table.itemSelectionChanged.connect(self.on_selection_changed)
 
         splitter.addWidget(self.table)

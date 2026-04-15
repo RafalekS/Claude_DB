@@ -183,7 +183,6 @@ class EnvVarsTab(QWidget):
         self._ref_table.verticalHeader().setVisible(False)
         self._ref_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._ref_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self._ref_table.setAlternatingRowColors(True)
         self._ref_table.setSortingEnabled(True)
         self._ref_table.doubleClicked.connect(self._add_from_reference)
         inner.addWidget(self._ref_table, 1)

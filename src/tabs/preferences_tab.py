@@ -55,24 +55,35 @@ class TabEditorDialog(QDialog):
 
         # Info label
         info = QLabel("Reorder tabs with Up/Down/Move buttons, or double-click a tab to rename it")
-        info.setStyleSheet(f"font-size: 12px; color: {theme.FG_SECONDARY}; font-style: italic;")
+        info.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY}; font-style: italic;")
         info.setWordWrap(True)
         layout.addWidget(info)
 
         # Row 1 tabs
         row1_label = QLabel("Row 1 Tabs:")
-        row1_label.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
+        row1_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
         layout.addWidget(row1_label)
 
         self.row1_list = QListWidget()
-        self.row1_list.setAlternatingRowColors(True)
         self.row1_list.setStyleSheet(f"""
             QListWidget {{
-                font-size: 13px;
+                font-size: {theme.FONT_SIZE_NORMAL}px;
                 padding: 5px;
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
             }}
             QListWidget::item {{
                 padding: 8px;
+                color: {theme.FG_PRIMARY};
+                background-color: {theme.BG_DARK};
+            }}
+            QListWidget::item:selected {{
+                background-color: {theme.ACCENT_PRIMARY};
+                color: {theme.BG_DARK};
+            }}
+            QListWidget::item:hover:!selected {{
+                background-color: {theme.BG_MEDIUM};
             }}
         """)
         for tab_name in tabs_row1:
@@ -104,18 +115,29 @@ class TabEditorDialog(QDialog):
 
         # Row 2 tabs
         row2_label = QLabel("Row 2 Tabs:")
-        row2_label.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {theme.ACCENT_PRIMARY}; margin-top: 10px;")
+        row2_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; font-weight: bold; color: {theme.ACCENT_PRIMARY}; margin-top: 10px;")
         layout.addWidget(row2_label)
 
         self.row2_list = QListWidget()
-        self.row2_list.setAlternatingRowColors(True)
         self.row2_list.setStyleSheet(f"""
             QListWidget {{
-                font-size: 13px;
+                font-size: {theme.FONT_SIZE_NORMAL}px;
                 padding: 5px;
+                background-color: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
+                border: 1px solid {theme.BG_LIGHT};
             }}
             QListWidget::item {{
                 padding: 8px;
+                color: {theme.FG_PRIMARY};
+                background-color: {theme.BG_DARK};
+            }}
+            QListWidget::item:selected {{
+                background-color: {theme.ACCENT_PRIMARY};
+                color: {theme.BG_DARK};
+            }}
+            QListWidget::item:hover:!selected {{
+                background-color: {theme.BG_MEDIUM};
             }}
         """)
         for tab_name in tabs_row2:
@@ -342,7 +364,6 @@ class PreferencesTab(QWidget):
         self.subtabs = QTabWidget()
 
         # Create subtabs
-        self.create_tab_settings_subtab()
         self.create_appearance_subtab()
         self.create_backup_subtab()
         self.create_search_subtab()
@@ -350,161 +371,269 @@ class PreferencesTab(QWidget):
 
         layout.addWidget(self.subtabs)
 
-    def create_tab_settings_subtab(self):
-        """Create Tab Settings subtab"""
-        tab_settings_widget = QWidget()
-        layout = QVBoxLayout(tab_settings_widget)
-        layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(10)
-
-        # Tab Management Group
-        tab_mgmt_group = QGroupBox("Tab Management")
-        tab_mgmt_layout = QHBoxLayout()
-        tab_mgmt_layout.setSpacing(10)
-
-        self.edit_tabs_btn = QPushButton("🔀 Edit Tabs")
-        self.edit_tabs_btn.setToolTip("Reorder and rename tabs in one dialog")
-        self.edit_tabs_btn.clicked.connect(self.open_tab_editor_dialog)
-
-        self.add_tab_btn = QPushButton("➕ Add New Tab")
-        self.add_tab_btn.setToolTip("Create a new empty tab")
-        self.add_tab_btn.clicked.connect(self.open_add_tab_dialog)
-
-        tab_mgmt_layout.addWidget(self.edit_tabs_btn)
-        tab_mgmt_layout.addWidget(self.add_tab_btn)
-        tab_mgmt_layout.addStretch()
-
-        tab_mgmt_group.setLayout(tab_mgmt_layout)
-        layout.addWidget(tab_mgmt_group)
-
-        layout.addStretch()
-        self.subtabs.addTab(tab_settings_widget, "⚙️ Tab Settings")
+    # Color variables exposed in the theme editor
+    _THEME_COLOR_VARS = [
+        ("Background",    "BG_DARK"),
+        ("Surface",       "BG_MEDIUM"),
+        ("Surface Light", "BG_LIGHT"),
+        ("Text Primary",  "FG_PRIMARY"),
+        ("Text Secondary","FG_SECONDARY"),
+        ("Text Dim",      "FG_DIM"),
+        ("Accent",        "ACCENT_PRIMARY"),
+        ("Accent Alt",    "ACCENT_SECONDARY"),
+        ("Error",         "ERROR_COLOR"),
+        ("Warning",       "WARNING_COLOR"),
+        ("Success",       "SUCCESS_COLOR"),
+    ]
 
     def create_appearance_subtab(self):
-        """Create Appearance subtab"""
+        """Create Appearance subtab — theme, font, tab management, color editor, preview."""
+        from PyQt6.QtWidgets import QScrollArea
         appearance_widget = QWidget()
-        layout = QVBoxLayout(appearance_widget)
-        layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(10)
+        main_layout = QVBoxLayout(appearance_widget)
+        main_layout.setContentsMargins(6, 6, 6, 6)
+        main_layout.setSpacing(8)
 
-        # Theme Settings Group
-        theme_group = QGroupBox("Theme Settings")
-        theme_layout = QFormLayout()
-        theme_layout.setSpacing(10)
+        # ── Row 1: Theme + Font side by side ────────────────────────────
+        top_row = QHBoxLayout()
+        top_row.setSpacing(8)
 
-        # Theme selector
+        theme_group = QGroupBox("Color Theme")
+        theme_form = QFormLayout(theme_group)
+        theme_form.setSpacing(8)
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(THEMES.keys())
         self.theme_combo.currentTextChanged.connect(self.preview_theme)
+        theme_form.addRow("Theme:", self.theme_combo)
+        top_row.addWidget(theme_group, 1)
 
-        theme_label = QLabel("Color Theme:")
-        theme_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; color: {theme.FG_PRIMARY};")
-        theme_layout.addRow(theme_label, self.theme_combo)
-
-        theme_group.setLayout(theme_layout)
-        layout.addWidget(theme_group)
-
-        # Font Settings Group
-        font_group = QGroupBox("Font Settings")
-        font_layout = QFormLayout()
-        font_layout.setSpacing(10)
-
-        # Font family dropdown
+        font_group = QGroupBox("Font")
+        font_form = QFormLayout(font_group)
+        font_form.setSpacing(8)
         self.font_family_combo = QComboBox()
         self.font_family_combo.addItems([
-            # Sans-serif (UI fonts)
-            "Segoe UI",
-            "Arial",
-            "Calibri",
-            "Tahoma",
-            "Verdana",
-            "Trebuchet MS",
-            "Georgia",
-            "Helvetica",
-            "Ubuntu",
-            "Noto Sans",
-            "Open Sans",
-            # Monospace (code fonts)
-            "Consolas",
-            "Courier New",
-            "DejaVu Sans Mono",
-            "Liberation Mono",
-            "Monaco",
-            "Menlo",
-            "SF Mono",
-            "Cascadia Code",
-            "Fira Code",
-            "JetBrains Mono",
-            "Source Code Pro",
+            "Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
+            "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu", "Noto Sans", "Open Sans",
+            "Consolas", "Courier New", "DejaVu Sans Mono", "Liberation Mono",
+            "Monaco", "Menlo", "SF Mono", "Cascadia Code", "Fira Code",
+            "JetBrains Mono", "Source Code Pro",
         ])
-
-        font_family_label = QLabel("Font Family:")
-        font_family_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; color: {theme.FG_PRIMARY};")
-        font_layout.addRow(font_family_label, self.font_family_combo)
-
-        # Font size spinner
+        font_form.addRow("Family:", self.font_family_combo)
         self.font_size_spin = QSpinBox()
         self.font_size_spin.setRange(10, 24)
         self.font_size_spin.setValue(14)
         self.font_size_spin.setSuffix(" px")
+        font_form.addRow("Size:", self.font_size_spin)
+        top_row.addWidget(font_group, 1)
 
-        font_label = QLabel("Font Size:")
-        font_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_NORMAL}px; color: {theme.FG_PRIMARY};")
-        font_layout.addRow(font_label, self.font_size_spin)
+        main_layout.addLayout(top_row)
 
-        font_group.setLayout(font_layout)
-        layout.addWidget(font_group)
+        # ── Tab Management ───────────────────────────────────────────────
+        tab_mgmt_group = QGroupBox("Tab Management")
+        tab_mgmt_layout = QHBoxLayout(tab_mgmt_group)
+        tab_mgmt_layout.setSpacing(8)
+        self.edit_tabs_btn = QPushButton("Edit Tabs")
+        self.edit_tabs_btn.setToolTip("Reorder and rename tabs")
+        self.edit_tabs_btn.clicked.connect(self.open_tab_editor_dialog)
+        self.add_tab_btn = QPushButton("Add New Tab")
+        self.add_tab_btn.setToolTip("Create a new empty tab")
+        self.add_tab_btn.clicked.connect(self.open_add_tab_dialog)
+        tab_mgmt_layout.addWidget(self.edit_tabs_btn)
+        tab_mgmt_layout.addWidget(self.add_tab_btn)
+        tab_mgmt_layout.addStretch()
+        main_layout.addWidget(tab_mgmt_group)
 
-        # Theme Preview
-        preview_group = QGroupBox("Theme Preview")
-        preview_layout = QVBoxLayout()
+        # ── Color Editor + Preview in a QSplitter ───────────────────────
+        color_splitter = QSplitter(Qt.Orientation.Horizontal)
+        color_splitter.addWidget(self._build_color_editor())
+        color_splitter.addWidget(self._build_widget_preview())
+        color_splitter.setSizes([280, 500])
+        main_layout.addWidget(color_splitter, 1)
 
-        self.preview_label = QLabel("Preview of selected theme colors")
-        self.preview_label.setWordWrap(True)
-        self.preview_label.setMinimumHeight(100)
-        self.preview_label.setStyleSheet(f"""
-            QLabel {{
-                padding: 15px;
-                border-radius: 3px;
-                font-size: {theme.FONT_SIZE_NORMAL}px;
-            }}
-        """)
-        preview_layout.addWidget(self.preview_label)
-
-        preview_group.setLayout(preview_layout)
-        layout.addWidget(preview_group)
-
-        # Buttons
+        # ── Action buttons ───────────────────────────────────────────────
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)
-
-        self.apply_btn = QPushButton("Apply Theme")
-        self.apply_btn.setToolTip("Apply theme changes to the current session")
+        button_layout.setSpacing(8)
+        self.apply_btn = QPushButton("Apply")
+        self.apply_btn.setToolTip("Apply theme and font changes now")
         self.apply_btn.clicked.connect(self.apply_preferences)
-
-        self.save_btn = QPushButton("Save Preferences")
+        self.save_btn = QPushButton("Save")
         self.save_btn.setToolTip("Save preferences to config file")
         self.save_btn.clicked.connect(self.save_preferences)
-
         self.reset_btn = QPushButton("Reset to Gruvbox Dark")
-        self.reset_btn.setToolTip("Reset theme to default Gruvbox Dark")
+        self.reset_btn.setToolTip("Reset to default theme")
         self.reset_btn.clicked.connect(self.reset_to_default)
-
-        self.restart_btn = QPushButton("🔄 Restart Application")
-        self.restart_btn.setToolTip("Restart the application to apply all changes")
-        self.restart_btn.setMinimumWidth(150)
+        self.restart_btn = QPushButton("Restart App")
+        self.restart_btn.setToolTip("Restart application to apply all changes")
         self.restart_btn.clicked.connect(self.restart_application)
-
         button_layout.addWidget(self.apply_btn)
         button_layout.addWidget(self.save_btn)
         button_layout.addWidget(self.reset_btn)
         button_layout.addStretch()
         button_layout.addWidget(self.restart_btn)
-
-        layout.addLayout(button_layout)
-        layout.addStretch()
+        main_layout.addLayout(button_layout)
 
         self.subtabs.addTab(appearance_widget, "🎨 Appearance")
+
+    def _build_color_editor(self):
+        """Build the Theme Colors panel with per-variable color pickers."""
+        from PyQt6.QtWidgets import QScrollArea, QGridLayout
+        self._custom_colors = {}
+        self._color_btns = {}
+        self._color_hex_lbls = {}
+
+        group = QGroupBox("Theme Colors")
+        outer = QVBoxLayout(group)
+        outer.setContentsMargins(4, 6, 4, 4)
+        outer.setSpacing(4)
+
+        hint = QLabel("Click a swatch to override. Changes apply with the Apply button.")
+        hint.setStyleSheet(f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px;")
+        hint.setWordWrap(True)
+        outer.addWidget(hint)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        grid_widget = QWidget()
+        grid = QGridLayout(grid_widget)
+        grid.setSpacing(4)
+        grid.setContentsMargins(2, 2, 2, 2)
+
+        for row_idx, (label, var_name) in enumerate(self._THEME_COLOR_VARS):
+            name_lbl = QLabel(label)
+            name_lbl.setStyleSheet(
+                f"color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_SMALL}px;"
+            )
+            grid.addWidget(name_lbl, row_idx, 0)
+
+            current_hex = getattr(theme, var_name, "#888888")
+            swatch = QPushButton()
+            swatch.setToolTip(f"Click to change {var_name}")
+            swatch.setStyleSheet(
+                f"background-color: {current_hex}; border: 1px solid {theme.BG_LIGHT}; "
+                f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 20px;"
+            )
+            swatch.clicked.connect(lambda checked, vn=var_name: self._pick_color(vn))
+            self._color_btns[var_name] = swatch
+            grid.addWidget(swatch, row_idx, 1)
+
+            hex_lbl = QLabel(current_hex)
+            hex_lbl.setStyleSheet(
+                f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; "
+                f"font-family: {theme.FONT_MONOSPACE};"
+            )
+            self._color_hex_lbls[var_name] = hex_lbl
+            grid.addWidget(hex_lbl, row_idx, 2)
+
+        reset_btn = QPushButton("Reset Colors")
+        reset_btn.setToolTip("Discard all custom color overrides")
+        reset_btn.clicked.connect(self._reset_custom_colors)
+        n = len(self._THEME_COLOR_VARS)
+        grid.addWidget(reset_btn, n, 0, 1, 3)
+
+        scroll.setWidget(grid_widget)
+        outer.addWidget(scroll, 1)
+        return group
+
+    def _build_widget_preview(self):
+        """Build the live Theme Preview panel (QTextBrowser HTML)."""
+        group = QGroupBox("Theme Preview")
+        layout = QVBoxLayout(group)
+        layout.setContentsMargins(4, 6, 4, 4)
+        self.preview_browser = QTextBrowser()
+        self.preview_browser.setOpenExternalLinks(False)
+        layout.addWidget(self.preview_browser, 1)
+        self._update_preview_html()
+        return group
+
+    def _update_preview_html(self):
+        """Regenerate the preview browser with current theme variable values."""
+        def _swatch_row(color, var, desc):
+            return (
+                f"<tr>"
+                f"<td style='padding:2px 4px;'>"
+                f"<span style='background:{color};border:1px solid {theme.BG_LIGHT};"
+                f"border-radius:2px;padding:0 12px;'>&nbsp;</span></td>"
+                f"<td style='padding:2px 6px;color:{theme.FG_SECONDARY};"
+                f"font-size:{theme.FONT_SIZE_SMALL}px;font-family:{theme.FONT_MONOSPACE};'>{color}</td>"
+                f"<td style='padding:2px 4px;color:{theme.FG_DIM};"
+                f"font-size:{theme.FONT_SIZE_SMALL}px;'>{var}</td>"
+                f"<td style='padding:2px 4px;color:{color};"
+                f"font-size:{theme.FONT_SIZE_SMALL}px;'>■ {desc}</td>"
+                f"</tr>"
+            )
+
+        html = (
+            f"<html><body style='background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
+            f"padding:8px;font-size:{theme.FONT_SIZE_NORMAL}px;'>"
+
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:0 0 4px;'>Backgrounds &amp; Surfaces</p>"
+            f"<table style='border-collapse:collapse;width:100%;'>"
+            f"{_swatch_row(theme.BG_DARK,   'BG_DARK',   'main window')}"
+            f"{_swatch_row(theme.BG_MEDIUM, 'BG_MEDIUM', 'panels / group boxes')}"
+            f"{_swatch_row(theme.BG_LIGHT,  'BG_LIGHT',  'borders / selection')}"
+            f"</table>"
+
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:8px 0 4px;'>Text Colors</p>"
+            f"<p style='margin:2px 0;color:{theme.FG_PRIMARY};'>■ FG_PRIMARY {theme.FG_PRIMARY} — body text</p>"
+            f"<p style='margin:2px 0;color:{theme.FG_SECONDARY};'>■ FG_SECONDARY {theme.FG_SECONDARY} — captions</p>"
+            f"<p style='margin:2px 0;color:{theme.FG_DIM};'>■ FG_DIM {theme.FG_DIM} — timestamps</p>"
+
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:8px 0 4px;'>Accent &amp; Semantic</p>"
+            f"<p style='margin:2px 0;color:{theme.ACCENT_PRIMARY};'>■ ACCENT_PRIMARY {theme.ACCENT_PRIMARY} — buttons, active tab</p>"
+            f"<p style='margin:2px 0;color:{theme.ACCENT_SECONDARY};'>■ ACCENT_SECONDARY {theme.ACCENT_SECONDARY} — hover, success</p>"
+            f"<p style='margin:2px 0;color:{theme.ERROR_COLOR};'>■ ERROR_COLOR {theme.ERROR_COLOR} — errors</p>"
+            f"<p style='margin:2px 0;color:{theme.WARNING_COLOR};'>■ WARNING_COLOR {theme.WARNING_COLOR} — warnings</p>"
+
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:8px 0 4px;'>Font &amp; Spacing</p>"
+            f"<p style='margin:2px 0;'>UI: <b>{theme.FONT_FAMILY_UI}</b> &nbsp; "
+            f"large={theme.FONT_SIZE_LARGE}px &nbsp; normal={theme.FONT_SIZE_NORMAL}px &nbsp; "
+            f"small={theme.FONT_SIZE_SMALL}px &nbsp; tiny={theme.FONT_SIZE_TINY}px</p>"
+            f"<p style='margin:3px 0;font-family:{theme.FONT_FAMILY_MONO};"
+            f"font-size:{theme.FONT_SIZE_SMALL}px;background:{theme.BG_MEDIUM};"
+            f"padding:4px;border-radius:3px;'>Mono ({theme.FONT_MONOSPACE}): $ claude --help</p>"
+            f"<p style='margin:2px 0;color:{theme.FG_SECONDARY};font-size:{theme.FONT_SIZE_SMALL}px;'>"
+            f"Margins SM={theme.MARGIN_SM} MD={theme.MARGIN_MD} LG={theme.MARGIN_LG} &nbsp; "
+            f"Padding SM={theme.PADDING_SM} MD={theme.PADDING_MD} &nbsp; "
+            f"Border-radius {theme.BORDER_RADIUS}px</p>"
+            f"</body></html>"
+        )
+        self.preview_browser.setHtml(html)
+
+    def _pick_color(self, var_name: str):
+        """Open a color picker for var_name and store the result."""
+        from PyQt6.QtWidgets import QColorDialog
+        from PyQt6.QtGui import QColor
+        current_hex = self._custom_colors.get(var_name, getattr(theme, var_name, "#888888"))
+        color = QColorDialog.getColor(QColor(current_hex), self, f"Pick color — {var_name}")
+        if color.isValid():
+            new_hex = color.name()
+            self._custom_colors[var_name] = new_hex
+            if var_name in self._color_btns:
+                self._color_btns[var_name].setStyleSheet(
+                    f"background-color: {new_hex}; border: 2px solid {theme.ACCENT_PRIMARY}; "
+                    f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 20px;"
+                )
+            if var_name in self._color_hex_lbls:
+                self._color_hex_lbls[var_name].setText(new_hex)
+
+    def _reset_custom_colors(self):
+        """Discard all custom color overrides and refresh the editor."""
+        self._custom_colors.clear()
+        self._refresh_color_buttons()
+
+    def _refresh_color_buttons(self):
+        """Sync color swatch buttons and hex labels to current theme globals."""
+        for var_name, btn in self._color_btns.items():
+            cur = self._custom_colors.get(var_name, getattr(theme, var_name, "#888888"))
+            btn.setStyleSheet(
+                f"background-color: {cur}; border: 1px solid {theme.BG_LIGHT}; "
+                f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 20px;"
+            )
+        for var_name, lbl in self._color_hex_lbls.items():
+            cur = self._custom_colors.get(var_name, getattr(theme, var_name, "#888888"))
+            lbl.setText(cur)
 
     def create_backup_subtab(self):
         """Create Backup subtab"""
@@ -1185,31 +1314,14 @@ class {class_name}Tab(QWidget):
 '''
 
     def preview_theme(self, theme_name):
-        """Preview selected theme colors"""
+        """Preview selected theme — update globals and refresh the preview browser."""
         if theme_name in THEMES:
-            theme_colors = THEMES[theme_name]
-            preview_text = f"""
-            <b>Theme: {theme_name}</b><br><br>
-            <span style='color: {theme_colors["foreground"]};'>■ Foreground Text</span><br>
-            <span style='color: {theme_colors["brightBlue"]};'>■ Accent Blue</span><br>
-            <span style='color: {theme_colors["brightGreen"]};'>■ Accent Green</span><br>
-            <span style='color: {theme_colors["brightYellow"]};'>■ Accent Yellow</span><br>
-            <span style='color: {theme_colors["brightRed"]};'>■ Accent Red</span><br>
-            <br>
-            Background: {theme_colors["background"]}<br>
-            Selection: {theme_colors["selection"]}
-            """
-
-            self.preview_label.setStyleSheet(f"""
-                QLabel {{
-                    background-color: {theme_colors["background"]};
-                    color: {theme_colors["foreground"]};
-                    padding: 15px;
-                    border-radius: 3px;
-                    font-size: {theme.FONT_SIZE_NORMAL}px;
-                }}
-            """)
-            self.preview_label.setText(preview_text)
+            font_size = self.font_size_spin.value()
+            font_family = self.font_family_combo.currentText()
+            theme.apply_theme(theme_name, font_size, font_family)
+            if self._custom_colors:
+                theme.apply_color_overrides(self._custom_colors)
+            self._update_preview_html()
 
     def apply_preferences(self):
         """Apply preferences immediately — emits theme_changed signal for instant update."""
@@ -1217,48 +1329,44 @@ class {class_name}Tab(QWidget):
         font_size = self.font_size_spin.value()
         font_family = self.font_family_combo.currentText()
 
-        # Apply locally first
         theme.apply_theme(theme_name, font_size, font_family)
+        if self._custom_colors:
+            theme.apply_color_overrides(self._custom_colors)
+
         app = QApplication.instance()
         if app:
             from PyQt6.QtGui import QFont
             app.setFont(QFont(font_family, font_size))
             app.setStyleSheet(theme.generate_app_stylesheet())
 
-        # Emit signal → main window calls apply_theme_change on all tabs
+        self._refresh_color_buttons()
+        self._update_preview_html()
         self.theme_changed.emit(theme_name, font_size)
-
-        # Save preferences
         self.save_preferences_silently()
 
-        # Report via status bar if main window has set_status, else show dialog
         main_win = self.window()
         if hasattr(main_win, "set_status"):
-            main_win.set_status(f"Theme '{theme_name}' applied ({font_size}px)")
+            main_win.set_status(f"Theme '{theme_name}' applied ({font_family} {font_size}px)")
         else:
             QMessageBox.information(
-                self,
-                "Theme Applied",
-                f"Theme '{theme_name}' with {font_size}px font applied."
+                self, "Applied",
+                f"Theme '{theme_name}', {font_family} {font_size}px applied."
             )
 
     def save_preferences_silently(self):
         """Save preferences to file without showing message"""
         try:
-            # Load existing config
             config_data = {}
             if self.config_file.exists():
                 with open(self.config_file, 'r') as f:
                     config_data = json.load(f)
 
-            # Update preferences section
             config_data["preferences"] = {
                 "theme": self.theme_combo.currentText(),
                 "font_size": self.font_size_spin.value(),
                 "font_family": self.font_family_combo.currentText(),
+                "custom_colors": self._custom_colors,
             }
-
-            # Save merged config (atomic)
             _atomic_json_write(self.config_file, config_data)
         except Exception as e:
             logger.warning("Failed to auto-save preferences: %s", e)
@@ -1270,36 +1378,34 @@ class {class_name}Tab(QWidget):
             font_size = self.font_size_spin.value()
             font_family = self.font_family_combo.currentText()
 
-            # Apply theme + font
             theme.apply_theme(theme_name, font_size, font_family)
+            if self._custom_colors:
+                theme.apply_color_overrides(self._custom_colors)
             app = QApplication.instance()
             if app:
                 from PyQt6.QtGui import QFont
                 app.setFont(QFont(font_family, font_size))
                 app.setStyleSheet(theme.generate_app_stylesheet())
 
-            # Load existing config
             config_data = {}
             if self.config_file.exists():
                 with open(self.config_file, 'r') as f:
                     config_data = json.load(f)
 
-            # Update preferences section
             config_data["preferences"] = {
                 "theme": theme_name,
                 "font_size": font_size,
                 "font_family": font_family,
+                "custom_colors": self._custom_colors,
             }
-
-            # Save merged config (atomic)
             _atomic_json_write(self.config_file, config_data)
 
-            # Emit signal for instant theme refresh across all tabs
+            self._refresh_color_buttons()
+            self._update_preview_html()
             self.theme_changed.emit(theme_name, font_size)
 
             QMessageBox.information(
-                self,
-                "Saved & Applied",
+                self, "Saved & Applied",
                 f"Theme '{theme_name}', {font_family} {font_size}px saved and applied!"
             )
         except Exception as e:
@@ -1312,48 +1418,54 @@ class {class_name}Tab(QWidget):
                 with open(self.config_file, 'r') as f:
                     config_data = json.load(f)
 
-                # Get preferences section
                 prefs = config_data.get("preferences", {})
                 theme_name = prefs.get("theme", "Gruvbox Dark")
                 font_size = prefs.get("font_size", 14)
                 font_family = prefs.get("font_family", "Segoe UI")
+                self._custom_colors = prefs.get("custom_colors", {})
 
-                # Apply the theme + font
                 theme.apply_theme(theme_name, font_size, font_family)
+                if self._custom_colors:
+                    theme.apply_color_overrides(self._custom_colors)
 
-                # Set UI values
+                # Block signals so setCurrentIndex doesn't trigger preview_theme mid-load
+                self.theme_combo.blockSignals(True)
                 index = self.theme_combo.findText(theme_name)
                 if index >= 0:
                     self.theme_combo.setCurrentIndex(index)
+                self.theme_combo.blockSignals(False)
 
                 self.font_size_spin.setValue(font_size)
-
                 ff_index = self.font_family_combo.findText(font_family)
                 if ff_index >= 0:
                     self.font_family_combo.setCurrentIndex(ff_index)
 
-                self.preview_theme(theme_name)
+                self._refresh_color_buttons()
+                self._update_preview_html()
             else:
-                # No config file - use defaults
+                self._custom_colors = {}
                 self.theme_combo.setCurrentText("Gruvbox Dark")
                 self.font_size_spin.setValue(14)
                 self.font_family_combo.setCurrentText("Segoe UI")
+                self._update_preview_html()
         except Exception as e:
             logger.warning("Failed to load preferences: %s", e)
-            # Use defaults on error
+            self._custom_colors = {}
             self.theme_combo.setCurrentText("Gruvbox Dark")
             self.font_size_spin.setValue(14)
             self.font_family_combo.setCurrentText("Segoe UI")
+            self._update_preview_html()
 
         self._load_search_settings()
         self._load_skills_settings()
 
     def reset_to_default(self):
         """Reset to default Gruvbox Dark theme and apply immediately."""
+        self._custom_colors.clear()
         self.theme_combo.setCurrentText("Gruvbox Dark")
         self.font_size_spin.setValue(14)
         self.font_family_combo.setCurrentText("Segoe UI")
-        self.apply_preferences()  # apply + save
+        self.apply_preferences()
 
     def create_full_backup(self):
         """Create full backup of Claude Code configuration"""

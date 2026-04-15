@@ -52,6 +52,8 @@ class DocPage(QWidget):
 
         # ── Content browser ──────────────────────────────────────────────
         self._browser = QTextBrowser()
+        from PyQt6.QtGui import QFont
+        self._browser.setFont(QFont(theme.FONT_FAMILY_UI, theme.FONT_SIZE_NORMAL))
         self._browser.setOpenExternalLinks(True)
         self._browser.setHtml(self._html)
         layout.addWidget(self._browser, 1)
@@ -114,7 +116,7 @@ def _table(headers, rows):
 
 def _wrap(*parts):
     return (f"<html><body style='background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
-            f"font-family:{theme.FONT_FAMILY};font-size:{theme.FONT_SIZE_NORMAL}px;"
+            f"font-size:{theme.FONT_SIZE_NORMAL}px;"
             f"padding:{theme.PADDING_MD}px;'>{''.join(parts)}</body></html>")
 
 

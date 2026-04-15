@@ -91,7 +91,6 @@ class LinkManagerDialog(QDialog):
 
         # Links list - show both title and URL
         self.list_widget = QListWidget()
-        self.list_widget.setAlternatingRowColors(True)
         layout.addWidget(self.list_widget)
 
         # Buttons
