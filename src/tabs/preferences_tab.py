@@ -21,6 +21,7 @@ from PyQt6.QtCore import pyqtSignal, QProcess, Qt
 from utils import theme
 from utils.ui_state_manager import UIStateManager
 from tabs.config_sync_tab import ConfigSyncTab
+from tabs.widget_theme_editor import WidgetThemeEditor
 
 logger = logging.getLogger(__name__)
 
@@ -446,7 +447,7 @@ class PreferencesTab(QWidget):
         editor_splitter = QSplitter(Qt.Orientation.Horizontal)
         editor_splitter.addWidget(self._build_theme_editor())
         editor_splitter.addWidget(self._build_widget_preview())
-        editor_splitter.setSizes([320, 500])
+        editor_splitter.setSizes([300, 900])
         main_layout.addWidget(editor_splitter, 1)
 
         # ── Action buttons ────────────────────────────────────────────────
@@ -636,159 +637,24 @@ class PreferencesTab(QWidget):
         return outer_widget
 
     def _build_widget_preview(self):
-        """Build the live Theme Preview panel (QTextBrowser HTML)."""
-        group = QGroupBox("Theme Preview")
-        layout = QVBoxLayout(group)
-        layout.setContentsMargins(4, 6, 4, 4)
-        self.preview_browser = QTextBrowser()
-        self.preview_browser.setOpenExternalLinks(False)
-        layout.addWidget(self.preview_browser, 1)
-        self._update_preview_html()
-        return group
+        """Build the interactive widget theme editor (real Qt widgets, click to edit)."""
+        self._widget_theme_editor = WidgetThemeEditor(
+            on_change_callback=self._push_app_stylesheet
+        )
+        return self._widget_theme_editor
 
     def _update_preview_html(self):
-        """Regenerate the preview browser with current theme + editor values."""
-        n = self.font_size_spin.value()
-        mono = self.font_mono_combo.currentText() if hasattr(self, 'font_mono_combo') else theme.FONT_MONOSPACE
-        ui_font = self.font_family_combo.currentText() if hasattr(self, 'font_family_combo') else theme.FONT_FAMILY_UI
-        n_large  = self._typo_spins["FONT_SIZE_LARGE"].value()  if hasattr(self, '_typo_spins') else theme.FONT_SIZE_LARGE
-        n_small  = self._typo_spins["FONT_SIZE_SMALL"].value()  if hasattr(self, '_typo_spins') else theme.FONT_SIZE_SMALL
-        n_tiny   = self._typo_spins["FONT_SIZE_TINY"].value()   if hasattr(self, '_typo_spins') else theme.FONT_SIZE_TINY
-        n_tab    = self._typo_spins["FONT_SIZE_TAB"].value()    if hasattr(self, '_typo_spins') else theme.FONT_SIZE_TAB
-        radius   = self._spacing_spins["BORDER_RADIUS"].value() if hasattr(self, '_spacing_spins') else theme.BORDER_RADIUS
-        margin_sm = self._spacing_spins["MARGIN_SM"].value()    if hasattr(self, '_spacing_spins') else theme.MARGIN_SM
-        margin_md = self._spacing_spins["MARGIN_MD"].value()    if hasattr(self, '_spacing_spins') else theme.MARGIN_MD
-        margin_lg = self._spacing_spins["MARGIN_LG"].value()    if hasattr(self, '_spacing_spins') else theme.MARGIN_LG
-        pad_sm   = self._spacing_spins["PADDING_SM"].value()    if hasattr(self, '_spacing_spins') else theme.PADDING_SM
-        pad_md   = self._spacing_spins["PADDING_MD"].value()    if hasattr(self, '_spacing_spins') else theme.PADDING_MD
-
-        def btn(label, bg, fg):
-            return (f"<span style='display:inline-block;background:{bg};color:{fg};"
-                    f"padding:{pad_sm}px {pad_md*2}px;border-radius:{radius}px;"
-                    f"font-size:{n}px;font-weight:bold;margin:2px;'>{label}</span>")
-
-        def inp(placeholder):
-            return (f"<span style='display:inline-block;background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
-                    f"border:1px solid {theme.BG_LIGHT};padding:{pad_sm}px {pad_md}px;"
-                    f"border-radius:{radius}px;font-size:{n}px;min-width:180px;'>{placeholder}</span>")
-
-        def tag(label, color):
-            return (f"<span style='background:{color};color:{theme.BG_DARK};"
-                    f"padding:1px {pad_sm}px;border-radius:{radius}px;"
-                    f"font-size:{n_small}px;margin:1px;'>{label}</span>")
-
-        sep = f"<hr style='border:none;border-top:1px solid {theme.BG_LIGHT};margin:{margin_sm}px 0;'/>"
-
-        html = (
-            f"<html><body style='background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
-            f"font-family:{ui_font};font-size:{n}px;padding:{pad_md}px;line-height:1.5;'>"
-
-            # Section: Typography
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;font-size:{n_large}px;"
-            f"margin:0 0 {margin_sm}px;'>Typography</p>"
-            f"<p style='font-size:{n_large}px;margin:{margin_sm}px 0;color:{theme.FG_PRIMARY};'>"
-            f"Large ({n_large}px) — Section header</p>"
-            f"<p style='font-size:{n}px;margin:{margin_sm}px 0;color:{theme.FG_PRIMARY};'>"
-            f"Normal ({n}px) — Body text and labels</p>"
-            f"<p style='font-size:{n_small}px;margin:{margin_sm}px 0;color:{theme.FG_SECONDARY};'>"
-            f"Small ({n_small}px) — Captions and hints</p>"
-            f"<p style='font-size:{n_tiny}px;margin:{margin_sm}px 0;color:{theme.FG_DIM};'>"
-            f"Tiny ({n_tiny}px) — Timestamps and metadata</p>"
-            f"<p style='font-size:{n_tab}px;margin:{margin_sm}px 0;color:{theme.FG_SECONDARY};'>"
-            f"Tab ({n_tab}px) — Tab bar labels</p>"
-            f"<p style='font-family:{mono};font-size:{n_small}px;background:{theme.BG_MEDIUM};"
-            f"color:{theme.ACCENT_SECONDARY};padding:{pad_sm}px {pad_md}px;"
-            f"border-radius:{radius}px;margin:{margin_sm}px 0;'>"
-            f"Mono ({mono}): $ claude --help --output-format json</p>"
-            f"{sep}"
-
-            # Section: Buttons
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Buttons</p>"
-            f"<p style='margin:{margin_sm}px 0;'>"
-            f"{btn('Apply', theme.ACCENT_PRIMARY, theme.BG_DARK)}&nbsp;"
-            f"{btn('Save', theme.ACCENT_SECONDARY, theme.BG_DARK)}&nbsp;"
-            f"{btn('Reset', theme.BG_MEDIUM, theme.FG_PRIMARY)}&nbsp;"
-            f"{btn('Delete', theme.ERROR_COLOR, theme.BG_DARK)}&nbsp;"
-            f"{btn('Disabled', theme.BG_MEDIUM, theme.FG_DIM)}"
-            f"</p>{sep}"
-
-            # Section: Inputs
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Inputs &amp; Controls</p>"
-            f"<p style='margin:{margin_sm}px 0;'>{inp('Search or filter...')}</p>"
-            f"<p style='margin:{margin_sm}px 0;'>"
-            f"<span style='background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
-            f"border:1px solid {theme.ACCENT_PRIMARY};padding:{pad_sm}px {pad_md}px;"
-            f"border-radius:{radius}px;font-size:{n}px;'>Focused input border</span>"
-            f"</p>{sep}"
-
-            # Section: Colors
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Colors</p>"
-            f"<p style='margin:{margin_sm}px 0;'>"
-            f"{tag('BG_DARK '+theme.BG_DARK, theme.BG_MEDIUM)}&nbsp;"
-            f"{tag('BG_MEDIUM '+theme.BG_MEDIUM, theme.BG_LIGHT)}&nbsp;"
-            f"{tag('BG_LIGHT '+theme.BG_LIGHT, theme.FG_DIM)}"
-            f"</p>"
-            f"<p style='margin:{margin_sm}px 0;color:{theme.FG_PRIMARY};'>"
-            f"■ <span style='color:{theme.FG_PRIMARY};'>FG_PRIMARY</span>&nbsp; "
-            f"■ <span style='color:{theme.FG_SECONDARY};'>FG_SECONDARY</span>&nbsp; "
-            f"■ <span style='color:{theme.FG_DIM};'>FG_DIM</span>"
-            f"</p>"
-            f"<p style='margin:{margin_sm}px 0;'>"
-            f"■ <span style='color:{theme.ACCENT_PRIMARY};'>ACCENT_PRIMARY</span>&nbsp; "
-            f"■ <span style='color:{theme.ACCENT_SECONDARY};'>ACCENT_SECONDARY</span>"
-            f"</p>"
-            f"<p style='margin:{margin_sm}px 0;'>"
-            f"■ <span style='color:{theme.ERROR_COLOR};'>ERROR</span>&nbsp; "
-            f"■ <span style='color:{theme.WARNING_COLOR};'>WARNING</span>&nbsp; "
-            f"■ <span style='color:{theme.SUCCESS_COLOR};'>SUCCESS</span>"
-            f"</p>{sep}"
-
-            # Section: Table
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Table / List</p>"
-            f"<table style='border-collapse:collapse;width:100%;font-size:{n_small}px;'>"
-            f"<tr style='background:{theme.BG_MEDIUM};'>"
-            f"<th style='text-align:left;padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_PRIMARY};"
-            f"border-bottom:2px solid {theme.ACCENT_PRIMARY};'>Name</th>"
-            f"<th style='text-align:left;padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_PRIMARY};"
-            f"border-bottom:2px solid {theme.ACCENT_PRIMARY};'>Value</th>"
-            f"<th style='text-align:left;padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_PRIMARY};"
-            f"border-bottom:2px solid {theme.ACCENT_PRIMARY};'>Status</th>"
-            f"</tr>"
-            f"<tr style='background:{theme.BG_DARK};border-bottom:1px solid {theme.BG_LIGHT};'>"
-            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.FG_PRIMARY};'>row-item-1</td>"
-            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.FG_PRIMARY};'>value-a</td>"
-            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_SECONDARY};'>✓ OK</td>"
-            f"</tr>"
-            f"<tr style='background:{theme.BG_DARK};border-bottom:1px solid {theme.BG_LIGHT};'>"
-            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.FG_PRIMARY};'>row-item-2</td>"
-            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.FG_PRIMARY};'>value-b</td>"
-            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.WARNING_COLOR};'>⚠ Warn</td>"
-            f"</tr>"
-            f"<tr style='background:{theme.BG_MEDIUM};'>"
-            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_PRIMARY};' colspan='3'>"
-            f"▶ Selected row (BG_MEDIUM, ACCENT_PRIMARY text)</td>"
-            f"</tr>"
-            f"</table>{sep}"
-
-            # Section: Spacing summary
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Spacing</p>"
-            f"<p style='color:{theme.FG_SECONDARY};font-size:{n_small}px;margin:{margin_sm}px 0;'>"
-            f"Margin SM={margin_sm}px &nbsp; MD={margin_md}px &nbsp; LG={margin_lg}px &nbsp;|&nbsp; "
-            f"Padding SM={pad_sm}px &nbsp; MD={pad_md}px &nbsp;|&nbsp; "
-            f"Radius={radius}px</p>"
-
-            f"</body></html>"
-        )
-        if hasattr(self, 'preview_browser'):
-            self.preview_browser.setHtml(html)
+        """No-op: preview is now real live Qt widgets in WidgetThemeEditor."""
 
     # ── Live-apply helpers ───────────────────────────────────────────────────
 
     def _push_app_stylesheet(self):
-        """Regenerate and push the full app stylesheet from current theme globals."""
+        """Regenerate and push the full app stylesheet from current theme globals + widget overrides."""
         app = QApplication.instance()
         if app:
-            app.setStyleSheet(theme.generate_app_stylesheet())
+            base_qss = theme.generate_app_stylesheet()
+            widget_qss = self._widget_theme_editor.get_overrides_qss() if hasattr(self, '_widget_theme_editor') else ''
+            app.setStyleSheet(base_qss + '\n' + widget_qss)
 
     def _live_apply_font_family(self, family: str):
         """Immediately apply a UI font family change to the whole app."""
@@ -1692,11 +1558,10 @@ class {class_name}Tab(QWidget):
         if app:
             from PyQt6.QtGui import QFont
             app.setFont(QFont(font_family, font_size))
-            app.setStyleSheet(theme.generate_app_stylesheet())
+            self._push_app_stylesheet()
 
         self._refresh_color_buttons()
         self._refresh_typo_spacing_controls()
-        self._update_preview_html()
         self.theme_changed.emit(theme_name, font_size)
         self.save_preferences_silently()
 
@@ -1721,6 +1586,7 @@ class {class_name}Tab(QWidget):
                 "font_mono": self.font_mono_combo.currentText(),
                 "custom_colors": self._custom_colors,
                 "custom_numbers": self._custom_numbers,
+                "widget_overrides": self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {},
             }
             _atomic_json_write(self.config_file, config_data)
         except Exception as e:
@@ -1747,7 +1613,7 @@ class {class_name}Tab(QWidget):
             if app:
                 from PyQt6.QtGui import QFont
                 app.setFont(QFont(font_family, font_size))
-                app.setStyleSheet(theme.generate_app_stylesheet())
+                self._push_app_stylesheet()
 
             config_data = {}
             if self.config_file.exists():
@@ -1761,12 +1627,12 @@ class {class_name}Tab(QWidget):
                 "font_mono": font_mono,
                 "custom_colors": self._custom_colors,
                 "custom_numbers": self._custom_numbers,
+                "widget_overrides": self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {},
             }
             _atomic_json_write(self.config_file, config_data)
 
             self._refresh_color_buttons()
             self._refresh_typo_spacing_controls()
-            self._update_preview_html()
             self.theme_changed.emit(theme_name, font_size)
 
             QMessageBox.information(
@@ -1790,6 +1656,7 @@ class {class_name}Tab(QWidget):
                 font_mono = prefs.get("font_mono", "Consolas")
                 self._custom_colors = prefs.get("custom_colors", {})
                 self._custom_numbers = prefs.get("custom_numbers", {})
+                widget_overrides = prefs.get("widget_overrides", {})
 
                 theme.apply_theme(theme_name, font_size, font_family)
                 if self._custom_colors:
@@ -1816,16 +1683,18 @@ class {class_name}Tab(QWidget):
                 for widget in (self.theme_combo, self.font_family_combo, self.font_mono_combo):
                     widget.blockSignals(False)
 
+                if widget_overrides and hasattr(self, '_widget_theme_editor'):
+                    self._widget_theme_editor.load_overrides(widget_overrides)
+
                 self._refresh_color_buttons()
                 self._refresh_typo_spacing_controls()
-                self._update_preview_html()
+                self._push_app_stylesheet()
             else:
                 self._custom_colors = {}
                 self._custom_numbers = {}
                 self.theme_combo.setCurrentText("Gruvbox Dark")
                 self.font_family_combo.setCurrentText("Segoe UI")
                 self.font_mono_combo.setCurrentText("Consolas")
-                self._update_preview_html()
         except Exception as e:
             logger.warning("Failed to load preferences: %s", e)
             self._custom_colors = {}
@@ -1833,7 +1702,6 @@ class {class_name}Tab(QWidget):
             self.theme_combo.setCurrentText("Gruvbox Dark")
             self.font_family_combo.setCurrentText("Segoe UI")
             self.font_mono_combo.setCurrentText("Consolas")
-            self._update_preview_html()
 
         self._load_search_settings()
         self._load_skills_settings()
