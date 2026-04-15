@@ -947,7 +947,7 @@ class SkillsTab(QWidget):
                 if new_data.get('context'):
                     fm_lines.append(f"context: {new_data['context']}")
                 if new_data.get('user_invocable'):
-                    fm_lines.append("user-invocable: true")
+                    fm_lines.append(f"user-invocable: {new_data['user_invocable']}")
                 if new_data.get('disable_model_invocation'):
                     fm_lines.append("disable-model-invocation: true")
                 if new_data.get('agent'):
@@ -1257,10 +1257,14 @@ class NewSkillDialog(QDialog):
         self.description_edit.setPlaceholderText("Use when you need to... / Helps with...")
         self.description_edit.setMinimumHeight(70)
         self.description_edit.setMaximumHeight(100)
+        self.description_edit.setToolTip("Max 1536 chars (hard limit). Aim for 50+ chars with trigger words.")
         form.addRow("Description*:", self.description_edit)
 
         self.argument_hint_edit = QLineEdit()
-        self.argument_hint_edit.setPlaceholderText("e.g., <file-path> (optional)")
+        self.argument_hint_edit.setPlaceholderText("e.g., <file-path>  (shown in autocomplete)")
+        self.argument_hint_edit.setToolTip(
+            "Shown during / autocomplete. Use $ARGUMENTS, $1, $2… in body to access these values."
+        )
         form.addRow("Argument Hint:", self.argument_hint_edit)
 
         self.model_combo = QComboBox()
@@ -1274,13 +1278,21 @@ class NewSkillDialog(QDialog):
 
         self.paths_edit = QLineEdit()
         self.paths_edit.setPlaceholderText("e.g., src/**/*.py, tests/ (comma-separated globs, optional)")
-        self.paths_edit.setToolTip("Limit this skill to specific file paths (glob patterns)")
+        self.paths_edit.setToolTip("Auto-activate skill for matching file paths only")
         form.addRow("Paths:", self.paths_edit)
 
         self.context_edit = QLineEdit()
-        self.context_edit.setPlaceholderText("Path to context file or brief context note (optional)")
-        self.context_edit.setToolTip("Additional context file path or description")
+        self.context_edit.setPlaceholderText("fork  or path/to/context.md (optional)")
+        self.context_edit.setToolTip(
+            "'fork' = run skill in a forked context (isolates side effects)\n"
+            "Or provide a path to a context file for additional background"
+        )
         form.addRow("Context:", self.context_edit)
+
+        self.user_invocable_combo = QComboBox()
+        self.user_invocable_combo.addItems(["(default — visible in / menu)", "true — visible in / menu", "false — hidden from / menu"])
+        self.user_invocable_combo.setToolTip("Controls whether skill appears in / autocomplete menu")
+        form.addRow("User-invocable:", self.user_invocable_combo)
 
         layout.addLayout(form)
 
@@ -1291,15 +1303,13 @@ class NewSkillDialog(QDialog):
 
         flags_layout = QHBoxLayout()
         flags_layout.setSpacing(16)
-        self.user_invocable_cb = QCheckBox("user-invocable")
-        self.user_invocable_cb.setToolTip("Users can invoke this skill directly with /skill-name")
         self.disable_model_cb = QCheckBox("disable-model-invocation")
         self.disable_model_cb.setToolTip("Disable model calls within this skill")
         self.agent_cb = QCheckBox("agent")
         self.agent_cb.setToolTip("Run this skill as an agent subagent")
         self.shell_cb = QCheckBox("shell")
         self.shell_cb.setToolTip("Allow shell command execution in this skill")
-        for cb in (self.user_invocable_cb, self.disable_model_cb, self.agent_cb, self.shell_cb):
+        for cb in (self.disable_model_cb, self.agent_cb, self.shell_cb):
             flags_layout.addWidget(cb)
         flags_layout.addStretch()
         layout.addLayout(flags_layout)
@@ -1333,7 +1343,23 @@ class NewSkillDialog(QDialog):
         tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: {theme.PADDING_MD}px; border-radius: {theme.BORDER_RADIUS}px;")
         layout.addWidget(tools_widget)
 
-        info_label = QLabel("* Required fields. The skill will be created with YAML frontmatter.")
+        # Substitution variables info
+        subst_label = QLabel(
+            "💡 Substitutions in skill body: "
+            "<code>$ARGUMENTS</code> — full argument string &nbsp; "
+            "<code>$1</code> <code>$2</code>… — positional args &nbsp; "
+            "<code>${CLAUDE_SKILL_DIR}</code> — skill directory path &nbsp; "
+            "<code>${CLAUDE_PROJECT_DIR}</code> — project root path"
+        )
+        subst_label.setWordWrap(True)
+        subst_label.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"padding: {theme.PADDING_SM}px; background: {theme.BG_MEDIUM}; "
+            f"border-radius: {theme.BORDER_RADIUS}px;"
+        )
+        layout.addWidget(subst_label)
+
+        info_label = QLabel("* Required. Description max 1536 chars. Multi-file skills: add extra files alongside SKILL.md.")
         info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
@@ -1355,6 +1381,8 @@ class NewSkillDialog(QDialog):
         selected_tools = [t for t, cb in self.tool_checkboxes.items() if cb.isChecked()]
         model_val = self.model_combo.currentText()
         effort_val = self.effort_combo.currentText()
+        ui_val = self.user_invocable_combo.currentText()
+        user_invocable = "" if ui_val.startswith("(default") else ("true" if ui_val.startswith("true") else "false")
         return {
             'name': self.name_edit.text().strip(),
             'description': self.description_edit.toPlainText().strip(),
@@ -1364,7 +1392,7 @@ class NewSkillDialog(QDialog):
             'paths': self.paths_edit.text().strip(),
             'context': self.context_edit.text().strip(),
             'allowed_tools': ", ".join(selected_tools),
-            'user_invocable': self.user_invocable_cb.isChecked(),
+            'user_invocable': user_invocable,
             'disable_model_invocation': self.disable_model_cb.isChecked(),
             'agent': self.agent_cb.isChecked(),
             'shell': self.shell_cb.isChecked(),
@@ -1418,11 +1446,15 @@ class EditSkillDialog(QDialog):
         self.description_edit.setPlainText(parsed_desc)
         self.description_edit.setMinimumHeight(70)
         self.description_edit.setMaximumHeight(100)
+        self.description_edit.setToolTip("Max 1536 chars (hard limit). Aim for 50+ chars with trigger words.")
         form.addRow("Description*:", self.description_edit)
 
         self.argument_hint_edit = QLineEdit()
         self.argument_hint_edit.setText(parsed_arg_hint)
-        self.argument_hint_edit.setPlaceholderText("e.g., <file-path> (optional)")
+        self.argument_hint_edit.setPlaceholderText("e.g., <file-path>  (shown in autocomplete)")
+        self.argument_hint_edit.setToolTip(
+            "Shown during / autocomplete. Use $ARGUMENTS, $1, $2… in body to access these values."
+        )
         form.addRow("Argument Hint:", self.argument_hint_edit)
 
         self.model_combo = QComboBox()
@@ -1441,13 +1473,29 @@ class EditSkillDialog(QDialog):
         self.paths_edit = QLineEdit()
         self.paths_edit.setText(parsed_paths)
         self.paths_edit.setPlaceholderText("e.g., src/**/*.py, tests/ (comma-separated globs)")
-        self.paths_edit.setToolTip("Limit this skill to specific file paths")
+        self.paths_edit.setToolTip("Auto-activate skill for matching file paths only")
         form.addRow("Paths:", self.paths_edit)
 
         self.context_edit = QLineEdit()
         self.context_edit.setText(parsed_context)
-        self.context_edit.setPlaceholderText("Path to context file or note (optional)")
+        self.context_edit.setPlaceholderText("fork  or path/to/context.md (optional)")
+        self.context_edit.setToolTip(
+            "'fork' = run skill in a forked context (isolates side effects)\n"
+            "Or provide a path to a context file for additional background"
+        )
         form.addRow("Context:", self.context_edit)
+
+        self.user_invocable_combo = QComboBox()
+        self.user_invocable_combo.addItems(["(default — visible in / menu)", "true — visible in / menu", "false — hidden from / menu"])
+        self.user_invocable_combo.setToolTip("Controls whether skill appears in / autocomplete menu")
+        parsed_ui = _get(r'user-invocable:\s*(.+)')
+        if parsed_ui.lower() == "false":
+            self.user_invocable_combo.setCurrentIndex(2)
+        elif parsed_ui.lower() == "true":
+            self.user_invocable_combo.setCurrentIndex(1)
+        else:
+            self.user_invocable_combo.setCurrentIndex(0)
+        form.addRow("User-invocable:", self.user_invocable_combo)
 
         layout.addLayout(form)
 
@@ -1457,9 +1505,6 @@ class EditSkillDialog(QDialog):
 
         flags_layout = QHBoxLayout()
         flags_layout.setSpacing(16)
-        self.user_invocable_cb = QCheckBox("user-invocable")
-        self.user_invocable_cb.setToolTip("Users can invoke directly with /skill-name")
-        self.user_invocable_cb.setChecked(_getbool("user-invocable"))
         self.disable_model_cb = QCheckBox("disable-model-invocation")
         self.disable_model_cb.setToolTip("Disable model calls within this skill")
         self.disable_model_cb.setChecked(_getbool("disable-model-invocation"))
@@ -1469,7 +1514,7 @@ class EditSkillDialog(QDialog):
         self.shell_cb = QCheckBox("shell")
         self.shell_cb.setToolTip("Allow shell command execution")
         self.shell_cb.setChecked(_getbool("shell"))
-        for cb in (self.user_invocable_cb, self.disable_model_cb, self.agent_cb, self.shell_cb):
+        for cb in (self.disable_model_cb, self.agent_cb, self.shell_cb):
             flags_layout.addWidget(cb)
         flags_layout.addStretch()
         layout.addLayout(flags_layout)
@@ -1502,7 +1547,23 @@ class EditSkillDialog(QDialog):
         tools_widget.setStyleSheet(f"background: {theme.BG_MEDIUM}; padding: {theme.PADDING_MD}px; border-radius: {theme.BORDER_RADIUS}px;")
         layout.addWidget(tools_widget)
 
-        info_label = QLabel("* Required fields. Skill body content is preserved.")
+        # Substitution variables info
+        subst_label = QLabel(
+            "💡 Substitutions in skill body: "
+            "<code>$ARGUMENTS</code> — full argument string &nbsp; "
+            "<code>$1</code> <code>$2</code>… — positional args &nbsp; "
+            "<code>${CLAUDE_SKILL_DIR}</code> — skill directory path &nbsp; "
+            "<code>${CLAUDE_PROJECT_DIR}</code> — project root path"
+        )
+        subst_label.setWordWrap(True)
+        subst_label.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"padding: {theme.PADDING_SM}px; background: {theme.BG_MEDIUM}; "
+            f"border-radius: {theme.BORDER_RADIUS}px;"
+        )
+        layout.addWidget(subst_label)
+
+        info_label = QLabel("* Required. Description max 1536 chars. Multi-file skills: add extra files alongside SKILL.md.")
         info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
@@ -1521,6 +1582,8 @@ class EditSkillDialog(QDialog):
         selected_tools = [t for t, cb in self.tool_checkboxes.items() if cb.isChecked()]
         model_val = self.model_combo.currentText()
         effort_val = self.effort_combo.currentText()
+        ui_val = self.user_invocable_combo.currentText()
+        user_invocable = "" if ui_val.startswith("(default") else ("true" if ui_val.startswith("true") else "false")
         return {
             'description': self.description_edit.toPlainText().strip(),
             'argument_hint': self.argument_hint_edit.text().strip(),
@@ -1529,7 +1592,7 @@ class EditSkillDialog(QDialog):
             'paths': self.paths_edit.text().strip(),
             'context': self.context_edit.text().strip(),
             'allowed_tools': ", ".join(selected_tools),
-            'user_invocable': self.user_invocable_cb.isChecked(),
+            'user_invocable': user_invocable,
             'disable_model_invocation': self.disable_model_cb.isChecked(),
             'agent': self.agent_cb.isChecked(),
             'shell': self.shell_cb.isChecked(),

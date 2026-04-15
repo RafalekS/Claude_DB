@@ -277,8 +277,50 @@ class UserSettingsSubTab(QWidget):
         skill_shell_lbl.setStyleSheet(lbl_style)
         layout.addRow(skill_shell_lbl, self.disable_skill_shell_check)
 
+        # autoInstallIdeExtension
+        self.auto_ide_check = QCheckBox("Auto-install IDE extension")
+        self.auto_ide_check.setToolTip(
+            "When enabled, Claude Code automatically installs the VS Code / JetBrains extension.\n"
+            "Settings key: autoInstallIdeExtension"
+        )
+        ide_lbl = QLabel("Auto IDE Extension:")
+        ide_lbl.setStyleSheet(lbl_style)
+        layout.addRow(ide_lbl, self.auto_ide_check)
+
+        # disabledPlugins
+        disabled_plugins_lbl = QLabel("Disabled Plugins:")
+        disabled_plugins_lbl.setStyleSheet(lbl_style)
+        self.disabled_plugins_list = QListWidget()
+        self.disabled_plugins_list.setMaximumHeight(80)
+        self.disabled_plugins_list.setToolTip(
+            "Plugin names to disable globally (overridden per-project via enabledPlugins).\n"
+            "Settings key: disabledPlugins"
+        )
+        layout.addRow(disabled_plugins_lbl, self.disabled_plugins_list)
+
+        dp_btn_row = QHBoxLayout()
+        dp_btn_row.setSpacing(4)
+        dp_add_btn = QPushButton("➕ Add")
+        dp_remove_btn = QPushButton("🗑 Remove")
+        dp_add_btn.clicked.connect(self._add_disabled_plugin)
+        dp_remove_btn.clicked.connect(self._remove_disabled_plugin)
+        dp_btn_row.addWidget(dp_add_btn)
+        dp_btn_row.addWidget(dp_remove_btn)
+        dp_btn_row.addStretch()
+        layout.addRow("", dp_btn_row)
+
         group.setLayout(layout)
         return group
+
+    def _add_disabled_plugin(self):
+        name, ok = QInputDialog.getText(self, "Disable Plugin", "Plugin name:")
+        if ok and name.strip():
+            self.disabled_plugins_list.addItem(name.strip())
+
+    def _remove_disabled_plugin(self):
+        row = self.disabled_plugins_list.currentRow()
+        if row >= 0:
+            self.disabled_plugins_list.takeItem(row)
 
     def create_env_vars_section(self) -> QGroupBox:
         """Create environment variables section"""
@@ -495,6 +537,10 @@ class UserSettingsSubTab(QWidget):
             eidx = self.effort_combo.findText(effort if effort else "(default)")
             self.effort_combo.setCurrentIndex(eidx if eidx >= 0 else 0)
             self.disable_skill_shell_check.setChecked(settings.get("disableSkillShellExecution", False))
+            self.auto_ide_check.setChecked(settings.get("autoInstallIdeExtension", False))
+            self.disabled_plugins_list.clear()
+            for p in settings.get("disabledPlugins", []):
+                self.disabled_plugins_list.addItem(p)
 
             # Load environment variables
             self.load_env_vars(settings)
@@ -542,6 +588,14 @@ class UserSettingsSubTab(QWidget):
                 del settings["effortLevel"]
 
             settings["disableSkillShellExecution"] = self.disable_skill_shell_check.isChecked()
+            settings["autoInstallIdeExtension"] = self.auto_ide_check.isChecked()
+
+            disabled_plugins = [self.disabled_plugins_list.item(i).text()
+                                 for i in range(self.disabled_plugins_list.count())]
+            if disabled_plugins:
+                settings["disabledPlugins"] = disabled_plugins
+            elif "disabledPlugins" in settings:
+                del settings["disabledPlugins"]
 
             # Save
             self.settings_manager.save_user_settings(settings)

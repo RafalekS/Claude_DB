@@ -177,6 +177,43 @@ class PluginsTab(QWidget):
         extra_marketplaces_group.setLayout(extra_marketplaces_layout)
         layout.addWidget(extra_marketplaces_group)
 
+        # Plugin.json reference section
+        plugin_ref_group = QGroupBox("Plugin Capabilities (plugin.json reference)")
+        plugin_ref_layout = QVBoxLayout()
+        plugin_ref_layout.setSpacing(4)
+
+        plugin_ref = QLabel(
+            "<b>LSP Servers</b> — plugins can expose a Language Server Protocol server:<br>"
+            "<code style='font-size:11px'>"
+            "&nbsp;&nbsp;\"lsp\": {\"command\": \"node\", \"args\": [\"server.js\"], "
+            "\"languages\": [\"python\"]}"
+            "</code><br><br>"
+            "<b>Monitors</b> — background watchers that fire on file/event changes:<br>"
+            "<code style='font-size:11px'>"
+            "&nbsp;&nbsp;\"monitors\": [{\"event\": \"FileChanged\", \"pattern\": \"*.py\", "
+            "\"command\": \"lint.sh\"}]"
+            "</code><br><br>"
+            "<b>userConfig</b> — schema for user-configurable plugin settings (shown in UI):<br>"
+            "<code style='font-size:11px'>"
+            "&nbsp;&nbsp;\"userConfig\": {\"apiKey\": {\"type\": \"string\", \"description\": \"API key\"}}"
+            "</code><br><br>"
+            "<b>channels</b> — communication channels the plugin provides:<br>"
+            "<code style='font-size:11px'>"
+            "&nbsp;&nbsp;\"channels\": [\"http\", \"stdio\"]"
+            "</code><br><br>"
+            "<b>Vars in plugin.json:</b> "
+            "<code>${CLAUDE_PLUGIN_ROOT}</code> — plugin install directory &nbsp; "
+            "<code>${CLAUDE_PLUGIN_DATA}</code> — plugin data/config directory"
+        )
+        plugin_ref.setWordWrap(True)
+        plugin_ref.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"padding: {theme.PADDING_MD}px;"
+        )
+        plugin_ref_layout.addWidget(plugin_ref)
+        plugin_ref_group.setLayout(plugin_ref_layout)
+        layout.addWidget(plugin_ref_group)
+
         # CLI reference footer
         cli_footer = QLabel(
             "<b>CLI commands:</b> "
