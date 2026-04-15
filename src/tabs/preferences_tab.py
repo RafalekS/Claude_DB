@@ -372,64 +372,60 @@ class PreferencesTab(QWidget):
 
         layout.addWidget(self.subtabs)
 
-    # Color variables exposed in the theme editor
+    # ── Theme editor variable definitions ───────────────────────────────────────
+
     _THEME_COLOR_VARS = [
-        ("Background",    "BG_DARK"),
-        ("Surface",       "BG_MEDIUM"),
-        ("Surface Light", "BG_LIGHT"),
-        ("Text Primary",  "FG_PRIMARY"),
-        ("Text Secondary","FG_SECONDARY"),
-        ("Text Dim",      "FG_DIM"),
-        ("Accent",        "ACCENT_PRIMARY"),
-        ("Accent Alt",    "ACCENT_SECONDARY"),
-        ("Error",         "ERROR_COLOR"),
-        ("Warning",       "WARNING_COLOR"),
-        ("Success",       "SUCCESS_COLOR"),
+        ("Background",     "BG_DARK"),
+        ("Surface",        "BG_MEDIUM"),
+        ("Surface Light",  "BG_LIGHT"),
+        ("Text Primary",   "FG_PRIMARY"),
+        ("Text Secondary", "FG_SECONDARY"),
+        ("Text Dim",       "FG_DIM"),
+        ("Accent",         "ACCENT_PRIMARY"),
+        ("Accent Alt",     "ACCENT_SECONDARY"),
+        ("Error",          "ERROR_COLOR"),
+        ("Warning",        "WARNING_COLOR"),
+        ("Success",        "SUCCESS_COLOR"),
+    ]
+
+    # (label, var_name, min, max, default)
+    _THEME_TYPO_VARS = [
+        ("Normal",   "FONT_SIZE_NORMAL", 8,  24, 14),
+        ("Large",    "FONT_SIZE_LARGE",  10, 28, 16),
+        ("Small",    "FONT_SIZE_SMALL",  7,  20, 12),
+        ("Tiny",     "FONT_SIZE_TINY",   6,  18, 11),
+        ("Tab",      "FONT_SIZE_TAB",    8,  20, 13),
+    ]
+
+    _THEME_SPACING_VARS = [
+        ("Border Radius",  "BORDER_RADIUS", 0, 20, 4),
+        ("Margin SM",      "MARGIN_SM",     0, 20, 3),
+        ("Margin MD",      "MARGIN_MD",     0, 30, 6),
+        ("Margin LG",      "MARGIN_LG",     0, 40, 10),
+        ("Padding SM",     "PADDING_SM",    0, 20, 4),
+        ("Padding MD",     "PADDING_MD",    0, 30, 8),
     ]
 
     def create_appearance_subtab(self):
-        """Create Appearance subtab — theme, font, tab management, color editor, preview."""
-        from PyQt6.QtWidgets import QScrollArea
+        """Create Appearance subtab — full theme editor + live preview."""
         appearance_widget = QWidget()
         main_layout = QVBoxLayout(appearance_widget)
         main_layout.setContentsMargins(6, 6, 6, 6)
-        main_layout.setSpacing(8)
+        main_layout.setSpacing(6)
 
-        # ── Row 1: Theme + Font side by side ────────────────────────────
+        # ── Top row: Theme selector + Tab Management ─────────────────────
         top_row = QHBoxLayout()
         top_row.setSpacing(8)
 
         theme_group = QGroupBox("Color Theme")
         theme_form = QFormLayout(theme_group)
-        theme_form.setSpacing(8)
+        theme_form.setSpacing(6)
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(THEMES.keys())
         self.theme_combo.currentTextChanged.connect(self.preview_theme)
         theme_form.addRow("Theme:", self.theme_combo)
         top_row.addWidget(theme_group, 1)
 
-        font_group = QGroupBox("Font")
-        font_form = QFormLayout(font_group)
-        font_form.setSpacing(8)
-        self.font_family_combo = QComboBox()
-        self.font_family_combo.addItems([
-            "Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
-            "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu", "Noto Sans", "Open Sans",
-            "Consolas", "Courier New", "DejaVu Sans Mono", "Liberation Mono",
-            "Monaco", "Menlo", "SF Mono", "Cascadia Code", "Fira Code",
-            "JetBrains Mono", "Source Code Pro",
-        ])
-        font_form.addRow("Family:", self.font_family_combo)
-        self.font_size_spin = QSpinBox()
-        self.font_size_spin.setRange(10, 24)
-        self.font_size_spin.setValue(14)
-        self.font_size_spin.setSuffix(" px")
-        font_form.addRow("Size:", self.font_size_spin)
-        top_row.addWidget(font_group, 1)
-
-        main_layout.addLayout(top_row)
-
-        # ── Tab Management ───────────────────────────────────────────────
         tab_mgmt_group = QGroupBox("Tab Management")
         tab_mgmt_layout = QHBoxLayout(tab_mgmt_group)
         tab_mgmt_layout.setSpacing(8)
@@ -442,26 +438,28 @@ class PreferencesTab(QWidget):
         tab_mgmt_layout.addWidget(self.edit_tabs_btn)
         tab_mgmt_layout.addWidget(self.add_tab_btn)
         tab_mgmt_layout.addStretch()
-        main_layout.addWidget(tab_mgmt_group)
+        top_row.addWidget(tab_mgmt_group, 1)
 
-        # ── Color Editor + Preview in a QSplitter ───────────────────────
-        color_splitter = QSplitter(Qt.Orientation.Horizontal)
-        color_splitter.addWidget(self._build_color_editor())
-        color_splitter.addWidget(self._build_widget_preview())
-        color_splitter.setSizes([280, 500])
-        main_layout.addWidget(color_splitter, 1)
+        main_layout.addLayout(top_row)
 
-        # ── Action buttons ───────────────────────────────────────────────
+        # ── Editor (left) + Preview (right) in QSplitter ─────────────────
+        editor_splitter = QSplitter(Qt.Orientation.Horizontal)
+        editor_splitter.addWidget(self._build_theme_editor())
+        editor_splitter.addWidget(self._build_widget_preview())
+        editor_splitter.setSizes([320, 500])
+        main_layout.addWidget(editor_splitter, 1)
+
+        # ── Action buttons ────────────────────────────────────────────────
         button_layout = QHBoxLayout()
         button_layout.setSpacing(8)
         self.apply_btn = QPushButton("Apply")
-        self.apply_btn.setToolTip("Apply theme and font changes now")
+        self.apply_btn.setToolTip("Apply all theme changes now")
         self.apply_btn.clicked.connect(self.apply_preferences)
         self.save_btn = QPushButton("Save")
         self.save_btn.setToolTip("Save preferences to config file")
         self.save_btn.clicked.connect(self.save_preferences)
         self.reset_btn = QPushButton("Reset to Gruvbox Dark")
-        self.reset_btn.setToolTip("Reset to default theme")
+        self.reset_btn.setToolTip("Reset to default theme and sizes")
         self.reset_btn.clicked.connect(self.reset_to_default)
         self.restart_btn = QPushButton("Restart App")
         self.restart_btn.setToolTip("Restart application to apply all changes")
@@ -475,38 +473,87 @@ class PreferencesTab(QWidget):
 
         self.subtabs.addTab(appearance_widget, "🎨 Appearance")
 
-    def _build_color_editor(self):
-        """Build the Theme Colors panel with per-variable color pickers."""
-        from PyQt6.QtWidgets import QScrollArea, QGridLayout
+    def _build_theme_editor(self):
+        """Build the full Theme Editor panel: colors + typography + spacing."""
         self._custom_colors = {}
+        self._custom_numbers = {}
         self._color_btns = {}
         self._color_hex_lbls = {}
+        self._typo_spins = {}     # var_name → QSpinBox
+        self._spacing_spins = {}  # var_name → QSpinBox
 
-        group = QGroupBox("Theme Colors")
-        outer = QVBoxLayout(group)
-        outer.setContentsMargins(4, 6, 4, 4)
-        outer.setSpacing(4)
-
-        hint = QLabel("Click a swatch to override. Changes apply with the Apply button.")
-        hint.setStyleSheet(f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px;")
-        hint.setWordWrap(True)
-        outer.addWidget(hint)
+        outer_widget = QWidget()
+        outer_layout = QVBoxLayout(outer_widget)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setSpacing(0)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        grid_widget = QWidget()
-        grid = QGridLayout(grid_widget)
-        grid.setSpacing(4)
-        grid.setContentsMargins(2, 2, 2, 2)
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(6, 6, 6, 6)
+        content_layout.setSpacing(10)
+
+        # ── TYPOGRAPHY ────────────────────────────────────────────────────
+        typo_group = QGroupBox("Typography")
+        typo_form = QFormLayout(typo_group)
+        typo_form.setSpacing(5)
+        typo_form.setContentsMargins(6, 10, 6, 6)
+
+        self.font_family_combo = QComboBox()
+        self.font_family_combo.addItems([
+            "Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
+            "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu", "Noto Sans", "Open Sans",
+        ])
+        self.font_family_combo.setToolTip("UI font family (buttons, labels, menus)")
+        self.font_family_combo.currentTextChanged.connect(self._update_preview_html)
+        typo_form.addRow("UI Font:", self.font_family_combo)
+
+        self.font_mono_combo = QComboBox()
+        self.font_mono_combo.addItems([
+            "Consolas", "Courier New", "DejaVu Sans Mono", "Liberation Mono",
+            "Monaco", "Menlo", "SF Mono", "Cascadia Code", "Fira Code",
+            "JetBrains Mono", "Source Code Pro",
+        ])
+        self.font_mono_combo.setToolTip("Monospace font (code blocks, terminals)")
+        self.font_mono_combo.currentTextChanged.connect(self._update_preview_html)
+        typo_form.addRow("Mono Font:", self.font_mono_combo)
+
+        # Font size spinboxes
+        for label, var_name, lo, hi, default in self._THEME_TYPO_VARS:
+            spin = QSpinBox()
+            spin.setRange(lo, hi)
+            spin.setValue(getattr(theme, var_name, default))
+            spin.setSuffix(" px")
+            spin.setMaximumWidth(80)
+            spin.valueChanged.connect(self._update_preview_html)
+            self._typo_spins[var_name] = spin
+            typo_form.addRow(f"Size {label}:", spin)
+
+        # Keep font_size_spin as alias for FONT_SIZE_NORMAL for compatibility
+        self.font_size_spin = self._typo_spins["FONT_SIZE_NORMAL"]
+
+        content_layout.addWidget(typo_group)
+
+        # ── COLORS ────────────────────────────────────────────────────────
+        color_group = QGroupBox("Colors  (click swatch to pick)")
+        color_vbox = QVBoxLayout(color_group)
+        color_vbox.setContentsMargins(6, 10, 6, 6)
+        color_vbox.setSpacing(4)
+
+        color_grid_widget = QWidget()
+        color_grid = QGridLayout(color_grid_widget)
+        color_grid.setSpacing(4)
+        color_grid.setContentsMargins(0, 0, 0, 0)
 
         for row_idx, (label, var_name) in enumerate(self._THEME_COLOR_VARS):
             name_lbl = QLabel(label)
             name_lbl.setStyleSheet(
                 f"color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_SMALL}px;"
             )
-            grid.addWidget(name_lbl, row_idx, 0)
+            color_grid.addWidget(name_lbl, row_idx, 0)
 
             current_hex = getattr(theme, var_name, "#888888")
             swatch = QPushButton()
@@ -517,7 +564,7 @@ class PreferencesTab(QWidget):
             )
             swatch.clicked.connect(lambda checked, vn=var_name: self._pick_color(vn))
             self._color_btns[var_name] = swatch
-            grid.addWidget(swatch, row_idx, 1)
+            color_grid.addWidget(swatch, row_idx, 1)
 
             hex_lbl = QLabel(current_hex)
             hex_lbl.setStyleSheet(
@@ -525,17 +572,41 @@ class PreferencesTab(QWidget):
                 f"font-family: {theme.FONT_MONOSPACE};"
             )
             self._color_hex_lbls[var_name] = hex_lbl
-            grid.addWidget(hex_lbl, row_idx, 2)
+            color_grid.addWidget(hex_lbl, row_idx, 2)
 
-        reset_btn = QPushButton("Reset Colors")
-        reset_btn.setToolTip("Discard all custom color overrides")
-        reset_btn.clicked.connect(self._reset_custom_colors)
-        n = len(self._THEME_COLOR_VARS)
-        grid.addWidget(reset_btn, n, 0, 1, 3)
+        color_vbox.addWidget(color_grid_widget)
+        reset_colors_btn = QPushButton("Reset Colors to Theme Defaults")
+        reset_colors_btn.setToolTip("Discard all custom color overrides")
+        reset_colors_btn.clicked.connect(self._reset_custom_colors)
+        color_vbox.addWidget(reset_colors_btn)
+        content_layout.addWidget(color_group)
 
-        scroll.setWidget(grid_widget)
-        outer.addWidget(scroll, 1)
-        return group
+        # ── SPACING ───────────────────────────────────────────────────────
+        spacing_group = QGroupBox("Spacing & Layout")
+        spacing_form = QFormLayout(spacing_group)
+        spacing_form.setSpacing(5)
+        spacing_form.setContentsMargins(6, 10, 6, 6)
+
+        for label, var_name, lo, hi, default in self._THEME_SPACING_VARS:
+            spin = QSpinBox()
+            spin.setRange(lo, hi)
+            spin.setValue(getattr(theme, var_name, default))
+            spin.setSuffix(" px")
+            spin.setMaximumWidth(80)
+            spin.valueChanged.connect(self._update_preview_html)
+            self._spacing_spins[var_name] = spin
+            spacing_form.addRow(f"{label}:", spin)
+
+        reset_spacing_btn = QPushButton("Reset Spacing to Defaults")
+        reset_spacing_btn.clicked.connect(self._reset_custom_numbers)
+        spacing_form.addRow("", reset_spacing_btn)
+        content_layout.addWidget(spacing_group)
+
+        content_layout.addStretch()
+        scroll.setWidget(content)
+
+        outer_layout.addWidget(scroll)
+        return outer_widget
 
     def _build_widget_preview(self):
         """Build the live Theme Preview panel (QTextBrowser HTML)."""
@@ -549,58 +620,140 @@ class PreferencesTab(QWidget):
         return group
 
     def _update_preview_html(self):
-        """Regenerate the preview browser with current theme variable values."""
-        def _swatch_row(color, var, desc):
-            return (
-                f"<tr>"
-                f"<td style='padding:2px 4px;'>"
-                f"<span style='background:{color};border:1px solid {theme.BG_LIGHT};"
-                f"border-radius:2px;padding:0 12px;'>&nbsp;</span></td>"
-                f"<td style='padding:2px 6px;color:{theme.FG_SECONDARY};"
-                f"font-size:{theme.FONT_SIZE_SMALL}px;font-family:{theme.FONT_MONOSPACE};'>{color}</td>"
-                f"<td style='padding:2px 4px;color:{theme.FG_DIM};"
-                f"font-size:{theme.FONT_SIZE_SMALL}px;'>{var}</td>"
-                f"<td style='padding:2px 4px;color:{color};"
-                f"font-size:{theme.FONT_SIZE_SMALL}px;'>■ {desc}</td>"
-                f"</tr>"
-            )
+        """Regenerate the preview browser with current theme + editor values."""
+        n = self.font_size_spin.value()
+        mono = self.font_mono_combo.currentText() if hasattr(self, 'font_mono_combo') else theme.FONT_MONOSPACE
+        ui_font = self.font_family_combo.currentText() if hasattr(self, 'font_family_combo') else theme.FONT_FAMILY_UI
+        n_large  = self._typo_spins["FONT_SIZE_LARGE"].value()  if hasattr(self, '_typo_spins') else theme.FONT_SIZE_LARGE
+        n_small  = self._typo_spins["FONT_SIZE_SMALL"].value()  if hasattr(self, '_typo_spins') else theme.FONT_SIZE_SMALL
+        n_tiny   = self._typo_spins["FONT_SIZE_TINY"].value()   if hasattr(self, '_typo_spins') else theme.FONT_SIZE_TINY
+        n_tab    = self._typo_spins["FONT_SIZE_TAB"].value()    if hasattr(self, '_typo_spins') else theme.FONT_SIZE_TAB
+        radius   = self._spacing_spins["BORDER_RADIUS"].value() if hasattr(self, '_spacing_spins') else theme.BORDER_RADIUS
+        margin_sm = self._spacing_spins["MARGIN_SM"].value()    if hasattr(self, '_spacing_spins') else theme.MARGIN_SM
+        margin_md = self._spacing_spins["MARGIN_MD"].value()    if hasattr(self, '_spacing_spins') else theme.MARGIN_MD
+        margin_lg = self._spacing_spins["MARGIN_LG"].value()    if hasattr(self, '_spacing_spins') else theme.MARGIN_LG
+        pad_sm   = self._spacing_spins["PADDING_SM"].value()    if hasattr(self, '_spacing_spins') else theme.PADDING_SM
+        pad_md   = self._spacing_spins["PADDING_MD"].value()    if hasattr(self, '_spacing_spins') else theme.PADDING_MD
+
+        def btn(label, bg, fg):
+            return (f"<span style='display:inline-block;background:{bg};color:{fg};"
+                    f"padding:{pad_sm}px {pad_md*2}px;border-radius:{radius}px;"
+                    f"font-size:{n}px;font-weight:bold;margin:2px;'>{label}</span>")
+
+        def inp(placeholder):
+            return (f"<span style='display:inline-block;background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
+                    f"border:1px solid {theme.BG_LIGHT};padding:{pad_sm}px {pad_md}px;"
+                    f"border-radius:{radius}px;font-size:{n}px;min-width:180px;'>{placeholder}</span>")
+
+        def tag(label, color):
+            return (f"<span style='background:{color};color:{theme.BG_DARK};"
+                    f"padding:1px {pad_sm}px;border-radius:{radius}px;"
+                    f"font-size:{n_small}px;margin:1px;'>{label}</span>")
+
+        sep = f"<hr style='border:none;border-top:1px solid {theme.BG_LIGHT};margin:{margin_sm}px 0;'/>"
 
         html = (
             f"<html><body style='background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
-            f"padding:8px;font-size:{theme.FONT_SIZE_NORMAL}px;'>"
+            f"font-family:{ui_font};font-size:{n}px;padding:{pad_md}px;line-height:1.5;'>"
 
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:0 0 4px;'>Backgrounds &amp; Surfaces</p>"
-            f"<table style='border-collapse:collapse;width:100%;'>"
-            f"{_swatch_row(theme.BG_DARK,   'BG_DARK',   'main window')}"
-            f"{_swatch_row(theme.BG_MEDIUM, 'BG_MEDIUM', 'panels / group boxes')}"
-            f"{_swatch_row(theme.BG_LIGHT,  'BG_LIGHT',  'borders / selection')}"
-            f"</table>"
+            # Section: Typography
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;font-size:{n_large}px;"
+            f"margin:0 0 {margin_sm}px;'>Typography</p>"
+            f"<p style='font-size:{n_large}px;margin:{margin_sm}px 0;color:{theme.FG_PRIMARY};'>"
+            f"Large ({n_large}px) — Section header</p>"
+            f"<p style='font-size:{n}px;margin:{margin_sm}px 0;color:{theme.FG_PRIMARY};'>"
+            f"Normal ({n}px) — Body text and labels</p>"
+            f"<p style='font-size:{n_small}px;margin:{margin_sm}px 0;color:{theme.FG_SECONDARY};'>"
+            f"Small ({n_small}px) — Captions and hints</p>"
+            f"<p style='font-size:{n_tiny}px;margin:{margin_sm}px 0;color:{theme.FG_DIM};'>"
+            f"Tiny ({n_tiny}px) — Timestamps and metadata</p>"
+            f"<p style='font-size:{n_tab}px;margin:{margin_sm}px 0;color:{theme.FG_SECONDARY};'>"
+            f"Tab ({n_tab}px) — Tab bar labels</p>"
+            f"<p style='font-family:{mono};font-size:{n_small}px;background:{theme.BG_MEDIUM};"
+            f"color:{theme.ACCENT_SECONDARY};padding:{pad_sm}px {pad_md}px;"
+            f"border-radius:{radius}px;margin:{margin_sm}px 0;'>"
+            f"Mono ({mono}): $ claude --help --output-format json</p>"
+            f"{sep}"
 
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:8px 0 4px;'>Text Colors</p>"
-            f"<p style='margin:2px 0;color:{theme.FG_PRIMARY};'>■ FG_PRIMARY {theme.FG_PRIMARY} — body text</p>"
-            f"<p style='margin:2px 0;color:{theme.FG_SECONDARY};'>■ FG_SECONDARY {theme.FG_SECONDARY} — captions</p>"
-            f"<p style='margin:2px 0;color:{theme.FG_DIM};'>■ FG_DIM {theme.FG_DIM} — timestamps</p>"
+            # Section: Buttons
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Buttons</p>"
+            f"<p style='margin:{margin_sm}px 0;'>"
+            f"{btn('Apply', theme.ACCENT_PRIMARY, theme.BG_DARK)}&nbsp;"
+            f"{btn('Save', theme.ACCENT_SECONDARY, theme.BG_DARK)}&nbsp;"
+            f"{btn('Reset', theme.BG_MEDIUM, theme.FG_PRIMARY)}&nbsp;"
+            f"{btn('Delete', theme.ERROR_COLOR, theme.BG_DARK)}&nbsp;"
+            f"{btn('Disabled', theme.BG_MEDIUM, theme.FG_DIM)}"
+            f"</p>{sep}"
 
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:8px 0 4px;'>Accent &amp; Semantic</p>"
-            f"<p style='margin:2px 0;color:{theme.ACCENT_PRIMARY};'>■ ACCENT_PRIMARY {theme.ACCENT_PRIMARY} — buttons, active tab</p>"
-            f"<p style='margin:2px 0;color:{theme.ACCENT_SECONDARY};'>■ ACCENT_SECONDARY {theme.ACCENT_SECONDARY} — hover, success</p>"
-            f"<p style='margin:2px 0;color:{theme.ERROR_COLOR};'>■ ERROR_COLOR {theme.ERROR_COLOR} — errors</p>"
-            f"<p style='margin:2px 0;color:{theme.WARNING_COLOR};'>■ WARNING_COLOR {theme.WARNING_COLOR} — warnings</p>"
+            # Section: Inputs
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Inputs &amp; Controls</p>"
+            f"<p style='margin:{margin_sm}px 0;'>{inp('Search or filter...')}</p>"
+            f"<p style='margin:{margin_sm}px 0;'>"
+            f"<span style='background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
+            f"border:1px solid {theme.ACCENT_PRIMARY};padding:{pad_sm}px {pad_md}px;"
+            f"border-radius:{radius}px;font-size:{n}px;'>Focused input border</span>"
+            f"</p>{sep}"
 
-            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:8px 0 4px;'>Font &amp; Spacing</p>"
-            f"<p style='margin:2px 0;'>UI: <b>{theme.FONT_FAMILY_UI}</b> &nbsp; "
-            f"large={theme.FONT_SIZE_LARGE}px &nbsp; normal={theme.FONT_SIZE_NORMAL}px &nbsp; "
-            f"small={theme.FONT_SIZE_SMALL}px &nbsp; tiny={theme.FONT_SIZE_TINY}px</p>"
-            f"<p style='margin:3px 0;font-family:{theme.FONT_FAMILY_MONO};"
-            f"font-size:{theme.FONT_SIZE_SMALL}px;background:{theme.BG_MEDIUM};"
-            f"padding:4px;border-radius:3px;'>Mono ({theme.FONT_MONOSPACE}): $ claude --help</p>"
-            f"<p style='margin:2px 0;color:{theme.FG_SECONDARY};font-size:{theme.FONT_SIZE_SMALL}px;'>"
-            f"Margins SM={theme.MARGIN_SM} MD={theme.MARGIN_MD} LG={theme.MARGIN_LG} &nbsp; "
-            f"Padding SM={theme.PADDING_SM} MD={theme.PADDING_MD} &nbsp; "
-            f"Border-radius {theme.BORDER_RADIUS}px</p>"
+            # Section: Colors
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Colors</p>"
+            f"<p style='margin:{margin_sm}px 0;'>"
+            f"{tag('BG_DARK '+theme.BG_DARK, theme.BG_MEDIUM)}&nbsp;"
+            f"{tag('BG_MEDIUM '+theme.BG_MEDIUM, theme.BG_LIGHT)}&nbsp;"
+            f"{tag('BG_LIGHT '+theme.BG_LIGHT, theme.FG_DIM)}"
+            f"</p>"
+            f"<p style='margin:{margin_sm}px 0;color:{theme.FG_PRIMARY};'>"
+            f"■ <span style='color:{theme.FG_PRIMARY};'>FG_PRIMARY</span>&nbsp; "
+            f"■ <span style='color:{theme.FG_SECONDARY};'>FG_SECONDARY</span>&nbsp; "
+            f"■ <span style='color:{theme.FG_DIM};'>FG_DIM</span>"
+            f"</p>"
+            f"<p style='margin:{margin_sm}px 0;'>"
+            f"■ <span style='color:{theme.ACCENT_PRIMARY};'>ACCENT_PRIMARY</span>&nbsp; "
+            f"■ <span style='color:{theme.ACCENT_SECONDARY};'>ACCENT_SECONDARY</span>"
+            f"</p>"
+            f"<p style='margin:{margin_sm}px 0;'>"
+            f"■ <span style='color:{theme.ERROR_COLOR};'>ERROR</span>&nbsp; "
+            f"■ <span style='color:{theme.WARNING_COLOR};'>WARNING</span>&nbsp; "
+            f"■ <span style='color:{theme.SUCCESS_COLOR};'>SUCCESS</span>"
+            f"</p>{sep}"
+
+            # Section: Table
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Table / List</p>"
+            f"<table style='border-collapse:collapse;width:100%;font-size:{n_small}px;'>"
+            f"<tr style='background:{theme.BG_MEDIUM};'>"
+            f"<th style='text-align:left;padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_PRIMARY};"
+            f"border-bottom:2px solid {theme.ACCENT_PRIMARY};'>Name</th>"
+            f"<th style='text-align:left;padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_PRIMARY};"
+            f"border-bottom:2px solid {theme.ACCENT_PRIMARY};'>Value</th>"
+            f"<th style='text-align:left;padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_PRIMARY};"
+            f"border-bottom:2px solid {theme.ACCENT_PRIMARY};'>Status</th>"
+            f"</tr>"
+            f"<tr style='background:{theme.BG_DARK};border-bottom:1px solid {theme.BG_LIGHT};'>"
+            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.FG_PRIMARY};'>row-item-1</td>"
+            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.FG_PRIMARY};'>value-a</td>"
+            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_SECONDARY};'>✓ OK</td>"
+            f"</tr>"
+            f"<tr style='background:{theme.BG_DARK};border-bottom:1px solid {theme.BG_LIGHT};'>"
+            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.FG_PRIMARY};'>row-item-2</td>"
+            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.FG_PRIMARY};'>value-b</td>"
+            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.WARNING_COLOR};'>⚠ Warn</td>"
+            f"</tr>"
+            f"<tr style='background:{theme.BG_MEDIUM};'>"
+            f"<td style='padding:{pad_sm}px {pad_md}px;color:{theme.ACCENT_PRIMARY};' colspan='3'>"
+            f"▶ Selected row (BG_MEDIUM, ACCENT_PRIMARY text)</td>"
+            f"</tr>"
+            f"</table>{sep}"
+
+            # Section: Spacing summary
+            f"<p style='color:{theme.ACCENT_PRIMARY};font-weight:bold;margin:{margin_sm}px 0;'>Spacing</p>"
+            f"<p style='color:{theme.FG_SECONDARY};font-size:{n_small}px;margin:{margin_sm}px 0;'>"
+            f"Margin SM={margin_sm}px &nbsp; MD={margin_md}px &nbsp; LG={margin_lg}px &nbsp;|&nbsp; "
+            f"Padding SM={pad_sm}px &nbsp; MD={pad_md}px &nbsp;|&nbsp; "
+            f"Radius={radius}px</p>"
+
             f"</body></html>"
         )
-        self.preview_browser.setHtml(html)
+        if hasattr(self, 'preview_browser'):
+            self.preview_browser.setHtml(html)
 
     def _pick_color(self, var_name: str):
         """Open a color picker for var_name and store the result."""
@@ -618,11 +771,28 @@ class PreferencesTab(QWidget):
                 )
             if var_name in self._color_hex_lbls:
                 self._color_hex_lbls[var_name].setText(new_hex)
+            self._update_preview_html()
 
     def _reset_custom_colors(self):
         """Discard all custom color overrides and refresh the editor."""
         self._custom_colors.clear()
         self._refresh_color_buttons()
+        self._update_preview_html()
+
+    def _reset_custom_numbers(self):
+        """Reset all font size and spacing spinboxes to current theme defaults."""
+        self._custom_numbers.clear()
+        for _, var_name, _, _, default in self._THEME_TYPO_VARS:
+            if var_name in self._typo_spins:
+                self._typo_spins[var_name].blockSignals(True)
+                self._typo_spins[var_name].setValue(getattr(theme, var_name, default))
+                self._typo_spins[var_name].blockSignals(False)
+        for _, var_name, _, _, default in self._THEME_SPACING_VARS:
+            if var_name in self._spacing_spins:
+                self._spacing_spins[var_name].blockSignals(True)
+                self._spacing_spins[var_name].setValue(getattr(theme, var_name, default))
+                self._spacing_spins[var_name].blockSignals(False)
+        self._update_preview_html()
 
     def _refresh_color_buttons(self):
         """Sync color swatch buttons and hex labels to current theme globals."""
@@ -635,6 +805,23 @@ class PreferencesTab(QWidget):
         for var_name, lbl in self._color_hex_lbls.items():
             cur = self._custom_colors.get(var_name, getattr(theme, var_name, "#888888"))
             lbl.setText(cur)
+
+    def _refresh_typo_spacing_controls(self):
+        """Sync typography and spacing spinboxes to current theme globals."""
+        for _, var_name, _, _, default in self._THEME_TYPO_VARS:
+            if var_name in self._typo_spins:
+                self._typo_spins[var_name].blockSignals(True)
+                self._typo_spins[var_name].setValue(
+                    self._custom_numbers.get(var_name, getattr(theme, var_name, default))
+                )
+                self._typo_spins[var_name].blockSignals(False)
+        for _, var_name, _, _, default in self._THEME_SPACING_VARS:
+            if var_name in self._spacing_spins:
+                self._spacing_spins[var_name].blockSignals(True)
+                self._spacing_spins[var_name].setValue(
+                    self._custom_numbers.get(var_name, getattr(theme, var_name, default))
+                )
+                self._spacing_spins[var_name].blockSignals(False)
 
     def create_backup_subtab(self):
         """Create Backup subtab"""
@@ -1315,24 +1502,48 @@ class {class_name}Tab(QWidget):
 '''
 
     def preview_theme(self, theme_name):
-        """Preview selected theme — update globals and refresh the preview browser."""
+        """Preview selected theme — update globals, refresh color swatches and preview."""
         if theme_name in THEMES:
             font_size = self.font_size_spin.value()
             font_family = self.font_family_combo.currentText()
             theme.apply_theme(theme_name, font_size, font_family)
             if self._custom_colors:
                 theme.apply_color_overrides(self._custom_colors)
+            # Refresh the number controls to reflect new theme defaults
+            self._refresh_typo_spacing_controls()
+            # Refresh color swatches to show new theme colors
+            self._refresh_color_buttons()
             self._update_preview_html()
+
+    def _collect_number_overrides(self) -> dict:
+        """Read current spinbox values and build the custom_numbers dict."""
+        nums = {}
+        for _, var_name, _, _, default in self._THEME_TYPO_VARS:
+            if var_name in self._typo_spins:
+                nums[var_name] = self._typo_spins[var_name].value()
+        for _, var_name, _, _, default in self._THEME_SPACING_VARS:
+            if var_name in self._spacing_spins:
+                nums[var_name] = self._spacing_spins[var_name].value()
+        # Only keep values that differ from current theme globals
+        return {k: v for k, v in nums.items() if getattr(theme, k, None) != v}
 
     def apply_preferences(self):
         """Apply preferences immediately — emits theme_changed signal for instant update."""
         theme_name = self.theme_combo.currentText()
         font_size = self.font_size_spin.value()
         font_family = self.font_family_combo.currentText()
+        font_mono = self.font_mono_combo.currentText()
 
         theme.apply_theme(theme_name, font_size, font_family)
         if self._custom_colors:
             theme.apply_color_overrides(self._custom_colors)
+        # Apply mono font override
+        theme.FONT_MONOSPACE = font_mono
+        theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
+        # Collect and apply number overrides (font sizes + spacing)
+        self._custom_numbers = self._collect_number_overrides()
+        if self._custom_numbers:
+            theme.apply_number_overrides(self._custom_numbers)
 
         app = QApplication.instance()
         if app:
@@ -1341,6 +1552,7 @@ class {class_name}Tab(QWidget):
             app.setStyleSheet(theme.generate_app_stylesheet())
 
         self._refresh_color_buttons()
+        self._refresh_typo_spacing_controls()
         self._update_preview_html()
         self.theme_changed.emit(theme_name, font_size)
         self.save_preferences_silently()
@@ -1366,7 +1578,9 @@ class {class_name}Tab(QWidget):
                 "theme": self.theme_combo.currentText(),
                 "font_size": self.font_size_spin.value(),
                 "font_family": self.font_family_combo.currentText(),
+                "font_mono": self.font_mono_combo.currentText(),
                 "custom_colors": self._custom_colors,
+                "custom_numbers": self._custom_numbers,
             }
             _atomic_json_write(self.config_file, config_data)
         except Exception as e:
@@ -1378,10 +1592,17 @@ class {class_name}Tab(QWidget):
             theme_name = self.theme_combo.currentText()
             font_size = self.font_size_spin.value()
             font_family = self.font_family_combo.currentText()
+            font_mono = self.font_mono_combo.currentText()
 
             theme.apply_theme(theme_name, font_size, font_family)
             if self._custom_colors:
                 theme.apply_color_overrides(self._custom_colors)
+            theme.FONT_MONOSPACE = font_mono
+            theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
+            self._custom_numbers = self._collect_number_overrides()
+            if self._custom_numbers:
+                theme.apply_number_overrides(self._custom_numbers)
+
             app = QApplication.instance()
             if app:
                 from PyQt6.QtGui import QFont
@@ -1397,11 +1618,14 @@ class {class_name}Tab(QWidget):
                 "theme": theme_name,
                 "font_size": font_size,
                 "font_family": font_family,
+                "font_mono": font_mono,
                 "custom_colors": self._custom_colors,
+                "custom_numbers": self._custom_numbers,
             }
             _atomic_json_write(self.config_file, config_data)
 
             self._refresh_color_buttons()
+            self._refresh_typo_spacing_controls()
             self._update_preview_html()
             self.theme_changed.emit(theme_name, font_size)
 
@@ -1423,38 +1647,52 @@ class {class_name}Tab(QWidget):
                 theme_name = prefs.get("theme", "Gruvbox Dark")
                 font_size = prefs.get("font_size", 14)
                 font_family = prefs.get("font_family", "Segoe UI")
+                font_mono = prefs.get("font_mono", "Consolas")
                 self._custom_colors = prefs.get("custom_colors", {})
+                self._custom_numbers = prefs.get("custom_numbers", {})
 
                 theme.apply_theme(theme_name, font_size, font_family)
                 if self._custom_colors:
                     theme.apply_color_overrides(self._custom_colors)
+                theme.FONT_MONOSPACE = font_mono
+                theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
+                if self._custom_numbers:
+                    theme.apply_number_overrides(self._custom_numbers)
 
                 # Block signals so setCurrentIndex doesn't trigger preview_theme mid-load
-                self.theme_combo.blockSignals(True)
+                for widget in (self.theme_combo, self.font_family_combo, self.font_mono_combo):
+                    widget.blockSignals(True)
+
                 index = self.theme_combo.findText(theme_name)
                 if index >= 0:
                     self.theme_combo.setCurrentIndex(index)
-                self.theme_combo.blockSignals(False)
-
-                self.font_size_spin.setValue(font_size)
                 ff_index = self.font_family_combo.findText(font_family)
                 if ff_index >= 0:
                     self.font_family_combo.setCurrentIndex(ff_index)
+                fm_index = self.font_mono_combo.findText(font_mono)
+                if fm_index >= 0:
+                    self.font_mono_combo.setCurrentIndex(fm_index)
+
+                for widget in (self.theme_combo, self.font_family_combo, self.font_mono_combo):
+                    widget.blockSignals(False)
 
                 self._refresh_color_buttons()
+                self._refresh_typo_spacing_controls()
                 self._update_preview_html()
             else:
                 self._custom_colors = {}
+                self._custom_numbers = {}
                 self.theme_combo.setCurrentText("Gruvbox Dark")
-                self.font_size_spin.setValue(14)
                 self.font_family_combo.setCurrentText("Segoe UI")
+                self.font_mono_combo.setCurrentText("Consolas")
                 self._update_preview_html()
         except Exception as e:
             logger.warning("Failed to load preferences: %s", e)
             self._custom_colors = {}
+            self._custom_numbers = {}
             self.theme_combo.setCurrentText("Gruvbox Dark")
-            self.font_size_spin.setValue(14)
             self.font_family_combo.setCurrentText("Segoe UI")
+            self.font_mono_combo.setCurrentText("Consolas")
             self._update_preview_html()
 
         self._load_search_settings()
@@ -1463,9 +1701,17 @@ class {class_name}Tab(QWidget):
     def reset_to_default(self):
         """Reset to default Gruvbox Dark theme and apply immediately."""
         self._custom_colors.clear()
+        self._custom_numbers.clear()
         self.theme_combo.setCurrentText("Gruvbox Dark")
-        self.font_size_spin.setValue(14)
         self.font_family_combo.setCurrentText("Segoe UI")
+        self.font_mono_combo.setCurrentText("Consolas")
+        # Reset all size/spacing spinboxes to default values
+        for _, var_name, _, _, default in self._THEME_TYPO_VARS:
+            if var_name in self._typo_spins:
+                self._typo_spins[var_name].setValue(default)
+        for _, var_name, _, _, default in self._THEME_SPACING_VARS:
+            if var_name in self._spacing_spins:
+                self._spacing_spins[var_name].setValue(default)
         self.apply_preferences()
 
     def create_full_backup(self):

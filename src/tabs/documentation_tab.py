@@ -100,18 +100,18 @@ def _pre(text):
 
 def _table(headers, rows):
     th = "".join(f"<th style='padding:{theme.PADDING_SM}px {theme.PADDING_MD}px;"
-                 f"border-bottom:1px solid {theme.BG_LIGHT};"
+                 f"border-bottom:2px solid {theme.ACCENT_PRIMARY};"
                  f"text-align:left;color:{theme.ACCENT_PRIMARY};'>{h}</th>" for h in headers)
     body = ""
-    for i, row in enumerate(rows):
-        bg = theme.BG_MEDIUM if i % 2 == 0 else theme.BG_DARK
-        body += f"<tr style='background:{bg};'>"
+    for row in rows:
+        body += f"<tr style='background:{theme.BG_DARK};border-bottom:1px solid {theme.BG_LIGHT};'>"
         body += "".join(
             f"<td style='padding:{theme.PADDING_SM}px {theme.PADDING_MD}px;"
             f"color:{theme.FG_PRIMARY};'>{c}</td>" for c in row)
         body += "</tr>"
     return (f"<table style='border-collapse:collapse;width:100%;margin:{theme.MARGIN_MD}px 0;'>"
-            f"<thead><tr>{th}</tr></thead><tbody>{body}</tbody></table>")
+            f"<thead><tr style='background:{theme.BG_MEDIUM};'>{th}</tr></thead>"
+            f"<tbody>{body}</tbody></table>")
 
 
 def _wrap(*parts):

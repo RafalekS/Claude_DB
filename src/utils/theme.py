@@ -742,3 +742,14 @@ def apply_color_overrides(overrides: dict):
     for var_name, hex_value in overrides.items():
         if var_name in g and isinstance(hex_value, str) and hex_value.startswith("#"):
             g[var_name] = hex_value
+
+
+def apply_number_overrides(overrides: dict):
+    """Apply custom numeric overrides for font sizes and spacing constants.
+    Keys are theme module variable names (e.g. 'FONT_SIZE_NORMAL', 'BORDER_RADIUS').
+    Call generate_app_stylesheet() afterwards to propagate changes.
+    """
+    g = globals()
+    for var_name, val in overrides.items():
+        if var_name in g and isinstance(val, (int, float)):
+            g[var_name] = int(val)

@@ -386,7 +386,7 @@ class SkillsTab(QWidget):
             self._validation_label.setText(f"Errors: {msgs}")
             self._validation_label.setStyleSheet(
                 f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 2px 4px; border-radius: 2px;"
-                f"color: #fb4934; background: #3c1f1f;"
+                f"color: {theme.ERROR_COLOR}; background: {theme.BG_MEDIUM};"
             )
             self._validation_label.show()
         elif warnings:
@@ -394,7 +394,7 @@ class SkillsTab(QWidget):
             self._validation_label.setText(f"Warnings: {msgs}")
             self._validation_label.setStyleSheet(
                 f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 2px 4px; border-radius: 2px;"
-                f"color: #fabd2f; background: #3c3010;"
+                f"color: {theme.WARNING_COLOR}; background: {theme.BG_MEDIUM};"
             )
             self._validation_label.show()
         else:
