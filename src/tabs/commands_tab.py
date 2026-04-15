@@ -267,6 +267,56 @@ class CommandsTab(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Load Error", f"Failed to load command:\n{str(e)}")
 
+    @staticmethod
+    def _parse_command_sections(content):
+        """Parse all sections from command markdown content"""
+        import re
+
+        def find_section(text, patterns):
+            for pattern in patterns:
+                m = re.search(rf'##\s+{pattern}\s*\n(.+?)(?=\n##|\Z)', text, re.DOTALL | re.IGNORECASE)
+                if m:
+                    return m.group(1).strip()
+            return ""
+
+        title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+        return {
+            'display_name': title_match.group(1).strip() if title_match else "",
+            'description': find_section(content, [
+                'Description', 'Role and Purpose', 'Purpose', 'Overview',
+                'Role', 'About', 'Summary'
+            ]),
+            'requirements': find_section(content, [
+                'Requirements', 'Arguments', 'Prerequisites', 'Parameters',
+                'Core Requirements', 'Input Parameters', 'Inputs'
+            ]),
+            'instructions': find_section(content, [
+                'Instructions', 'How to Use', 'Steps', 'Usage Instructions',
+                'Guide', 'Directions', 'Implementation', 'How it Works'
+            ]),
+            'examples': find_section(content, [
+                'Examples', 'Code Examples', 'Usage Examples',
+                'Use Cases', 'Practical Usage', 'Usage', 'Sample Usage'
+            ]),
+            'notes': find_section(content, [
+                'Important Notes', 'Notes', 'Warnings', 'Limitations',
+                'Caveats', 'Considerations'
+            ]),
+        }
+
+    @staticmethod
+    def _build_command_content(data):
+        """Build command markdown from section data"""
+        name = data.get('display_name') or data.get('name', 'Command')
+        parts = [f"# {name}", "", "## Description", data.get('description', ''), ""]
+        if data.get('requirements'):
+            parts += ["## Requirements", data['requirements'], ""]
+        parts += ["## Instructions", data.get('instructions', ''), ""]
+        parts += ["## Examples", data.get('examples', ''), ""]
+        if data.get('notes'):
+            parts += ["## Important Notes", data['notes'], ""]
+        return "\n".join(parts)
+
     def edit_command(self):
         """Edit selected command with dialog"""
         current_item = self.command_list.currentItem()
@@ -289,18 +339,7 @@ class CommandsTab(QWidget):
             dialog = EditCommandDialog(command_name, content, self)
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 new_data = dialog.get_command_data()
-                # Regenerate content
-                new_content = f"""# {new_data['display_name'] or Path(command_name).stem}
-
-## Description
-{new_data['description']}
-
-## Usage
-When to use this command.
-
-## Instructions
-Detailed instructions for the command.
-"""
+                new_content = self._build_command_content(new_data)
                 with open(command_path, 'w', encoding='utf-8') as f:
                     f.write(new_content)
                 self.load_commands()
@@ -316,7 +355,7 @@ Detailed instructions for the command.
             content = self.command_editor.toPlainText()
             with open(self.current_command, 'w', encoding='utf-8') as f:
                 f.write(content)
-            QMessageBox.information(self, "Save Success", "Command saved successfully!")
+            self.command_name_label.setText(f"{self.current_command.name} ✓ saved")
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save command:\n{str(e)}")
 
@@ -330,7 +369,7 @@ Detailed instructions for the command.
             content = self.command_editor.toPlainText()
             with open(self.current_command, 'w', encoding='utf-8') as f:
                 f.write(content)
-            QMessageBox.information(self, "Backup & Save Success", "Backup created and command saved!")
+            self.command_name_label.setText(f"{self.current_command.name} ✓ backed up & saved")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to backup and save:\n{str(e)}")
 
@@ -369,21 +408,9 @@ Detailed instructions for the command.
             return
 
         try:
-            # Create parent directories if they don't exist
             command_path.parent.mkdir(parents=True, exist_ok=True)
-
-            # Build content
-            content = f"""# {command_data['display_name'] or Path(name).stem}
-
-## Description
-{command_data['description']}
-
-## Usage
-When to use this command.
-
-## Instructions
-Detailed instructions for the command.
-"""
+            command_data['display_name'] = command_data.get('display_name') or Path(name).stem
+            content = self._build_command_content(command_data)
             with open(command_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             self.load_commands()
@@ -406,7 +433,6 @@ Detailed instructions for the command.
                 self.command_name_label.setText("No command selected")
                 self.current_command = None
                 self.load_commands()
-                QMessageBox.information(self, "Delete Success", "Command deleted successfully!")
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to delete command:\n{str(e)}")
 
@@ -450,51 +476,81 @@ Detailed instructions for the command.
         QMessageBox.information(self, "Deploy Complete", msg)
 
 class NewCommandDialog(QDialog):
-    """Dialog for creating a new command with proper fields"""
+    """Dialog for creating a new command with all content fields"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Create New Command")
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(700)
         self.init_ui()
 
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(10)
+        from PyQt6.QtWidgets import QScrollArea
+        outer = QVBoxLayout(self)
+        outer.setSpacing(8)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(scroll.Shape.NoFrame)
+        inner = QWidget()
+        layout = QVBoxLayout(inner)
+        layout.setSpacing(8)
+        scroll.setWidget(inner)
+        outer.addWidget(scroll, 1)
 
         form = QFormLayout()
         form.setSpacing(8)
 
-        # Name field
         self.name_edit = QLineEdit()
-        self.name_edit.setPlaceholderText("e.g., bash-timeout")
+        self.name_edit.setPlaceholderText("e.g., bash-timeout  (becomes /bash-timeout)")
         form.addRow("Command Name*:", self.name_edit)
 
-        # Display Name field
         self.display_name_edit = QLineEdit()
-        self.display_name_edit.setPlaceholderText("e.g., Bash Timeout")
+        self.display_name_edit.setPlaceholderText("e.g., Bash Timeout  (heading in the file)")
         form.addRow("Display Name:", self.display_name_edit)
 
-        # Description field
         self.description_edit = QTextEdit()
-        self.description_edit.setPlaceholderText("e.g., Runs bash commands with timeout")
-        self.description_edit.setMinimumHeight(100)
-        self.description_edit.setMaximumHeight(150)
+        self.description_edit.setPlaceholderText("What the command does — role, purpose, overview")
+        self.description_edit.setMinimumHeight(80)
+        self.description_edit.setMaximumHeight(120)
         form.addRow("Description*:", self.description_edit)
+
+        self.requirements_edit = QTextEdit()
+        self.requirements_edit.setPlaceholderText("Arguments, parameters, prerequisites (optional)")
+        self.requirements_edit.setMinimumHeight(80)
+        self.requirements_edit.setMaximumHeight(120)
+        form.addRow("Requirements:", self.requirements_edit)
+
+        self.instructions_edit = QTextEdit()
+        self.instructions_edit.setPlaceholderText("Step-by-step instructions for Claude to follow")
+        self.instructions_edit.setMinimumHeight(100)
+        self.instructions_edit.setMaximumHeight(150)
+        form.addRow("Instructions:", self.instructions_edit)
+
+        self.examples_edit = QTextEdit()
+        self.examples_edit.setPlaceholderText("Code examples, usage examples, reference workflows")
+        self.examples_edit.setMinimumHeight(100)
+        self.examples_edit.setMaximumHeight(150)
+        form.addRow("Examples:", self.examples_edit)
+
+        self.notes_edit = QTextEdit()
+        self.notes_edit.setPlaceholderText("Warnings, limitations, considerations (optional)")
+        self.notes_edit.setMinimumHeight(80)
+        self.notes_edit.setMaximumHeight(120)
+        form.addRow("Important Notes:", self.notes_edit)
 
         layout.addLayout(form)
 
-        # Info label
-        info_label = QLabel("* Required fields")
+        info_label = QLabel("* Required fields. Command file: ~/.claude/commands/<name>.md")
         info_label.setWordWrap(True)
         info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info_label)
 
-        # Button box
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
+        outer.addWidget(button_box)
 
     def validate_and_accept(self):
         if not self.name_edit.text().strip():
@@ -509,45 +565,92 @@ class NewCommandDialog(QDialog):
         return {
             'name': self.name_edit.text().strip(),
             'display_name': self.display_name_edit.text().strip(),
-            'description': self.description_edit.toPlainText().strip()
+            'description': self.description_edit.toPlainText().strip(),
+            'requirements': self.requirements_edit.toPlainText().strip(),
+            'instructions': self.instructions_edit.toPlainText().strip(),
+            'examples': self.examples_edit.toPlainText().strip(),
+            'notes': self.notes_edit.toPlainText().strip(),
         }
 
+
 class EditCommandDialog(QDialog):
-    """Dialog for editing a command with form fields"""
+    """Dialog for editing a command — parses and preserves all sections"""
 
     def __init__(self, command_name, content, parent=None):
         super().__init__(parent)
         self.command_name = command_name
         self.setWindowTitle(f"Edit Command: {command_name}")
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(700)
         self.init_ui(content)
 
     def init_ui(self, content):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(10)
-
-        # Parse markdown content
         import re
-        title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
-        desc_match = re.search(r'##\s+Description\s*\n(.+?)(?=\n##|\Z)', content, re.DOTALL)
 
+        def find_section(text, patterns):
+            for pattern in patterns:
+                m = re.search(rf'##\s+{pattern}\s*\n(.+?)(?=\n##|\Z)', text, re.DOTALL | re.IGNORECASE)
+                if m:
+                    return m.group(1).strip()
+            return ""
+
+        title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
         parsed_display_name = title_match.group(1).strip() if title_match else Path(self.command_name).stem
-        parsed_desc = desc_match.group(1).strip() if desc_match else ""
+        parsed_desc = find_section(content, ['Description', 'Role and Purpose', 'Purpose', 'Overview', 'Role', 'About', 'Summary'])
+        parsed_req = find_section(content, ['Requirements', 'Arguments', 'Prerequisites', 'Parameters', 'Core Requirements', 'Input Parameters', 'Inputs'])
+        parsed_instr = find_section(content, ['Instructions', 'How to Use', 'Steps', 'Usage Instructions', 'Guide', 'Directions', 'Implementation'])
+        parsed_examples = find_section(content, ['Examples', 'Code Examples', 'Usage Examples', 'Use Cases', 'Practical Usage', 'Usage', 'Sample Usage'])
+        parsed_notes = find_section(content, ['Important Notes', 'Notes', 'Warnings', 'Limitations', 'Caveats', 'Considerations'])
+
+        from PyQt6.QtWidgets import QScrollArea
+        outer = QVBoxLayout(self)
+        outer.setSpacing(8)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(scroll.Shape.NoFrame)
+        inner = QWidget()
+        layout = QVBoxLayout(inner)
+        layout.setSpacing(8)
+        scroll.setWidget(inner)
+        outer.addWidget(scroll, 1)
 
         form = QFormLayout()
         form.setSpacing(8)
 
-        # Display Name field
         self.display_name_edit = QLineEdit()
         self.display_name_edit.setText(parsed_display_name)
         form.addRow("Display Name:", self.display_name_edit)
 
-        # Description field
         self.description_edit = QTextEdit()
         self.description_edit.setPlainText(parsed_desc)
-        self.description_edit.setMinimumHeight(100)
-        self.description_edit.setMaximumHeight(150)
+        self.description_edit.setMinimumHeight(80)
+        self.description_edit.setMaximumHeight(120)
         form.addRow("Description*:", self.description_edit)
+
+        self.requirements_edit = QTextEdit()
+        self.requirements_edit.setPlainText(parsed_req)
+        self.requirements_edit.setMinimumHeight(80)
+        self.requirements_edit.setMaximumHeight(120)
+        form.addRow("Requirements:", self.requirements_edit)
+
+        self.instructions_edit = QTextEdit()
+        self.instructions_edit.setPlainText(parsed_instr)
+        self.instructions_edit.setMinimumHeight(100)
+        self.instructions_edit.setMaximumHeight(150)
+        form.addRow("Instructions:", self.instructions_edit)
+
+        self.examples_edit = QTextEdit()
+        self.examples_edit.setPlainText(parsed_examples)
+        self.examples_edit.setMinimumHeight(100)
+        self.examples_edit.setMaximumHeight(150)
+        form.addRow("Examples:", self.examples_edit)
+
+        self.notes_edit = QTextEdit()
+        self.notes_edit.setPlainText(parsed_notes)
+        self.notes_edit.setMinimumHeight(80)
+        self.notes_edit.setMaximumHeight(120)
+        form.addRow("Important Notes:", self.notes_edit)
 
         layout.addLayout(form)
 
@@ -559,7 +662,7 @@ class EditCommandDialog(QDialog):
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.validate_and_accept)
         button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
+        outer.addWidget(button_box)
 
     def validate_and_accept(self):
         if not self.description_edit.toPlainText().strip():
@@ -570,5 +673,9 @@ class EditCommandDialog(QDialog):
     def get_command_data(self):
         return {
             'display_name': self.display_name_edit.text().strip(),
-            'description': self.description_edit.toPlainText().strip()
+            'description': self.description_edit.toPlainText().strip(),
+            'requirements': self.requirements_edit.toPlainText().strip(),
+            'instructions': self.instructions_edit.toPlainText().strip(),
+            'examples': self.examples_edit.toPlainText().strip(),
+            'notes': self.notes_edit.toPlainText().strip(),
         }

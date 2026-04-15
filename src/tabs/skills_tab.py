@@ -1079,12 +1079,6 @@ Provide examples of using this skill.
                 # Delete directory and all contents
                 shutil.rmtree(skill_path)
 
-                QMessageBox.information(
-                    self,
-                    "Deleted",
-                    f"Skill '{skill_name}' has been deleted."
-                )
-
                 # Clear editor
                 self.editor.clear()
                 self.skill_name_label.setText("No skill selected")
@@ -1119,11 +1113,7 @@ Provide examples of using this skill.
             with open(skill_md, 'w', encoding='utf-8') as f:
                 f.write(content)
 
-            QMessageBox.information(
-                self,
-                "Saved",
-                f"SKILL.md saved to:\n{skill_md}"
-            )
+            self.skill_name_label.setText(f"Editing: {current_skill.name} ✓ saved")
 
         except Exception as e:
             QMessageBox.critical(
@@ -1155,11 +1145,7 @@ Provide examples of using this skill.
             with open(skill_md, 'w', encoding='utf-8') as f:
                 f.write(content)
 
-            QMessageBox.information(
-                self,
-                "Saved",
-                f"Backup created and SKILL.md saved to:\n{skill_md}"
-            )
+            self.skill_name_label.setText(f"Editing: {current_skill.name} ✓ backed up & saved")
 
         except Exception as e:
             QMessageBox.critical(

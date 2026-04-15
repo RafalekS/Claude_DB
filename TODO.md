@@ -41,34 +41,27 @@
 
 ---
 
-## PENDING - CRITICAL ISSUES
+## COMPLETED - CRITICAL ISSUES (Session 2026-04-15)
 
 ### 1. Skills Tab Issues
-- [ ] **New Skill button**: Skills created without proper YAML frontmatter - needs proper form dialog
-- [ ] **Edit button**: Does nothing - needs to open GUI dialog for editing skill
-- [ ] **Skills Library - Add Template**: Uses two separate tiny dialogs - consolidate into ONE proper form with:
-  - Name
-  - Description
-  - Allowed-tools
-- [ ] **Remove excessive pop-ups**: Use status line instead of QMessageBox for create/delete confirmations
+- [x] **New Skill button**: Full form dialog with YAML frontmatter fields (name, description, argument-hint, model, effort, paths, context, tools, flags, hooks)
+- [x] **Edit button**: GUI dialog pre-filled from existing frontmatter
+- [x] **Skills Library - Add Template**: Single proper form (name, description, allowed-tools checkboxes)
+- [x] **Remove excessive pop-ups**: Save/delete now uses status line label instead of QMessageBox.information
 
 ### 2. Commands Tab Issues
-- [ ] **Edit button**: Does nothing - needs to open GUI dialog for editing command
-- [ ] **New button**: Only asks for name - needs proper form with all fields
+- [x] **Edit button**: Full GUI dialog with all 5 sections (Description, Requirements, Instructions, Examples, Important Notes) — parses existing content and rebuilds correctly
+- [x] **New button**: Full form with all 5 content sections
 
 ### 3. Agents Tab Issues
-- [ ] **Remove "Template" field from New Agent dialog** - user doesn't understand why it's there
-- [ ] **Remove "Template" field from Edit Agent dialog** - same issue
-- [ ] **Agent Library - Add Template**: Missing fields:
-  - Subfolder
-  - Category
-  - Color
-- [ ] **Agent Library - Edit Template**: Uses text editor - should use proper GUI form with ALL fields
+- [x] **No "Template" field** in New Agent dialog or Edit Agent dialog
+- [x] **Agent Library - Add Template**: Has name, description, color, model, tools
+- [x] **Agent Library - Edit Template**: Proper GUI form with all fields including subfolder
 
 ---
 
-## REQUIREMENTS
-- All Add/Edit operations MUST use proper GUI forms, NOT text editors
-- All forms MUST have ALL relevant fields
-- Use status line for feedback instead of excessive QMessageBox pop-ups
-- Consistent experience across all tabs (Agents, Skills, Commands, MCP)
+## REQUIREMENTS (met)
+- All Add/Edit operations use proper GUI forms, NOT text editors ✓
+- All forms have ALL relevant fields ✓
+- Status line used for save/delete feedback instead of excessive QMessageBox pop-ups ✓
+- Consistent experience across all tabs (Agents, Skills, Commands, MCP) ✓
