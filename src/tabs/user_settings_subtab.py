@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QCheckBox, QLineEdit
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QFont
 
 from utils import theme
 
@@ -71,11 +71,7 @@ class UserSettingsSubTab(QWidget):
         advanced_group = self.create_advanced_section()
         scroll_layout.addWidget(advanced_group)
 
-        # Section 4: Environment Variables
-        env_group = self.create_env_vars_section()
-        scroll_layout.addWidget(env_group)
-
-        # Section 5: JSON Preview
+        # Section 4: JSON Preview
         preview_group = self.create_preview_section()
         scroll_layout.addWidget(preview_group)
 
@@ -322,51 +318,6 @@ class UserSettingsSubTab(QWidget):
         if row >= 0:
             self.disabled_plugins_list.takeItem(row)
 
-    def create_env_vars_section(self) -> QGroupBox:
-        """Create environment variables section"""
-        group = QGroupBox("Environment Variables")
-
-        layout = QVBoxLayout()
-        layout.setSpacing(5)
-
-        # Env vars list
-        self.env_list = QListWidget()
-        self.env_list.setMaximumHeight(150)
-        self.env_list.setStyleSheet(f"""
-            QListWidget {{
-                border-radius: 3px;
-                padding: 3px;
-                font-size: {theme.FONT_SIZE_SMALL}px;
-                font-family: {theme.FONT_FAMILY_MONO};
-            }}
-        """)
-        layout.addWidget(self.env_list)
-
-        # Buttons
-        btn_layout = QHBoxLayout()
-        add_btn = QPushButton("➕ Add")
-        add_btn.setToolTip("Add environment variable")
-        edit_btn = QPushButton("✏️ Edit")
-        edit_btn.setToolTip("Edit selected variable")
-        remove_btn = QPushButton("🗑 Remove")
-        remove_btn.setToolTip("Remove selected variable")
-
-        for btn in [add_btn, edit_btn, remove_btn]:
-            btn.setMaximumWidth(80)
-
-        add_btn.clicked.connect(self.add_env_var)
-        edit_btn.clicked.connect(self.edit_env_var)
-        remove_btn.clicked.connect(self.remove_env_var)
-
-        btn_layout.addWidget(add_btn)
-        btn_layout.addWidget(edit_btn)
-        btn_layout.addWidget(remove_btn)
-        btn_layout.addStretch()
-        layout.addLayout(btn_layout)
-
-        group.setLayout(layout)
-        return group
-
     def create_preview_section(self) -> QGroupBox:
         """Create JSON preview section"""
         group = QGroupBox("JSON Preview")
@@ -392,119 +343,6 @@ class UserSettingsSubTab(QWidget):
 
         group.setLayout(layout)
         return group
-
-    def load_env_vars(self, settings: dict):
-        """Load environment variables into list"""
-        self.env_list.clear()
-        env_vars = settings.get('env', {})
-
-        if not env_vars:
-            item = QListWidgetItem("No environment variables configured")
-            item.setFlags(Qt.ItemFlag.NoItemFlags)
-            item.setForeground(QColor(theme.FG_SECONDARY))
-            self.env_list.addItem(item)
-        else:
-            for key, value in sorted(env_vars.items()):
-                # Mask sensitive values
-                if any(s in key.upper() for s in ['KEY', 'TOKEN', 'PASSWORD', 'SECRET']):
-                    display_value = f"{value[:4]}...{value[-4:]}" if len(value) > 8 else "***"
-                else:
-                    display_value = value
-                item = QListWidgetItem(f"{key} = {display_value}")
-                item.setData(Qt.ItemDataRole.UserRole, {'key': key, 'value': value})
-                item.setForeground(QColor(theme.ACCENT_PRIMARY))
-                self.env_list.addItem(item)
-
-    def add_env_var(self):
-        """Add new environment variable"""
-        key, ok = QInputDialog.getText(
-            self,
-            "Add Environment Variable",
-            "Variable name (e.g., ANTHROPIC_API_KEY):"
-        )
-        if not ok or not key:
-            return
-        key = key.strip().upper().replace(' ', '_')
-
-        value, ok = QInputDialog.getText(
-            self,
-            "Add Environment Variable",
-            f"Value for {key}:"
-        )
-        if not ok:
-            return
-
-        try:
-            settings = self.settings_manager.get_user_settings()
-            if 'env' not in settings:
-                settings['env'] = {}
-            settings['env'][key] = value
-
-            self.settings_manager.save_user_settings(settings)
-            self.load_settings()
-            QMessageBox.information(self, "Added", f"Environment variable '{key}' added successfully!")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add variable:\n{str(e)}")
-
-    def edit_env_var(self):
-        """Edit selected environment variable"""
-        current = self.env_list.currentItem()
-        if not current or not current.data(Qt.ItemDataRole.UserRole):
-            QMessageBox.warning(self, "No Selection", "Please select a variable to edit")
-            return
-
-        data = current.data(Qt.ItemDataRole.UserRole)
-        key = data['key']
-        old_value = data['value']
-
-        value, ok = QInputDialog.getText(
-            self,
-            "Edit Environment Variable",
-            f"New value for {key}:",
-            text=old_value
-        )
-        if not ok:
-            return
-
-        try:
-            settings = self.settings_manager.get_user_settings()
-            settings['env'][key] = value
-
-            self.settings_manager.save_user_settings(settings)
-            self.load_settings()
-            QMessageBox.information(self, "Updated", f"Environment variable '{key}' updated!")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to update variable:\n{str(e)}")
-
-    def remove_env_var(self):
-        """Remove selected environment variable"""
-        current = self.env_list.currentItem()
-        if not current or not current.data(Qt.ItemDataRole.UserRole):
-            QMessageBox.warning(self, "No Selection", "Please select a variable to remove")
-            return
-
-        data = current.data(Qt.ItemDataRole.UserRole)
-        key = data['key']
-
-        reply = QMessageBox.question(
-            self,
-            "Confirm Removal",
-            f"Remove '{key}'?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply == QMessageBox.StandardButton.No:
-            return
-
-        try:
-            settings = self.settings_manager.get_user_settings()
-            if 'env' in settings and key in settings['env']:
-                del settings['env'][key]
-
-            self.settings_manager.save_user_settings(settings)
-            self.load_settings()
-            QMessageBox.information(self, "Removed", f"Environment variable '{key}' removed!")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to remove variable:\n{str(e)}")
 
     def load_settings(self):
         """Load settings from file"""
@@ -541,9 +379,6 @@ class UserSettingsSubTab(QWidget):
             self.disabled_plugins_list.clear()
             for p in settings.get("disabledPlugins", []):
                 self.disabled_plugins_list.addItem(p)
-
-            # Load environment variables
-            self.load_env_vars(settings)
 
             # Update preview
             self.update_preview(settings)

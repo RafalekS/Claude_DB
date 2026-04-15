@@ -19,8 +19,6 @@ from PyQt6.QtWidgets import (
 from utils import theme
 # Import subtabs (using OLD correct implementations)
 from tabs.user_settings_subtab import UserSettingsSubTab
-from tabs.user_model_info_subtab import UserModelInfoSubTab
-from tabs.user_workflows_subtab import UserWorkflowsSubTab
 from tabs.user_hooks_subtab import UserHooksSubTab
 from tabs.user_permissions_subtab import UserPermissionsSubTab
 from tabs.user_statusline_subtab import UserStatuslineSubTab
@@ -98,14 +96,6 @@ class UserConfigTab(QWidget):
         settings_tab = UserSettingsSubTab(self.config_manager, self.backup_manager, self.settings_manager)
         self.sub_tabs.addTab(settings_tab, "🎛️ Settings")
 
-        # Model Information sub-tab
-        model_info_tab = UserModelInfoSubTab(self.config_manager, self.backup_manager, self.settings_manager)
-        self.sub_tabs.addTab(model_info_tab, "📚 Model Information")
-
-        # Workflows sub-tab
-        workflows_tab = UserWorkflowsSubTab(self.config_manager, self.backup_manager, self.settings_manager)
-        self.sub_tabs.addTab(workflows_tab, "🔄 Workflows")
-
         # Env Vars sub-tab
         env_vars_tab = EnvVarsTab(self.config_manager, self.backup_manager)
         self.sub_tabs.addTab(env_vars_tab, "🔑 Env Vars")
@@ -159,19 +149,3 @@ class UserConfigTab(QWidget):
         self.sub_tabs.addTab(remote_control_tab, "🌐 Remote Control")
 
         layout.addWidget(self.sub_tabs, 1)
-
-        # Info footer
-        footer = QLabel(
-            "💡 Tip: User settings apply globally to all projects. "
-            "For project-specific settings, use the Project Configuration tab."
-        )
-        footer.setWordWrap(True)
-        footer.setStyleSheet(
-            f"color: {theme.FG_SECONDARY}; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; "
-            f"padding: 5px; "
-            f"background-color: {theme.BG_MEDIUM}; "
-            f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
-            f"border-radius: 3px;"
-        )
-        layout.addWidget(footer)

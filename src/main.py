@@ -45,7 +45,6 @@ from tabs.plugins_tab import PluginsTab
 from tabs.memory_tab import MemoryTab
 from tabs.usage_tab import UsageTab
 from tabs.documentation_tab import DocumentationTab
-from tabs.styles_workflows_tab import StylesWorkflowsTab
 from tabs.claudekit_tab import ClaudeKitTab
 from tabs.tools_tab import ToolsTab
 from tabs.about_tab import AboutTab
@@ -145,7 +144,6 @@ class ClaudeDBApp(QMainWindow):
             "memory": ("💾 Memory", MemoryTab(self.config_manager, self.backup_manager)),
             "usage": ("📈 Usage & Analytics", UsageTab(self.config_manager, self.backup_manager)),
             "docs": ("📚 Documentation", DocumentationTab()),
-            "styles": ("🔄 Workflows", StylesWorkflowsTab(self.config_manager, self.backup_manager)),
             "claudekit": ("🛠️ ClaudeKit", ClaudeKitTab()),
             "tools": ("🔧 Tools", ToolsTab()),
             "about": ("ℹ️ About", AboutTab()),
@@ -154,7 +152,7 @@ class ClaudeDBApp(QMainWindow):
 
         # Default tab order (using keys)
         default_row1 = ["userconfig", "projectconfig", "prompts", "plugins", "memory"]
-        default_row2 = ["usage", "docs", "styles", "claudekit", "tools", "about", "preferences"]
+        default_row2 = ["usage", "docs", "claudekit", "tools", "about", "preferences"]
 
         # Load custom tab configuration from config
         row1_tabs, row2_tabs = self.load_tab_configuration(self.all_tabs, default_row1, default_row2)

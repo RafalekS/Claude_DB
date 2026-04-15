@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QLabel, QMessageBox, QListWidget, QSplitter, QLineEdit, QInputDialog,
     QFileDialog, QTabWidget, QDialog, QComboBox, QFormLayout, QDialogButtonBox,
     QCheckBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-    QGridLayout, QScrollArea
+    QGridLayout, QScrollArea, QTextBrowser
 )
 import json
 
@@ -227,25 +227,22 @@ class AgentsTab(QWidget):
         layout.addWidget(editor_widget, 1)
 
         # Info tip with best practices
-        tip_label = QLabel(
-            "💡 <b>Agent Design Best Practices:</b> "
-            "Define ONE clear responsibility per agent • "
-            "Minimize tool access per role (principle of least privilege) • "
-            "Prefer read-only agents for analysis/review tasks • "
-            "Limit write permissions to essential agents only"
-            "<br><b>Example Agents:</b> "
-            "Planner (read-only: convert features → tasks) • "
-            "Codegen (edit: implement with path restrictions) • "
-            "Tester (read-only: write failing tests) • "
-            "Reviewer (read-only: structured comments) • "
-            "Docs (edit: update documentation)"
-            "<br><b>Usage:</b> "
-            "Use <code>claude /agents</code> to invoke • "
-            "User agents (~/.claude/agents/) are global • "
-            "Project agents (./.claude/agents/) are shared with team via git"
+        tip_label = QTextBrowser()
+        tip_label.setOpenExternalLinks(False)
+        tip_label.setMaximumHeight(70)
+        tip_label.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
+            f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
         )
-        tip_label.setWordWrap(True)
-        tip_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
+        tip_label.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "💡 <b>Best Practices:</b> One responsibility per agent • Least privilege • "
+            "Read-only for analysis • Write only where essential"
+            "<br><b>Usage:</b> <code>claude /agents</code> • "
+            "User: <code>~/.claude/agents/</code> (global) • "
+            "Project: <code>./.claude/agents/</code> (git-shared)"
+            "</span>"
+        )
         layout.addWidget(tip_label)
 
     def create_agents_editor(self):

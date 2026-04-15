@@ -7,7 +7,7 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QLabel, QMessageBox, QListWidget,
-    QListWidgetItem, QGroupBox, QInputDialog
+    QListWidgetItem, QGroupBox, QInputDialog, QTextBrowser, QSplitter
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
@@ -99,140 +99,130 @@ class PluginsTab(QWidget):
         quick_actions_group.setLayout(quick_actions_layout)
         layout.addWidget(quick_actions_group)
 
-        # Known Marketplaces Section (moved here right after Quick Actions)
-        known_marketplaces_group = QGroupBox("Known Marketplaces (from ~/.claude/plugins/known_marketplaces.json)")
+        # ── Splitter: left = plugins, right = marketplaces + reference ──────
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setHandleWidth(6)
+        layout.addWidget(splitter, 1)
 
-        known_marketplaces_layout = QVBoxLayout()
-        self.known_marketplaces_list = QListWidget()
-        self.known_marketplaces_list.setMinimumHeight(150)  # Make it taller
-        known_marketplaces_layout.addWidget(self.known_marketplaces_list)
-        known_marketplaces_group.setLayout(known_marketplaces_layout)
-        layout.addWidget(known_marketplaces_group)
+        # ── LEFT: Enabled + Installed Plugins ────────────────────────────────
+        left = QWidget()
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 4, 0)
+        left_layout.setSpacing(5)
 
-        # Enabled Plugins Section (from settings.json)
-        enabled_plugins_group = QGroupBox("Enabled Plugins (from settings.json)")
-
-        enabled_plugins_layout = QVBoxLayout()
+        # Enabled Plugins
+        enabled_plugins_group = QGroupBox("Enabled Plugins (settings.json)")
+        enabled_plugins_layout = QVBoxLayout(enabled_plugins_group)
         self.enabled_plugins_list = QListWidget()
         enabled_plugins_layout.addWidget(self.enabled_plugins_list)
-
         enabled_plugins_btn_layout = QHBoxLayout()
-        enabled_plugins_btn_layout.setSpacing(5)
-
-        self.add_enabled_plugin_btn = QPushButton("➕ Add Plugin")
+        enabled_plugins_btn_layout.setSpacing(4)
+        self.add_enabled_plugin_btn = QPushButton("Add")
         self.add_enabled_plugin_btn.setToolTip("Add a plugin to enabledPlugins in settings.json")
-
-        self.toggle_enabled_plugin_btn = QPushButton("🔄 Toggle Enable/Disable")
+        self.toggle_enabled_plugin_btn = QPushButton("Toggle")
         self.toggle_enabled_plugin_btn.setToolTip("Enable or disable the selected plugin")
-
-        self.remove_enabled_plugin_btn = QPushButton("🗑 Remove Plugin")
+        self.remove_enabled_plugin_btn = QPushButton("Remove")
         self.remove_enabled_plugin_btn.setToolTip("Remove plugin from enabledPlugins in settings.json")
-
         self.add_enabled_plugin_btn.clicked.connect(self.add_enabled_plugin)
         self.toggle_enabled_plugin_btn.clicked.connect(self.toggle_enabled_plugin)
         self.remove_enabled_plugin_btn.clicked.connect(self.remove_enabled_plugin)
-
-        enabled_plugins_btn_layout.addWidget(self.add_enabled_plugin_btn)
-        enabled_plugins_btn_layout.addWidget(self.toggle_enabled_plugin_btn)
-        enabled_plugins_btn_layout.addWidget(self.remove_enabled_plugin_btn)
+        for b in (self.add_enabled_plugin_btn, self.toggle_enabled_plugin_btn, self.remove_enabled_plugin_btn):
+            enabled_plugins_btn_layout.addWidget(b)
         enabled_plugins_btn_layout.addStretch()
-
         enabled_plugins_layout.addLayout(enabled_plugins_btn_layout)
-        enabled_plugins_group.setLayout(enabled_plugins_layout)
-        layout.addWidget(enabled_plugins_group)
+        left_layout.addWidget(enabled_plugins_group)
 
-        # Installed Plugins Section (from ~/.claude/plugins/config.json)
-        installed_plugins_group = QGroupBox("Installed Plugins (from ~/.claude/plugins/config.json)")
-
-        installed_plugins_layout = QVBoxLayout()
+        # Installed Plugins
+        installed_plugins_group = QGroupBox("Installed Plugins (~/.claude/plugins/config.json)")
+        installed_plugins_layout = QVBoxLayout(installed_plugins_group)
         self.installed_plugins_list = QListWidget()
         installed_plugins_layout.addWidget(self.installed_plugins_list)
-        installed_plugins_group.setLayout(installed_plugins_layout)
-        layout.addWidget(installed_plugins_group)
+        left_layout.addWidget(installed_plugins_group)
 
-        # Extra Known Marketplaces Section (from settings.json)
-        extra_marketplaces_group = QGroupBox("Extra Known Marketplaces (from settings.json)")
+        splitter.addWidget(left)
 
-        extra_marketplaces_layout = QVBoxLayout()
+        # ── RIGHT: Marketplaces + Reference ──────────────────────────────────
+        right = QWidget()
+        right_layout = QVBoxLayout(right)
+        right_layout.setContentsMargins(4, 0, 0, 0)
+        right_layout.setSpacing(5)
+
+        # Known Marketplaces
+        known_marketplaces_group = QGroupBox("Known Marketplaces (~/.claude/plugins/known_marketplaces.json)")
+        known_marketplaces_layout = QVBoxLayout(known_marketplaces_group)
+        self.known_marketplaces_list = QListWidget()
+        known_marketplaces_layout.addWidget(self.known_marketplaces_list)
+        right_layout.addWidget(known_marketplaces_group)
+
+        # Extra Marketplaces
+        extra_marketplaces_group = QGroupBox("Extra Known Marketplaces (settings.json)")
+        extra_marketplaces_layout = QVBoxLayout(extra_marketplaces_group)
         self.extra_marketplaces_list = QListWidget()
         extra_marketplaces_layout.addWidget(self.extra_marketplaces_list)
-
         extra_marketplaces_btn_layout = QHBoxLayout()
-        extra_marketplaces_btn_layout.setSpacing(5)
-
-        self.add_extra_marketplace_btn = QPushButton("➕ Add Marketplace")
+        extra_marketplaces_btn_layout.setSpacing(4)
+        self.add_extra_marketplace_btn = QPushButton("Add")
         self.add_extra_marketplace_btn.setToolTip("Add marketplace to extraKnownMarketplaces in settings.json")
-
-        self.remove_extra_marketplace_btn = QPushButton("🗑 Remove Marketplace")
+        self.remove_extra_marketplace_btn = QPushButton("Remove")
         self.remove_extra_marketplace_btn.setToolTip("Remove marketplace from extraKnownMarketplaces in settings.json")
-
         self.add_extra_marketplace_btn.clicked.connect(self.add_extra_marketplace)
         self.remove_extra_marketplace_btn.clicked.connect(self.remove_extra_marketplace)
-
         extra_marketplaces_btn_layout.addWidget(self.add_extra_marketplace_btn)
         extra_marketplaces_btn_layout.addWidget(self.remove_extra_marketplace_btn)
         extra_marketplaces_btn_layout.addStretch()
-
         extra_marketplaces_layout.addLayout(extra_marketplaces_btn_layout)
-        extra_marketplaces_group.setLayout(extra_marketplaces_layout)
-        layout.addWidget(extra_marketplaces_group)
+        right_layout.addWidget(extra_marketplaces_group)
 
-        # Plugin.json reference section
+        # Plugin Capabilities reference
         plugin_ref_group = QGroupBox("Plugin Capabilities (plugin.json reference)")
-        plugin_ref_layout = QVBoxLayout()
+        plugin_ref_layout = QVBoxLayout(plugin_ref_group)
         plugin_ref_layout.setSpacing(4)
-
-        plugin_ref = QLabel(
-            "<b>LSP Servers</b> — plugins can expose a Language Server Protocol server:<br>"
+        plugin_ref = QTextBrowser()
+        plugin_ref.setOpenExternalLinks(False)
+        plugin_ref.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "<b>LSP Servers</b> — expose a Language Server Protocol server:<br>"
             "<code style='font-size:11px'>"
-            "&nbsp;&nbsp;\"lsp\": {\"command\": \"node\", \"args\": [\"server.js\"], "
-            "\"languages\": [\"python\"]}"
-            "</code><br><br>"
-            "<b>Monitors</b> — background watchers that fire on file/event changes:<br>"
+            "&nbsp;&nbsp;\"lsp\": {{\"command\": \"node\", \"args\": [\"server.js\"], \"languages\": [\"python\"]}}"
+            "</code><br>"
+            "<b>Monitors</b> — background watchers fired on file/event changes:<br>"
             "<code style='font-size:11px'>"
-            "&nbsp;&nbsp;\"monitors\": [{\"event\": \"FileChanged\", \"pattern\": \"*.py\", "
-            "\"command\": \"lint.sh\"}]"
-            "</code><br><br>"
-            "<b>userConfig</b> — schema for user-configurable plugin settings (shown in UI):<br>"
+            "&nbsp;&nbsp;\"monitors\": [{{\"event\": \"FileChanged\", \"pattern\": \"*.py\", \"command\": \"lint.sh\"}}]"
+            "</code><br>"
+            "<b>userConfig</b> — user-configurable settings schema (shown in UI):<br>"
             "<code style='font-size:11px'>"
-            "&nbsp;&nbsp;\"userConfig\": {\"apiKey\": {\"type\": \"string\", \"description\": \"API key\"}}"
-            "</code><br><br>"
-            "<b>channels</b> — communication channels the plugin provides:<br>"
-            "<code style='font-size:11px'>"
-            "&nbsp;&nbsp;\"channels\": [\"http\", \"stdio\"]"
-            "</code><br><br>"
-            "<b>Vars in plugin.json:</b> "
-            "<code>${CLAUDE_PLUGIN_ROOT}</code> — plugin install directory &nbsp; "
-            "<code>${CLAUDE_PLUGIN_DATA}</code> — plugin data/config directory"
-        )
-        plugin_ref.setWordWrap(True)
-        plugin_ref.setStyleSheet(
-            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; "
-            f"padding: {theme.PADDING_MD}px;"
+            "&nbsp;&nbsp;\"userConfig\": {{\"apiKey\": {{\"type\": \"string\", \"description\": \"API key\"}}}}"
+            "</code><br>"
+            "<b>channels</b> — communication channels: "
+            "<code>\"channels\": [\"http\", \"stdio\"]</code><br>"
+            "<b>Vars:</b> <code>${{CLAUDE_PLUGIN_ROOT}}</code> install dir &nbsp; "
+            "<code>${{CLAUDE_PLUGIN_DATA}}</code> data dir"
+            "</span>"
         )
         plugin_ref_layout.addWidget(plugin_ref)
-        plugin_ref_group.setLayout(plugin_ref_layout)
-        layout.addWidget(plugin_ref_group)
+        right_layout.addWidget(plugin_ref_group)
+
+        splitter.addWidget(right)
+        splitter.setSizes([500, 500])
 
         # CLI reference footer
-        cli_footer = QLabel(
-            "<b>CLI commands:</b> "
+        cli_footer = QTextBrowser()
+        cli_footer.setOpenExternalLinks(False)
+        cli_footer.setMaximumHeight(50)
+        cli_footer.setStyleSheet(
+            f"font-size: {theme.FONT_SIZE_SMALL}px; background: {theme.BG_MEDIUM}; "
+            f"border-left: 3px solid {theme.ACCENT_SECONDARY}; border-radius: {theme.BORDER_RADIUS}px;"
+        )
+        cli_footer.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px;'>"
+            "<b>CLI:</b> "
             "<code>claude plugin install &lt;id&gt;@&lt;marketplace&gt;</code> · "
             "<code>claude plugin uninstall &lt;id&gt; [--keep-data]</code> · "
             "<code>claude plugin enable/disable &lt;id&gt;</code> · "
             "<code>claude plugin update &lt;id&gt;</code> · "
             "<code>claude plugin validate</code> &nbsp;|&nbsp; "
-            "<b>Scopes:</b> user (default) · project (git) · local (gitignored) · managed (org, read-only) &nbsp;|&nbsp; "
             "<b>Cache:</b> <code>~/.claude/plugins/cache/</code>"
-        )
-        cli_footer.setWordWrap(True)
-        cli_footer.setOpenExternalLinks(False)
-        cli_footer.setStyleSheet(
-            f"font-size: {theme.FONT_SIZE_SMALL}px; "
-            f"padding: {theme.PADDING_SM}px {theme.PADDING_MD}px; "
-            f"background: {theme.BG_MEDIUM}; "
-            f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
-            f"border-radius: {theme.BORDER_RADIUS}px;"
+            "</span>"
         )
         layout.addWidget(cli_footer)
 

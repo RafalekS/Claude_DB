@@ -8,7 +8,7 @@ import logging
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTextEdit, QSplitter, QGroupBox, QFormLayout, QLineEdit,
-    QComboBox, QCheckBox, QSpinBox
+    QComboBox, QCheckBox, QSpinBox, QTextBrowser
 )
 from PyQt6.QtCore import Qt
 
@@ -81,17 +81,21 @@ class RemoteControlTab(QWidget):
         layout.addWidget(splitter, 1)
 
         # Footer
-        tip = QLabel(
-            "💡 <b>Key flags for headless use:</b> "
-            "<code>-p</code> / <code>--print</code> — non-interactive mode, print response and exit &nbsp;|&nbsp; "
-            "<code>--output-format json</code> — machine-readable output &nbsp;|&nbsp; "
-            "<code>--permission-prompt-tool mcp__server__tool</code> — delegate permission prompts to an MCP tool &nbsp;|&nbsp; "
-            "<code>--no-markdown</code> — plain text output for piping"
-        )
-        tip.setWordWrap(True)
+        tip = QTextBrowser()
+        tip.setOpenExternalLinks(False)
+        tip.setMaximumHeight(55)
         tip.setStyleSheet(
             f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
-            f"padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
+            f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        tip.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "💡 <b>Key flags:</b> "
+            "<code>-p</code>/<code>--print</code> — non-interactive &nbsp;|&nbsp; "
+            "<code>--output-format json</code> — machine-readable &nbsp;|&nbsp; "
+            "<code>--permission-prompt-tool mcp__server__tool</code> — delegate permissions &nbsp;|&nbsp; "
+            "<code>--no-markdown</code> — plain text for piping"
+            "</span>"
         )
         layout.addWidget(tip)
 

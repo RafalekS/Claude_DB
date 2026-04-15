@@ -564,6 +564,48 @@ def _plugins_ref_html():
     )
 
 
+def _model_info_html():
+    return _wrap(
+        _h(1, "Model Information"),
+        _h(2, "Available Models"),
+        _table(["Model ID", "Alias", "Description"],
+               [["claude-opus-4-5", "claude-opus-4-5", "Most capable — complex reasoning, architecture decisions"],
+                ["claude-sonnet-4-5", "claude-sonnet-4-5", "Best coding model — main development tasks"],
+                ["claude-haiku-4-5-20251001", "claude-haiku-4-5", "Fast &amp; cost-efficient — worker agents, pair programming"]]),
+        _h(2, "Selecting a Model"),
+        _pre("claude --model claude-sonnet-4-5\n"
+             "claude --model claude-opus-4-5\n"
+             "export ANTHROPIC_MODEL=claude-sonnet-4-5"),
+        _p("The default model is set via " + _code("model") + " in " + _code("~/.claude/settings.json") + "."),
+        _h(2, "Effort Levels (Extended Thinking)"),
+        _table(["Level", "Budget Tokens", "Use Case"],
+               [["low", "~1,024", "Quick tasks, simple questions"],
+                ["medium", "~10,000", "Most coding tasks (default)"],
+                ["high", "~31,999", "Complex reasoning, architecture"],
+                ["ultrathink", "Max", "Deepest reasoning — /ultrathink command"]]),
+        _h(2, "Controlling Thinking"),
+        _pre("export ANTHROPIC_THINKING_BUDGET=10000\nexport MAX_THINKING_TOKENS=10000"),
+        _p("Toggle via " + _code("Option+T") + " (macOS) / " + _code("Alt+T") + " (Win/Linux).<br>"
+           "View thinking output with " + _code("Ctrl+O") + " (verbose mode).<br>"
+           "Config key: " + _code("alwaysThinkingEnabled") + " in settings.json."),
+        _h(2, "Context Window"),
+        _table(["Model", "Context Window", "Output Tokens"],
+               [["claude-opus-4-5", "200K tokens", "32K tokens"],
+                ["claude-sonnet-4-5", "200K tokens", "64K tokens"],
+                ["claude-haiku-4-5", "200K tokens", "8K tokens"]]),
+        _p("Claude Code tracks context usage and warns when approaching limits.<br>"
+           "Use " + _code("/compact") + " to summarize and compress the conversation context.<br>"
+           "Use " + _code("/clear") + " to start a fresh context window."),
+        _h(2, "Fast Mode"),
+        _p("Toggle fast output mode with " + _code("/fast") + ". Uses the same model — does NOT switch models. "
+           "Fast mode reduces latency at the cost of slightly reduced reasoning depth."),
+        _h(2, "Cost & Token Tracking"),
+        _p("Claude Code tracks token usage per session. Use the Usage &amp; Analytics tab to view "
+           "historical usage, costs, and per-project breakdowns.<br>"
+           "Set " + _code("ANTHROPIC_API_KEY") + " environment variable for API access."),
+    )
+
+
 # ─── Main Documentation Tab ───────────────────────────────────────────────────
 
 class DocumentationTab(QWidget):
@@ -628,3 +670,7 @@ class DocumentationTab(QWidget):
         tabs.addTab(DocPage(_plugins_ref_html(),
                             "https://code.claude.com/docs/en/plugins-reference"),
                     "🧩 Plugins Ref")
+
+        tabs.addTab(DocPage(_model_info_html(),
+                            "https://code.claude.com/docs/en/model-config"),
+                    "🤖 Model Info")

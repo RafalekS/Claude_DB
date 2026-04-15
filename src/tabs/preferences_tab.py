@@ -412,17 +412,30 @@ class PreferencesTab(QWidget):
         # Font family dropdown
         self.font_family_combo = QComboBox()
         self.font_family_combo.addItems([
+            # Sans-serif (UI fonts)
+            "Segoe UI",
+            "Arial",
+            "Calibri",
+            "Tahoma",
+            "Verdana",
+            "Trebuchet MS",
+            "Georgia",
+            "Helvetica",
+            "Ubuntu",
+            "Noto Sans",
+            "Open Sans",
+            # Monospace (code fonts)
             "Consolas",
-            "Monaco",
             "Courier New",
-            "SF Mono",
-            "Menlo",
             "DejaVu Sans Mono",
             "Liberation Mono",
+            "Monaco",
+            "Menlo",
+            "SF Mono",
             "Cascadia Code",
             "Fira Code",
             "JetBrains Mono",
-            "Source Code Pro"
+            "Source Code Pro",
         ])
 
         font_family_label = QLabel("Font Family:")
@@ -1202,11 +1215,14 @@ class {class_name}Tab(QWidget):
         """Apply preferences immediately — emits theme_changed signal for instant update."""
         theme_name = self.theme_combo.currentText()
         font_size = self.font_size_spin.value()
+        font_family = self.font_family_combo.currentText()
 
         # Apply locally first
-        theme.apply_theme(theme_name, font_size)
+        theme.apply_theme(theme_name, font_size, font_family)
         app = QApplication.instance()
         if app:
+            from PyQt6.QtGui import QFont
+            app.setFont(QFont(font_family, font_size))
             app.setStyleSheet(theme.generate_app_stylesheet())
 
         # Emit signal → main window calls apply_theme_change on all tabs
@@ -1238,7 +1254,8 @@ class {class_name}Tab(QWidget):
             # Update preferences section
             config_data["preferences"] = {
                 "theme": self.theme_combo.currentText(),
-                "font_size": self.font_size_spin.value()
+                "font_size": self.font_size_spin.value(),
+                "font_family": self.font_family_combo.currentText(),
             }
 
             # Save merged config (atomic)
@@ -1251,9 +1268,15 @@ class {class_name}Tab(QWidget):
         try:
             theme_name = self.theme_combo.currentText()
             font_size = self.font_size_spin.value()
+            font_family = self.font_family_combo.currentText()
 
-            # Apply theme
-            theme.apply_theme(theme_name, font_size)
+            # Apply theme + font
+            theme.apply_theme(theme_name, font_size, font_family)
+            app = QApplication.instance()
+            if app:
+                from PyQt6.QtGui import QFont
+                app.setFont(QFont(font_family, font_size))
+                app.setStyleSheet(theme.generate_app_stylesheet())
 
             # Load existing config
             config_data = {}
@@ -1264,7 +1287,8 @@ class {class_name}Tab(QWidget):
             # Update preferences section
             config_data["preferences"] = {
                 "theme": theme_name,
-                "font_size": font_size
+                "font_size": font_size,
+                "font_family": font_family,
             }
 
             # Save merged config (atomic)
@@ -1276,7 +1300,7 @@ class {class_name}Tab(QWidget):
             QMessageBox.information(
                 self,
                 "Saved & Applied",
-                f"Theme '{theme_name}' with {font_size}px font saved and applied!"
+                f"Theme '{theme_name}', {font_family} {font_size}px saved and applied!"
             )
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save preferences:\n{str(e)}")
@@ -1292,9 +1316,10 @@ class {class_name}Tab(QWidget):
                 prefs = config_data.get("preferences", {})
                 theme_name = prefs.get("theme", "Gruvbox Dark")
                 font_size = prefs.get("font_size", 14)
+                font_family = prefs.get("font_family", "Segoe UI")
 
-                # Apply the theme
-                theme.apply_theme(theme_name, font_size)
+                # Apply the theme + font
+                theme.apply_theme(theme_name, font_size, font_family)
 
                 # Set UI values
                 index = self.theme_combo.findText(theme_name)
@@ -1302,32 +1327,33 @@ class {class_name}Tab(QWidget):
                     self.theme_combo.setCurrentIndex(index)
 
                 self.font_size_spin.setValue(font_size)
+
+                ff_index = self.font_family_combo.findText(font_family)
+                if ff_index >= 0:
+                    self.font_family_combo.setCurrentIndex(ff_index)
+
                 self.preview_theme(theme_name)
             else:
                 # No config file - use defaults
                 self.theme_combo.setCurrentText("Gruvbox Dark")
                 self.font_size_spin.setValue(14)
+                self.font_family_combo.setCurrentText("Segoe UI")
         except Exception as e:
             logger.warning("Failed to load preferences: %s", e)
             # Use defaults on error
             self.theme_combo.setCurrentText("Gruvbox Dark")
             self.font_size_spin.setValue(14)
+            self.font_family_combo.setCurrentText("Segoe UI")
 
         self._load_search_settings()
         self._load_skills_settings()
 
     def reset_to_default(self):
-        """Reset to default Gruvbox Dark theme"""
+        """Reset to default Gruvbox Dark theme and apply immediately."""
         self.theme_combo.setCurrentText("Gruvbox Dark")
         self.font_size_spin.setValue(14)
-        self.preview_theme("Gruvbox Dark")
-
-        QMessageBox.information(
-            self,
-            "Reset",
-            "Preferences reset to Gruvbox Dark theme with 14px font.\n\n"
-            "Click 'Save Preferences' to make this permanent."
-        )
+        self.font_family_combo.setCurrentText("Segoe UI")
+        self.apply_preferences()  # apply + save
 
     def create_full_backup(self):
         """Create full backup of Claude Code configuration"""

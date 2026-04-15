@@ -59,10 +59,12 @@ FONT_SIZE_SMALL = 12
 FONT_SIZE_TINY = 11
 FONT_SIZE_TAB = 13
 
-# Font constants (immutable - font stacks, not theme-specific)
+# Font constants
 FONT_MONOSPACE = "Consolas"
 FONT_FAMILY_MONO = "'Consolas', 'Monaco', 'Courier New', monospace"
 FONT_FAMILY = "'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+# Current UI font family (mutable — updated by apply_theme)
+FONT_FAMILY_UI = "Segoe UI"
 
 # UI spacing constants (consistent across all widgets)
 MARGIN_SM = 3
@@ -73,18 +75,19 @@ PADDING_MD = 8
 BORDER_RADIUS = 4
 
 
-def apply_theme(theme_name, font_size=14):
+def apply_theme(theme_name, font_size=14, font_family=None):
     """
-    Apply a new theme dynamically by updating all global variables
+    Apply a new theme dynamically by updating all global variables.
 
     Args:
-        theme_name: Name of theme from AVAILABLE_THEMES
-        font_size: Base font size in pixels
+        theme_name:   Name of theme from AVAILABLE_THEMES
+        font_size:    Base font size in pixels
+        font_family:  UI font family name (e.g. "Segoe UI", "Calibri")
     """
     global GRUVBOX, BG_DARK, BG_MEDIUM, BG_LIGHT, FG_PRIMARY, FG_SECONDARY, FG_DIM
     global ACCENT_PRIMARY, ACCENT_SECONDARY, ERROR_COLOR, WARNING_COLOR, SUCCESS_COLOR
     global FONT_SIZE_LARGE, FONT_SIZE_NORMAL, FONT_SIZE_SMALL, FONT_SIZE_TINY, FONT_SIZE_TAB
-    global _current_theme
+    global FONT_FAMILY, FONT_FAMILY_UI, _current_theme
 
     if theme_name not in AVAILABLE_THEMES:
         logger.warning("Theme '%s' not found, using Gruvbox Dark", theme_name)
@@ -114,6 +117,11 @@ def apply_theme(theme_name, font_size=14):
     FONT_SIZE_SMALL = max(10, font_size - 2)
     FONT_SIZE_TINY = max(9, font_size - 3)
     FONT_SIZE_TAB = max(11, font_size - 1)
+
+    # Update UI font family if provided
+    if font_family:
+        FONT_FAMILY_UI = font_family
+        FONT_FAMILY = f"'{font_family}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
 
 
 def lighten_color(hex_color, factor=0.1):

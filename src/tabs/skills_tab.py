@@ -11,7 +11,8 @@ from PyQt6.QtWidgets import (
     QLabel, QMessageBox, QListWidget, QSplitter, QLineEdit, QInputDialog,
     QListWidgetItem, QGroupBox, QFileDialog, QTabWidget, QDialog,
     QDialogButtonBox, QTableWidget, QTableWidgetItem, QHeaderView,
-    QCheckBox, QAbstractItemView, QFormLayout, QGridLayout, QComboBox
+    QCheckBox, QAbstractItemView, QFormLayout, QGridLayout, QComboBox,
+    QTextBrowser
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
@@ -221,19 +222,21 @@ class SkillsTab(QWidget):
         info_group = QGroupBox("About Skills")
 
         info_layout = QVBoxLayout()
-        info_text = QLabel(
+        info_text = QTextBrowser()
+        info_text.setOpenExternalLinks(False)
+        info_text.setMaximumHeight(95)
+        info_text.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; padding: 3px;"
+        )
+        info_text.setPlainText(
             "Skills are directory-based (a directory with SKILL.md), discovered automatically at startup and on file change.\n"
             "• User skills: ~/.claude/skills/ — personal, all projects\n"
             "• Project skills: ./.claude/skills/ — team-shared via git\n"
             "• Plugin skills: installed via 'claude plugin install'\n"
-            "Priority (highest first): Enterprise > Personal > Project > Plugin\n"
-            "\n"
-            "Bundled skills: simplify · batch · debug · loop · claude-api\n"
-            "Description cap: ~1,024 chars (shown to model; trim for best adherence)\n"
-            "Substitutions in body: $ARGUMENTS[N] / $N · ${CLAUDE_SKILL_DIR}"
+            "Priority: Enterprise > Personal > Project > Plugin\n"
+            "Bundled: simplify · batch · debug · loop · claude-api\n"
+            "Description cap: ~1,024 chars  |  Substitutions: $ARGUMENTS[N] / $N · ${CLAUDE_SKILL_DIR}"
         )
-        info_text.setWordWrap(True)
-        info_text.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; padding: 5px;")
         info_layout.addWidget(info_text)
         info_group.setLayout(info_layout)
         layout.addWidget(info_group)

@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QLabel, QMessageBox, QListWidget, QSplitter, QComboBox, QListWidgetItem,
     QDialog, QFormLayout, QLineEdit, QTextEdit as QTextEditWidget, QDialogButtonBox,
     QFileDialog, QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView,
-    QAbstractItemView, QCheckBox
+    QAbstractItemView, QCheckBox, QTextBrowser
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon, QColor
@@ -604,26 +604,28 @@ class MCPTab(QWidget):
         layout.addWidget(self._sub_tabs, 1)
 
         # Info section with recommended servers
-        info_label = QLabel(
-            "💡 <b>MCP Quick Commands:</b> "
-            "<code>claude mcp list</code> (view servers) • "
-            "<code>claude mcp add &lt;name&gt; &lt;cmd&gt;</code> (add) • "
-            "<code>claude mcp remove &lt;name&gt;</code> (remove) • "
-            "<code>claude mcp add-from-claude-desktop</code> (import)"
-            "<br><b>Recommended Servers:</b> "
-            "Filesystem: <code>npx @modelcontextprotocol/server-filesystem</code> • "
-            "GitHub: <code>npx @modelcontextprotocol/server-github</code> (needs GITHUB_TOKEN) • "
-            "Puppeteer: <code>npx @modelcontextprotocol/server-puppeteer</code> • "
-            "Memory: <code>npx @modelcontextprotocol/server-memory</code>"
-            "<br><b>Scopes:</b> "
-            "User (~/.claude.json) affects all projects • "
-            "Local (per-project in ~/.claude.json) affects current user • "
-            "Project (.mcp.json at project root) is shared with team • "
-            "Use <code>-s user/project</code> flag to specify scope • "
-            "Use <code>claude mcp list</code> to check server status"
+        info_label = QTextBrowser()
+        info_label.setOpenExternalLinks(False)
+        info_label.setMaximumHeight(75)
+        info_label.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
+            f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
         )
-        info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;")
+        info_label.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "💡 <b>MCP Quick Commands:</b> "
+            "<code>claude mcp list</code> • "
+            "<code>claude mcp add &lt;name&gt; &lt;cmd&gt;</code> • "
+            "<code>claude mcp remove &lt;name&gt;</code> • "
+            "<code>claude mcp add-from-claude-desktop</code>"
+            "<br><b>Recommended:</b> "
+            "<code>npx @modelcontextprotocol/server-filesystem</code> • "
+            "<code>npx @modelcontextprotocol/server-github</code> (GITHUB_TOKEN) • "
+            "<code>npx @modelcontextprotocol/server-memory</code>"
+            "<br><b>Scopes:</b> user (~/.claude.json) • project (.mcp.json in git) • "
+            "local (gitignored) | use <code>-s user/project</code> flag"
+            "</span>"
+        )
         layout.addWidget(info_label)
 
     def create_mcp_editor(self):

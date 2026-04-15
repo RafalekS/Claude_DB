@@ -8,11 +8,11 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QScrollArea, QTextEdit, QMessageBox, QTabWidget,
-    QComboBox, QFormLayout, QListWidget, QListWidgetItem, QInputDialog,
+    QComboBox, QFormLayout, QListWidget, QInputDialog,
     QLineEdit
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QFont
 
 from utils import theme
 
@@ -29,7 +29,6 @@ class ProjectSettingsSubTab(QWidget):
         # Storage for UI widgets by scope
         self.model_combos = {}
         self.theme_combos = {}
-        self.env_lists = {}
         self.preview_texts = {}
         self.excludes_edits = {}
         self.plugins_lists = {}
@@ -143,11 +142,7 @@ class ProjectSettingsSubTab(QWidget):
         advanced_group = self.create_advanced_section(scope)
         scroll_layout.addWidget(advanced_group)
 
-        # Section 4: Environment Variables
-        env_group = self.create_env_vars_section(scope)
-        scroll_layout.addWidget(env_group)
-
-        # Section 5: JSON Preview
+        # Section 4: JSON Preview
         preview_group = self.create_preview_section(scope)
         scroll_layout.addWidget(preview_group)
 
@@ -353,55 +348,6 @@ class ProjectSettingsSubTab(QWidget):
         if row >= 0:
             lst.takeItem(row)
 
-    def create_env_vars_section(self, scope: str) -> QGroupBox:
-        """Create environment variables section"""
-        group = QGroupBox("Environment Variables")
-
-        layout = QVBoxLayout()
-        layout.setSpacing(5)
-
-        # Env vars list
-        env_list = QListWidget()
-        env_list.setMaximumHeight(150)
-        env_list.setStyleSheet(f"""
-            QListWidget {{
-                border-radius: 3px;
-                padding: 3px;
-                font-size: {theme.FONT_SIZE_SMALL}px;
-                font-family: {theme.FONT_FAMILY_MONO};
-            }}
-        """)
-        layout.addWidget(env_list)
-
-        # Buttons
-        btn_layout = QHBoxLayout()
-        add_btn = QPushButton("➕ Add")
-        add_btn.setToolTip("Add environment variable")
-        edit_btn = QPushButton("✏️ Edit")
-        edit_btn.setToolTip("Edit selected variable")
-        remove_btn = QPushButton("🗑 Remove")
-        remove_btn.setToolTip("Remove selected variable")
-
-        for btn in [add_btn, edit_btn, remove_btn]:
-            btn.setMaximumWidth(80)
-
-        add_btn.clicked.connect(lambda: self.add_env_var(scope))
-        edit_btn.clicked.connect(lambda: self.edit_env_var(scope))
-        remove_btn.clicked.connect(lambda: self.remove_env_var(scope))
-
-        btn_layout.addWidget(add_btn)
-        btn_layout.addWidget(edit_btn)
-        btn_layout.addWidget(remove_btn)
-        btn_layout.addStretch()
-        layout.addLayout(btn_layout)
-
-        group.setLayout(layout)
-
-        # Store reference
-        self.env_lists[scope] = env_list
-
-        return group
-
     def create_preview_section(self, scope: str) -> QGroupBox:
         """Create JSON preview section"""
         group = QGroupBox("JSON Preview")
@@ -431,173 +377,6 @@ class ProjectSettingsSubTab(QWidget):
         self.preview_texts[scope] = preview_text
 
         return group
-
-    def load_env_vars(self, settings: dict, scope: str):
-        """Load environment variables into list"""
-        if scope not in self.env_lists:
-            return
-
-        env_list = self.env_lists[scope]
-        env_list.clear()
-        env_vars = settings.get('env', {})
-
-        if not env_vars:
-            item = QListWidgetItem("No environment variables configured")
-            item.setFlags(Qt.ItemFlag.NoItemFlags)
-            item.setForeground(QColor(theme.FG_SECONDARY))
-            env_list.addItem(item)
-        else:
-            for key, value in sorted(env_vars.items()):
-                # Mask sensitive values
-                if any(s in key.upper() for s in ['KEY', 'TOKEN', 'PASSWORD', 'SECRET']):
-                    display_value = f"{value[:4]}...{value[-4:]}" if len(value) > 8 else "***"
-                else:
-                    display_value = value
-                item = QListWidgetItem(f"{key} = {display_value}")
-                item.setData(Qt.ItemDataRole.UserRole, {'key': key, 'value': value})
-                item.setForeground(QColor(theme.ACCENT_PRIMARY))
-                env_list.addItem(item)
-
-    def add_env_var(self, scope: str):
-        """Add new environment variable"""
-        if not self.project_context.has_project():
-            QMessageBox.warning(self, "No Project", "No project selected. Please select a project first.")
-            return
-
-        key, ok = QInputDialog.getText(
-            self,
-            "Add Environment Variable",
-            "Variable name (e.g., ANTHROPIC_API_KEY):"
-        )
-        if not ok or not key:
-            return
-        key = key.strip().upper().replace(' ', '_')
-
-        value, ok = QInputDialog.getText(
-            self,
-            "Add Environment Variable",
-            f"Value for {key}:"
-        )
-        if not ok:
-            return
-
-        try:
-            project_path = self.project_context.get_project()
-
-            if scope == "shared":
-                settings = self.settings_manager.get_project_shared_settings(project_path)
-            else:
-                settings = self.settings_manager.get_project_local_settings(project_path)
-
-            if 'env' not in settings:
-                settings['env'] = {}
-            settings['env'][key] = value
-
-            if scope == "shared":
-                self.settings_manager.save_project_shared_settings(project_path, settings)
-            else:
-                self.settings_manager.save_project_local_settings(project_path, settings)
-
-            self.load_settings(scope)
-            QMessageBox.information(self, "Added", f"Environment variable '{key}' added successfully!")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add variable:\n{str(e)}")
-
-    def edit_env_var(self, scope: str):
-        """Edit selected environment variable"""
-        if not self.project_context.has_project():
-            QMessageBox.warning(self, "No Project", "No project selected. Please select a project first.")
-            return
-
-        if scope not in self.env_lists:
-            return
-
-        env_list = self.env_lists[scope]
-        current = env_list.currentItem()
-        if not current or not current.data(Qt.ItemDataRole.UserRole):
-            QMessageBox.warning(self, "No Selection", "Please select a variable to edit")
-            return
-
-        data = current.data(Qt.ItemDataRole.UserRole)
-        key = data['key']
-        old_value = data['value']
-
-        value, ok = QInputDialog.getText(
-            self,
-            "Edit Environment Variable",
-            f"New value for {key}:",
-            text=old_value
-        )
-        if not ok:
-            return
-
-        try:
-            project_path = self.project_context.get_project()
-
-            if scope == "shared":
-                settings = self.settings_manager.get_project_shared_settings(project_path)
-            else:
-                settings = self.settings_manager.get_project_local_settings(project_path)
-
-            settings['env'][key] = value
-
-            if scope == "shared":
-                self.settings_manager.save_project_shared_settings(project_path, settings)
-            else:
-                self.settings_manager.save_project_local_settings(project_path, settings)
-
-            self.load_settings(scope)
-            QMessageBox.information(self, "Updated", f"Environment variable '{key}' updated!")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to update variable:\n{str(e)}")
-
-    def remove_env_var(self, scope: str):
-        """Remove selected environment variable"""
-        if not self.project_context.has_project():
-            QMessageBox.warning(self, "No Project", "No project selected. Please select a project first.")
-            return
-
-        if scope not in self.env_lists:
-            return
-
-        env_list = self.env_lists[scope]
-        current = env_list.currentItem()
-        if not current or not current.data(Qt.ItemDataRole.UserRole):
-            QMessageBox.warning(self, "No Selection", "Please select a variable to remove")
-            return
-
-        data = current.data(Qt.ItemDataRole.UserRole)
-        key = data['key']
-
-        reply = QMessageBox.question(
-            self,
-            "Confirm Removal",
-            f"Remove '{key}'?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply == QMessageBox.StandardButton.No:
-            return
-
-        try:
-            project_path = self.project_context.get_project()
-
-            if scope == "shared":
-                settings = self.settings_manager.get_project_shared_settings(project_path)
-            else:
-                settings = self.settings_manager.get_project_local_settings(project_path)
-
-            if 'env' in settings and key in settings['env']:
-                del settings['env'][key]
-
-            if scope == "shared":
-                self.settings_manager.save_project_shared_settings(project_path, settings)
-            else:
-                self.settings_manager.save_project_local_settings(project_path, settings)
-
-            self.load_settings(scope)
-            QMessageBox.information(self, "Removed", f"Environment variable '{key}' removed!")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to remove variable:\n{str(e)}")
 
     def load_settings(self, scope: str):
         """Load settings from file for a specific scope"""
@@ -640,9 +419,6 @@ class ProjectSettingsSubTab(QWidget):
                 self.plugins_lists[scope].clear()
                 for plugin in settings.get("enabledPlugins", []):
                     self.plugins_lists[scope].addItem(plugin)
-
-            # Load environment variables
-            self.load_env_vars(settings, scope)
 
             # Update preview
             self.update_preview(settings, scope)
