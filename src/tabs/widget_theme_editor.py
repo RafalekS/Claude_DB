@@ -10,13 +10,11 @@ All changes apply LIVE to the running app via the global QSS override.
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QSpinBox, QCheckBox, QScrollArea, QFrame, QLineEdit, QTextEdit,
-    QComboBox, QTableWidget, QTableWidgetItem, QListWidget, QListWidgetItem,
-    QGroupBox, QProgressBar, QSlider, QTabWidget, QRadioButton,
-    QSplitter, QHeaderView, QSizePolicy, QApplication, QStackedWidget
+    QSpinBox, QCheckBox, QScrollArea, QFrame, QLineEdit,
+    QSplitter, QApplication
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QSize
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor
 from utils import theme
 
 # ── Property type tokens ──────────────────────────────────────────────────────
@@ -350,425 +348,337 @@ def build_overrides_qss(overrides: dict) -> str:
     return '\n'.join(parts)
 
 
-# ── ClickableSection ──────────────────────────────────────────────────────────
+# ── ColorSwatch ───────────────────────────────────────────────────────────────
 
-class ClickableSection(QFrame):
-    """A row in the preview panel.  Click anywhere (including child widgets)
-    to select this widget type."""
+class ColorSwatch(QFrame):
+    """Clickable color swatch. Custom-painted so it is never overridden by the
+    global app QSS (which can stomp QPushButton backgrounds)."""
 
-    selected = pyqtSignal(str)   # emits widget_name
+    clicked = pyqtSignal()
 
-    _NORMAL_STYLE = f"QFrame {{ background: {theme.BG_DARK}; border: 2px solid transparent; border-radius: 4px; }}"
-    _ACTIVE_STYLE = f"QFrame {{ background: {theme.BG_MEDIUM}; border: 2px solid {theme.ACCENT_PRIMARY}; border-radius: 4px; }}"
-
-    def __init__(self, widget_name: str, parent=None):
+    def __init__(self, color: str, parent=None):
         super().__init__(parent)
-        self._name = widget_name
-        self._active = False
-        self.setStyleSheet(self._NORMAL_STYLE)
+        self._color = color if color and color.startswith('#') else '#888888'
+        self.setFixedSize(40, 26)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setToolTip("Click to pick colour")
 
-    def set_active(self, active: bool):
-        self._active = active
-        self.setStyleSheet(self._ACTIVE_STYLE if active else self._NORMAL_STYLE)
+    def set_color(self, color: str):
+        self._color = color if color and color.startswith('#') else '#888888'
+        self.update()
+
+    def paintEvent(self, event):
+        from PyQt6.QtGui import QPainter, QColor
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        try:
+            p.fillRect(self.rect().adjusted(1, 1, -1, -1), QColor(self._color))
+        except Exception:
+            p.fillRect(self.rect().adjusted(1, 1, -1, -1), QColor('#888888'))
+        pen_color = QColor(theme.FG_DIM)
+        p.setPen(pen_color)
+        p.drawRect(self.rect().adjusted(0, 0, -1, -1))
 
     def mousePressEvent(self, event):
-        self.selected.emit(self._name)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
         super().mousePressEvent(event)
-
-    # Forward clicks from ALL descendant widgets
-    def childEvent(self, event):
-        if event.type() == event.Type.ChildAdded:
-            obj = event.child()
-            if isinstance(obj, QWidget):
-                obj.installEventFilter(self)
-        super().childEvent(event)
-
-    def eventFilter(self, obj, event):
-        if event.type() == QEvent.Type.MouseButtonPress:
-            self.selected.emit(self._name)
-        return False   # let the original event still be processed
 
 
 # ── WidgetPreviewPanel ────────────────────────────────────────────────────────
 
 class WidgetPreviewPanel(QScrollArea):
-    """Right panel — all widgets shown as real Qt instances; clicking any
-    emits widget_selected(name)."""
+    """Left panel — a clean scrollable list of widget-type buttons.
+    Click one to load its properties in the right panel."""
 
     widget_selected = pyqtSignal(str)
+
+    _BTN_H = 38
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._sections: dict[str, ClickableSection] = {}
+        self.setMinimumWidth(180)
+        self.setMaximumWidth(220)
+        self._buttons: dict[str, QPushButton] = {}
+        self._selected: str | None = None
 
         content = QWidget()
         vbox = QVBoxLayout(content)
-        vbox.setContentsMargins(8, 8, 8, 8)
-        vbox.setSpacing(6)
+        vbox.setContentsMargins(6, 8, 6, 8)
+        vbox.setSpacing(3)
 
-        title = QLabel("Click any widget to edit its properties")
-        title.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; font-style: italic;")
+        title = QLabel("Select widget:")
+        title.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"font-style: italic; padding-bottom: 4px;"
+        )
         vbox.addWidget(title)
 
-        for wname in WIDGET_DEFS:
-            section = ClickableSection(wname)
-            section.selected.connect(self._on_section_clicked)
-            self._sections[wname] = section
-
-            row = QHBoxLayout(section)
-            row.setContentsMargins(8, 8, 8, 8)
-            row.setSpacing(12)
-
-            # Type label
-            icon_lbl = QLabel(WIDGET_DEFS[wname]['icon'])
-            icon_lbl.setFixedWidth(130)
-            icon_lbl.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
-            row.addWidget(icon_lbl)
-
-            # Actual widget(s)
-            preview_widget = self._make_preview(wname)
-            row.addWidget(preview_widget, 1)
-
-            vbox.addWidget(section)
+        for wname, wdef in WIDGET_DEFS.items():
+            btn = QPushButton(wdef['icon'])
+            btn.setCheckable(True)
+            btn.setFixedHeight(self._BTN_H)
+            btn.setStyleSheet(self._btn_style(False))
+            btn.clicked.connect(lambda _checked, n=wname: self._select(n))
+            self._buttons[wname] = btn
+            vbox.addWidget(btn)
 
         vbox.addStretch()
         self.setWidget(content)
 
-    def _make_preview(self, name: str) -> QWidget:
-        """Create a small live preview for the widget type."""
-        w = QWidget()
-        h = QHBoxLayout(w)
-        h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(8)
+    @staticmethod
+    def _btn_style(active: bool) -> str:
+        if active:
+            return (
+                f"QPushButton {{ background-color: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; "
+                f"border: none; border-radius: 4px; padding: 0 10px; "
+                f"font-size: {theme.FONT_SIZE_NORMAL}px; font-weight: bold; text-align: left; }}"
+            )
+        return (
+            f"QPushButton {{ background-color: {theme.BG_MEDIUM}; color: {theme.FG_PRIMARY}; "
+            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 4px; padding: 0 10px; "
+            f"font-size: {theme.FONT_SIZE_NORMAL}px; text-align: left; }}"
+            f"QPushButton:hover {{ background-color: {theme.BG_LIGHT}; }}"
+        )
 
-        if name == 'Button':
-            h.addWidget(QPushButton("Primary"))
-            h.addWidget(QPushButton("Secondary"))
-            d = QPushButton("Disabled")
-            d.setDisabled(True)
-            h.addWidget(d)
-
-        elif name == 'Label':
-            h.addWidget(QLabel("Normal text"))
-            lbl2 = QLabel("Secondary")
-            lbl2.setStyleSheet(f"color: {theme.FG_SECONDARY};")
-            h.addWidget(lbl2)
-
-        elif name == 'Input':
-            le = QLineEdit()
-            le.setPlaceholderText("Type here…")
-            le.setFixedWidth(200)
-            h.addWidget(le)
-
-        elif name == 'TextEdit':
-            te = QTextEdit()
-            te.setPlainText("Sample text\nLine two")
-            te.setFixedHeight(60)
-            te.setFixedWidth(240)
-            h.addWidget(te)
-
-        elif name == 'ComboBox':
-            cb = QComboBox()
-            cb.addItems(["Option A", "Option B", "Option C"])
-            cb.setFixedWidth(150)
-            h.addWidget(cb)
-
-        elif name == 'CheckBox':
-            c1 = QCheckBox("Checked")
-            c1.setChecked(True)
-            h.addWidget(c1)
-            h.addWidget(QCheckBox("Unchecked"))
-
-        elif name == 'RadioButton':
-            r1 = QRadioButton("Option A")
-            r1.setChecked(True)
-            h.addWidget(r1)
-            h.addWidget(QRadioButton("Option B"))
-
-        elif name == 'Table':
-            t = QTableWidget(3, 3)
-            t.setFixedHeight(90)
-            t.setFixedWidth(280)
-            t.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-            t.verticalHeader().setVisible(False)
-            t.horizontalHeader().setVisible(True)
-            t.setHorizontalHeaderLabels(["Name", "Value", "Type"])
-            for r in range(3):
-                for c in range(3):
-                    t.setItem(r, c, QTableWidgetItem(f"R{r+1}C{c+1}"))
-            h.addWidget(t)
-
-        elif name == 'List':
-            lw = QListWidget()
-            lw.setFixedHeight(80)
-            lw.setFixedWidth(160)
-            for item in ("Item Alpha", "Item Beta", "Item Gamma"):
-                lw.addItem(QListWidgetItem(item))
-            h.addWidget(lw)
-
-        elif name == 'GroupBox':
-            gb = QGroupBox("Group Title")
-            gb_inner = QHBoxLayout(gb)
-            gb_inner.addWidget(QLabel("Content inside"))
-            h.addWidget(gb)
-
-        elif name == 'ProgressBar':
-            pb = QProgressBar()
-            pb.setValue(65)
-            pb.setFixedWidth(200)
-            h.addWidget(pb)
-            pb2 = QProgressBar()
-            pb2.setValue(30)
-            pb2.setFixedWidth(120)
-            h.addWidget(pb2)
-
-        elif name == 'Slider':
-            sl = QSlider(Qt.Orientation.Horizontal)
-            sl.setValue(60)
-            sl.setFixedWidth(200)
-            h.addWidget(sl)
-
-        elif name == 'SpinBox':
-            sb = QSpinBox()
-            sb.setValue(42)
-            sb.setFixedWidth(90)
-            h.addWidget(sb)
-            sb2 = QSpinBox()
-            sb2.setValue(7)
-            sb2.setFixedWidth(90)
-            h.addWidget(sb2)
-
-        elif name == 'Tabs':
-            tw = QTabWidget()
-            tw.addTab(QLabel("Tab A content"), "Tab A")
-            tw.addTab(QLabel("Tab B content"), "Tab B")
-            tw.addTab(QLabel("Tab C content"), "Tab C")
-            tw.setFixedHeight(80)
-            tw.setFixedWidth(300)
-            h.addWidget(tw)
-
-        elif name == 'Divider':
-            line = QFrame()
-            line.setFrameShape(QFrame.Shape.HLine)
-            line.setFixedWidth(300)
-            h.addWidget(line)
-
-        elif name == 'ScrollBar':
-            sa = QScrollArea()
-            inner = QWidget()
-            inner.setFixedHeight(400)
-            sa.setWidget(inner)
-            sa.setFixedHeight(60)
-            sa.setFixedWidth(200)
-            h.addWidget(sa)
-
-        elif name == 'ToolTip':
-            btn = QPushButton("Hover for tooltip")
-            btn.setToolTip("This is how tooltips look")
-            h.addWidget(btn)
-
-        else:
-            h.addWidget(QLabel(f"({name})"))
-
-        h.addStretch()
-        return w
-
-    def _on_section_clicked(self, name: str):
-        for n, sec in self._sections.items():
-            sec.set_active(n == name)
+    def _select(self, name: str):
+        for n, btn in self._buttons.items():
+            active = (n == name)
+            btn.setChecked(active)
+            btn.setStyleSheet(self._btn_style(active))
+        self._selected = name
         self.widget_selected.emit(name)
 
 
 # ── WidgetPropertyPanel ───────────────────────────────────────────────────────
 
+_ROW_H   = 30   # every editor row same height
+_LBL_W   = 130  # label column width
+_SWATCH_W = 40  # colour swatch width
+_HEX_W   = 90   # hex input width
+_SPIN_W  = 90   # spinbox width
+
+
 class WidgetPropertyPanel(QScrollArea):
-    """Left panel — shows all editable properties for the selected widget type.
-    Emits property_changed(widget_name, state, qss_key, value) on any edit."""
+    """Right panel — all editable QSS properties for the selected widget type."""
 
     property_changed = pyqtSignal(str, str, str, object)
 
     def __init__(self, overrides: dict, parent=None):
         super().__init__(parent)
         self._overrides = overrides
-        self._current = None
+        self._current: str | None = None
 
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self._content = QWidget()
         self._vbox = QVBoxLayout(self._content)
-        self._vbox.setContentsMargins(8, 8, 8, 8)
-        self._vbox.setSpacing(4)
+        self._vbox.setContentsMargins(10, 10, 10, 10)
+        self._vbox.setSpacing(0)
+        self._vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        self._placeholder = QLabel("← Click any widget on the right\nto edit its properties here")
-        self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._placeholder.setStyleSheet(f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_NORMAL}px; font-style: italic;")
-        self._vbox.addWidget(self._placeholder)
-        self._vbox.addStretch()
+        self._show_placeholder()
         self.setWidget(self._content)
 
+    # ── public ────────────────────────────────────────────────────────────────
+
     def load_widget(self, widget_name: str):
-        """Rebuild the property editor for the given widget type."""
         if widget_name not in WIDGET_DEFS:
             return
         self._current = widget_name
         self._clear()
 
         wdef = WIDGET_DEFS[widget_name]
+
+        # Title row
         title = QLabel(wdef['icon'])
         title.setStyleSheet(
             f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; "
-            f"color: {theme.ACCENT_PRIMARY}; padding-bottom: 4px;"
+            f"color: {theme.ACCENT_PRIMARY}; padding: 0 0 8px 0;"
         )
         self._vbox.addWidget(title)
 
         overrides_for = self._overrides.get(widget_name, {})
-
         for prop in wdef['props']:
             if 'section' in prop:
                 self._add_section_header(prop['section'])
             else:
                 self._add_prop_row(widget_name, prop, overrides_for)
 
-        self._vbox.addStretch()
+    # ── private ───────────────────────────────────────────────────────────────
+
+    def _show_placeholder(self):
+        ph = QLabel("← Select a widget type\nto edit its properties")
+        ph.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        ph.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_NORMAL}px; font-style: italic;"
+        )
+        self._vbox.addWidget(ph)
 
     def _clear(self):
         while self._vbox.count():
             item = self._vbox.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            w = item.widget()
+            if w:
+                w.deleteLater()
 
     def _add_section_header(self, title: str):
-        lbl = QLabel(title)
+        lbl = QLabel(title.upper())
+        lbl.setFixedHeight(28)
         lbl.setStyleSheet(
             f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; "
             f"border-bottom: 1px solid {theme.BG_LIGHT}; "
-            f"padding: 4px 0 2px 0; margin-top: 6px;"
+            f"padding: 8px 0 2px 0; background: transparent;"
         )
         self._vbox.addWidget(lbl)
 
     def _add_prop_row(self, widget_name: str, prop: dict, overrides_for: dict):
-        state = prop['state']
-        qss_key = prop['qss']
-        key = (state, qss_key)
-        current_val = overrides_for.get(key, prop['val'])
+        state    = prop['state']
+        qss_key  = prop['qss']
+        key      = (state, qss_key)
+        cur_val  = overrides_for.get(key, prop['val'])
 
-        row = QHBoxLayout()
-        row.setSpacing(6)
+        row = QWidget()
+        row.setFixedHeight(_ROW_H)
+        h = QHBoxLayout(row)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setSpacing(6)
+        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
+        # Label — fixed width, left-aligned, vertically centred
         lbl = QLabel(prop['label'])
-        lbl.setFixedWidth(110)
-        lbl.setStyleSheet(f"color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
-        row.addWidget(lbl)
+        lbl.setFixedWidth(_LBL_W)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lbl.setStyleSheet(
+            f"color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_SMALL}px; background: transparent;"
+        )
+        h.addWidget(lbl)
 
-        prop_type = prop['type']
-
-        if prop_type == COLOR:
-            editor = self._make_color_editor(widget_name, state, qss_key, current_val)
-        elif prop_type == PX:
-            editor = self._make_px_editor(widget_name, state, qss_key, current_val)
-        elif prop_type == BOOL:
-            editor = self._make_bool_editor(widget_name, state, qss_key, current_val)
+        # Editor
+        ptype = prop['type']
+        if ptype == COLOR:
+            editor = self._make_color_editor(widget_name, state, qss_key, cur_val)
+        elif ptype == PX:
+            editor = self._make_px_editor(widget_name, state, qss_key, cur_val)
+        elif ptype == BOOL:
+            editor = self._make_bool_editor(widget_name, state, qss_key, cur_val)
         else:
-            editor = QLabel(f"({prop_type}?)")
+            editor = QLabel(f"({ptype}?)")
 
-        row.addWidget(editor, 1)
+        editor.setFixedHeight(_ROW_H - 4)
+        h.addWidget(editor)
 
-        # Reset-to-default button
+        # Reset button
         rst = QPushButton("↺")
         rst.setFixedSize(22, 22)
-        rst.setToolTip("Reset to theme default")
+        rst.setToolTip("Reset to default")
         rst.setStyleSheet(
             f"QPushButton {{ background: {theme.BG_MEDIUM}; color: {theme.FG_SECONDARY}; "
-            f"border: none; border-radius: 3px; font-size: 11px; }}"
-            f"QPushButton:hover {{ background: {theme.BG_LIGHT}; }}"
+            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; font-size: 11px; padding: 0; }}"
+            f"QPushButton:hover {{ background: {theme.BG_LIGHT}; color: {theme.FG_PRIMARY}; }}"
         )
-        rst.clicked.connect(lambda _, wn=widget_name, st=state, qk=qss_key, dv=prop['val']:
-                            self._reset_prop(wn, st, qk, dv))
-        row.addWidget(rst)
+        rst.clicked.connect(
+            lambda _, wn=widget_name, st=state, qk=qss_key, dv=prop['val']:
+            self._reset_prop(wn, st, qk, dv)
+        )
+        h.addWidget(rst)
 
-        self._vbox.addLayout(row)
+        self._vbox.addWidget(row)
 
-    def _make_color_editor(self, wn, state, qss_key, current_val) -> QWidget:
-        w = QWidget()
-        h = QHBoxLayout(w)
+    def _make_color_editor(self, wn, state, qss_key, cur_val) -> QWidget:
+        hex_val = cur_val if isinstance(cur_val, str) and cur_val.startswith('#') else '#888888'
+
+        container = QWidget()
+        container.setFixedHeight(_ROW_H - 4)
+        h = QHBoxLayout(container)
         h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(4)
+        h.setSpacing(6)
+        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        swatch = QPushButton()
-        swatch.setFixedSize(28, 22)
-        hex_val = current_val if isinstance(current_val, str) and current_val.startswith('#') else '#888888'
-        swatch.setStyleSheet(
-            f"QPushButton {{ background-color: {hex_val}; border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; }}"
+        swatch = ColorSwatch(hex_val)
+        hex_edit = QLineEdit(hex_val)
+        hex_edit.setFixedWidth(_HEX_W)
+        hex_edit.setFixedHeight(_ROW_H - 6)
+        hex_edit.setStyleSheet(
+            f"QLineEdit {{ font-family: {theme.FONT_MONOSPACE}; font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"background: {theme.BG_DARK}; color: {theme.FG_PRIMARY}; "
+            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; padding: 0 4px; }}"
         )
-        swatch.setToolTip("Click to pick color")
-
-        hex_edit = QLineEdit(current_val if isinstance(current_val, str) else '#888888')
-        hex_edit.setFixedWidth(80)
-        hex_edit.setStyleSheet(f"font-family: {theme.FONT_MONOSPACE}; font-size: {theme.FONT_SIZE_SMALL}px;")
 
         def _pick():
             from PyQt6.QtWidgets import QColorDialog
-            c = QColorDialog.getColor(QColor(hex_edit.text()), w, f"Pick — {qss_key}")
+            c = QColorDialog.getColor(QColor(hex_edit.text()), container, f"Pick — {qss_key}")
             if c.isValid():
+                hex_edit.blockSignals(True)
                 hex_edit.setText(c.name())
-                swatch.setStyleSheet(
-                    f"QPushButton {{ background-color: {c.name()}; border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; }}"
-                )
+                hex_edit.blockSignals(False)
+                swatch.set_color(c.name())
                 self._emit_change(wn, state, qss_key, c.name())
 
-        def _hex_changed(text: str):
+        def _hex_typed(text: str):
             if len(text) == 7 and text.startswith('#'):
                 try:
                     QColor(text)
-                    swatch.setStyleSheet(
-                        f"QPushButton {{ background-color: {text}; border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; }}"
-                    )
+                    swatch.set_color(text)
                     self._emit_change(wn, state, qss_key, text)
                 except Exception:
                     pass
 
         swatch.clicked.connect(_pick)
-        hex_edit.textChanged.connect(_hex_changed)
+        hex_edit.textChanged.connect(_hex_typed)
 
         h.addWidget(swatch)
         h.addWidget(hex_edit)
-        return w
+        return container
 
-    def _make_px_editor(self, wn, state, qss_key, current_val) -> QWidget:
+    def _make_px_editor(self, wn, state, qss_key, cur_val) -> QWidget:
         spin = QSpinBox()
         spin.setRange(0, 200)
+        spin.setFixedWidth(_SPIN_W)
+        spin.setFixedHeight(_ROW_H - 4)
+        spin.setSuffix(" px")
+        spin.setStyleSheet(
+            f"QSpinBox {{ background: {theme.BG_DARK}; color: {theme.FG_PRIMARY}; "
+            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; padding: 0 4px; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; }}"
+        )
         try:
-            spin.setValue(int(current_val))
+            spin.setValue(int(cur_val))
         except (TypeError, ValueError):
             spin.setValue(0)
-        spin.setSuffix(" px")
-        spin.setMaximumWidth(80)
-        spin.valueChanged.connect(lambda v, _wn=wn, _st=state, _qk=qss_key:
-                                  self._emit_change(_wn, _st, _qk, v))
+        spin.valueChanged.connect(
+            lambda v, _wn=wn, _st=state, _qk=qss_key: self._emit_change(_wn, _st, _qk, v)
+        )
         return spin
 
-    def _make_bool_editor(self, wn, state, qss_key, current_val) -> QWidget:
+    def _make_bool_editor(self, wn, state, qss_key, cur_val) -> QWidget:
+        container = QWidget()
+        container.setFixedHeight(_ROW_H - 4)
+        h = QHBoxLayout(container)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
         cb = QCheckBox()
-        cb.setChecked(bool(current_val))
-        cb.stateChanged.connect(lambda s, _wn=wn, _st=state, _qk=qss_key:
-                                self._emit_change(_wn, _st, _qk, s == 2))
-        return cb
+        cb.setChecked(bool(cur_val))
+        cb.setStyleSheet(f"QCheckBox {{ color: {theme.FG_PRIMARY}; }}")
+        cb.stateChanged.connect(
+            lambda s, _wn=wn, _st=state, _qk=qss_key: self._emit_change(_wn, _st, _qk, s == 2)
+        )
+        h.addWidget(cb)
+        return container
 
     def _emit_change(self, wn: str, state: str, qss_key: str, value):
-        key = (state, qss_key)
-        self._overrides.setdefault(wn, {})[key] = value
+        self._overrides.setdefault(wn, {})[(state, qss_key)] = value
         self.property_changed.emit(wn, state, qss_key, value)
 
     def _reset_prop(self, wn: str, state: str, qss_key: str, default_val):
         key = (state, qss_key)
         if wn in self._overrides and key in self._overrides[wn]:
             del self._overrides[wn][key]
-        # Reload the panel to refresh displayed values
         if self._current == wn:
             self.load_widget(wn)
         self.property_changed.emit(wn, state, qss_key, default_val)
@@ -793,17 +703,17 @@ class WidgetThemeEditor(QSplitter):
         self._overrides: dict = {}
         self._on_change = on_change_callback   # called whenever any property changes
 
-        self._prop_panel = WidgetPropertyPanel(self._overrides)
-        self._prop_panel.setMinimumWidth(280)
         self._preview_panel = WidgetPreviewPanel()
-        self._preview_panel.setMinimumWidth(400)
+        self._prop_panel = WidgetPropertyPanel(self._overrides)
+        self._prop_panel.setMinimumWidth(300)
 
-        self.addWidget(self._prop_panel)
         self.addWidget(self._preview_panel)
-        self.setSizes([380, 700])
+        self.addWidget(self._prop_panel)
+        self.setSizes([200, 800])
 
         self._preview_panel.widget_selected.connect(self._prop_panel.load_widget)
         self._prop_panel.property_changed.connect(self._on_property_changed)
+
 
     def _on_property_changed(self, wn: str, state: str, qss_key: str, value):
         if self._on_change:
