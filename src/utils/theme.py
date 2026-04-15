@@ -753,3 +753,52 @@ def apply_number_overrides(overrides: dict):
     for var_name, val in overrides.items():
         if var_name in g and isinstance(val, (int, float)):
             g[var_name] = int(val)
+
+
+def get_current_colors_dict() -> dict:
+    """Return current color globals in themes.json-compatible format."""
+    return {
+        "background":   BG_DARK,
+        "foreground":   FG_PRIMARY,
+        "white":        FG_SECONDARY,
+        "brightBlack":  FG_DIM,
+        "brightBlue":   ACCENT_PRIMARY,
+        "brightGreen":  ACCENT_SECONDARY,
+        "brightRed":    ERROR_COLOR,
+        "brightYellow": WARNING_COLOR,
+        "selection":    BG_LIGHT,
+    }
+
+
+def save_theme_to_file(name: str) -> bool:
+    """Snapshot current color globals and save as a named entry in themes.json.
+    Returns True on success.
+    """
+    global AVAILABLE_THEMES
+    try:
+        existing = load_themes()
+        existing[name] = get_current_colors_dict()
+        with open(THEMES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, indent=2)
+        AVAILABLE_THEMES = existing
+        return True
+    except Exception as e:
+        logger.error("Failed to save theme '%s': %s", name, e)
+        return False
+
+
+def delete_theme_from_file(name: str) -> bool:
+    """Remove a named theme from themes.json. Returns True on success."""
+    global AVAILABLE_THEMES
+    try:
+        existing = load_themes()
+        if name not in existing:
+            return False
+        del existing[name]
+        with open(THEMES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, indent=2)
+        AVAILABLE_THEMES = existing
+        return True
+    except Exception as e:
+        logger.error("Failed to delete theme '%s': %s", name, e)
+        return False

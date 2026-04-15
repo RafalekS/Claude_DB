@@ -452,24 +452,51 @@ class PreferencesTab(QWidget):
         # ── Action buttons ────────────────────────────────────────────────
         button_layout = QHBoxLayout()
         button_layout.setSpacing(8)
-        self.apply_btn = QPushButton("Apply")
-        self.apply_btn.setToolTip("Apply all theme changes now")
+
+        self.save_as_theme_btn = QPushButton("Save as Theme...")
+        self.save_as_theme_btn.setToolTip(
+            "Save current colors as a named theme in config/themes.json\n"
+            "The theme will appear in the dropdown and persist across restarts."
+        )
+        self.save_as_theme_btn.clicked.connect(self._save_as_theme)
+
+        self.delete_theme_btn = QPushButton("Delete Theme")
+        self.delete_theme_btn.setToolTip("Remove selected theme from themes.json")
+        self.delete_theme_btn.clicked.connect(self._delete_theme)
+
+        self.apply_btn = QPushButton("Apply & Save Session")
+        self.apply_btn.setToolTip(
+            "Apply changes to the running app and save the session state.\n"
+            "Saves selected theme + font + spacing to config/config.json\n"
+            "so they are restored on next startup."
+        )
         self.apply_btn.clicked.connect(self.apply_preferences)
-        self.save_btn = QPushButton("Save")
-        self.save_btn.setToolTip("Save preferences to config file")
-        self.save_btn.clicked.connect(self.save_preferences)
+
         self.reset_btn = QPushButton("Reset to Gruvbox Dark")
-        self.reset_btn.setToolTip("Reset to default theme and sizes")
+        self.reset_btn.setToolTip("Reset all settings to defaults")
         self.reset_btn.clicked.connect(self.reset_to_default)
+
         self.restart_btn = QPushButton("Restart App")
-        self.restart_btn.setToolTip("Restart application to apply all changes")
+        self.restart_btn.setToolTip("Restart application")
         self.restart_btn.clicked.connect(self.restart_application)
+
+        button_layout.addWidget(self.save_as_theme_btn)
+        button_layout.addWidget(self.delete_theme_btn)
         button_layout.addWidget(self.apply_btn)
-        button_layout.addWidget(self.save_btn)
         button_layout.addWidget(self.reset_btn)
         button_layout.addStretch()
         button_layout.addWidget(self.restart_btn)
         main_layout.addLayout(button_layout)
+
+        # ── Info label: where things are saved ───────────────────────────
+        save_info = QLabel(
+            f"Session prefs → config/config.json  |  Named themes → config/themes.json  "
+            f"|  Changes apply live as you edit"
+        )
+        save_info.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_TINY}px; padding: 2px 0;"
+        )
+        main_layout.addWidget(save_info)
 
         self.subtabs.addTab(appearance_widget, "🎨 Appearance")
 
@@ -507,8 +534,8 @@ class PreferencesTab(QWidget):
             "Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
             "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu", "Noto Sans", "Open Sans",
         ])
-        self.font_family_combo.setToolTip("UI font family (buttons, labels, menus)")
-        self.font_family_combo.currentTextChanged.connect(self._update_preview_html)
+        self.font_family_combo.setToolTip("UI font family (buttons, labels, menus) — live")
+        self.font_family_combo.currentTextChanged.connect(self._live_apply_font_family)
         typo_form.addRow("UI Font:", self.font_family_combo)
 
         self.font_mono_combo = QComboBox()
@@ -517,18 +544,18 @@ class PreferencesTab(QWidget):
             "Monaco", "Menlo", "SF Mono", "Cascadia Code", "Fira Code",
             "JetBrains Mono", "Source Code Pro",
         ])
-        self.font_mono_combo.setToolTip("Monospace font (code blocks, terminals)")
-        self.font_mono_combo.currentTextChanged.connect(self._update_preview_html)
+        self.font_mono_combo.setToolTip("Monospace font (code blocks, terminals) — live")
+        self.font_mono_combo.currentTextChanged.connect(self._live_apply_font_mono)
         typo_form.addRow("Mono Font:", self.font_mono_combo)
 
-        # Font size spinboxes
+        # Font size spinboxes — live apply
         for label, var_name, lo, hi, default in self._THEME_TYPO_VARS:
             spin = QSpinBox()
             spin.setRange(lo, hi)
             spin.setValue(getattr(theme, var_name, default))
             spin.setSuffix(" px")
             spin.setMaximumWidth(80)
-            spin.valueChanged.connect(self._update_preview_html)
+            spin.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
             self._typo_spins[var_name] = spin
             typo_form.addRow(f"Size {label}:", spin)
 
@@ -593,7 +620,7 @@ class PreferencesTab(QWidget):
             spin.setValue(getattr(theme, var_name, default))
             spin.setSuffix(" px")
             spin.setMaximumWidth(80)
-            spin.valueChanged.connect(self._update_preview_html)
+            spin.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
             self._spacing_spins[var_name] = spin
             spacing_form.addRow(f"{label}:", spin)
 
@@ -755,33 +782,84 @@ class PreferencesTab(QWidget):
         if hasattr(self, 'preview_browser'):
             self.preview_browser.setHtml(html)
 
+    # ── Live-apply helpers ───────────────────────────────────────────────────
+
+    def _push_app_stylesheet(self):
+        """Regenerate and push the full app stylesheet from current theme globals."""
+        app = QApplication.instance()
+        if app:
+            app.setStyleSheet(theme.generate_app_stylesheet())
+
+    def _live_apply_font_family(self, family: str):
+        """Immediately apply a UI font family change to the whole app."""
+        theme.FONT_FAMILY_UI = family
+        theme.FONT_FAMILY = f"'{family}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        app = QApplication.instance()
+        if app:
+            from PyQt6.QtGui import QFont
+            app.setFont(QFont(family, self.font_size_spin.value()))
+            app.setStyleSheet(theme.generate_app_stylesheet())
+        self._update_preview_html()
+
+    def _live_apply_font_mono(self, mono: str):
+        """Immediately apply a monospace font change."""
+        theme.FONT_MONOSPACE = mono
+        theme.FONT_FAMILY_MONO = f"'{mono}', 'Courier New', monospace"
+        self._push_app_stylesheet()
+        self._update_preview_html()
+
+    def _live_apply_spinbox(self, var_name: str, val: int):
+        """Immediately apply a font-size or spacing change to theme globals and app."""
+        setattr(theme, var_name, val)
+        self._push_app_stylesheet()
+        self._update_preview_html()
+
+    # ── Color picker ─────────────────────────────────────────────────────────
+
     def _pick_color(self, var_name: str):
-        """Open a color picker for var_name and store the result."""
+        """Open a color picker; immediately apply the chosen color to the whole app."""
         from PyQt6.QtWidgets import QColorDialog
         from PyQt6.QtGui import QColor
         current_hex = self._custom_colors.get(var_name, getattr(theme, var_name, "#888888"))
-        color = QColorDialog.getColor(QColor(current_hex), self, f"Pick color — {var_name}")
-        if color.isValid():
-            new_hex = color.name()
-            self._custom_colors[var_name] = new_hex
-            if var_name in self._color_btns:
-                self._color_btns[var_name].setStyleSheet(
-                    f"background-color: {new_hex}; border: 2px solid {theme.ACCENT_PRIMARY}; "
-                    f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 20px;"
-                )
-            if var_name in self._color_hex_lbls:
-                self._color_hex_lbls[var_name].setText(new_hex)
-            self._update_preview_html()
+        color = QColorDialog.getColor(QColor(current_hex), self, f"Pick — {var_name}")
+        if not color.isValid():
+            return
+        new_hex = color.name()
+        # Track the override
+        self._custom_colors[var_name] = new_hex
+        # Apply directly to theme global — live
+        setattr(theme, var_name, new_hex)
+        self._push_app_stylesheet()
+        # Update swatch
+        if var_name in self._color_btns:
+            self._color_btns[var_name].setStyleSheet(
+                f"background-color: {new_hex}; border: 2px solid {theme.ACCENT_PRIMARY}; "
+                f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 20px;"
+            )
+        if var_name in self._color_hex_lbls:
+            self._color_hex_lbls[var_name].setText(new_hex)
+        self._update_preview_html()
 
     def _reset_custom_colors(self):
-        """Discard all custom color overrides and refresh the editor."""
+        """Re-apply the base theme colors, discarding all custom color overrides."""
         self._custom_colors.clear()
+        theme.apply_theme(
+            self.theme_combo.currentText(),
+            self.font_size_spin.value(),
+            self.font_family_combo.currentText(),
+        )
+        self._push_app_stylesheet()
         self._refresh_color_buttons()
         self._update_preview_html()
 
     def _reset_custom_numbers(self):
-        """Reset all font size and spacing spinboxes to current theme defaults."""
+        """Reset all font size and spacing spinboxes to base theme defaults."""
         self._custom_numbers.clear()
+        theme.apply_theme(
+            self.theme_combo.currentText(),
+            self.font_size_spin.value(),
+            self.font_family_combo.currentText(),
+        )
         for _, var_name, _, _, default in self._THEME_TYPO_VARS:
             if var_name in self._typo_spins:
                 self._typo_spins[var_name].blockSignals(True)
@@ -792,36 +870,90 @@ class PreferencesTab(QWidget):
                 self._spacing_spins[var_name].blockSignals(True)
                 self._spacing_spins[var_name].setValue(getattr(theme, var_name, default))
                 self._spacing_spins[var_name].blockSignals(False)
+        self._push_app_stylesheet()
         self._update_preview_html()
 
     def _refresh_color_buttons(self):
         """Sync color swatch buttons and hex labels to current theme globals."""
         for var_name, btn in self._color_btns.items():
-            cur = self._custom_colors.get(var_name, getattr(theme, var_name, "#888888"))
+            cur = getattr(theme, var_name, "#888888")
             btn.setStyleSheet(
                 f"background-color: {cur}; border: 1px solid {theme.BG_LIGHT}; "
                 f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 20px;"
             )
         for var_name, lbl in self._color_hex_lbls.items():
-            cur = self._custom_colors.get(var_name, getattr(theme, var_name, "#888888"))
-            lbl.setText(cur)
+            lbl.setText(getattr(theme, var_name, "#888888"))
 
     def _refresh_typo_spacing_controls(self):
         """Sync typography and spacing spinboxes to current theme globals."""
         for _, var_name, _, _, default in self._THEME_TYPO_VARS:
             if var_name in self._typo_spins:
                 self._typo_spins[var_name].blockSignals(True)
-                self._typo_spins[var_name].setValue(
-                    self._custom_numbers.get(var_name, getattr(theme, var_name, default))
-                )
+                self._typo_spins[var_name].setValue(getattr(theme, var_name, default))
                 self._typo_spins[var_name].blockSignals(False)
         for _, var_name, _, _, default in self._THEME_SPACING_VARS:
             if var_name in self._spacing_spins:
                 self._spacing_spins[var_name].blockSignals(True)
-                self._spacing_spins[var_name].setValue(
-                    self._custom_numbers.get(var_name, getattr(theme, var_name, default))
-                )
+                self._spacing_spins[var_name].setValue(getattr(theme, var_name, default))
                 self._spacing_spins[var_name].blockSignals(False)
+
+    # ── Theme management ─────────────────────────────────────────────────────
+
+    def _save_as_theme(self):
+        """Snapshot current colors and save as a named theme in config/themes.json."""
+        name, ok = QInputDialog.getText(
+            self, "Save as Theme",
+            "Enter a name for this theme:\n"
+            "(saves current colors to config/themes.json\nand adds it to the dropdown)"
+        )
+        if not ok or not name.strip():
+            return
+        name = name.strip()
+        if theme.save_theme_to_file(name):
+            global THEMES
+            THEMES = theme.AVAILABLE_THEMES
+            self.theme_combo.blockSignals(True)
+            self.theme_combo.clear()
+            self.theme_combo.addItems(THEMES.keys())
+            idx = self.theme_combo.findText(name)
+            if idx >= 0:
+                self.theme_combo.setCurrentIndex(idx)
+            self.theme_combo.blockSignals(False)
+            # Colors are now part of the named theme; clear the "unsaved" tracking dict
+            self._custom_colors.clear()
+            main_win = self.window()
+            if hasattr(main_win, "set_status"):
+                main_win.set_status(f"Theme '{name}' saved to config/themes.json")
+            else:
+                QMessageBox.information(self, "Saved", f"Theme '{name}' saved to config/themes.json")
+        else:
+            QMessageBox.critical(self, "Error", "Failed to write config/themes.json")
+
+    def _delete_theme(self):
+        """Delete the selected theme from config/themes.json."""
+        name = self.theme_combo.currentText()
+        reply = QMessageBox.question(
+            self, "Delete Theme",
+            f"Delete theme '{name}' from themes.json?\nThis cannot be undone.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        if theme.delete_theme_from_file(name):
+            global THEMES
+            THEMES = theme.AVAILABLE_THEMES
+            self.theme_combo.blockSignals(True)
+            self.theme_combo.clear()
+            self.theme_combo.addItems(THEMES.keys())
+            if self.theme_combo.count() > 0:
+                self.theme_combo.setCurrentIndex(0)
+            self.theme_combo.blockSignals(False)
+            self.preview_theme(self.theme_combo.currentText())
+        else:
+            QMessageBox.critical(
+                self, "Error",
+                f"Could not delete '{name}'.\nIt may be the last remaining theme or the file is read-only."
+            )
 
     def create_backup_subtab(self):
         """Create Backup subtab"""
@@ -1502,18 +1634,28 @@ class {class_name}Tab(QWidget):
 '''
 
     def preview_theme(self, theme_name):
-        """Preview selected theme — update globals, refresh color swatches and preview."""
-        if theme_name in THEMES:
-            font_size = self.font_size_spin.value()
-            font_family = self.font_family_combo.currentText()
-            theme.apply_theme(theme_name, font_size, font_family)
-            if self._custom_colors:
-                theme.apply_color_overrides(self._custom_colors)
-            # Refresh the number controls to reflect new theme defaults
-            self._refresh_typo_spacing_controls()
-            # Refresh color swatches to show new theme colors
-            self._refresh_color_buttons()
-            self._update_preview_html()
+        """Switch to a different theme — clears all custom overrides and applies live."""
+        if theme_name not in THEMES:
+            return
+        # Switching themes discards any unsaved customizations
+        self._custom_colors.clear()
+        self._custom_numbers.clear()
+        font_size = self.font_size_spin.value()
+        font_family = self.font_family_combo.currentText()
+        font_mono = self.font_mono_combo.currentText()
+        theme.apply_theme(theme_name, font_size, font_family)
+        theme.FONT_MONOSPACE = font_mono
+        theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
+        # Apply live to the running app
+        app = QApplication.instance()
+        if app:
+            from PyQt6.QtGui import QFont
+            app.setFont(QFont(font_family, font_size))
+            app.setStyleSheet(theme.generate_app_stylesheet())
+        # Sync editor controls to the new theme's values
+        self._refresh_color_buttons()
+        self._refresh_typo_spacing_controls()
+        self._update_preview_html()
 
     def _collect_number_overrides(self) -> dict:
         """Read current spinbox values and build the custom_numbers dict."""
@@ -1528,19 +1670,20 @@ class {class_name}Tab(QWidget):
         return {k: v for k, v in nums.items() if getattr(theme, k, None) != v}
 
     def apply_preferences(self):
-        """Apply preferences immediately — emits theme_changed signal for instant update."""
+        """Save current session state to config/config.json so it restores on next startup.
+        Changes are already applied live — this just persists them.
+        """
         theme_name = self.theme_combo.currentText()
         font_size = self.font_size_spin.value()
         font_family = self.font_family_combo.currentText()
         font_mono = self.font_mono_combo.currentText()
 
+        # Re-apply to make sure the running app state is fully consistent
         theme.apply_theme(theme_name, font_size, font_family)
         if self._custom_colors:
             theme.apply_color_overrides(self._custom_colors)
-        # Apply mono font override
         theme.FONT_MONOSPACE = font_mono
         theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
-        # Collect and apply number overrides (font sizes + spacing)
         self._custom_numbers = self._collect_number_overrides()
         if self._custom_numbers:
             theme.apply_number_overrides(self._custom_numbers)
@@ -1559,11 +1702,8 @@ class {class_name}Tab(QWidget):
 
         main_win = self.window()
         if hasattr(main_win, "set_status"):
-            main_win.set_status(f"Theme '{theme_name}' applied ({font_family} {font_size}px)")
-        else:
-            QMessageBox.information(
-                self, "Applied",
-                f"Theme '{theme_name}', {font_family} {font_size}px applied."
+            main_win.set_status(
+                f"Session saved — theme '{theme_name}', {font_family} {font_size}px  →  config/config.json"
             )
 
     def save_preferences_silently(self):
