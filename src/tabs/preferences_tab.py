@@ -519,23 +519,35 @@ class PreferencesTab(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
+        # outer hbox: left = fixed-width content, right = stretch (prevents full-width expansion)
+        h_wrapper = QWidget()
+        h_wrapper_layout = QHBoxLayout(h_wrapper)
+        h_wrapper_layout.setContentsMargins(0, 0, 0, 0)
+        h_wrapper_layout.setSpacing(0)
+
         content = QWidget()
+        content.setMaximumWidth(460)
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(6, 6, 6, 6)
         content_layout.setSpacing(10)
 
+        h_wrapper_layout.addWidget(content)
+        h_wrapper_layout.addStretch(1)
+
         # ── TYPOGRAPHY ────────────────────────────────────────────────────
         typo_group = QGroupBox("Typography")
         typo_form = QFormLayout(typo_group)
-        typo_form.setSpacing(5)
-        typo_form.setContentsMargins(6, 10, 6, 6)
+        typo_form.setSpacing(6)
+        typo_form.setContentsMargins(8, 12, 8, 8)
 
         self.font_family_combo = QComboBox()
         self.font_family_combo.addItems([
             "Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
             "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu", "Noto Sans", "Open Sans",
         ])
-        self.font_family_combo.setToolTip("UI font family (buttons, labels, menus) — live")
+        self.font_family_combo.setMaximumWidth(200)
+        self.font_family_combo.setStyleSheet("combobox-popup: 0;")
+        self.font_family_combo.setToolTip("UI font family — live")
         self.font_family_combo.currentTextChanged.connect(self._live_apply_font_family)
         typo_form.addRow("UI Font:", self.font_family_combo)
 
@@ -545,7 +557,9 @@ class PreferencesTab(QWidget):
             "Monaco", "Menlo", "SF Mono", "Cascadia Code", "Fira Code",
             "JetBrains Mono", "Source Code Pro",
         ])
-        self.font_mono_combo.setToolTip("Monospace font (code blocks, terminals) — live")
+        self.font_mono_combo.setMaximumWidth(200)
+        self.font_mono_combo.setStyleSheet("combobox-popup: 0;")
+        self.font_mono_combo.setToolTip("Monospace font — live")
         self.font_mono_combo.currentTextChanged.connect(self._live_apply_font_mono)
         typo_form.addRow("Mono Font:", self.font_mono_combo)
 
@@ -555,7 +569,8 @@ class PreferencesTab(QWidget):
             spin.setRange(lo, hi)
             spin.setValue(getattr(theme, var_name, default))
             spin.setSuffix(" px")
-            spin.setMaximumWidth(80)
+            spin.setFixedWidth(90)
+            spin.setFixedHeight(28)
             spin.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
             self._typo_spins[var_name] = spin
             typo_form.addRow(f"Size {label}:", spin)
@@ -568,7 +583,7 @@ class PreferencesTab(QWidget):
         # ── COLORS ────────────────────────────────────────────────────────
         color_group = QGroupBox("Colors  (click swatch to pick)")
         color_vbox = QVBoxLayout(color_group)
-        color_vbox.setContentsMargins(6, 10, 6, 6)
+        color_vbox.setContentsMargins(8, 12, 8, 8)
         color_vbox.setSpacing(4)
 
         color_grid_widget = QWidget()
@@ -578,9 +593,7 @@ class PreferencesTab(QWidget):
 
         for row_idx, (label, var_name) in enumerate(self._THEME_COLOR_VARS):
             name_lbl = QLabel(label)
-            name_lbl.setStyleSheet(
-                f"color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_SMALL}px;"
-            )
+            name_lbl.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             color_grid.addWidget(name_lbl, row_idx, 0)
 
             current_hex = getattr(theme, var_name, "#888888")
@@ -588,7 +601,7 @@ class PreferencesTab(QWidget):
             swatch.setToolTip(f"Click to change {var_name}")
             swatch.setStyleSheet(
                 f"background-color: {current_hex}; border: 1px solid {theme.BG_LIGHT}; "
-                f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 20px;"
+                f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 24px;"
             )
             swatch.clicked.connect(lambda checked, vn=var_name: self._pick_color(vn))
             self._color_btns[var_name] = swatch
@@ -596,14 +609,14 @@ class PreferencesTab(QWidget):
 
             hex_lbl = QLabel(current_hex)
             hex_lbl.setStyleSheet(
-                f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; "
-                f"font-family: {theme.FONT_MONOSPACE};"
+                f"color: {theme.FG_SECONDARY}; font-family: {theme.FONT_MONOSPACE};"
             )
             self._color_hex_lbls[var_name] = hex_lbl
             color_grid.addWidget(hex_lbl, row_idx, 2)
 
         color_vbox.addWidget(color_grid_widget)
         reset_colors_btn = QPushButton("Reset Colors to Theme Defaults")
+        reset_colors_btn.setMaximumWidth(240)
         reset_colors_btn.setToolTip("Discard all custom color overrides")
         reset_colors_btn.clicked.connect(self._reset_custom_colors)
         color_vbox.addWidget(reset_colors_btn)
@@ -612,26 +625,28 @@ class PreferencesTab(QWidget):
         # ── SPACING ───────────────────────────────────────────────────────
         spacing_group = QGroupBox("Spacing & Layout")
         spacing_form = QFormLayout(spacing_group)
-        spacing_form.setSpacing(5)
-        spacing_form.setContentsMargins(6, 10, 6, 6)
+        spacing_form.setSpacing(6)
+        spacing_form.setContentsMargins(8, 12, 8, 8)
 
         for label, var_name, lo, hi, default in self._THEME_SPACING_VARS:
             spin = QSpinBox()
             spin.setRange(lo, hi)
             spin.setValue(getattr(theme, var_name, default))
             spin.setSuffix(" px")
-            spin.setMaximumWidth(80)
+            spin.setFixedWidth(90)
+            spin.setFixedHeight(28)
             spin.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
             self._spacing_spins[var_name] = spin
             spacing_form.addRow(f"{label}:", spin)
 
         reset_spacing_btn = QPushButton("Reset Spacing to Defaults")
+        reset_spacing_btn.setMaximumWidth(200)
         reset_spacing_btn.clicked.connect(self._reset_custom_numbers)
         spacing_form.addRow("", reset_spacing_btn)
         content_layout.addWidget(spacing_group)
 
         content_layout.addStretch()
-        scroll.setWidget(content)
+        scroll.setWidget(h_wrapper)
 
         outer_layout.addWidget(scroll)
         return outer_widget

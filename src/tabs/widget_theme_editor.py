@@ -411,8 +411,7 @@ class WidgetPreviewPanel(QScrollArea):
 
         title = QLabel("Select widget:")
         title.setStyleSheet(
-            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px; "
-            f"font-style: italic; padding-bottom: 4px;"
+            f"color: {theme.FG_DIM}; font-style: italic; padding-bottom: 4px;"
         )
         vbox.addWidget(title)
 
@@ -434,12 +433,12 @@ class WidgetPreviewPanel(QScrollArea):
             return (
                 f"QPushButton {{ background-color: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; "
                 f"border: none; border-radius: 4px; padding: 0 10px; "
-                f"font-size: {theme.FONT_SIZE_NORMAL}px; font-weight: bold; text-align: left; }}"
+                f"font-weight: bold; text-align: left; }}"
             )
         return (
             f"QPushButton {{ background-color: {theme.BG_MEDIUM}; color: {theme.FG_PRIMARY}; "
             f"border: 1px solid {theme.BG_LIGHT}; border-radius: 4px; padding: 0 10px; "
-            f"font-size: {theme.FONT_SIZE_NORMAL}px; text-align: left; }}"
+            f"text-align: left; }}"
             f"QPushButton:hover {{ background-color: {theme.BG_LIGHT}; }}"
         )
 
@@ -496,8 +495,7 @@ class WidgetPropertyPanel(QScrollArea):
         # Title row
         title = QLabel(wdef['icon'])
         title.setStyleSheet(
-            f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; "
-            f"color: {theme.ACCENT_PRIMARY}; padding: 0 0 8px 0;"
+            f"font-weight: bold; color: {theme.ACCENT_PRIMARY}; padding: 0 0 8px 0;"
         )
         self._vbox.addWidget(title)
 
@@ -513,9 +511,7 @@ class WidgetPropertyPanel(QScrollArea):
     def _show_placeholder(self):
         ph = QLabel("← Select a widget type\nto edit its properties")
         ph.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        ph.setStyleSheet(
-            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_NORMAL}px; font-style: italic;"
-        )
+        ph.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
         self._vbox.addWidget(ph)
 
     def _clear(self):
@@ -529,8 +525,7 @@ class WidgetPropertyPanel(QScrollArea):
         lbl = QLabel(title.upper())
         lbl.setFixedHeight(28)
         lbl.setStyleSheet(
-            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; "
+            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; letter-spacing: 1px; "
             f"border-bottom: 1px solid {theme.BG_LIGHT}; "
             f"padding: 8px 0 2px 0; background: transparent;"
         )
@@ -553,21 +548,23 @@ class WidgetPropertyPanel(QScrollArea):
         lbl = QLabel(prop['label'])
         lbl.setFixedWidth(_LBL_W)
         lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        lbl.setStyleSheet(
-            f"color: {theme.FG_PRIMARY}; font-size: {theme.FONT_SIZE_SMALL}px; background: transparent;"
-        )
+        lbl.setStyleSheet(f"color: {theme.FG_PRIMARY}; background: transparent;")
         h.addWidget(lbl)
 
-        # Editor
+        # Editor — fixed width per type so it never expands
         ptype = prop['type']
         if ptype == COLOR:
             editor = self._make_color_editor(widget_name, state, qss_key, cur_val)
+            editor.setFixedWidth(_SWATCH_W + 6 + _HEX_W)
         elif ptype == PX:
             editor = self._make_px_editor(widget_name, state, qss_key, cur_val)
+            editor.setFixedWidth(_SPIN_W)
         elif ptype == BOOL:
             editor = self._make_bool_editor(widget_name, state, qss_key, cur_val)
+            editor.setFixedWidth(24)
         else:
             editor = QLabel(f"({ptype}?)")
+            editor.setFixedWidth(60)
 
         editor.setFixedHeight(_ROW_H - 4)
         h.addWidget(editor)
@@ -586,6 +583,7 @@ class WidgetPropertyPanel(QScrollArea):
             self._reset_prop(wn, st, qk, dv)
         )
         h.addWidget(rst)
+        h.addStretch(1)   # absorbs remaining space — keeps everything left-aligned
 
         self._vbox.addWidget(row)
 

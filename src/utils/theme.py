@@ -579,13 +579,40 @@ def generate_app_stylesheet():
             background-color: {BG_DARK};
             color: {FG_PRIMARY};
             border: 1px solid {BG_LIGHT};
-            padding: 4px;
+            border-radius: 3px;
+            padding: 2px 4px;
             font-size: {FONT_SIZE_NORMAL}px;
+            min-height: 26px;
         }}
-        QSpinBox::up-button, QSpinBox::down-button {{
-            background-color: {ACCENT_PRIMARY};
+        QSpinBox::up-button {{
+            background-color: {BG_MEDIUM};
             border: none;
-            width: 20px;
+            border-left: 1px solid {BG_LIGHT};
+            border-bottom: 1px solid {BG_LIGHT};
+            width: 22px;
+            height: 13px;
+            subcontrol-origin: border;
+            subcontrol-position: top right;
+        }}
+        QSpinBox::down-button {{
+            background-color: {BG_MEDIUM};
+            border: none;
+            border-left: 1px solid {BG_LIGHT};
+            width: 22px;
+            height: 13px;
+            subcontrol-origin: border;
+            subcontrol-position: bottom right;
+        }}
+        QSpinBox::up-button:hover, QSpinBox::down-button:hover {{
+            background-color: {ACCENT_PRIMARY};
+        }}
+        QSpinBox::up-arrow {{
+            width: 8px;
+            height: 8px;
+        }}
+        QSpinBox::down-arrow {{
+            width: 8px;
+            height: 8px;
         }}
 
         /* List Widget */
