@@ -39,6 +39,37 @@ def _atomic_json_write(path: Path, data: dict) -> None:
 # Load themes from config file
 THEMES = theme.AVAILABLE_THEMES
 
+
+class IntLineEdit(QLineEdit):
+    """A compact numeric input that exposes .value() / .setValue() like QSpinBox,
+    but looks like a plain text field — no arrow buttons."""
+    from PyQt6.QtCore import pyqtSignal as _sig
+    valueChanged = _sig(int)
+
+    def __init__(self, lo: int, hi: int, val: int, parent=None):
+        super().__init__(str(val), parent)
+        from PyQt6.QtGui import QIntValidator
+        self.setValidator(QIntValidator(lo, hi, self))
+        self.textChanged.connect(self._on_text)
+
+    def _on_text(self, text: str):
+        try:
+            self.valueChanged.emit(int(text))
+        except ValueError:
+            pass
+
+    def value(self) -> int:
+        try:
+            return int(self.text())
+        except ValueError:
+            return 0
+
+    def setValue(self, v: int):
+        self.blockSignals(True)
+        self.setText(str(v))
+        self.blockSignals(False)
+
+
 class TabEditorDialog(QDialog):
     """Unified dialog for reordering and renaming tabs"""
 
@@ -519,35 +550,29 @@ class PreferencesTab(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        # outer hbox: left = fixed-width content, right = stretch (prevents full-width expansion)
-        h_wrapper = QWidget()
-        h_wrapper_layout = QHBoxLayout(h_wrapper)
-        h_wrapper_layout.setContentsMargins(0, 0, 0, 0)
-        h_wrapper_layout.setSpacing(0)
+        # ── 3-column layout: Typography | Colors | Spacing ────────────────
+        columns = QWidget()
+        col_layout = QHBoxLayout(columns)
+        col_layout.setContentsMargins(6, 6, 6, 6)
+        col_layout.setSpacing(10)
+        col_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
-        content = QWidget()
-        content.setMaximumWidth(460)
-        content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(6, 6, 6, 6)
-        content_layout.setSpacing(10)
-
-        h_wrapper_layout.addWidget(content)
-        h_wrapper_layout.addStretch(1)
-
-        # ── TYPOGRAPHY ────────────────────────────────────────────────────
+        # ── Column 1: TYPOGRAPHY ──────────────────────────────────────────
         typo_group = QGroupBox("Typography")
+        typo_group.setFixedWidth(250)
         typo_form = QFormLayout(typo_group)
         typo_form.setSpacing(6)
         typo_form.setContentsMargins(8, 12, 8, 8)
+        typo_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
 
         self.font_family_combo = QComboBox()
         self.font_family_combo.addItems([
             "Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
             "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu", "Noto Sans", "Open Sans",
         ])
-        self.font_family_combo.setMaximumWidth(200)
+        self.font_family_combo.setMaximumWidth(170)
         self.font_family_combo.setStyleSheet("combobox-popup: 0;")
-        self.font_family_combo.setToolTip("UI font family — live")
+        self.font_family_combo.setToolTip("UI font — changes all text. Live.")
         self.font_family_combo.currentTextChanged.connect(self._live_apply_font_family)
         typo_form.addRow("UI Font:", self.font_family_combo)
 
@@ -557,31 +582,33 @@ class PreferencesTab(QWidget):
             "Monaco", "Menlo", "SF Mono", "Cascadia Code", "Fira Code",
             "JetBrains Mono", "Source Code Pro",
         ])
-        self.font_mono_combo.setMaximumWidth(200)
+        self.font_mono_combo.setMaximumWidth(170)
         self.font_mono_combo.setStyleSheet("combobox-popup: 0;")
-        self.font_mono_combo.setToolTip("Monospace font — live")
+        self.font_mono_combo.setToolTip("Mono font — code/terminal text. Live.")
         self.font_mono_combo.currentTextChanged.connect(self._live_apply_font_mono)
         typo_form.addRow("Mono Font:", self.font_mono_combo)
 
-        # Font size spinboxes — live apply
+        # Size fields — IntLineEdit (type the number, no arrow buttons)
+        _note = QLabel("↑ Change 'Normal' to resize the editor UI")
+        _note.setWordWrap(True)
+        _note.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
+        typo_form.addRow("", _note)
+
         for label, var_name, lo, hi, default in self._THEME_TYPO_VARS:
-            spin = QSpinBox()
-            spin.setRange(lo, hi)
-            spin.setValue(getattr(theme, var_name, default))
-            spin.setSuffix(" px")
-            spin.setFixedWidth(90)
-            spin.setFixedHeight(28)
-            spin.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
-            self._typo_spins[var_name] = spin
-            typo_form.addRow(f"Size {label}:", spin)
+            le = IntLineEdit(lo, hi, getattr(theme, var_name, default))
+            le.setFixedWidth(70)
+            le.setFixedHeight(26)
+            le.setToolTip(f"{var_name}  ({lo}–{hi} px)")
+            le.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
+            self._typo_spins[var_name] = le
+            typo_form.addRow(f"{label}:", le)
 
-        # Keep font_size_spin as alias for FONT_SIZE_NORMAL for compatibility
         self.font_size_spin = self._typo_spins["FONT_SIZE_NORMAL"]
+        col_layout.addWidget(typo_group)
 
-        content_layout.addWidget(typo_group)
-
-        # ── COLORS ────────────────────────────────────────────────────────
+        # ── Column 2: COLORS ──────────────────────────────────────────────
         color_group = QGroupBox("Colors  (click swatch to pick)")
+        color_group.setFixedWidth(290)
         color_vbox = QVBoxLayout(color_group)
         color_vbox.setContentsMargins(8, 12, 8, 8)
         color_vbox.setSpacing(4)
@@ -601,7 +628,7 @@ class PreferencesTab(QWidget):
             swatch.setToolTip(f"Click to change {var_name}")
             swatch.setStyleSheet(
                 f"background-color: {current_hex}; border: 1px solid {theme.BG_LIGHT}; "
-                f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 24px;"
+                f"border-radius: 3px; min-width: 32px; max-width: 32px; height: 22px;"
             )
             swatch.clicked.connect(lambda checked, vn=var_name: self._pick_color(vn))
             self._color_btns[var_name] = swatch
@@ -615,38 +642,40 @@ class PreferencesTab(QWidget):
             color_grid.addWidget(hex_lbl, row_idx, 2)
 
         color_vbox.addWidget(color_grid_widget)
-        reset_colors_btn = QPushButton("Reset Colors to Theme Defaults")
-        reset_colors_btn.setMaximumWidth(240)
+        reset_colors_btn = QPushButton("Reset Colors")
+        reset_colors_btn.setMaximumWidth(140)
         reset_colors_btn.setToolTip("Discard all custom color overrides")
         reset_colors_btn.clicked.connect(self._reset_custom_colors)
         color_vbox.addWidget(reset_colors_btn)
-        content_layout.addWidget(color_group)
+        color_vbox.addStretch()
+        col_layout.addWidget(color_group)
 
-        # ── SPACING ───────────────────────────────────────────────────────
+        # ── Column 3: SPACING ─────────────────────────────────────────────
         spacing_group = QGroupBox("Spacing & Layout")
+        spacing_group.setFixedWidth(190)
         spacing_form = QFormLayout(spacing_group)
         spacing_form.setSpacing(6)
         spacing_form.setContentsMargins(8, 12, 8, 8)
+        spacing_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
 
         for label, var_name, lo, hi, default in self._THEME_SPACING_VARS:
-            spin = QSpinBox()
-            spin.setRange(lo, hi)
-            spin.setValue(getattr(theme, var_name, default))
-            spin.setSuffix(" px")
-            spin.setFixedWidth(90)
-            spin.setFixedHeight(28)
-            spin.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
-            self._spacing_spins[var_name] = spin
-            spacing_form.addRow(f"{label}:", spin)
+            le = IntLineEdit(lo, hi, getattr(theme, var_name, default))
+            le.setFixedWidth(70)
+            le.setFixedHeight(26)
+            le.setToolTip(f"{var_name}  ({lo}–{hi} px)")
+            le.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
+            self._spacing_spins[var_name] = le
+            spacing_form.addRow(f"{label}:", le)
 
-        reset_spacing_btn = QPushButton("Reset Spacing to Defaults")
-        reset_spacing_btn.setMaximumWidth(200)
+        reset_spacing_btn = QPushButton("Reset Spacing")
+        reset_spacing_btn.setMaximumWidth(140)
         reset_spacing_btn.clicked.connect(self._reset_custom_numbers)
         spacing_form.addRow("", reset_spacing_btn)
-        content_layout.addWidget(spacing_group)
+        col_layout.addWidget(spacing_group)
 
-        content_layout.addStretch()
-        scroll.setWidget(h_wrapper)
+        col_layout.addStretch(1)
+
+        scroll.setWidget(columns)
 
         outer_layout.addWidget(scroll)
         return outer_widget
@@ -790,7 +819,8 @@ class PreferencesTab(QWidget):
         if not ok or not name.strip():
             return
         name = name.strip()
-        if theme.save_theme_to_file(name):
+        widget_overrides = self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {}
+        if theme.save_theme_to_file(name, widget_overrides or None):
             global THEMES
             THEMES = theme.AVAILABLE_THEMES
             self.theme_combo.blockSignals(True)
@@ -1527,12 +1557,16 @@ class {class_name}Tab(QWidget):
         theme.apply_theme(theme_name, font_size, font_family)
         theme.FONT_MONOSPACE = font_mono
         theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
-        # Apply live to the running app
+        # Load any widget overrides stored in this theme
+        if hasattr(self, '_widget_theme_editor'):
+            saved_overrides = theme.get_theme_widget_overrides(theme_name)
+            self._widget_theme_editor.load_overrides(saved_overrides)
+        # Apply live to the running app (includes widget overrides)
         app = QApplication.instance()
         if app:
             from PyQt6.QtGui import QFont
             app.setFont(QFont(font_family, font_size))
-            app.setStyleSheet(theme.generate_app_stylesheet())
+        self._push_app_stylesheet()
         # Sync editor controls to the new theme's values
         self._refresh_color_buttons()
         self._refresh_typo_spacing_controls()

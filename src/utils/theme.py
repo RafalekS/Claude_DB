@@ -797,14 +797,25 @@ def get_current_colors_dict() -> dict:
     }
 
 
-def save_theme_to_file(name: str) -> bool:
+def save_theme_to_file(name: str, widget_overrides: dict | None = None) -> bool:
     """Snapshot current color globals and save as a named entry in themes.json.
+
+    If *widget_overrides* is supplied (a dict of per-widget QSS overrides from
+    WidgetThemeEditor), it is stored under the ``__widget_overrides`` key inside
+    the theme entry so it can be restored when the theme is loaded later.
+
     Returns True on success.
     """
     global AVAILABLE_THEMES
     try:
         existing = load_themes()
-        existing[name] = get_current_colors_dict()
+        entry = get_current_colors_dict()
+        if widget_overrides:
+            entry["__widget_overrides"] = widget_overrides
+        elif name in existing and "__widget_overrides" in existing[name]:
+            # Preserve any existing overrides if none are passed
+            entry["__widget_overrides"] = existing[name]["__widget_overrides"]
+        existing[name] = entry
         with open(THEMES_FILE, 'w', encoding='utf-8') as f:
             json.dump(existing, f, indent=2)
         AVAILABLE_THEMES = existing
@@ -812,6 +823,12 @@ def save_theme_to_file(name: str) -> bool:
     except Exception as e:
         logger.error("Failed to save theme '%s': %s", name, e)
         return False
+
+
+def get_theme_widget_overrides(name: str) -> dict:
+    """Return the widget overrides stored in the named theme, or {} if none."""
+    themes = load_themes()
+    return themes.get(name, {}).get("__widget_overrides", {})
 
 
 def delete_theme_from_file(name: str) -> bool:

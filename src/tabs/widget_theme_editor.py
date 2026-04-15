@@ -10,9 +10,10 @@ All changes apply LIVE to the running app via the global QSS override.
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QSpinBox, QCheckBox, QScrollArea, QFrame, QLineEdit,
+    QCheckBox, QScrollArea, QFrame, QLineEdit,
     QSplitter, QApplication
 )
+from PyQt6.QtGui import QIntValidator
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from utils import theme
@@ -634,24 +635,29 @@ class WidgetPropertyPanel(QScrollArea):
         return container
 
     def _make_px_editor(self, wn, state, qss_key, cur_val) -> QWidget:
-        spin = QSpinBox()
-        spin.setRange(0, 200)
-        spin.setFixedWidth(_SPIN_W)
-        spin.setFixedHeight(_ROW_H - 4)
-        spin.setSuffix(" px")
-        spin.setStyleSheet(
-            f"QSpinBox {{ background: {theme.BG_DARK}; color: {theme.FG_PRIMARY}; "
-            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; padding: 0 4px; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; }}"
+        le = QLineEdit()
+        le.setValidator(QIntValidator(0, 200, le))
+        le.setFixedWidth(_SPIN_W)
+        le.setFixedHeight(_ROW_H - 4)
+        le.setAlignment(Qt.AlignmentFlag.AlignRight)
+        le.setPlaceholderText("px")
+        le.setStyleSheet(
+            f"QLineEdit {{ background: {theme.BG_DARK}; color: {theme.FG_PRIMARY}; "
+            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; padding: 0 4px; }}"
         )
         try:
-            spin.setValue(int(cur_val))
+            le.setText(str(int(cur_val)))
         except (TypeError, ValueError):
-            spin.setValue(0)
-        spin.valueChanged.connect(
-            lambda v, _wn=wn, _st=state, _qk=qss_key: self._emit_change(_wn, _st, _qk, v)
-        )
-        return spin
+            le.setText("0")
+
+        def _on_change(text, _wn=wn, _st=state, _qk=qss_key):
+            try:
+                self._emit_change(_wn, _st, _qk, int(text))
+            except ValueError:
+                pass
+
+        le.textChanged.connect(_on_change)
+        return le
 
     def _make_bool_editor(self, wn, state, qss_key, cur_val) -> QWidget:
         container = QWidget()
