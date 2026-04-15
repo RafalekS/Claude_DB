@@ -1,6 +1,6 @@
 # Claude_DB Refactor Plan — Status Tracker
 
-_Last updated: 2026-04-14_
+_Last updated: 2026-04-15_
 
 ---
 
@@ -57,15 +57,13 @@ Remaining edge cases (pluginConfigs, autoMode.environment) are complex JSON — 
 ---
 
 ## Item 9 — Hooks subtabs: validate against /hooks
-**Status: TODO**
-Review `user_hooks_subtab.py` and `project_hooks_subtab.py` against current docs.
-Missing hook types: `http`, `prompt`, `agent`.
-New events not yet in UI: `SessionEnd`, `InstructionsLoaded`, `CwdChanged`, `FileChanged`,
-`WorktreeCreate`, `WorktreeRemove`, `PreCompact`, `PostCompact`, `Elicitation`, `ElicitationResult`,
-`Notification`, `SubagentStart`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `TeammateIdle`,
-`StopFailure`, `PermissionRequest`, `PermissionDenied`, `UserPromptSubmit`
-New fields: `async`, `asyncRewake`, `statusMessage`, `once`, `if`
-Output: `hookSpecificOutput`, `updatedInput`, `additionalContext`, `permissionDecision`
+**Status: DONE**
+Both `user_hooks_subtab.py` and `project_hooks_subtab.py` are fully up to date:
+- 26 hook events including all new ones (SessionEnd, InstructionsLoaded, CwdChanged, FileChanged, WorktreeCreate/Remove, PreCompact/PostCompact, Elicitation/ElicitationResult, Notification, SubagentStart/Stop, TaskCreated/Completed, TeammateIdle, StopFailure, PermissionRequest/Denied, UserPromptSubmit)
+- All 4 handler types: command, http, prompt, agent (with templates for each)
+- All new fields: async, asyncRewake, statusMessage, once, if, timeout
+- Output keys documented: hookSpecificOutput, updatedInput, additionalContext, permissionDecision
+- Old name-based format detection with migration warning
 
 ---
 
@@ -89,9 +87,13 @@ Old `cli_reference_tab.py` replaced in `main.py`.
 
 ---
 
-## Item 13 — Memory tab: restructure Projects subtab + merge File History
+## Item 13 — Memory tab: restructure + QTreeWidget + JSONL parsing
 **Status: DONE**
-`memory_tab.py` updated: `_decode_project_path()` added, `refresh_projects()` groups sessions by project folder with bold non-selectable headers (path, session count, latest date) and indented selectable session rows. Max 20 sessions per project shown.
+Full rewrite of `memory_tab.py`:
+- Conversations tab: QTreeWidget (left) + QTextEdit (right) in a QSplitter. Projects are bold top-level items; sessions are children.
+- JSONL parsing skips `type=="progress"` and `file-history-snapshot:` / `<function_calls>` entries; extracts human/assistant messages with timestamps. No entry limit.
+- Project Memories tab: QTreeWidget shows `~/.claude/projects/*/memory/*.md` files grouped by project; clicking a file loads it in a QTextEdit viewer.
+- File History and Shell Snapshots: QListWidget + QTextEdit viewer; path stored as UserRole data.
 
 ---
 
@@ -102,40 +104,72 @@ All fields complete in dialogs. user-invocable combo (true/false/default), paths
 ---
 
 ## Item 15 — User & Project Permissions subtabs: review against /permission-modes
-**Status: TODO**
-Review `user_permissions_subtab.py` and `project_permissions_subtab.py` against current docs.
-Items to add:
-- `acceptEdits` mode — auto-approves file edits + common filesystem commands
-- `auto` mode — background classifier, requirements
-- `dontAsk` mode — pre-approved tools only, CI use
-- `bypassPermissions` mode — containers/VMs only
-- Protected paths list
-- `Shift+Tab` cycling explanation
-- `disableAutoMode` / `disableBypassPermissionsMode` managed settings
+**Status: DONE**
+Footer converted from `QLabel` → `QTextBrowser` (text now selectable/copyable).
+All modes documented: `default`, `acceptEdits`, `auto` (ML classifier, Team/Enterprise; `disableAutoMode` flag), `dontAsk`, `bypassPermissions`.
+Protected paths listed. `Shift+Tab` cycling explained. Managed flags noted.
 
 ---
 
 ## Item 16 — New features list for potential tabs/subtabs
-**Status: DONE (research complete)**
+**Status: DONE**
+All identified features implemented. See Feedback Items FB1–FB10 below.
 
-Features from current docs not yet covered:
+---
 
-| Feature | Docs Page | Suggested Location |
-|---------|-----------|-------------------|
-| Auto Mode (classifier permissions) | /permission-modes | Permissions subtab |
-| Ultraplan | /ultraplan | Tools tab or Workflows |
-| Sandboxing | /sandboxing | Documentation or Permissions |
-| Context Window visualization | /context-window | Memory tab or About |
-| Output Styles | /output-styles | User Config subtab |
-| LSP Servers | /plugins-reference | Plugins tab subtab |
-| Monitors (background monitors) | /plugins-reference | Plugins tab subtab |
-| Model Configuration (effort, thinking) | /model-config | Expand Settings subtab |
-| Headless / Non-interactive | /headless | Documentation subtab |
-| OpenTelemetry / Telemetry | /telemetry | Documentation subtab |
-| MCP OAuth | /mcp | Expand MCP tab |
-| IDE Integration (VS Code, JetBrains) | /vs-code, /jetbrains | Documentation subtab |
-| GitHub Actions / CI | /github-actions | Documentation subtab |
-| Subagents (full coverage) | /sub-agents | Expand Agents tab |
+## Feedback Session — User Feedback Items (Session 2)
+
+### FB1 — Model Info subtab: move from User Config → Documentation tab
+**Status: DONE**
+`UserModelInfoSubTab` removed from `UserConfigTab`. Model info HTML added as `"🤖 Model Info"` subtab in `documentation_tab.py` — covers model IDs, context windows, effort levels, fast mode.
+
+### FB2 — Remove Workflows from main tab AND User Config subtab
+**Status: DONE**
+`StylesWorkflowsTab` removed from `main.py` tab list. `UserWorkflowsSubTab` import and addTab call removed from `user_config_tab.py`.
+
+### FB3 — Env Vars: redesign as split screen; remove from Settings subtabs
+**Status: DONE**
+`env_vars_tab.py` rewritten: QSplitter with left panel (current vars from settings.json: QListWidget + Add/Edit/Remove) and right panel (reference QTableWidget with 37 known env vars, 4 columns: Variable/Category/Default/Description). Double-clicking a reference row pre-fills the Add dialog.
+Env var sections removed from `user_settings_subtab.py` and `project_settings_subtab.py`.
+
+### FB4 — Make non-copyable code/command labels selectable (QLabel → QTextBrowser)
+**Status: DONE**
+Converted in: `mcp_tab.py`, `agents_tab.py`, `skills_tab.py`, `remote_control_tab.py`, `user_settings_subtab.py`, `user_permissions_subtab.py`, `project_permissions_subtab.py`.
+
+### FB5 — Plugins tab: use QSplitter to reduce clutter
+**Status: DONE**
+`plugins_tab.py` rewrote `init_ui` with `QSplitter(Horizontal)` — left panel: Enabled + Installed plugins; right panel: Known Marketplaces + Extra Marketplaces + Plugin Capabilities reference (QTextBrowser). CLI footer as QTextBrowser (max 50px).
+
+### FB6 — Font in Settings doesn't work; expand font list
+**Status: DONE**
+Root cause: `apply_theme()` never updated `FONT_FAMILY` global and never called `app.setFont()`.
+Fix: added `font_family` parameter to `theme.apply_theme()`; `preferences_tab.py` now calls `app.setFont(QFont(family, size))`.
+Font list expanded to: Segoe UI, Arial, Calibri, Tahoma, Verdana, Trebuchet MS, Georgia, Helvetica, Ubuntu, Noto Sans, Open Sans (plus existing mono fonts).
+
+### FB7 — Reset to Gruvbox Dark button does nothing
+**Status: DONE**
+Root cause: `reset_to_default()` only set widget values without applying them.
+Fix: calls `apply_preferences()` which saves and applies theme + font.
+
+### FB8 — Memory tab: proper JSONL parsing, QTreeWidget, no entry limits
+**Status: DONE**
+See Item 13 above.
+
+### FB9 — Memory: show project memories (.md files)
+**Status: DONE**
+See Item 13 above (Project Memories tab).
+
+### FB10 — New feature content additions
+**Status: DONE**
+- Documentation tab: added Ultraplan, Sandboxing, Context Window, Headless, Telemetry, IDE Integration, GitHub Actions subtabs.
+- User Settings subtab: Output Styles reference section (QTextBrowser).
+- MCP tab Discover: MCP OAuth reference footer (QTextBrowser).
+- Agents tab: Subagents/Task tool info added to best-practices footer.
+- Permissions subtabs: Auto Mode expanded with ML classifier description.
+
+### FB11 — Remove footer "Tip: User settings apply globally..." from User Config
+**Status: DONE**
+Footer label removed from `user_config_tab.py`.
 
 ---
 
@@ -155,7 +189,20 @@ Features from current docs not yet covered:
 | 10 | Plugins tab: review + update | DONE |
 | 11 | Plugins tab: remove text block | DONE |
 | 12 | Documentation tab with 10 subtabs | DONE |
-| 13 | Memory tab: Projects by folder | DONE |
+| 13 | Memory tab: tree view + JSONL parsing + project memories | DONE |
 | 14 | Skills subtabs: review new features | DONE |
 | 15 | Permissions subtabs: add new modes | DONE |
 | 16 | New features list | DONE |
+| FB1 | Model Info → Documentation tab | DONE |
+| FB2 | Remove Workflows everywhere | DONE |
+| FB3 | Env Vars split screen + remove from Settings | DONE |
+| FB4 | QLabel → QTextBrowser (selectable) | DONE |
+| FB5 | Plugins tab QSplitter | DONE |
+| FB6 | Font in Settings fix | DONE |
+| FB7 | Reset to Gruvbox Dark fix | DONE |
+| FB8 | Memory JSONL parsing + QTreeWidget | DONE |
+| FB9 | Memory project memories tab | DONE |
+| FB10 | New feature content (docs, OAuth, subagents, etc.) | DONE |
+| FB11 | Remove User Config footer tip | DONE |
+
+**All items complete.**
