@@ -867,6 +867,24 @@ class MCPTab(QWidget):
         bottom_layout.addWidget(add_btn)
         layout.addLayout(bottom_layout)
 
+        # OAuth reference info
+        oauth_info = QTextBrowser()
+        oauth_info.setOpenExternalLinks(False)
+        oauth_info.setMaximumHeight(60)
+        oauth_info.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
+            f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        oauth_info.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "🔐 <b>MCP OAuth:</b> Some MCP servers support OAuth 2.0 authentication. "
+            "Claude Code handles the OAuth flow automatically — run "
+            "<code>claude mcp add &lt;server&gt;</code> and follow the browser prompt. "
+            "Tokens are stored securely in the system keychain."
+            "</span>"
+        )
+        layout.addWidget(oauth_info)
+
         return widget
 
     def _do_discover_search(self):

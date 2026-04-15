@@ -229,7 +229,7 @@ class AgentsTab(QWidget):
         # Info tip with best practices
         tip_label = QTextBrowser()
         tip_label.setOpenExternalLinks(False)
-        tip_label.setMaximumHeight(70)
+        tip_label.setMaximumHeight(90)
         tip_label.setStyleSheet(
             f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
             f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
@@ -241,6 +241,9 @@ class AgentsTab(QWidget):
             "<br><b>Usage:</b> <code>claude /agents</code> • "
             "User: <code>~/.claude/agents/</code> (global) • "
             "Project: <code>./.claude/agents/</code> (git-shared)"
+            "<br>🤖 <b>Subagents:</b> Agents can spawn subagents via the <code>Task</code> tool. "
+            "Subagents run in isolated contexts with their own tool permissions. "
+            "Use <code>subagent_type</code> to select a specific agent; omit to use the default."
             "</span>"
         )
         layout.addWidget(tip_label)

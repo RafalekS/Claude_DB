@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView,
     QDialog, QComboBox, QFormLayout, QLineEdit, QDialogButtonBox,
-    QCheckBox, QGroupBox, QRadioButton
+    QCheckBox, QGroupBox, QRadioButton, QTextBrowser
 )
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QColor
@@ -457,19 +457,9 @@ class UserPermissionsSubTab(QWidget):
         layout.addLayout(btn_layout)
 
         # Permission modes reference footer
-        footer = QLabel(
-            "<b>Modes:</b> "
-            "<b>default</b> — normal prompting &nbsp;| "
-            "<b>acceptEdits</b> — auto-approve edits + filesystem commands &nbsp;| "
-            "<b>auto</b> — background classifier (Team/Enterprise only) &nbsp;| "
-            "<b>dontAsk</b> — skip prompts, CI use &nbsp;| "
-            "<b>bypassPermissions</b> — containers/VMs only &nbsp;&nbsp; "
-            "• <b>Shift+Tab</b> cycles modes during a session &nbsp;&nbsp; "
-            "• Protected paths (always restricted): <code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.gnupg</code>, "
-            "<code>/etc/passwd</code>, <code>/etc/shadow</code> &nbsp;&nbsp; "
-            "• Managed flags: <code>disableAutoMode</code>, <code>disableBypassPermissionsMode</code>"
-        )
-        footer.setWordWrap(True)
+        footer = QTextBrowser()
+        footer.setOpenExternalLinks(False)
+        footer.setMaximumHeight(80)
         footer.setStyleSheet(
             f"color: {theme.FG_SECONDARY}; "
             f"font-size: {theme.FONT_SIZE_SMALL}px; "
@@ -477,6 +467,20 @@ class UserPermissionsSubTab(QWidget):
             f"background-color: {theme.BG_MEDIUM}; "
             f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
             f"border-radius: {theme.BORDER_RADIUS}px;"
+        )
+        footer.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "<b>Modes:</b> "
+            "<b>default</b> — normal prompting &nbsp;| "
+            "<b>acceptEdits</b> — auto-approve edits + filesystem commands &nbsp;| "
+            "<b>auto</b> — background classifier uses ML to approve safe actions automatically (Team/Enterprise only; disable with <code>disableAutoMode</code>) &nbsp;| "
+            "<b>dontAsk</b> — skip prompts, CI use &nbsp;| "
+            "<b>bypassPermissions</b> — containers/VMs only"
+            "<br>• <b>Shift+Tab</b> cycles modes during a session &nbsp;&nbsp; "
+            "• Protected paths: <code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.gnupg</code>, "
+            "<code>/etc/passwd</code>, <code>/etc/shadow</code> &nbsp;&nbsp; "
+            "• Managed flags: <code>disableAutoMode</code>, <code>disableBypassPermissionsMode</code>"
+            "</span>"
         )
         layout.addWidget(footer)
 

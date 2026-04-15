@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QScrollArea, QTextEdit, QMessageBox, QComboBox,
     QSpinBox, QFormLayout, QListWidget, QListWidgetItem, QInputDialog,
-    QCheckBox, QLineEdit
+    QCheckBox, QLineEdit, QTextBrowser
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
@@ -70,6 +70,10 @@ class UserSettingsSubTab(QWidget):
         # Section 3: Advanced Settings
         advanced_group = self.create_advanced_section()
         scroll_layout.addWidget(advanced_group)
+
+        # Section 3b: Output Styles reference
+        output_styles_group = self._create_output_styles_section()
+        scroll_layout.addWidget(output_styles_group)
 
         # Section 4: JSON Preview
         preview_group = self.create_preview_section()
@@ -317,6 +321,29 @@ class UserSettingsSubTab(QWidget):
         row = self.disabled_plugins_list.currentRow()
         if row >= 0:
             self.disabled_plugins_list.takeItem(row)
+
+    def _create_output_styles_section(self) -> QGroupBox:
+        """Reference section for output styles."""
+        group = QGroupBox("Output Styles (reference)")
+        layout = QVBoxLayout(group)
+        layout.setSpacing(4)
+        ref = QTextBrowser()
+        ref.setOpenExternalLinks(False)
+        ref.setMaximumHeight(130)
+        ref.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "<b>--output-format</b> controls Claude's response format in non-interactive mode:<br>"
+            "<code>text</code> — plain text (default)<br>"
+            "<code>json</code> — single JSON object with result and metadata<br>"
+            "<code>stream-json</code> — newline-delimited JSON events streamed as they arrive<br><br>"
+            "<b>--no-markdown</b> — strip all markdown formatting from text output (useful for piping)<br>"
+            "<b>--verbose</b> — include thinking blocks and extended reasoning in output<br>"
+            "JSON output includes: <code>result</code>, <code>cost_usd</code>, "
+            "<code>duration_ms</code>, <code>num_turns</code>, <code>usage</code> fields"
+            "</span>"
+        )
+        layout.addWidget(ref)
+        return group
 
     def create_preview_section(self) -> QGroupBox:
         """Create JSON preview section"""

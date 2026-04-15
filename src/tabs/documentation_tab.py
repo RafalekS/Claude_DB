@@ -606,6 +606,205 @@ def _model_info_html():
     )
 
 
+def _ultraplan_html():
+    return _wrap(
+        _h(1, "Ultraplan"),
+        _h(2, "What is Ultraplan?"),
+        _p("Ultraplan is a command that activates extended thinking with maximum token budget "
+           "for the deepest possible planning and reasoning on complex tasks."),
+        _h(2, "Usage"),
+        _pre("/ultraplan\n/ultrathink"),
+        _p(_code("/ultraplan") + " and " + _code("/ultrathink") + " both trigger max-depth thinking. "
+           "The model will spend more tokens reasoning before producing a response."),
+        _h(2, "When to Use"),
+        _p("• Complex architectural decisions requiring deep analysis<br>"
+           "• Multi-step refactors that span many files<br>"
+           "• Designing systems with many interacting components<br>"
+           "• Problems where initial plans have repeatedly failed"),
+        _h(2, "Configuration"),
+        _table(["Setting", "Value", "Effect"],
+               [["effortLevel", "high", "Allocates ~31,999 thinking tokens"],
+                ["effortLevel", "ultrathink", "Maximum available thinking budget"],
+                ["alwaysThinkingEnabled", "true", "Extended thinking on by default"],
+                ["MAX_THINKING_TOKENS", "env var", "Hard cap on thinking token budget"]]),
+        _p("Toggle thinking on/off: " + _code("Alt+T") + " (Win/Linux) / " + _code("Option+T") + " (macOS)."),
+    )
+
+
+def _sandboxing_html():
+    return _wrap(
+        _h(1, "Sandboxing"),
+        _h(2, "What is Sandboxing?"),
+        _p("Sandboxing isolates Claude Code's bash command execution in a containerised environment, "
+           "preventing unintended changes to the host system."),
+        _h(2, "macOS Sandbox"),
+        _pre("claude --sandbox"),
+        _p("On macOS, sandboxing uses the built-in " + _code("sandbox-exec") +
+           " mechanism to restrict file writes and network access."),
+        _h(2, "Docker Sandbox"),
+        _p("For Linux and cross-platform use, run Claude Code inside a Docker container:"),
+        _pre("docker run -it --rm -v $(pwd):/workspace anthropic/claude-code:latest"),
+        _h(2, "Permission Modes with Sandboxing"),
+        _table(["Mode", "Sandboxing Benefit"],
+               [["bypassPermissions", "Requires container/VM — sandboxing provides the safety boundary"],
+                ["acceptEdits", "File edits auto-approved; sandboxing limits blast radius"],
+                ["default", "Prompts on dangerous ops; sandboxing adds second layer"]]),
+        _h(2, "Best Practices"),
+        _p("• Always use sandboxing in CI/CD pipelines<br>"
+           "• Use " + _code("bypassPermissions") + " only inside containers<br>"
+           "• Mount only necessary directories as volumes<br>"
+           "• Use read-only mounts for reference files"),
+    )
+
+
+def _context_window_html():
+    return _wrap(
+        _h(1, "Context Window"),
+        _h(2, "What is the Context Window?"),
+        _p("The context window is the total number of tokens Claude can see at once — "
+           "including the conversation history, file contents, tool outputs, and system prompts."),
+        _h(2, "Token Limits"),
+        _table(["Model", "Context Window", "Max Output"],
+               [["claude-opus-4-5", "200,000 tokens", "32,768 tokens"],
+                ["claude-sonnet-4-5", "200,000 tokens", "64,000 tokens"],
+                ["claude-haiku-4-5", "200,000 tokens", "8,192 tokens"]]),
+        _h(2, "Compaction"),
+        _pre("/compact\n/compact Focus on the authentication changes\n/clear    # start fresh"),
+        _p(_code("/compact") + " summarises the current conversation into a shorter form, "
+           "freeing context space while preserving key information.<br>"
+           "Hook: " + _code("PreCompact") + " fires before, " + _code("PostCompact") + " fires after."),
+        _h(2, "Context Pressure Indicators"),
+        _p("Claude Code warns when approaching context limits. Signs of high context usage:<br>"
+           "• Responses become shorter or less detailed<br>"
+           "• Tool calls start failing due to token limits<br>"
+           "• Status line shows high token count"),
+        _h(2, "Managing Context"),
+        _p("• Use " + _code("/compact") + " regularly in long sessions<br>"
+           "• Avoid reading very large files unnecessarily<br>"
+           "• Use focused " + _code("Glob") + " and " + _code("Grep") + " instead of reading entire directories<br>"
+           "• Break large tasks into smaller sub-conversations"),
+    )
+
+
+def _headless_html():
+    return _wrap(
+        _h(1, "Headless / Non-Interactive Mode"),
+        _h(2, "Overview"),
+        _p("Headless mode runs Claude Code non-interactively — useful for CI/CD, scripting, and automation."),
+        _h(2, "Basic Usage"),
+        _pre('# Single prompt, print and exit\nclaude -p "Fix the tests"\n\n'
+             '# Pipe input\ncat error.log | claude -p "Explain this error"\n\n'
+             '# From a file\nclaude -p "$(cat prompt.txt)"\n\n'
+             '# JSON output for machine parsing\nclaude -p "List all functions" --output-format json'),
+        _h(2, "Key Flags"),
+        _table(["Flag", "Description"],
+               [["-p / --print", "Non-interactive, print response and exit"],
+                ["--output-format json", "Machine-readable JSON output"],
+                ["--output-format stream-json", "Stream JSON events as they arrive"],
+                ["--no-markdown", "Plain text output, no markdown formatting"],
+                ["--permission-prompt-tool mcp__s__t", "Delegate permission prompts to MCP tool"],
+                ["--allowedTools <list>", "Comma-separated list of allowed tools"],
+                ["--disallowedTools <list>", "Tools to block"],
+                ["--max-turns <n>", "Limit agentic turns (default: unlimited)"]]),
+        _h(2, "CI/CD Example"),
+        _pre('# GitHub Actions step\n- name: Run Claude Code review\n'
+             '  run: claude -p "Review the changes in this PR" --output-format json \\\n'
+             '    --allowedTools Bash,Read,Grep'),
+        _h(2, "Exit Codes"),
+        _table(["Code", "Meaning"],
+               [["0", "Success"],
+                ["1", "General error"],
+                ["2", "Blocked by hook (stderr shown to user)"]]),
+    )
+
+
+def _telemetry_html():
+    return _wrap(
+        _h(1, "OpenTelemetry / Telemetry"),
+        _h(2, "Overview"),
+        _p("Claude Code supports OpenTelemetry (OTEL) for tracing and observability. "
+           "Enable it to send spans to any OTLP-compatible backend (Jaeger, Zipkin, Datadog, etc.)."),
+        _h(2, "Configuration"),
+        _pre('export CLAUDE_CODE_ENABLE_TELEMETRY=1\n'
+             'export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318\n'
+             'export OTEL_EXPORTER_OTLP_HEADERS="x-api-key=YOUR_KEY"'),
+        _h(2, "Environment Variables"),
+        _table(["Variable", "Description"],
+               [["CLAUDE_CODE_ENABLE_TELEMETRY", "Set to 1 to enable OTEL tracing"],
+                ["OTEL_EXPORTER_OTLP_ENDPOINT", "OTLP receiver endpoint URL"],
+                ["OTEL_EXPORTER_OTLP_HEADERS", "Auth headers (key=value,key=value)"],
+                ["OTEL_SERVICE_NAME", "Service name for traces (default: claude-code)"],
+                ["OTEL_RESOURCE_ATTRIBUTES", "Additional trace attributes"]]),
+        _h(2, "What is Traced"),
+        _p("• Every tool call (Bash, Read, Edit, etc.)<br>"
+           "• LLM API requests and responses (token counts, model, latency)<br>"
+           "• Session start/end events<br>"
+           "• Hook executions<br>"
+           "• MCP server calls"),
+        _h(2, "Usage Analytics"),
+        _p("Built-in usage analytics (token counts, cost estimates) are shown in the "
+           "Usage &amp; Analytics tab. This is separate from OTEL and always enabled."),
+    )
+
+
+def _ide_integration_html():
+    return _wrap(
+        _h(1, "IDE Integration"),
+        _h(2, "VS Code Extension"),
+        _pre("code --install-extension anthropic.claude-code"),
+        _p("Or search " + _code("Claude Code") + " in the VS Code Extensions marketplace."),
+        _h(2, "VS Code Features"),
+        _p("• Inline diff review directly in the editor<br>"
+           "• File open/close triggered by Claude<br>"
+           "• Terminal integration — Claude runs in VS Code terminal<br>"
+           "• Status bar showing Claude Code session state<br>"
+           "• Multi-root workspace support"),
+        _h(2, "JetBrains Plugin"),
+        _pre("# Install via JetBrains Marketplace\n# Search: Claude Code"),
+        _p("Supports IntelliJ IDEA, PyCharm, WebStorm, GoLand, Rider, and all JetBrains IDEs."),
+        _h(2, "JetBrains Features"),
+        _p("• Diff view in IDE diff tool<br>"
+           "• File navigation triggered by Claude<br>"
+           "• Terminal panel integration"),
+        _h(2, "Auto-Install"),
+        _p("Set " + _code("autoInstallIdeExtension: true") + " in settings.json to automatically "
+           "install/update the IDE extension when Claude Code starts."),
+        _h(2, "Settings"),
+        _table(["Setting", "Type", "Description"],
+               [["autoInstallIdeExtension", "boolean", "Auto-install/update IDE extension on startup"]]),
+    )
+
+
+def _github_actions_html():
+    return _wrap(
+        _h(1, "GitHub Actions / CI Integration"),
+        _h(2, "Overview"),
+        _p("Claude Code can run in GitHub Actions workflows for automated code review, "
+           "test generation, documentation, and more."),
+        _h(2, "Basic Workflow"),
+        _pre('name: Claude Code Review\non:\n  pull_request:\n\njobs:\n  review:\n    runs-on: ubuntu-latest\n'
+             '    steps:\n      - uses: actions/checkout@v4\n      - name: Install Claude Code\n'
+             '        run: npm install -g @anthropic/claude-code\n      - name: Run review\n'
+             '        env:\n          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}\n'
+             '        run: |\n          claude -p "Review this PR for bugs and security issues" \\\n'
+             '            --output-format json --allowedTools Read,Grep,Glob'),
+        _h(2, "Permission Modes in CI"),
+        _table(["Mode", "Use Case"],
+               [["--dangerously-skip-permissions", "Full automation in isolated containers (not recommended in shared runners)"],
+                ["--allowedTools", "Whitelist specific tools for safety"],
+                ["--disallowedTools", "Block dangerous tools (Bash, Edit, Write)"]]),
+        _h(2, "Secrets"),
+        _p("Store " + _code("ANTHROPIC_API_KEY") + " as a GitHub Actions secret. "
+           "Never hardcode API keys in workflows."),
+        _h(2, "Best Practices"),
+        _p("• Use read-only tools in PR review jobs (" + _code("--allowedTools Read,Grep,Glob") + ")<br>"
+           "• Pin Claude Code version for reproducibility<br>"
+           "• Cache npm install between runs<br>"
+           "• Use " + _code("--max-turns") + " to limit API costs<br>"
+           "• Use " + _code("--output-format json") + " for structured results"),
+    )
+
+
 # ─── Main Documentation Tab ───────────────────────────────────────────────────
 
 class DocumentationTab(QWidget):
@@ -674,3 +873,31 @@ class DocumentationTab(QWidget):
         tabs.addTab(DocPage(_model_info_html(),
                             "https://code.claude.com/docs/en/model-config"),
                     "🤖 Model Info")
+
+        tabs.addTab(DocPage(_ultraplan_html(),
+                            "https://code.claude.com/docs/en/ultraplan"),
+                    "🧠 Ultraplan")
+
+        tabs.addTab(DocPage(_sandboxing_html(),
+                            "https://code.claude.com/docs/en/sandboxing"),
+                    "🔒 Sandboxing")
+
+        tabs.addTab(DocPage(_context_window_html(),
+                            "https://code.claude.com/docs/en/context-window"),
+                    "📐 Context Window")
+
+        tabs.addTab(DocPage(_headless_html(),
+                            "https://code.claude.com/docs/en/headless"),
+                    "🤖 Headless")
+
+        tabs.addTab(DocPage(_telemetry_html(),
+                            "https://code.claude.com/docs/en/telemetry"),
+                    "📡 Telemetry")
+
+        tabs.addTab(DocPage(_ide_integration_html(),
+                            "https://code.claude.com/docs/en/vs-code"),
+                    "🖥️ IDE Integration")
+
+        tabs.addTab(DocPage(_github_actions_html(),
+                            "https://code.claude.com/docs/en/github-actions"),
+                    "🔁 GitHub Actions")
