@@ -14,7 +14,8 @@ from PyQt6.QtWidgets import (
     QSpinBox, QPushButton, QMessageBox, QGroupBox, QFormLayout,
     QDialog, QListWidget, QLineEdit, QTextEdit, QListWidgetItem, QInputDialog,
     QApplication, QTabWidget, QCheckBox, QAbstractItemView, QFileDialog,
-    QTableWidget, QTableWidgetItem, QHeaderView, QSplitter
+    QTableWidget, QTableWidgetItem, QHeaderView, QSplitter, QTextBrowser,
+    QScrollArea, QGridLayout
 )
 from PyQt6.QtCore import pyqtSignal, QProcess, Qt
 from utils import theme
