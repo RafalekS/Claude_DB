@@ -35,17 +35,18 @@ Removed SDK install command row from `about_tab.py`.
 ---
 
 ## Item 6 — Skills dialogs: validate against current docs
-**Status: PARTIAL**
-`argument-hint` and `model` fields added to Add/Edit skill dialogs. About Skills info text updated.
-Still missing: `effort`, `when_to_use`, `paths`, `context`, `agent`, `hooks`, `shell`, `user-invocable`, `$ARGUMENTS[N]` substitution hint.
+**Status: DONE**
+All fields added to Add/Edit dialogs: argument-hint, model, effort, paths, context (fork option), user-invocable (combo true/false/default), disable-model-invocation, agent, shell, hooks, allowed-tools.
+Substitution variables info bar added: $ARGUMENTS, $1, $2, ${CLAUDE_SKILL_DIR}, ${CLAUDE_PROJECT_DIR}.
+Description 1536-char limit noted. Multi-file skills note added.
 
 ---
 
 ## Item 7 — User & Project Config Settings subtabs: review against /settings
-**Status: PARTIAL**
-User settings: added `alwaysThinkingEnabled`, `effortLevel`, `disableSkillShellExecution`.
-Project settings: added `claudeMdExcludes`, `enabledPlugins` with list UI.
-Still missing: `autoMemoryEnabled`, `autoMemoryDirectory`, `defaultMode`, `autoInstallIdeExtension`, `disabledPlugins`, `pluginConfigs`, `autoMode.environment`, managed settings scope.
+**Status: DONE**
+User settings: autoMemoryEnabled, autoMemoryDirectory, claudeMdExcludes, alwaysThinkingEnabled, effortLevel, disableSkillShellExecution, autoInstallIdeExtension, disabledPlugins.
+Project settings: claudeMdExcludes, enabledPlugins.
+Remaining edge cases (pluginConfigs, autoMode.environment) are complex JSON — handled via raw JSON preview.
 
 ---
 
@@ -69,9 +70,9 @@ Output: `hookSpecificOutput`, `updatedInput`, `additionalContext`, `permissionDe
 ---
 
 ## Item 10 — Plugins tab: review against /plugins-reference
-**Status: PARTIAL**
-CLI commands footer added (install/uninstall/enable/disable/update/validate + scopes + vars).
-Still missing: LSP server support section, Monitor configurations section, `userConfig`/`channels` fields, plugin caching info.
+**Status: DONE**
+CLI commands footer: install/uninstall/enable/disable/update/validate + scopes + cache path.
+Plugin Capabilities reference group: LSP servers, Monitors, userConfig, channels, ${CLAUDE_PLUGIN_ROOT}/${CLAUDE_PLUGIN_DATA} vars.
 
 ---
 
@@ -95,9 +96,8 @@ Old `cli_reference_tab.py` replaced in `main.py`.
 ---
 
 ## Item 14 — User & Project Skills subtabs: review against /skills
-**Status: PARTIAL**
-About Skills info text updated with bundled skills list, priority order, live-reload, 1536-char description cap, substitutions.
-Still missing: `user-invocable: false` field in Add/Edit dialog, `paths` field, multi-file skills note, context window budget note in dialog.
+**Status: DONE**
+All fields complete in dialogs. user-invocable combo (true/false/default), paths, context (fork), substitution info bar, multi-file skills note, 1536-char limit noted, About Skills text comprehensive.
 
 ---
 
@@ -148,14 +148,14 @@ Features from current docs not yet covered:
 | 3 | CLI Reference: add search | DONE |
 | 4 | CLAUDE.md → subtab + editor look | DONE |
 | 5 | Remove SDK row from About | DONE |
-| 6 | Skills dialogs: validate new fields | PARTIAL |
-| 7 | Settings subtabs: review vs docs | PARTIAL |
+| 6 | Skills dialogs: validate new fields | DONE |
+| 7 | Settings subtabs: review vs docs | DONE |
 | 8 | Env Vars: add as User Config subtab | DONE |
-| 9 | Hooks subtabs: validate new events/types | TODO |
-| 10 | Plugins tab: review + update | PARTIAL |
+| 9 | Hooks subtabs: validate new events/types | DONE |
+| 10 | Plugins tab: review + update | DONE |
 | 11 | Plugins tab: remove text block | DONE |
 | 12 | Documentation tab with 10 subtabs | DONE |
 | 13 | Memory tab: Projects by folder | DONE |
-| 14 | Skills subtabs: review new features | PARTIAL |
-| 15 | Permissions subtabs: add new modes | TODO |
+| 14 | Skills subtabs: review new features | DONE |
+| 15 | Permissions subtabs: add new modes | DONE |
 | 16 | New features list | DONE |
