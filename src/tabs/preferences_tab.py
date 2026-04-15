@@ -443,12 +443,12 @@ class PreferencesTab(QWidget):
 
         main_layout.addLayout(top_row)
 
-        # ── Editor (left) + Preview (right) in QSplitter ─────────────────
-        editor_splitter = QSplitter(Qt.Orientation.Horizontal)
-        editor_splitter.addWidget(self._build_theme_editor())
-        editor_splitter.addWidget(self._build_widget_preview())
-        editor_splitter.setSizes([300, 900])
-        main_layout.addWidget(editor_splitter, 1)
+        # ── Inner tabs: Global Theme | Widget Styles ──────────────────────
+        inner_tabs = QTabWidget()
+        inner_tabs.setDocumentMode(True)
+        inner_tabs.addTab(self._build_theme_editor(), "🎨 Global Theme")
+        inner_tabs.addTab(self._build_widget_preview(), "🧩 Widget Styles")
+        main_layout.addWidget(inner_tabs, 1)
 
         # ── Action buttons ────────────────────────────────────────────────
         button_layout = QHBoxLayout()

@@ -794,11 +794,13 @@ class WidgetThemeEditor(QSplitter):
         self._on_change = on_change_callback   # called whenever any property changes
 
         self._prop_panel = WidgetPropertyPanel(self._overrides)
+        self._prop_panel.setMinimumWidth(280)
         self._preview_panel = WidgetPreviewPanel()
+        self._preview_panel.setMinimumWidth(400)
 
         self.addWidget(self._prop_panel)
         self.addWidget(self._preview_panel)
-        self.setSizes([300, 500])
+        self.setSizes([380, 700])
 
         self._preview_panel.widget_selected.connect(self._prop_panel.load_widget)
         self._prop_panel.property_changed.connect(self._on_property_changed)
