@@ -371,6 +371,8 @@ class PreferencesTab(QWidget):
 
     # Signal emitted when theme changes
     theme_changed = pyqtSignal(str, int)  # theme_name, font_size
+    # Signal to navigate to a tab/subtab/dialog by class name
+    navigate_to   = pyqtSignal(str)
 
     def __init__(self, config_manager, backup_manager, app=None):
         super().__init__()
@@ -683,6 +685,8 @@ class PreferencesTab(QWidget):
         self._widget_theme_editor = WidgetThemeEditor(
             on_change_callback=self._push_app_stylesheet
         )
+        # Forward navigation requests up to MainWindow
+        self._widget_theme_editor.navigate_to.connect(self.navigate_to)
         return self._widget_theme_editor
 
     def _update_preview_html(self):

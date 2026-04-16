@@ -189,12 +189,14 @@ class ClaudeDBApp(QMainWindow):
         self._github_label = QLabel("")
         self._github_label.hide()  # kept for API compatibility but not displayed
 
-        # Connect preferences theme-change signal → instant theme refresh
+        # Connect preferences signals → MainWindow handlers
         prefs_widget = self.all_tabs.get("preferences")
         if prefs_widget:
             _, prefs_tab = prefs_widget
             if hasattr(prefs_tab, "theme_changed"):
                 prefs_tab.theme_changed.connect(self.apply_theme_change)
+            if hasattr(prefs_tab, "navigate_to"):
+                prefs_tab.navigate_to.connect(self.navigate_to_class)
 
     def set_dark_theme(self):
         """Set dark theme for better visibility"""
@@ -301,6 +303,96 @@ class ClaudeDBApp(QMainWindow):
                 widget.apply_theme()
 
         logger.info(f"Theme changed to '{theme_name}' {font_size}px")
+
+    # ── Navigation ────────────────────────────────────────────────────────────
+
+    def navigate_to_class(self, class_name: str) -> bool:
+        """Switch to the tab/subtab that contains the given class name.
+
+        Checks:
+          1. Is this a main-tab widget? Switch to it directly.
+          2. Does any main tab have a sub_tabs (QTabWidget) containing this class?
+             If so, switch to the main tab and select the subtab.
+          3. If it looks like a Dialog, try to find the main tab from which the
+             dialog's file is referenced and switch to that tab.
+
+        Returns True if navigation succeeded.
+        """
+        from PyQt6.QtWidgets import QTabWidget as _QTW
+
+        # ── Pass 1: direct main-tab match ─────────────────────────────────────
+        for tab_key, (_, widget) in self.all_tabs.items():
+            if type(widget).__name__ == class_name:
+                self._switch_to_tab_key(tab_key)
+                logger.debug(f"Navigated to main tab '{tab_key}' for class '{class_name}'")
+                return True
+
+        # ── Pass 2: subtab match ───────────────────────────────────────────────
+        # Look for a QTabWidget attribute called 'sub_tabs' on any main tab
+        for tab_key, (_, widget) in self.all_tabs.items():
+            sub_tw = getattr(widget, 'sub_tabs', None)
+            if not isinstance(sub_tw, _QTW):
+                continue
+            for i in range(sub_tw.count()):
+                subtab = sub_tw.widget(i)
+                if type(subtab).__name__ == class_name:
+                    self._switch_to_tab_key(tab_key)
+                    sub_tw.setCurrentIndex(i)
+                    logger.debug(
+                        f"Navigated to '{tab_key}' subtab {i} ('{class_name}')"
+                    )
+                    return True
+
+        # ── Pass 3: dialog — find which main tab its source file belongs to ───
+        # For dialogs we can only navigate to the parent tab, not open the dialog.
+        # We map dialog class → the main tab it's associated with by source file.
+        # Fall back to a best-guess based on class name keywords.
+        if class_name.endswith("Dialog"):
+            hints = {
+                "Agent":       "userconfig",
+                "Server":      "userconfig",
+                "Permission":  "userconfig",
+                "Mcp":         "userconfig",
+                "MCP":         "userconfig",
+                "Skill":       "userconfig",
+                "Command":     "userconfig",
+                "Prompt":      "prompts",
+                "Tab":         "preferences",
+                "Backup":      "preferences",
+                "Theme":       "preferences",
+                "Import":      "prompts",
+                "Rule":        "userconfig",
+            }
+            for keyword, tab_key in hints.items():
+                if keyword in class_name and tab_key in self.all_tabs:
+                    self._switch_to_tab_key(tab_key)
+                    logger.debug(
+                        f"Navigated to '{tab_key}' (dialog hint for '{class_name}')"
+                    )
+                    return True
+
+        logger.warning(f"navigate_to_class: could not find '{class_name}'")
+        return False
+
+    def _switch_to_tab_key(self, tab_key: str):
+        """Switch the content stack to the tab identified by key.
+
+        Finds the widget in the content stack by identity (safe regardless of
+        which order tabs were added) and dispatches to row1/row2 switch.
+        """
+        entry = self.all_tabs.get(tab_key)
+        if not entry:
+            return
+        target_widget = entry[1]
+
+        # Find the stack index by scanning for widget identity
+        for stack_idx in range(self.content_stack.count()):
+            if self.content_stack.widget(stack_idx) is target_widget:
+                if stack_idx < self.row1_count:
+                    self.switch_to_row1_tab(stack_idx)
+                else:
+                    self.switch_to_row2_tab(stack_idx - self.row1_count)
+                return
 
     def create_backup(self):
         """Create backup of all configuration files"""
