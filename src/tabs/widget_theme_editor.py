@@ -19,7 +19,7 @@ from PyQt6.QtGui import QIntValidator
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from utils import theme
-from utils.widget_indexer import load_visible_ui_index
+from utils.widget_indexer import load_visible_ui_index, load_navigation_tree
 
 # ── Property type tokens ──────────────────────────────────────────────────────
 COLOR  = 'color'
@@ -492,6 +492,29 @@ class WidgetPreviewPanel(QScrollArea):
         except Exception:
             self._vis_idx = {}
 
+        # Build {qt_class: [nav_entries]} using the navigation tree.
+        # Augments _vis_idx with anonymous subtabs (Memory's _build_xxx, etc.)
+        # and adds proper parent labels so UsagePanel can show "sub of Memory".
+        try:
+            _nav_tree = load_navigation_tree()
+        except Exception:
+            _nav_tree = []
+        # Invert vis_idx: {class_name: [qt_classes]}
+        _class_to_qt: dict[str, list[str]] = {}
+        for _qc, _cls_names in self._vis_idx.items():
+            for _cn in _cls_names:
+                _class_to_qt.setdefault(_cn, []).append(_qc)
+        # Map each nav entry to the qt_classes of its source class
+        self._entries_by_qt_class: dict[str, list[dict]] = {}
+        _seen: set[tuple] = set()
+        for _entry in _nav_tree:
+            _src = _entry.get("source_class", _entry["id"].split("::")[0])
+            for _qc in _class_to_qt.get(_src, []):
+                _key = (_qc, _entry["id"])
+                if _key not in _seen:
+                    _seen.add(_key)
+                    self._entries_by_qt_class.setdefault(_qc, []).append(_entry)
+
         content = QWidget()
         vbox = QVBoxLayout(content)
         vbox.setContentsMargins(6, 6, 6, 8)
@@ -634,20 +657,19 @@ class UsagePanel(QWidget):
 
         self._loc_btns: list[QPushButton] = []
 
-    def update_locations(self, widget_display_name: str, locations: list[str]):
-        """Rebuild the grid with new locations, grouped by type then sorted by name."""
-        # Clear existing buttons and any section-header labels
+    def update_locations(self, widget_display_name: str, entries: list[dict]):
+        """Rebuild the grid with nav entries, grouped Tab → SubTab → Dialog."""
+        # Clear grid
         for w in self._loc_btns:
             w.deleteLater()
         self._loc_btns.clear()
-        # Also remove any leftover section labels from the grid
         while self._grid.count():
             item = self._grid.takeAt(0)
             w = item.widget()
             if w:
                 w.deleteLater()
 
-        n = len(locations)
+        n = len(entries)
         if n == 0:
             self._title_lbl.setText(f"{widget_display_name} — not used in any tab/dialog")
             self._hint_lbl.hide()
@@ -656,16 +678,16 @@ class UsagePanel(QWidget):
         self._title_lbl.setText(f"{widget_display_name}  —  {n} location{'s' if n != 1 else ''}")
         self._hint_lbl.show()
 
-        # Group by type: tabs → subtabs → dialogs
-        groups = {
-            "tab":    ("🗂  Tabs",     []),
-            "subtab": ("📑  Subtabs",  []),
-            "dialog": ("💬  Dialogs",  []),
+        # Group by type
+        groups: dict[str, tuple[str, list]] = {
+            "Tab":    ("🗂  Tabs",     []),
+            "SubTab": ("📑  SubTabs",  []),
+            "Dialog": ("💬  Dialogs",  []),
             "other":  ("▸  Other",    []),
         }
-        for cls_name in locations:
-            _, badge = _location_display_name(cls_name)
-            groups.get(badge, groups["other"])[1].append(cls_name)
+        for entry in entries:
+            t = entry.get("type", "other")
+            groups.get(t, groups["other"])[1].append(entry)
 
         cols = 1
         if n > self._COLS_THRESHOLD_3:
@@ -674,11 +696,10 @@ class UsagePanel(QWidget):
             cols = 2
 
         grid_row = 0
-        for badge_key, (section_title, cls_list) in groups.items():
-            if not cls_list:
+        for grp_key, (section_title, entry_list) in groups.items():
+            if not entry_list:
                 continue
 
-            # Section header spanning all columns
             hdr = QLabel(section_title)
             hdr.setStyleSheet(
                 f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
@@ -688,34 +709,38 @@ class UsagePanel(QWidget):
             self._grid.addWidget(hdr, grid_row, 0, 1, cols)
             grid_row += 1
 
-            for col_idx, cls_name in enumerate(sorted(cls_list)):
-                human, badge = _location_display_name(cls_name)
-                badge_map = {"tab": "🗂", "subtab": "📑", "dialog": "💬"}
-                icon = badge_map.get(badge, "▸")
-                label = f"{icon} {human}"
+            for col_idx, entry in enumerate(
+                sorted(entry_list, key=lambda e: e["label"])
+            ):
+                label       = entry["label"]
+                parent_lbl  = entry.get("parent_label")
+                # Button text: label on first line, "↳ Parent" on second if subtab
+                btn_text    = f"{label}\n↳ {parent_lbl}" if parent_lbl else label
+                tooltip     = (f"sub of {parent_lbl}" if parent_lbl else entry.get("type", ""))
 
-                btn = QPushButton(label)
-                btn.setToolTip(f"{cls_name}\n({badge})" if badge else cls_name)
+                btn = QPushButton(btn_text)
+                btn.setToolTip(tooltip)
                 btn.setStyleSheet(self._loc_btn_style())
-                # Allow vertical growth when there is room
                 btn.setSizePolicy(
                     QSizePolicy.Policy.Expanding,
                     QSizePolicy.Policy.Expanding,
                 )
-                btn.clicked.connect(lambda _c, cn=cls_name: self.navigate_to.emit(cn))
+                # Navigate to parent class for anonymous/named subtabs;
+                # the main window's navigate_to_class handles Tab/SubTab lookup.
+                nav_target = entry.get("parent_id") or entry["id"]
+                btn.clicked.connect(
+                    lambda _c, cn=nav_target: self.navigate_to.emit(cn)
+                )
 
                 row = grid_row + col_idx // cols
                 col = col_idx % cols
                 self._grid.addWidget(btn, row, col)
                 self._loc_btns.append(btn)
 
-            row_count = (len(cls_list) + cols - 1) // cols
-            grid_row += row_count
+            grid_row += (len(entry_list) + cols - 1) // cols
 
-        # Cap row height at ~45px when few buttons; let them grow otherwise
-        total_btn_rows = grid_row  # approximate
         if n < 45:
-            for r in range(total_btn_rows):
+            for r in range(grid_row):
                 self._grid.setRowStretch(r, 1)
 
     @staticmethod
@@ -1025,9 +1050,8 @@ class WidgetThemeEditor(QSplitter):
         if not wdef:
             return
         qt_class = wdef.get('qt_class', wdef['selector'].split('::')[0].split(' ')[0])
-        locations = self._preview_panel._vis_idx.get(qt_class, [])
-        display = wdef['icon']
-        self._usage_panel.update_locations(display, locations)
+        entries = self._preview_panel._entries_by_qt_class.get(qt_class, [])
+        self._usage_panel.update_locations(wdef['icon'], entries)
 
     def apply_theme(self):
         """Refresh colours after a global theme change."""
