@@ -13,7 +13,7 @@ import re
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QCheckBox, QScrollArea, QFrame, QLineEdit,
-    QSplitter, QApplication, QGridLayout
+    QSplitter, QApplication, QGridLayout, QSizePolicy
 )
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -635,11 +635,17 @@ class UsagePanel(QWidget):
         self._loc_btns: list[QPushButton] = []
 
     def update_locations(self, widget_display_name: str, locations: list[str]):
-        """Rebuild the grid with new locations for the selected widget."""
-        # Clear existing buttons
-        for btn in self._loc_btns:
-            btn.deleteLater()
+        """Rebuild the grid with new locations, grouped by type then sorted by name."""
+        # Clear existing buttons and any section-header labels
+        for w in self._loc_btns:
+            w.deleteLater()
         self._loc_btns.clear()
+        # Also remove any leftover section labels from the grid
+        while self._grid.count():
+            item = self._grid.takeAt(0)
+            w = item.widget()
+            if w:
+                w.deleteLater()
 
         n = len(locations)
         if n == 0:
@@ -650,24 +656,67 @@ class UsagePanel(QWidget):
         self._title_lbl.setText(f"{widget_display_name}  —  {n} location{'s' if n != 1 else ''}")
         self._hint_lbl.show()
 
+        # Group by type: tabs → subtabs → dialogs
+        groups = {
+            "tab":    ("🗂  Tabs",     []),
+            "subtab": ("📑  Subtabs",  []),
+            "dialog": ("💬  Dialogs",  []),
+            "other":  ("▸  Other",    []),
+        }
+        for cls_name in locations:
+            _, badge = _location_display_name(cls_name)
+            groups.get(badge, groups["other"])[1].append(cls_name)
+
         cols = 1
         if n > self._COLS_THRESHOLD_3:
             cols = 3
         elif n > self._COLS_THRESHOLD_2:
             cols = 2
 
-        for i, cls_name in enumerate(sorted(locations)):
-            human, badge = _location_display_name(cls_name)
-            badge_map = {"tab": "🗂", "subtab": "📑", "dialog": "💬"}
-            icon = badge_map.get(badge, "▸")
-            label = f"{icon} {human}"
+        grid_row = 0
+        for badge_key, (section_title, cls_list) in groups.items():
+            if not cls_list:
+                continue
 
-            btn = QPushButton(label)
-            btn.setToolTip(f"{cls_name}\n({badge})" if badge else cls_name)
-            btn.setStyleSheet(self._loc_btn_style())
-            btn.clicked.connect(lambda _c, cn=cls_name: self.navigate_to.emit(cn))
-            self._grid.addWidget(btn, i // cols, i % cols)
-            self._loc_btns.append(btn)
+            # Section header spanning all columns
+            hdr = QLabel(section_title)
+            hdr.setStyleSheet(
+                f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
+                f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; "
+                f"padding: 6px 0 2px 0; background: transparent;"
+            )
+            self._grid.addWidget(hdr, grid_row, 0, 1, cols)
+            grid_row += 1
+
+            for col_idx, cls_name in enumerate(sorted(cls_list)):
+                human, badge = _location_display_name(cls_name)
+                badge_map = {"tab": "🗂", "subtab": "📑", "dialog": "💬"}
+                icon = badge_map.get(badge, "▸")
+                label = f"{icon} {human}"
+
+                btn = QPushButton(label)
+                btn.setToolTip(f"{cls_name}\n({badge})" if badge else cls_name)
+                btn.setStyleSheet(self._loc_btn_style())
+                # Allow vertical growth when there is room
+                btn.setSizePolicy(
+                    QSizePolicy.Policy.Expanding,
+                    QSizePolicy.Policy.Expanding,
+                )
+                btn.clicked.connect(lambda _c, cn=cls_name: self.navigate_to.emit(cn))
+
+                row = grid_row + col_idx // cols
+                col = col_idx % cols
+                self._grid.addWidget(btn, row, col)
+                self._loc_btns.append(btn)
+
+            row_count = (len(cls_list) + cols - 1) // cols
+            grid_row += row_count
+
+        # Cap row height at ~45px when few buttons; let them grow otherwise
+        total_btn_rows = grid_row  # approximate
+        if n < 45:
+            for r in range(total_btn_rows):
+                self._grid.setRowStretch(r, 1)
 
     @staticmethod
     def _loc_btn_style() -> str:
@@ -688,6 +737,16 @@ class UsagePanel(QWidget):
         )
         for btn in self._loc_btns:
             btn.setStyleSheet(self._loc_btn_style())
+        # Restyle section header labels in the grid
+        hdr_style = (
+            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; "
+            f"padding: 6px 0 2px 0; background: transparent;"
+        )
+        for i in range(self._grid.count()):
+            w = self._grid.itemAt(i).widget()
+            if isinstance(w, QLabel):
+                w.setStyleSheet(hdr_style)
 
 
 # ── WidgetPropertyPanel ───────────────────────────────────────────────────────
@@ -935,6 +994,11 @@ class WidgetThemeEditor(QSplitter):
         self.addWidget(self._usage_panel)
         self._usage_panel.hide()
         self.setSizes([200, 700, 300])
+
+        # Prevent any pane from being collapsed to zero by dragging
+        self.setCollapsible(0, False)
+        self.setCollapsible(1, False)
+        self.setCollapsible(2, False)
 
         # Wire: selecting a widget → load props + update usage panel
         self._preview_panel.widget_selected.connect(self._prop_panel.load_widget)
