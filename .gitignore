@@ -35,3 +35,4 @@ config/config.json
 # OS
 .DS_Store
 Thumbs.db
+config/themes/themes.json
