@@ -21,7 +21,7 @@ from PyQt6.QtCore import pyqtSignal, QProcess, Qt
 from utils import theme
 from utils.ui_state_manager import UIStateManager
 from tabs.config_sync_tab import ConfigSyncTab
-from tabs.widget_theme_editor import WidgetThemeEditor
+from tabs.widget_theme_editor import WidgetThemeEditor, ColorSwatch
 
 logger = logging.getLogger(__name__)
 
@@ -636,13 +636,9 @@ class PreferencesTab(QWidget):
             color_grid.addWidget(name_lbl, row_idx, 0)
 
             current_hex = getattr(theme, var_name, "#888888")
-            swatch = QPushButton()
+            swatch = ColorSwatch(current_hex)
             swatch.setToolTip(f"Click to change {var_name}")
-            swatch.setStyleSheet(
-                f"background-color: {current_hex}; border: 1px solid {theme.BG_LIGHT}; "
-                f"border-radius: 3px; min-width: 32px; max-width: 32px; height: 22px;"
-            )
-            swatch.clicked.connect(lambda checked, vn=var_name: self._pick_color(vn))
+            swatch.clicked.connect(lambda vn=var_name: self._pick_color(vn))
             self._color_btns[var_name] = swatch
             color_grid.addWidget(swatch, row_idx, 1)
 
@@ -754,10 +750,7 @@ class PreferencesTab(QWidget):
         self._push_app_stylesheet()
         # Update swatch
         if var_name in self._color_btns:
-            self._color_btns[var_name].setStyleSheet(
-                f"background-color: {new_hex}; border: 2px solid {theme.ACCENT_PRIMARY}; "
-                f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 20px;"
-            )
+            self._color_btns[var_name].set_color(new_hex)
         if var_name in self._color_hex_lbls:
             self._color_hex_lbls[var_name].setText(new_hex)
         self._update_preview_html()
@@ -796,13 +789,9 @@ class PreferencesTab(QWidget):
         self._update_preview_html()
 
     def _refresh_color_buttons(self):
-        """Sync color swatch buttons and hex labels to current theme globals."""
-        for var_name, btn in self._color_btns.items():
-            cur = getattr(theme, var_name, "#888888")
-            btn.setStyleSheet(
-                f"background-color: {cur}; border: 1px solid {theme.BG_LIGHT}; "
-                f"border-radius: 3px; min-width: 36px; max-width: 36px; height: 20px;"
-            )
+        """Sync color swatches and hex labels to current theme globals."""
+        for var_name, swatch in self._color_btns.items():
+            swatch.set_color(getattr(theme, var_name, "#888888"))
         for var_name, lbl in self._color_hex_lbls.items():
             lbl.setText(getattr(theme, var_name, "#888888"))
 
