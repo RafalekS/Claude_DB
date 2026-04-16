@@ -17,11 +17,21 @@ from utils import theme
 # ─── Reusable page widget ────────────────────────────────────────────────────
 
 class DocPage(QWidget):
-    """A static doc page with a search bar and QTextBrowser."""
+    """A static doc page with a search bar and QTextBrowser.
 
-    def __init__(self, html_content: str, docs_url: str = "", parent=None):
+    Accepts either a pre-rendered HTML string or a callable that produces HTML.
+    When a callable is passed, apply_theme() regenerates the HTML from it so
+    the content re-renders with the latest theme colours.
+    """
+
+    def __init__(self, html_or_callable, docs_url: str = "", parent=None):
         super().__init__(parent)
-        self._html = html_content
+        if callable(html_or_callable):
+            self._html_fn = html_or_callable
+            self._html = html_or_callable()
+        else:
+            self._html_fn = None
+            self._html = html_or_callable
         self._url = docs_url
         self._build_ui()
 
@@ -62,12 +72,17 @@ class DocPage(QWidget):
         sc = QShortcut(QKeySequence("Ctrl+F"), self)
         sc.activated.connect(self._search.setFocus)
 
+    def apply_theme(self):
+        """Regenerate HTML with current theme colours and refresh the browser."""
+        if self._html_fn is not None:
+            self._html = self._html_fn()
+        self._browser.setHtml(self._html)
+        from PyQt6.QtGui import QFont
+        self._browser.setFont(QFont(theme.FONT_FAMILY_UI, theme.FONT_SIZE_NORMAL))
+
     def _do_search(self, text: str):
         """Find first occurrence of text in the browser."""
-        from PyQt6.QtWebEngineWidgets import QWebEngineView  # noqa: guard import
-        # QTextBrowser.find is sufficient here
         if not text:
-            # Reset by reloading
             self._browser.setHtml(self._html)
             return
         self._browser.find(text)
@@ -814,6 +829,8 @@ class DocumentationTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._header = None
+        self._pages: list[DocPage] = []
         self._build_ui()
 
     def _build_ui(self):
@@ -822,84 +839,47 @@ class DocumentationTab(QWidget):
         layout.setSpacing(4)
 
         # Header
-        header = QLabel("Documentation")
-        header.setStyleSheet(
+        self._header = QLabel("Documentation")
+        self._header.setStyleSheet(
             f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};"
         )
-        layout.addWidget(header)
+        layout.addWidget(self._header)
 
         # Subtab container
-        tabs = QTabWidget()
-        layout.addWidget(tabs, 1)
+        self._tabs = QTabWidget()
+        layout.addWidget(self._tabs, 1)
 
-        tabs.addTab(DocPage(_cli_reference_html(),
-                            "https://code.claude.com/docs/en/cli-reference"),
-                    "⌨️ CLI Reference")
+        # Each entry: (html_callable, url, tab_label)
+        _page_defs = [
+            (_cli_reference_html,    "https://code.claude.com/docs/en/cli-reference",    "⌨️ CLI Reference"),
+            (_workflows_html,        "https://code.claude.com/docs/en/common-workflows", "🔄 Workflows"),
+            (_prompts_html,          "https://code.claude.com/docs/en/memory",           "💬 Prompts & Memory"),
+            (_commands_html,         "https://code.claude.com/docs/en/commands",         "/ Commands"),
+            (_tools_ref_html,        "https://code.claude.com/docs/en/tools-reference",  "🔧 Tools Ref"),
+            (_shortcuts_html,        "https://code.claude.com/docs/en/interactive-mode", "⌨️ Shortcuts"),
+            (_remote_html,           "https://code.claude.com/docs/en/remote-control",   "🌐 Remote"),
+            (_chrome_html,           "https://code.claude.com/docs/en/chrome",           "🔵 Chrome"),
+            (_computer_use_html,     "https://code.claude.com/docs/en/computer-use",     "🖥️ Computer Use"),
+            (_plugins_ref_html,      "https://code.claude.com/docs/en/plugins-reference","🧩 Plugins Ref"),
+            (_model_info_html,       "https://code.claude.com/docs/en/model-config",     "🤖 Model Info"),
+            (_ultraplan_html,        "https://code.claude.com/docs/en/ultraplan",        "🧠 Ultraplan"),
+            (_sandboxing_html,       "https://code.claude.com/docs/en/sandboxing",       "🔒 Sandboxing"),
+            (_context_window_html,   "https://code.claude.com/docs/en/context-window",   "📐 Context Window"),
+            (_headless_html,         "https://code.claude.com/docs/en/headless",         "🤖 Headless"),
+            (_telemetry_html,        "https://code.claude.com/docs/en/telemetry",        "📡 Telemetry"),
+            (_ide_integration_html,  "https://code.claude.com/docs/en/vs-code",          "🖥️ IDE Integration"),
+            (_github_actions_html,   "https://code.claude.com/docs/en/github-actions",   "🔁 GitHub Actions"),
+        ]
+        for fn, url, label in _page_defs:
+            page = DocPage(fn, url)
+            self._pages.append(page)
+            self._tabs.addTab(page, label)
 
-        tabs.addTab(DocPage(_workflows_html(),
-                            "https://code.claude.com/docs/en/common-workflows"),
-                    "🔄 Workflows")
-
-        tabs.addTab(DocPage(_prompts_html(),
-                            "https://code.claude.com/docs/en/memory"),
-                    "💬 Prompts & Memory")
-
-        tabs.addTab(DocPage(_commands_html(),
-                            "https://code.claude.com/docs/en/commands"),
-                    "/ Commands")
-
-        tabs.addTab(DocPage(_tools_ref_html(),
-                            "https://code.claude.com/docs/en/tools-reference"),
-                    "🔧 Tools Ref")
-
-        tabs.addTab(DocPage(_shortcuts_html(),
-                            "https://code.claude.com/docs/en/interactive-mode"),
-                    "⌨️ Shortcuts")
-
-        tabs.addTab(DocPage(_remote_html(),
-                            "https://code.claude.com/docs/en/remote-control"),
-                    "🌐 Remote")
-
-        tabs.addTab(DocPage(_chrome_html(),
-                            "https://code.claude.com/docs/en/chrome"),
-                    "🔵 Chrome")
-
-        tabs.addTab(DocPage(_computer_use_html(),
-                            "https://code.claude.com/docs/en/computer-use"),
-                    "🖥️ Computer Use")
-
-        tabs.addTab(DocPage(_plugins_ref_html(),
-                            "https://code.claude.com/docs/en/plugins-reference"),
-                    "🧩 Plugins Ref")
-
-        tabs.addTab(DocPage(_model_info_html(),
-                            "https://code.claude.com/docs/en/model-config"),
-                    "🤖 Model Info")
-
-        tabs.addTab(DocPage(_ultraplan_html(),
-                            "https://code.claude.com/docs/en/ultraplan"),
-                    "🧠 Ultraplan")
-
-        tabs.addTab(DocPage(_sandboxing_html(),
-                            "https://code.claude.com/docs/en/sandboxing"),
-                    "🔒 Sandboxing")
-
-        tabs.addTab(DocPage(_context_window_html(),
-                            "https://code.claude.com/docs/en/context-window"),
-                    "📐 Context Window")
-
-        tabs.addTab(DocPage(_headless_html(),
-                            "https://code.claude.com/docs/en/headless"),
-                    "🤖 Headless")
-
-        tabs.addTab(DocPage(_telemetry_html(),
-                            "https://code.claude.com/docs/en/telemetry"),
-                    "📡 Telemetry")
-
-        tabs.addTab(DocPage(_ide_integration_html(),
-                            "https://code.claude.com/docs/en/vs-code"),
-                    "🖥️ IDE Integration")
-
-        tabs.addTab(DocPage(_github_actions_html(),
-                            "https://code.claude.com/docs/en/github-actions"),
-                    "🔁 GitHub Actions")
+    def apply_theme(self):
+        """Refresh header style and regenerate all HTML pages with current theme."""
+        if self._header:
+            self._header.setStyleSheet(
+                f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};"
+            )
+        for page in self._pages:
+            page.apply_theme()

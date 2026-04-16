@@ -707,11 +707,11 @@ def generate_app_stylesheet():
         /* Group Box */
         QGroupBox {{
             font-weight: bold;
-            border: 2px solid {ACCENT_PRIMARY};
-            border-radius: 5px;
+            border: 1px solid {BG_LIGHT};
+            border-radius: 4px;
             margin-top: 10px;
             padding-top: 10px;
-            color: {ACCENT_PRIMARY};
+            color: {FG_PRIMARY};
             background-color: {BG_MEDIUM};
         }}
         QGroupBox::title {{
@@ -719,6 +719,7 @@ def generate_app_stylesheet():
             left: 10px;
             padding: 0 5px 0 5px;
             background-color: {BG_MEDIUM};
+            color: {FG_PRIMARY};
         }}
 
         /* Scroll Bars */

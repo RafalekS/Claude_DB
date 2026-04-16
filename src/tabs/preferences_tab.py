@@ -388,10 +388,10 @@ class PreferencesTab(QWidget):
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(10)
 
-        # Header
-        header = QLabel("Application Preferences")
-        header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY}; margin-bottom: 10px;")
-        layout.addWidget(header)
+        # Header — store reference for apply_theme()
+        self._pref_header = QLabel("Application Preferences")
+        self._pref_header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY}; margin-bottom: 10px;")
+        layout.addWidget(self._pref_header)
 
         # Create subtabs — uses global app stylesheet, no per-widget override
         self.subtabs = QTabWidget()
@@ -531,16 +531,16 @@ class PreferencesTab(QWidget):
         main_layout.addLayout(button_layout)
 
         # ── Info label: where things are saved ───────────────────────────
-        save_info = QLabel(
+        self._save_info_lbl = QLabel(
             "All changes apply live instantly.  "
             "Save Session → config.json (restores on restart)  |  "
             "Save as Theme → themes/themes.json (reusable, appears in dropdown)  |  "
             "Widget Styles override Global Theme colors for specific widgets."
         )
-        save_info.setStyleSheet(
+        self._save_info_lbl.setStyleSheet(
             f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_TINY}px; padding: 2px 0;"
         )
-        main_layout.addWidget(save_info)
+        main_layout.addWidget(self._save_info_lbl)
 
         self.subtabs.addTab(appearance_widget, "🎨 Appearance")
 
@@ -601,10 +601,10 @@ class PreferencesTab(QWidget):
         typo_form.addRow("Mono Font:", self.font_mono_combo)
 
         # Size fields — IntLineEdit (type the number, no arrow buttons)
-        _note = QLabel("'Normal' = font size used everywhere in the app, including this editor UI")
-        _note.setWordWrap(True)
-        _note.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
-        typo_form.addRow("", _note)
+        self._typo_note_lbl = QLabel("'Normal' = font size used everywhere in the app, including this editor UI")
+        self._typo_note_lbl.setWordWrap(True)
+        self._typo_note_lbl.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
+        typo_form.addRow("", self._typo_note_lbl)
 
         for label, var_name, lo, hi, default in self._THEME_TYPO_VARS:
             le = IntLineEdit(lo, hi, getattr(theme, var_name, default))
@@ -630,9 +630,11 @@ class PreferencesTab(QWidget):
         color_grid.setSpacing(4)
         color_grid.setContentsMargins(0, 0, 0, 0)
 
+        self._color_name_lbls = {}
         for row_idx, (label, var_name) in enumerate(self._THEME_COLOR_VARS):
             name_lbl = QLabel(label)
             name_lbl.setStyleSheet(f"color: {theme.FG_PRIMARY};")
+            self._color_name_lbls[var_name] = name_lbl
             color_grid.addWidget(name_lbl, row_idx, 0)
 
             current_hex = getattr(theme, var_name, "#888888")
@@ -707,6 +709,30 @@ class PreferencesTab(QWidget):
             base_qss = theme.generate_app_stylesheet()
             widget_qss = self._widget_theme_editor.get_overrides_qss() if hasattr(self, '_widget_theme_editor') else ''
             app.setStyleSheet(base_qss + '\n' + widget_qss)
+
+    def apply_theme(self):
+        """Re-apply inline styles that were baked at widget-creation time so they match the current theme."""
+        # Header
+        if hasattr(self, '_pref_header'):
+            self._pref_header.setStyleSheet(
+                f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY}; margin-bottom: 10px;"
+            )
+        # Save info hint
+        if hasattr(self, '_save_info_lbl'):
+            self._save_info_lbl.setStyleSheet(
+                f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_TINY}px; padding: 2px 0;"
+            )
+        # Typography note
+        if hasattr(self, '_typo_note_lbl'):
+            self._typo_note_lbl.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
+        # Color row labels
+        if hasattr(self, '_color_name_lbls'):
+            for lbl in self._color_name_lbls.values():
+                lbl.setStyleSheet(f"color: {theme.FG_PRIMARY};")
+        # Color hex labels
+        if hasattr(self, '_color_hex_lbls'):
+            for lbl in self._color_hex_lbls.values():
+                lbl.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-family: {theme.FONT_MONOSPACE};")
 
     def _live_apply_font_family(self, family: str):
         """Immediately apply a UI font family change to the whole app."""

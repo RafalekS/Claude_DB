@@ -105,18 +105,21 @@ class ClaudeDBApp(QMainWindow):
         tab_bar_style = f"""
             QTabBar::tab {{
                 background: {theme.BG_MEDIUM};
-                color: {theme.FG_PRIMARY};
+                color: {theme.FG_SECONDARY};
                 padding: 8px 12px;
                 margin-right: 2px;
                 border: 1px solid {theme.BG_LIGHT};
+                border-bottom: none;
             }}
             QTabBar::tab:selected {{
-                background: {theme.ACCENT_PRIMARY};
-                color: {theme.BG_DARK};
+                background: {theme.BG_DARK};
+                color: {theme.FG_PRIMARY};
                 font-weight: bold;
+                border-bottom: 2px solid {theme.ACCENT_PRIMARY};
             }}
-            QTabBar::tab:hover {{
+            QTabBar::tab:hover:!selected {{
                 background: {theme.BG_LIGHT};
+                color: {theme.FG_PRIMARY};
             }}
         """
 
@@ -266,18 +269,21 @@ class ClaudeDBApp(QMainWindow):
         tab_bar_style = f"""
             QTabBar::tab {{
                 background: {_theme.BG_MEDIUM};
-                color: {_theme.FG_PRIMARY};
+                color: {_theme.FG_SECONDARY};
                 padding: 8px 12px;
                 margin-right: 2px;
                 border: 1px solid {_theme.BG_LIGHT};
+                border-bottom: none;
             }}
             QTabBar::tab:selected {{
-                background: {_theme.ACCENT_PRIMARY};
-                color: {_theme.BG_DARK};
+                background: {_theme.BG_DARK};
+                color: {_theme.FG_PRIMARY};
                 font-weight: bold;
+                border-bottom: 2px solid {_theme.ACCENT_PRIMARY};
             }}
-            QTabBar::tab:hover {{
+            QTabBar::tab:hover:!selected {{
                 background: {_theme.BG_LIGHT};
+                color: {_theme.FG_PRIMARY};
             }}
         """
         self.tab_bar_row1.setStyleSheet(tab_bar_style)
