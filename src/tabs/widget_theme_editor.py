@@ -705,13 +705,19 @@ class WidgetThemeEditor(QSplitter):
 
     # ── Public API: full widget definitions ───────────────────────────────────
 
+    # Properties that Typography (FONT_SIZE_*) controls globally.
+    # These are NOT stored in Widget Styles by default so that changing
+    # Typography still has effect on all widgets.  Only stored if the user
+    # explicitly overrides them per-widget in the property panel.
+    _TYPOGRAPHY_PROPS = {'font-size', 'font-weight'}
+
     def get_widgets_dict(self) -> dict:
-        """Return ALL widget properties for ALL widget types as a complete,
+        """Return widget properties for ALL widget types as a complete,
         JSON-serializable dict suitable for storing in themes.json.
 
-        For each property the value is: user override if set, otherwise the
-        current theme default (re-evaluated from live theme globals so that
-        freshly-switched themes produce correct defaults).
+        Font-size and font-weight are omitted from auto-generated defaults so
+        that Typography (Global Theme) still controls them.  They are only
+        included when the user has explicitly set an override per widget.
 
         Structure:
             { "Button": { "|background-color": "#83A598", ":hover|background-color": "#B8BB26", ... }, ... }
@@ -727,8 +733,14 @@ class WidgetThemeEditor(QSplitter):
                 state   = p['state']
                 qss_key = p['qss']
                 key_str = f"{state}|{qss_key}"
-                val = overrides_for.get((state, qss_key), p['val'])
-                props[key_str] = val
+                key     = (state, qss_key)
+                if key in overrides_for:
+                    # User explicitly set this — always include
+                    props[key_str] = overrides_for[key]
+                elif qss_key not in self._TYPOGRAPHY_PROPS:
+                    # Non-typography default — include
+                    props[key_str] = p['val']
+                # else: typography prop with no override — skip (Typography column controls it)
             if props:
                 result[wname] = props
         return result

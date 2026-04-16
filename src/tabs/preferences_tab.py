@@ -487,8 +487,8 @@ class PreferencesTab(QWidget):
 
         self.save_as_theme_btn = QPushButton("Save as Theme...")
         self.save_as_theme_btn.setToolTip(
-            "Save current colors as a named theme in config/themes.json\n"
-            "The theme will appear in the dropdown and persist across restarts."
+            "Save current colors + all widget styles as a named theme in config/themes/themes.json.\n"
+            "The theme will appear in the dropdown. Anyone can select and reuse it."
         )
         self.save_as_theme_btn.clicked.connect(self._save_as_theme)
 
@@ -496,16 +496,19 @@ class PreferencesTab(QWidget):
         self.delete_theme_btn.setToolTip("Remove selected theme from themes.json")
         self.delete_theme_btn.clicked.connect(self._delete_theme)
 
-        self.apply_btn = QPushButton("Apply & Save Session")
+        self.apply_btn = QPushButton("Save Session")
         self.apply_btn.setToolTip(
-            "Apply changes to the running app and save the session state.\n"
-            "Saves selected theme + font + spacing to config/config.json\n"
-            "so they are restored on next startup."
+            "Changes are already live. This writes them to config/config.json\n"
+            "so the same theme, font and widget styles are restored on next startup.\n\n"
+            "To save as a reusable named theme → use 'Save as Theme...'"
         )
         self.apply_btn.clicked.connect(self.apply_preferences)
 
         self.reset_btn = QPushButton("Reset to Gruvbox Dark")
-        self.reset_btn.setToolTip("Reset all settings to defaults")
+        self.reset_btn.setToolTip(
+            "Hard-reset everything back to the Gruvbox Dark defaults:\n"
+            "colors, font size, font family, widget styles."
+        )
         self.reset_btn.clicked.connect(self.reset_to_default)
 
         self.restart_btn = QPushButton("Restart App")
@@ -522,8 +525,10 @@ class PreferencesTab(QWidget):
 
         # ── Info label: where things are saved ───────────────────────────
         save_info = QLabel(
-            f"Session prefs → config/config.json  |  Named themes → config/themes.json  "
-            f"|  Changes apply live as you edit"
+            "All changes apply live instantly.  "
+            "Save Session → config.json (restores on restart)  |  "
+            "Save as Theme → themes/themes.json (reusable, appears in dropdown)  |  "
+            "Widget Styles override Global Theme colors for specific widgets."
         )
         save_info.setStyleSheet(
             f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_TINY}px; padding: 2px 0;"
@@ -652,7 +657,7 @@ class PreferencesTab(QWidget):
 
         # ── Column 3: SPACING ─────────────────────────────────────────────
         spacing_group = QGroupBox("Spacing & Layout")
-        spacing_group.setFixedWidth(190)
+        spacing_group.setFixedWidth(230)
         spacing_form = QFormLayout(spacing_group)
         spacing_form.setSpacing(6)
         spacing_form.setContentsMargins(8, 12, 8, 8)
@@ -1567,6 +1572,8 @@ class {class_name}Tab(QWidget):
             from PyQt6.QtGui import QFont
             app.setFont(QFont(font_family, font_size))
         self._push_app_stylesheet()
+        # Tell the main window to refresh its tab bars and any inline-styled widgets
+        self.theme_changed.emit(theme_name, font_size)
         # Sync editor controls to the new theme's values
         self._refresh_color_buttons()
         self._refresh_typo_spacing_controls()
