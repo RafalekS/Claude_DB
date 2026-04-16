@@ -485,10 +485,17 @@ class PreferencesTab(QWidget):
         button_layout = QHBoxLayout()
         button_layout.setSpacing(8)
 
-        self.save_as_theme_btn = QPushButton("Save as Theme...")
+        self.save_theme_btn = QPushButton("Save Theme")
+        self.save_theme_btn.setToolTip(
+            "Save changes back into the currently selected theme.\n"
+            "Overwrites its entry in config/themes/themes.json in-place."
+        )
+        self.save_theme_btn.clicked.connect(self._save_current_theme)
+
+        self.save_as_theme_btn = QPushButton("Save as New Theme...")
         self.save_as_theme_btn.setToolTip(
-            "Save current colors + all widget styles as a named theme in config/themes/themes.json.\n"
-            "The theme will appear in the dropdown. Anyone can select and reuse it."
+            "Save current colors + widget styles as a brand-new named theme.\n"
+            "Prompts for a name, then adds it to the dropdown."
         )
         self.save_as_theme_btn.clicked.connect(self._save_as_theme)
 
@@ -499,8 +506,7 @@ class PreferencesTab(QWidget):
         self.apply_btn = QPushButton("Save Session")
         self.apply_btn.setToolTip(
             "Changes are already live. This writes them to config/config.json\n"
-            "so the same theme, font and widget styles are restored on next startup.\n\n"
-            "To save as a reusable named theme → use 'Save as Theme...'"
+            "so the same theme, font and widget styles are restored on next startup."
         )
         self.apply_btn.clicked.connect(self.apply_preferences)
 
@@ -515,6 +521,7 @@ class PreferencesTab(QWidget):
         self.restart_btn.setToolTip("Restart application")
         self.restart_btn.clicked.connect(self.restart_application)
 
+        button_layout.addWidget(self.save_theme_btn)
         button_layout.addWidget(self.save_as_theme_btn)
         button_layout.addWidget(self.delete_theme_btn)
         button_layout.addWidget(self.apply_btn)
@@ -813,6 +820,22 @@ class PreferencesTab(QWidget):
                 self._spacing_spins[var_name].blockSignals(False)
 
     # ── Theme management ─────────────────────────────────────────────────────
+
+    def _save_current_theme(self):
+        """Overwrite the currently selected theme in themes.json with current settings."""
+        name = self.theme_combo.currentText()
+        if not name:
+            return
+        widgets = self._widget_theme_editor.get_widgets_dict() if hasattr(self, '_widget_theme_editor') else {}
+        if theme.save_theme_to_file(name, widgets or None):
+            self._custom_colors.clear()
+            main_win = self.window()
+            if hasattr(main_win, "set_status"):
+                main_win.set_status(f"Theme '{name}' saved to themes.json")
+            else:
+                QMessageBox.information(self, "Saved", f"Theme '{name}' saved.")
+        else:
+            QMessageBox.critical(self, "Error", "Failed to write themes.json")
 
     def _save_as_theme(self):
         """Snapshot current colors and save as a named theme in config/themes.json."""
