@@ -712,24 +712,41 @@ class PreferencesTab(QWidget):
             qc = wdef.get('qt_class', wdef['selector'].split('::')[0].split(' ')[0])
             qt_class_to_wdef.setdefault(qc, wname)
 
+        # Top-level tabs registered in the main window — everything else is a SubTab
+        _TOP_LEVEL_TABS = {
+            "UserConfigTab", "ProjectConfigTab", "PromptsTab", "PluginsTab",
+            "MemoryTab", "UsageTab", "DocumentationTab", "ClaudeKitTab",
+            "ToolsTab", "AboutTab", "PreferencesTab",
+            # dynamic user-created tabs also end with "Tab" — let suffix handle them
+        }
+
+        def _classify(class_name: str) -> str:
+            """Return group key: Tab | SubTab | Dialog | Window | Other."""
+            cl = class_name.lower()
+            if cl.endswith("subtab"):
+                return "SubTab"
+            if cl.endswith("dialog"):
+                return "Dialog"
+            if cl.endswith("window"):
+                return "Window"
+            if cl.endswith("tab"):
+                return "Tab" if class_name in _TOP_LEVEL_TABS else "SubTab"
+            return "Other"
+
         def _display_name(class_name: str) -> str:
             """'UserPermissionsSubTab' → 'User Permissions (SubTab)'"""
-            for suffix in ("SubTab", "Dialog", "Window", "Tab"):
+            for suffix in ("SubTab", "Subtab", "Dialog", "Window", "Tab"):
                 if class_name.endswith(suffix):
                     raw = class_name[: -len(suffix)]
                     spaced = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', raw)
-                    return f"{spaced} ({suffix})"
+                    badge = "SubTab" if suffix.lower() == "subtab" else suffix
+                    return f"{spaced} ({badge})"
             return class_name
 
         # ── Sort locations into groups ────────────────────────────────────────
         groups: dict[str, list[str]] = {"Tab": [], "SubTab": [], "Dialog": [], "Window": [], "Other": []}
         for loc in sorted(loc_to_widgets):
-            for suffix in ("SubTab", "Dialog", "Window", "Tab"):
-                if loc.endswith(suffix):
-                    groups[suffix].append(loc)
-                    break
-            else:
-                groups["Other"].append(loc)
+            groups[_classify(loc)].append(loc)
 
         # ── UI ────────────────────────────────────────────────────────────────
         container = QWidget()

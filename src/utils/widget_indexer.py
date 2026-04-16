@@ -63,7 +63,7 @@ _SCAN_DIRS = [
 _TABS_DIR = Path(__file__).parent.parent / "tabs"
 
 # Class name suffixes that indicate a user-visible, navigable UI component
-_NAVIGABLE_SUFFIXES = ("Tab", "SubTab", "Dialog", "Window")
+_NAVIGABLE_SUFFIXES = ("Tab", "SubTab", "Subtab", "Dialog", "Window")
 
 # ── Detection overrides for implicitly-used widgets ───────────────────────────
 # Some widgets are used without being named directly:
