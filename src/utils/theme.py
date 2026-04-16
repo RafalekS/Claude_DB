@@ -98,9 +98,13 @@ def apply_theme(theme_name, font_size=14, font_family=None):
 
     # Update all color variables
     BG_DARK = _current_theme.get("background", "#282828")
-    # Calculate medium and light variants
-    BG_MEDIUM = lighten_color(BG_DARK, 0.1)
-    BG_LIGHT = lighten_color(BG_DARK, 0.2)
+    # For light themes, surfaces must go DARKER (not lighter) to stay visible
+    if is_light_color(BG_DARK):
+        BG_MEDIUM = darken_color(BG_DARK, 0.08)   # subtle surface: #f3f3f3 → #e1e1e1
+        BG_LIGHT  = darken_color(BG_DARK, 0.17)   # border/divider:  #f3f3f3 → #cacacc
+    else:
+        BG_MEDIUM = lighten_color(BG_DARK, 0.1)
+        BG_LIGHT  = lighten_color(BG_DARK, 0.2)
 
     FG_PRIMARY = _current_theme.get("foreground", "#EBDBB2")
     FG_SECONDARY = _current_theme.get("white", "#A89984")
@@ -124,20 +128,38 @@ def apply_theme(theme_name, font_size=14, font_family=None):
         FONT_FAMILY = f"'{font_family}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
 
 
-def lighten_color(hex_color, factor=0.1):
-    """Lighten a hex color by a factor (0.0 to 1.0)"""
+def is_light_color(hex_color: str) -> bool:
+    """Return True if the colour is perceptually light (luminance > 60%)."""
     try:
-        # Remove # if present
-        hex_color = hex_color.lstrip('#')
-        # Convert to RGB
-        r = int(hex_color[0:2], 16)
-        g = int(hex_color[2:4], 16)
-        b = int(hex_color[4:6], 16)
-        # Lighten
+        h = hex_color.lstrip('#')
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        # Standard perceived-luminance formula (WCAG)
+        return (r * 299 + g * 587 + b * 114) / 1000 > 155
+    except Exception:
+        return False
+
+
+def lighten_color(hex_color, factor=0.1):
+    """Move a colour towards white by factor (0.0–1.0)."""
+    try:
+        h = hex_color.lstrip('#')
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
         r = min(255, int(r + (255 - r) * factor))
         g = min(255, int(g + (255 - g) * factor))
         b = min(255, int(b + (255 - b) * factor))
-        # Convert back to hex
+        return f"#{r:02x}{g:02x}{b:02x}"
+    except Exception:
+        return hex_color
+
+
+def darken_color(hex_color, factor=0.1):
+    """Move a colour towards black by factor (0.0–1.0)."""
+    try:
+        h = hex_color.lstrip('#')
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        r = max(0, int(r * (1 - factor)))
+        g = max(0, int(g * (1 - factor)))
+        b = max(0, int(b * (1 - factor)))
         return f"#{r:02x}{g:02x}{b:02x}"
     except Exception:
         return hex_color

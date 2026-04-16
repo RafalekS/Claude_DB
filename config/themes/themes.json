@@ -7461,7 +7461,7 @@
     "brightGreen": "#107c10",
     "brightRed": "#c42b1c",
     "brightYellow": "#9d5d00",
-    "selection": "#e0e0e0",
+    "selection": "#cce4f7",
     "black": "#1a1a1a",
     "blue": "#0067be",
     "cyan": "#006e8c",
@@ -7482,8 +7482,8 @@
         "|padding-left": 10,
         ":hover|background-color": "#107c10",
         ":hover|color": "#f3f3f3",
-        ":pressed|background-color": "#f5f5f5",
-        ":disabled|background-color": "#f4f4f4",
+        ":pressed|background-color": "#c9c9c9",
+        ":disabled|background-color": "#dfdfdf",
         ":disabled|color": "#767676"
       },
       "Label": {
@@ -7492,32 +7492,30 @@
         "|background-color": "transparent"
       },
       "Input": {
-        "|background-color": "#ffffff",
+        "|background-color": "#f3f3f3",
         "|color": "#1a1a1a",
-        "|border-color": "#cccccc",
+        "|border-color": "#c9c9c9",
         "|border-width": 1,
         "|border-radius": 4,
         "|padding": 4,
-        ":focus|border-color": "#0067be",
-        ":focus|background-color": "#ffffff",
-        "::placeholder|color": "#767676"
+        ":focus|border-color": "#0067be"
       },
       "TextEdit": {
-        "|background-color": "#ffffff",
+        "|background-color": "#f3f3f3",
         "|color": "#1a1a1a",
-        "|border-color": "#cccccc",
+        "|border-color": "#c9c9c9",
         "|border-width": 1,
         "|border-radius": 4,
         "|padding": 4
       },
       "ComboBox": {
-        "|background-color": "#ffffff",
+        "|background-color": "#f3f3f3",
         "|color": "#1a1a1a",
-        "|border-color": "#cccccc",
+        "|border-color": "#c9c9c9",
         "|border-width": 1,
         "|border-radius": 4,
         "|padding": 4,
-        ":hover|background-color": "#e8e8e8",
+        ":hover|background-color": "#dfdfdf",
         " QAbstractItemView|background-color": "#f3f3f3",
         " QAbstractItemView|color": "#1a1a1a"
       },
@@ -7533,37 +7531,31 @@
         "::indicator|width": 14
       },
       "Table": {
-        "|background-color": "#ffffff",
-        "|alternate-background-color": "#f4f4f4",
-        "|gridline-color": "#cccccc",
-        "::section|background-color": "#f4f4f4",
+        "|background-color": "#f3f3f3",
+        "|alternate-background-color": "#dfdfdf",
+        "|gridline-color": "#c9c9c9",
+        "::section|background-color": "#dfdfdf",
         "::section|color": "#1a1a1a",
         "::item:selected|background-color": "#0067be",
-        "::item:selected|color": "#f3f3f3",
-        "|color": "#1a1a1a",
-        "QHeaderView::section|background-color": "#e0e0e0",
-        "QHeaderView::section|color": "#1a1a1a",
-        "QTableWidget::item:selected|background-color": "#cce4f7",
-        "QTableWidget::item:selected|color": "#1a1a1a",
-        "QTableWidget::item:alternate|background-color": "#f9f9f9"
+        "::item:selected|color": "#f3f3f3"
       },
       "List": {
-        "|background-color": "#ffffff",
+        "|background-color": "#f3f3f3",
         "|color": "#1a1a1a",
-        "::item:hover|background-color": "#e8e8e8",
+        "::item:hover|background-color": "#dfdfdf",
         "::item:hover|color": "#1a1a1a",
-        "::item:selected|background-color": "#cce4f7",
-        "::item:selected|color": "#1a1a1a"
+        "::item:selected|background-color": "#0067be",
+        "::item:selected|color": "#f3f3f3"
       },
       "GroupBox": {
-        "|color": "#1a1a1a",
-        "|border-color": "#cccccc",
+        "|color": "#0067be",
+        "|border-color": "#c9c9c9",
         "|border-width": 1,
         "|border-radius": 4,
         "|padding-top": 14
       },
       "ProgressBar": {
-        "|background-color": "#e0e0e0",
+        "|background-color": "#dfdfdf",
         "|border-radius": 4,
         "|color": "#1a1a1a",
         "|max-height": 12,
@@ -7575,50 +7567,46 @@
         "::handle:horizontal|width": 14,
         "::handle:horizontal|height": 14,
         "::handle:horizontal|border-radius": 7,
-        "::groove:horizontal|background-color": "#f4f4f4",
+        "::groove:horizontal|background-color": "#dfdfdf",
         "::groove:horizontal|height": 6,
-        "::groove:horizontal|border-radius": 3,
-        "|background-color": "#e0e0e0",
-        "::handle|background-color": "#0067be"
+        "::groove:horizontal|border-radius": 3
       },
       "SpinBox": {
-        "|background-color": "#ffffff",
+        "|background-color": "#f3f3f3",
         "|color": "#1a1a1a",
-        "|border-color": "#cccccc",
+        "|border-color": "#c9c9c9",
         "|border-width": 1,
         "|border-radius": 4,
         "|padding": 3,
         ":focus|border-color": "#0067be"
       },
       "Tabs": {
-        "|background-color": "#e0e0e0",
+        "|background-color": "#dfdfdf",
         "|color": "#444444",
         "|padding": 6,
         "|border-radius": 4,
-        ":selected|background-color": "#ffffff",
-        ":selected|color": "#0067be",
-        ":hover|background-color": "#e8e8e8",
+        ":selected|background-color": "#f3f3f3",
+        ":selected|color": "#1a1a1a",
+        ":hover|background-color": "#c9c9c9",
         ":hover|color": "#1a1a1a"
       },
       "Divider": {
-        "|color": "#cccccc",
+        "|color": "#c9c9c9",
         "|max-height": 1
       },
       "ScrollBar": {
-        "|background-color": "#e8e8e8",
+        "|background-color": "#f3f3f3",
         ":vertical|width": 8,
         ":horizontal|height": 8,
-        "::handle:vertical|background-color": "#f5f5f5",
+        "::handle:vertical|background-color": "#c9c9c9",
         "::handle:vertical|border-radius": 4,
         "::handle:vertical|min-height": 20,
-        "::handle:vertical:hover|background-color": "#0067be",
-        "::handle|background-color": "#b0b0b0",
-        "::handle:hover|background-color": "#909090"
+        "::handle:vertical:hover|background-color": "#0067be"
       },
       "ToolTip": {
-        "|background-color": "#f4f4f4",
+        "|background-color": "#dfdfdf",
         "|color": "#1a1a1a",
-        "|border-color": "#f5f5f5",
+        "|border-color": "#c9c9c9",
         "|border-width": 1,
         "|border-radius": 4,
         "|padding": 4
