@@ -17,6 +17,7 @@ from PyQt6.QtGui import QIntValidator
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from utils import theme
+from utils.widget_indexer import load_widget_index
 
 # ── Property type tokens ──────────────────────────────────────────────────────
 COLOR  = 'color'
@@ -65,7 +66,7 @@ def _n(key: str, fallback: int = 4) -> int:
 def _make_defs() -> dict:
     return {
         'Button': {
-            'selector': 'QPushButton',
+            'selector': 'QPushButton', 'qt_class': 'QPushButton',
             'icon': '⬜ Button',
             'props': [
                 {'section': 'Normal'},
@@ -87,7 +88,7 @@ def _make_defs() -> dict:
             ],
         },
         'Label': {
-            'selector': 'QLabel',
+            'selector': 'QLabel', 'qt_class': 'QLabel',
             'icon': '🔤 Label',
             'props': [
                 {'section': 'Normal'},
@@ -99,7 +100,7 @@ def _make_defs() -> dict:
             ],
         },
         'Input': {
-            'selector': 'QLineEdit',
+            'selector': 'QLineEdit', 'qt_class': 'QLineEdit',
             'icon': '📝 Input',
             'props': [
                 {'section': 'Normal'},
@@ -115,8 +116,8 @@ def _make_defs() -> dict:
             ],
         },
         'TextEdit': {
-            'selector': 'QTextEdit',
-            'icon': '📄 Text Area',
+            'selector': 'QTextEdit', 'qt_class': 'QTextEdit',
+            'icon': '📄 Text Editor',
             'props': [
                 {'section': 'Normal'},
                 {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
@@ -128,8 +129,22 @@ def _make_defs() -> dict:
                 {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
             ],
         },
+        'TextBrowser': {
+            'selector': 'QTextBrowser', 'qt_class': 'QTextBrowser',
+            'icon': '📰 Text Browser',
+            'props': [
+                {'section': 'Normal'},
+                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
+                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
+                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
+                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding',       'qss': 'padding',          'type': PX,    'state': '', 'val': 6},
+                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
+            ],
+        },
         'ComboBox': {
-            'selector': 'QComboBox',
+            'selector': 'QComboBox', 'qt_class': 'QComboBox',
             'icon': '▼ ComboBox',
             'props': [
                 {'section': 'Normal'},
@@ -147,7 +162,7 @@ def _make_defs() -> dict:
             ],
         },
         'CheckBox': {
-            'selector': 'QCheckBox',
+            'selector': 'QCheckBox', 'qt_class': 'QCheckBox',
             'icon': '☑ CheckBox',
             'props': [
                 {'section': 'Normal'},
@@ -160,7 +175,7 @@ def _make_defs() -> dict:
             ],
         },
         'RadioButton': {
-            'selector': 'QRadioButton',
+            'selector': 'QRadioButton', 'qt_class': 'QRadioButton',
             'icon': '○ RadioButton',
             'props': [
                 {'section': 'Normal'},
@@ -172,24 +187,24 @@ def _make_defs() -> dict:
             ],
         },
         'Table': {
-            'selector': 'QTableWidget',
+            'selector': 'QTableWidget', 'qt_class': 'QTableWidget',
             'icon': '⊞ Table',
             'props': [
                 {'section': 'Table'},
-                {'label': 'Background',    'qss': 'background-color',          'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Alt Row Color', 'qss': 'alternate-background-color','type': COLOR, 'state': '', 'val': _c('BG_MEDIUM')},
-                {'label': 'Grid Color',    'qss': 'gridline-color',            'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Font Size',     'qss': 'font-size',                 'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
-                {'section': 'Header'},
-                {'label': 'Header BG',     'qss': 'background-color',          'type': COLOR, 'state': '::section', 'val': _c('BG_MEDIUM')},
-                {'label': 'Header Text',   'qss': 'color',                     'type': COLOR, 'state': '::section', 'val': _c('FG_PRIMARY')},
+                {'label': 'Background',    'qss': 'background-color',           'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
+                {'label': 'Alt Row Color', 'qss': 'alternate-background-color', 'type': COLOR, 'state': '', 'val': _c('BG_MEDIUM')},
+                {'label': 'Grid Color',    'qss': 'gridline-color',             'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
+                {'label': 'Font Size',     'qss': 'font-size',                  'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'section': 'Header (QHeaderView)'},
+                {'label': 'Header BG',     'qss': 'background-color',           'type': COLOR, 'state': '::section', 'val': _c('BG_MEDIUM')},
+                {'label': 'Header Text',   'qss': 'color',                      'type': COLOR, 'state': '::section', 'val': _c('FG_PRIMARY')},
                 {'section': 'Selection'},
-                {'label': 'Selected BG',   'qss': 'background-color',          'type': COLOR, 'state': '::item:selected', 'val': _c('ACCENT_PRIMARY')},
-                {'label': 'Selected Text', 'qss': 'color',                     'type': COLOR, 'state': '::item:selected', 'val': _c('BG_DARK')},
+                {'label': 'Selected BG',   'qss': 'background-color',           'type': COLOR, 'state': '::item:selected', 'val': _c('ACCENT_PRIMARY')},
+                {'label': 'Selected Text', 'qss': 'color',                      'type': COLOR, 'state': '::item:selected', 'val': _c('BG_DARK')},
             ],
         },
         'List': {
-            'selector': 'QListWidget',
+            'selector': 'QListWidget', 'qt_class': 'QListWidget',
             'icon': '≡ List',
             'props': [
                 {'section': 'List'},
@@ -204,12 +219,30 @@ def _make_defs() -> dict:
                 {'label': 'Selected Text', 'qss': 'color',            'type': COLOR, 'state': '::item:selected', 'val': _c('BG_DARK')},
             ],
         },
+        'TreeWidget': {
+            'selector': 'QTreeWidget', 'qt_class': 'QTreeWidget',
+            'icon': '🌲 Tree',
+            'props': [
+                {'section': 'Tree'},
+                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
+                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
+                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'section': 'Item Hover'},
+                {'label': 'Hover BG',      'qss': 'background-color', 'type': COLOR, 'state': '::item:hover', 'val': _c('BG_MEDIUM')},
+                {'section': 'Selected Item'},
+                {'label': 'Selected BG',   'qss': 'background-color', 'type': COLOR, 'state': '::item:selected', 'val': _c('ACCENT_PRIMARY')},
+                {'label': 'Selected Text', 'qss': 'color',            'type': COLOR, 'state': '::item:selected', 'val': _c('BG_DARK')},
+                {'section': 'Branch indicator'},
+                {'label': 'Branch BG',     'qss': 'background-color', 'type': COLOR, 'state': '::branch', 'val': _c('BG_DARK')},
+            ],
+        },
         'GroupBox': {
-            'selector': 'QGroupBox',
+            'selector': 'QGroupBox', 'qt_class': 'QGroupBox',
             'icon': '▣ GroupBox',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Title Color',   'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('ACCENT_PRIMARY')},
+                {'label': 'Title Color',   'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
+                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_MEDIUM')},
                 {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
                 {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
                 {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
@@ -217,8 +250,19 @@ def _make_defs() -> dict:
                 {'label': 'Font Bold',     'qss': 'font-weight',      'type': BOOL,  'state': '', 'val': True},
             ],
         },
+        'TabPane': {
+            'selector': 'QTabWidget::pane', 'qt_class': 'QTabWidget',
+            'icon': '🗂 Tab Pane',
+            'props': [
+                {'section': 'Pane'},
+                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
+                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
+                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
+            ],
+        },
         'ProgressBar': {
-            'selector': 'QProgressBar',
+            'selector': 'QProgressBar', 'qt_class': 'QProgressBar',
             'icon': '░ ProgressBar',
             'props': [
                 {'section': 'Track'},
@@ -232,7 +276,7 @@ def _make_defs() -> dict:
             ],
         },
         'Slider': {
-            'selector': 'QSlider',
+            'selector': 'QSlider', 'qt_class': 'QSlider',
             'icon': '▬ Slider',
             'props': [
                 {'section': 'Handle'},
@@ -247,7 +291,7 @@ def _make_defs() -> dict:
             ],
         },
         'SpinBox': {
-            'selector': 'QSpinBox',
+            'selector': 'QSpinBox', 'qt_class': 'QSpinBox',
             'icon': '123 SpinBox',
             'props': [
                 {'section': 'Normal'},
@@ -262,8 +306,8 @@ def _make_defs() -> dict:
             ],
         },
         'Tabs': {
-            'selector': 'QTabBar::tab',
-            'icon': '🗂 Tabs',
+            'selector': 'QTabBar::tab', 'qt_class': 'QTabBar',
+            'icon': '📑 Tab Bar',
             'props': [
                 {'section': 'Normal Tab'},
                 {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_MEDIUM')},
@@ -279,8 +323,18 @@ def _make_defs() -> dict:
                 {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': ':hover', 'val': _c('FG_PRIMARY')},
             ],
         },
+        'Splitter': {
+            'selector': 'QSplitter::handle', 'qt_class': 'QSplitter',
+            'icon': '┃ Splitter',
+            'props': [
+                {'section': 'Handle'},
+                {'label': 'Color',         'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
+                {'label': 'Width',         'qss': 'width',            'type': PX,    'state': ':horizontal', 'val': 4},
+                {'label': 'Height',        'qss': 'height',           'type': PX,    'state': ':vertical', 'val': 4},
+            ],
+        },
         'Divider': {
-            'selector': 'QFrame[frameShape="4"]',
+            'selector': 'QFrame[frameShape="4"]', 'qt_class': 'QFrame',
             'icon': '─── Divider',
             'props': [
                 {'section': 'Line'},
@@ -289,7 +343,7 @@ def _make_defs() -> dict:
             ],
         },
         'ScrollBar': {
-            'selector': 'QScrollBar',
+            'selector': 'QScrollBar', 'qt_class': 'QScrollBar',
             'icon': '│ ScrollBar',
             'props': [
                 {'section': 'Track'},
@@ -304,8 +358,18 @@ def _make_defs() -> dict:
                 {'label': 'Hover Color',   'qss': 'background-color', 'type': COLOR, 'state': '::handle:vertical:hover', 'val': _c('ACCENT_PRIMARY')},
             ],
         },
+        'Dialog': {
+            'selector': 'QDialog', 'qt_class': 'QDialog',
+            'icon': '🪟 Dialog',
+            'props': [
+                {'section': 'Normal'},
+                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
+                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
+                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+            ],
+        },
         'ToolTip': {
-            'selector': 'QToolTip',
+            'selector': 'QToolTip', 'qt_class': 'QToolTip',
             'icon': '💬 ToolTip',
             'props': [
                 {'section': 'Normal'},
@@ -400,15 +464,22 @@ class WidgetPreviewPanel(QScrollArea):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setMinimumWidth(180)
-        self.setMaximumWidth(220)
+        self.setMinimumWidth(200)
+        self.setMaximumWidth(240)
         self._buttons: dict[str, QPushButton] = {}
+        self._used_lbls: dict[str, QLabel] = {}
         self._selected: str | None = None
+
+        # Load widget usage index (which tabs/classes use each widget type)
+        try:
+            _idx = load_widget_index()
+        except Exception:
+            _idx = {}
 
         content = QWidget()
         vbox = QVBoxLayout(content)
         vbox.setContentsMargins(6, 8, 6, 8)
-        vbox.setSpacing(3)
+        vbox.setSpacing(2)
 
         title = QLabel("Select widget:")
         title.setStyleSheet(
@@ -417,13 +488,55 @@ class WidgetPreviewPanel(QScrollArea):
         vbox.addWidget(title)
 
         for wname, wdef in WIDGET_DEFS.items():
+            qt_class = wdef.get('qt_class', wdef['selector'].split('::')[0].split(' ')[0])
+
+            # Build "used in" text from the widget index
+            # Exclude the editor's own internal classes — they appear because the
+            # theme editor imports and uses most widget types for its preview.
+            classes = _idx.get(qt_class, [])
+            _SKIP = {
+                "QApplication", "ClaudeDBApp",
+                # editor internals — not useful as "used in" hints
+                "ColorSwatch", "WidgetPreviewPanel", "WidgetPropertyPanel",
+                "WidgetThemeEditor", "widget_indexer",
+            }
+            filtered = [c for c in classes if c not in _SKIP]
+            if filtered:
+                used_text = ", ".join(filtered[:6])
+                if len(filtered) > 6:
+                    used_text += f"  (+{len(filtered) - 6})"
+                tooltip_text = "Used in:\n" + "\n".join(f"  • {c}" for c in filtered)
+            else:
+                used_text = "not used"
+                tooltip_text = "Not found in any source file"
+
+            # Container: button + small "used in" label
+            container = QWidget()
+            container.setContentsMargins(0, 0, 0, 0)
+            c_vbox = QVBoxLayout(container)
+            c_vbox.setContentsMargins(0, 0, 0, 0)
+            c_vbox.setSpacing(1)
+
             btn = QPushButton(wdef['icon'])
             btn.setCheckable(True)
             btn.setFixedHeight(self._BTN_H)
             btn.setStyleSheet(self._btn_style(False))
+            btn.setToolTip(tooltip_text)
             btn.clicked.connect(lambda _checked, n=wname: self._select(n))
             self._buttons[wname] = btn
-            vbox.addWidget(btn)
+            c_vbox.addWidget(btn)
+
+            used_lbl = QLabel(used_text)
+            used_lbl.setWordWrap(True)
+            used_lbl.setStyleSheet(
+                f"color: {theme.FG_DIM}; font-size: {max(theme.FONT_SIZE_SMALL - 1, 9)}px; "
+                f"padding: 0 4px 3px 6px; background: transparent;"
+            )
+            used_lbl.setToolTip(tooltip_text)
+            self._used_lbls[wname] = used_lbl
+            c_vbox.addWidget(used_lbl)
+
+            vbox.addWidget(container)
 
         vbox.addStretch()
         self.setWidget(content)
@@ -442,6 +555,16 @@ class WidgetPreviewPanel(QScrollArea):
             f"text-align: left; }}"
             f"QPushButton:hover {{ background-color: {theme.BG_LIGHT}; }}"
         )
+
+    def apply_theme(self):
+        """Refresh all button and label colours after a theme change."""
+        for n, btn in self._buttons.items():
+            btn.setStyleSheet(self._btn_style(n == self._selected))
+        for lbl in self._used_lbls.values():
+            lbl.setStyleSheet(
+                f"color: {theme.FG_DIM}; font-size: {max(theme.FONT_SIZE_SMALL - 1, 9)}px; "
+                f"padding: 0 4px 3px 6px; background: transparent;"
+            )
 
     def _select(self, name: str):
         for n, btn in self._buttons.items():
@@ -694,6 +817,10 @@ class WidgetThemeEditor(QSplitter):
 
         self._preview_panel.widget_selected.connect(self._prop_panel.load_widget)
         self._prop_panel.property_changed.connect(self._on_property_changed)
+
+    def apply_theme(self):
+        """Refresh colours after a global theme change."""
+        self._preview_panel.apply_theme()
 
     def _on_property_changed(self, wn: str, state: str, qss_key: str, value):
         if self._on_change:

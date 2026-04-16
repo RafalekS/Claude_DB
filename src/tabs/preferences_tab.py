@@ -530,18 +530,6 @@ class PreferencesTab(QWidget):
         button_layout.addWidget(self.restart_btn)
         main_layout.addLayout(button_layout)
 
-        # ── Info label: where things are saved ───────────────────────────
-        self._save_info_lbl = QLabel(
-            "All changes apply live instantly.  "
-            "Save Session → config.json (restores on restart)  |  "
-            "Save as Theme → themes/themes.json (reusable, appears in dropdown)  |  "
-            "Widget Styles override Global Theme colors for specific widgets."
-        )
-        self._save_info_lbl.setStyleSheet(
-            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_TINY}px; padding: 2px 0;"
-        )
-        main_layout.addWidget(self._save_info_lbl)
-
         self.subtabs.addTab(appearance_widget, "🎨 Appearance")
 
     def _build_theme_editor(self):
@@ -717,11 +705,6 @@ class PreferencesTab(QWidget):
             self._pref_header.setStyleSheet(
                 f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY}; margin-bottom: 10px;"
             )
-        # Save info hint
-        if hasattr(self, '_save_info_lbl'):
-            self._save_info_lbl.setStyleSheet(
-                f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_TINY}px; padding: 2px 0;"
-            )
         # Typography note
         if hasattr(self, '_typo_note_lbl'):
             self._typo_note_lbl.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
@@ -733,6 +716,9 @@ class PreferencesTab(QWidget):
         if hasattr(self, '_color_hex_lbls'):
             for lbl in self._color_hex_lbls.values():
                 lbl.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-family: {theme.FONT_MONOSPACE};")
+        # Widget theme editor left panel
+        if hasattr(self, '_widget_theme_editor'):
+            self._widget_theme_editor.apply_theme()
 
     def _live_apply_font_family(self, family: str):
         """Immediately apply a UI font family change to the whole app."""
