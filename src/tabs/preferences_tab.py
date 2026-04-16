@@ -21,7 +21,8 @@ from PyQt6.QtCore import pyqtSignal, QProcess, Qt
 from utils import theme
 from utils.ui_state_manager import UIStateManager
 from tabs.config_sync_tab import ConfigSyncTab
-from tabs.widget_theme_editor import WidgetThemeEditor, ColorSwatch
+from tabs.widget_theme_editor import WidgetThemeEditor, ColorSwatch, WIDGET_DEFS
+from utils.widget_indexer import load_visible_ui_index
 
 logger = logging.getLogger(__name__)
 
@@ -476,12 +477,13 @@ class PreferencesTab(QWidget):
 
         main_layout.addLayout(top_row)
 
-        # ── Inner tabs: Global Theme | Widget Styles ──────────────────────
-        inner_tabs = QTabWidget()
-        inner_tabs.setDocumentMode(True)
-        inner_tabs.addTab(self._build_theme_editor(), "🎨 Global Theme")
-        inner_tabs.addTab(self._build_widget_preview(), "🧩 Widget Styles")
-        main_layout.addWidget(inner_tabs, 1)
+        # ── Inner tabs: Global Theme | Widget Editor | Elements ──────────
+        self._inner_tabs = QTabWidget()
+        self._inner_tabs.setDocumentMode(True)
+        self._inner_tabs.addTab(self._build_theme_editor(), "🎨 Global Theme")
+        self._inner_tabs.addTab(self._build_widget_preview(), "🧩 Widget Editor")
+        self._inner_tabs.addTab(self._build_elements_tab(), "🔍 Elements")
+        main_layout.addWidget(self._inner_tabs, 1)
 
         # ── Action buttons ────────────────────────────────────────────────
         button_layout = QHBoxLayout()
@@ -688,6 +690,164 @@ class PreferencesTab(QWidget):
         # Forward navigation requests up to MainWindow
         self._widget_theme_editor.navigate_to.connect(self.navigate_to)
         return self._widget_theme_editor
+
+    def _build_elements_tab(self) -> QWidget:
+        """Elements tab — browse which widgets are used per Tab/SubTab/Dialog."""
+        import re
+
+        # ── Build inverted index: location_class → [qt_classes] ──────────────
+        try:
+            vis_idx = load_visible_ui_index()   # {qt_class: [location_names]}
+        except Exception:
+            vis_idx = {}
+
+        loc_to_widgets: dict[str, list[str]] = {}
+        for qt_class, locations in vis_idx.items():
+            for loc in locations:
+                loc_to_widgets.setdefault(loc, []).append(qt_class)
+
+        # qt_class → first wdef_name that maps to it (for _preview_panel._select)
+        qt_class_to_wdef: dict[str, str] = {}
+        for wname, wdef in WIDGET_DEFS.items():
+            qc = wdef.get('qt_class', wdef['selector'].split('::')[0].split(' ')[0])
+            qt_class_to_wdef.setdefault(qc, wname)
+
+        def _display_name(class_name: str) -> str:
+            """'UserPermissionsSubTab' → 'User Permissions (SubTab)'"""
+            for suffix in ("SubTab", "Dialog", "Window", "Tab"):
+                if class_name.endswith(suffix):
+                    raw = class_name[: -len(suffix)]
+                    spaced = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', raw)
+                    return f"{spaced} ({suffix})"
+            return class_name
+
+        # ── Sort locations into groups ────────────────────────────────────────
+        groups: dict[str, list[str]] = {"Tab": [], "SubTab": [], "Dialog": [], "Window": [], "Other": []}
+        for loc in sorted(loc_to_widgets):
+            for suffix in ("SubTab", "Dialog", "Window", "Tab"):
+                if loc.endswith(suffix):
+                    groups[suffix].append(loc)
+                    break
+            else:
+                groups["Other"].append(loc)
+
+        # ── UI ────────────────────────────────────────────────────────────────
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setHandleWidth(4)
+
+        # ── Left pane: location list ──────────────────────────────────────────
+        left = QWidget()
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(4, 4, 4, 4)
+        left_layout.setSpacing(2)
+
+        loc_title = QLabel("Locations")
+        loc_title.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-style: italic; padding: 2px 0;"
+        )
+        left_layout.addWidget(loc_title)
+
+        self._elements_loc_list = QListWidget()
+        self._elements_loc_list.setAlternatingRowColors(False)
+        self._elements_loc_list.setStyleSheet(
+            f"QListWidget {{ background: {theme.BG_MEDIUM}; border: 1px solid {theme.BG_LIGHT}; "
+            f"border-radius: 4px; color: {theme.FG_PRIMARY}; }}"
+            f"QListWidget::item:selected {{ background: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}"
+            f"QListWidget::item:hover {{ background: {theme.BG_LIGHT}; }}"
+        )
+
+        # Populate with group headers + items
+        _group_labels = {"Tab": "── Tabs ──", "SubTab": "── SubTabs ──",
+                         "Dialog": "── Dialogs ──", "Window": "── Windows ──", "Other": "── Other ──"}
+        self._elements_loc_data: dict[str, str] = {}   # display_text → class_name
+
+        for group_key in ("Tab", "SubTab", "Dialog", "Window", "Other"):
+            items = groups.get(group_key, [])
+            if not items:
+                continue
+            header = QListWidgetItem(_group_labels[group_key])
+            header.setFlags(Qt.ItemFlag.NoItemFlags)
+            header.setForeground(
+                __import__('PyQt6.QtGui', fromlist=['QColor']).QColor(theme.FG_DIM)
+            )
+            self._elements_loc_list.addItem(header)
+            for cls in items:
+                label = _display_name(cls)
+                item = QListWidgetItem(f"  {label}")
+                item.setData(Qt.ItemDataRole.UserRole, cls)
+                self._elements_loc_list.addItem(item)
+                self._elements_loc_data[label] = cls
+
+        left_layout.addWidget(self._elements_loc_list, 1)
+        splitter.addWidget(left)
+
+        # ── Right pane: widgets in selected location ──────────────────────────
+        right = QWidget()
+        right_layout = QVBoxLayout(right)
+        right_layout.setContentsMargins(4, 4, 4, 4)
+        right_layout.setSpacing(2)
+
+        widget_title = QLabel("Widgets used here  (click to open in Widget Editor)")
+        widget_title.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-style: italic; padding: 2px 0;"
+        )
+        right_layout.addWidget(widget_title)
+
+        self._elements_widget_list = QListWidget()
+        self._elements_widget_list.setAlternatingRowColors(False)
+        self._elements_widget_list.setStyleSheet(
+            f"QListWidget {{ background: {theme.BG_MEDIUM}; border: 1px solid {theme.BG_LIGHT}; "
+            f"border-radius: 4px; color: {theme.FG_PRIMARY}; }}"
+            f"QListWidget::item:selected {{ background: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}"
+            f"QListWidget::item:hover {{ background: {theme.BG_LIGHT}; }}"
+        )
+        right_layout.addWidget(self._elements_widget_list, 1)
+        splitter.addWidget(right)
+
+        splitter.setSizes([220, 400])
+        splitter.setCollapsible(0, False)
+        splitter.setCollapsible(1, False)
+        layout.addWidget(splitter, 1)
+
+        # ── Wire signals ──────────────────────────────────────────────────────
+        def _on_location_selected(item: QListWidgetItem):
+            cls_name = item.data(Qt.ItemDataRole.UserRole)
+            if not cls_name:
+                return
+            self._elements_widget_list.clear()
+            qt_classes = sorted(loc_to_widgets.get(cls_name, []))
+            for qc in qt_classes:
+                wname = qt_class_to_wdef.get(qc)
+                if wname:
+                    wdef = WIDGET_DEFS[wname]
+                    label = f"{wdef.get('icon','•')}  {wname}  ({qc})"
+                else:
+                    label = f"•  {qc}"
+                    wname = None
+                wi = QListWidgetItem(label)
+                wi.setData(Qt.ItemDataRole.UserRole, wname)
+                self._elements_widget_list.addItem(wi)
+
+        def _on_widget_clicked(item: QListWidgetItem):
+            wname = item.data(Qt.ItemDataRole.UserRole)
+            if not wname:
+                return
+            # Switch to Widget Editor tab (index 1) and select the widget
+            self._inner_tabs.setCurrentIndex(1)
+            if hasattr(self, '_widget_theme_editor'):
+                self._widget_theme_editor._preview_panel._select(wname)
+                # Also load the widget properties
+                self._widget_theme_editor._prop_panel.load_widget(wname)
+
+        self._elements_loc_list.itemClicked.connect(_on_location_selected)
+        self._elements_widget_list.itemClicked.connect(_on_widget_clicked)
+
+        return container
 
     def _update_preview_html(self):
         """No-op: preview is now real live Qt widgets in WidgetThemeEditor."""
