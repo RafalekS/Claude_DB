@@ -9,7 +9,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # Path to themes config
-THEMES_FILE = Path(__file__).parent.parent.parent / "config" / "themes.json"
+THEMES_FILE = Path(__file__).parent.parent.parent / "config" / "themes" / "themes.json"
 
 # Load all available themes from config
 def load_themes():

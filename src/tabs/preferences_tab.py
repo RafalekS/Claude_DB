@@ -589,7 +589,7 @@ class PreferencesTab(QWidget):
         typo_form.addRow("Mono Font:", self.font_mono_combo)
 
         # Size fields — IntLineEdit (type the number, no arrow buttons)
-        _note = QLabel("↑ Change 'Normal' to resize the editor UI")
+        _note = QLabel("'Normal' = font size used everywhere in the app, including this editor UI")
         _note.setWordWrap(True)
         _note.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
         typo_form.addRow("", _note)

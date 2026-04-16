@@ -569,21 +569,6 @@ class WidgetPropertyPanel(QScrollArea):
 
         editor.setFixedHeight(_ROW_H - 4)
         h.addWidget(editor)
-
-        # Reset button
-        rst = QPushButton("↺")
-        rst.setFixedSize(22, 22)
-        rst.setToolTip("Reset to default")
-        rst.setStyleSheet(
-            f"QPushButton {{ background: {theme.BG_MEDIUM}; color: {theme.FG_SECONDARY}; "
-            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; font-size: 11px; padding: 0; }}"
-            f"QPushButton:hover {{ background: {theme.BG_LIGHT}; color: {theme.FG_PRIMARY}; }}"
-        )
-        rst.clicked.connect(
-            lambda _, wn=widget_name, st=state, qk=qss_key, dv=prop['val']:
-            self._reset_prop(wn, st, qk, dv)
-        )
-        h.addWidget(rst)
         h.addStretch(1)   # absorbs remaining space — keeps everything left-aligned
 
         self._vbox.addWidget(row)
@@ -678,14 +663,6 @@ class WidgetPropertyPanel(QScrollArea):
     def _emit_change(self, wn: str, state: str, qss_key: str, value):
         self._overrides.setdefault(wn, {})[(state, qss_key)] = value
         self.property_changed.emit(wn, state, qss_key, value)
-
-    def _reset_prop(self, wn: str, state: str, qss_key: str, default_val):
-        key = (state, qss_key)
-        if wn in self._overrides and key in self._overrides[wn]:
-            del self._overrides[wn][key]
-        if self._current == wn:
-            self.load_widget(wn)
-        self.property_changed.emit(wn, state, qss_key, default_val)
 
 
 # ── WidgetThemeEditor (top-level widget) ──────────────────────────────────────
