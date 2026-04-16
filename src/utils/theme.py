@@ -797,12 +797,13 @@ def get_current_colors_dict() -> dict:
     }
 
 
-def save_theme_to_file(name: str, widget_overrides: dict | None = None) -> bool:
+def save_theme_to_file(name: str, widgets: dict | None = None) -> bool:
     """Snapshot current color globals and save as a named entry in themes.json.
 
-    If *widget_overrides* is supplied (a dict of per-widget QSS overrides from
-    WidgetThemeEditor), it is stored under the ``__widget_overrides`` key inside
-    the theme entry so it can be restored when the theme is loaded later.
+    If *widgets* is supplied (a complete per-widget dict from
+    WidgetThemeEditor.get_widgets_dict()), it is stored under the ``widgets``
+    key inside the theme entry so every widget's appearance is part of the
+    theme definition.
 
     Returns True on success.
     """
@@ -810,11 +811,14 @@ def save_theme_to_file(name: str, widget_overrides: dict | None = None) -> bool:
     try:
         existing = load_themes()
         entry = get_current_colors_dict()
-        if widget_overrides:
-            entry["__widget_overrides"] = widget_overrides
-        elif name in existing and "__widget_overrides" in existing[name]:
-            # Preserve any existing overrides if none are passed
-            entry["__widget_overrides"] = existing[name]["__widget_overrides"]
+        if widgets:
+            entry["widgets"] = widgets
+        elif name in existing:
+            # Preserve any previously-saved widget definitions
+            for key in ("widgets", "__widget_overrides"):
+                if key in existing[name]:
+                    entry["widgets"] = existing[name][key]
+                    break
         existing[name] = entry
         with open(THEMES_FILE, 'w', encoding='utf-8') as f:
             json.dump(existing, f, indent=2)
@@ -825,10 +829,13 @@ def save_theme_to_file(name: str, widget_overrides: dict | None = None) -> bool:
         return False
 
 
-def get_theme_widget_overrides(name: str) -> dict:
-    """Return the widget overrides stored in the named theme, or {} if none."""
+def get_theme_widgets(name: str) -> dict:
+    """Return the full widget definitions stored in the named theme, or {}.
+    Falls back to the legacy ``__widget_overrides`` key for backward compat.
+    """
     themes = load_themes()
-    return themes.get(name, {}).get("__widget_overrides", {})
+    entry = themes.get(name, {})
+    return entry.get("widgets", entry.get("__widget_overrides", {}))
 
 
 def delete_theme_from_file(name: str) -> bool:

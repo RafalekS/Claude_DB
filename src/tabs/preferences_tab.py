@@ -819,8 +819,8 @@ class PreferencesTab(QWidget):
         if not ok or not name.strip():
             return
         name = name.strip()
-        widget_overrides = self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {}
-        if theme.save_theme_to_file(name, widget_overrides or None):
+        widgets = self._widget_theme_editor.get_widgets_dict() if hasattr(self, '_widget_theme_editor') else {}
+        if theme.save_theme_to_file(name, widgets or None):
             global THEMES
             THEMES = theme.AVAILABLE_THEMES
             self.theme_combo.blockSignals(True)
@@ -1557,10 +1557,10 @@ class {class_name}Tab(QWidget):
         theme.apply_theme(theme_name, font_size, font_family)
         theme.FONT_MONOSPACE = font_mono
         theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
-        # Load any widget overrides stored in this theme
+        # Load widget definitions stored in this theme
         if hasattr(self, '_widget_theme_editor'):
-            saved_overrides = theme.get_theme_widget_overrides(theme_name)
-            self._widget_theme_editor.load_overrides(saved_overrides)
+            saved_widgets = theme.get_theme_widgets(theme_name)
+            self._widget_theme_editor.load_widgets_dict(saved_widgets)
         # Apply live to the running app (includes widget overrides)
         app = QApplication.instance()
         if app:
@@ -1635,7 +1635,7 @@ class {class_name}Tab(QWidget):
                 "font_mono": self.font_mono_combo.currentText(),
                 "custom_colors": self._custom_colors,
                 "custom_numbers": self._custom_numbers,
-                "widget_overrides": self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {},
+                "widget_overrides": self._widget_theme_editor.get_widgets_dict() if hasattr(self, '_widget_theme_editor') else {},
             }
             _atomic_json_write(self.config_file, config_data)
         except Exception as e:
@@ -1676,7 +1676,7 @@ class {class_name}Tab(QWidget):
                 "font_mono": font_mono,
                 "custom_colors": self._custom_colors,
                 "custom_numbers": self._custom_numbers,
-                "widget_overrides": self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {},
+                "widget_overrides": self._widget_theme_editor.get_widgets_dict() if hasattr(self, '_widget_theme_editor') else {},
             }
             _atomic_json_write(self.config_file, config_data)
 
@@ -1733,7 +1733,7 @@ class {class_name}Tab(QWidget):
                     widget.blockSignals(False)
 
                 if widget_overrides and hasattr(self, '_widget_theme_editor'):
-                    self._widget_theme_editor.load_overrides(widget_overrides)
+                    self._widget_theme_editor.load_widgets_dict(widget_overrides)
 
                 self._refresh_color_buttons()
                 self._refresh_typo_spacing_controls()

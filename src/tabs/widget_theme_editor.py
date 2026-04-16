@@ -718,7 +718,6 @@ class WidgetThemeEditor(QSplitter):
         self._preview_panel.widget_selected.connect(self._prop_panel.load_widget)
         self._prop_panel.property_changed.connect(self._on_property_changed)
 
-
     def _on_property_changed(self, wn: str, state: str, qss_key: str, value):
         if self._on_change:
             self._on_change()
@@ -727,15 +726,41 @@ class WidgetThemeEditor(QSplitter):
         """Return the current per-widget overrides as a QSS string."""
         return build_overrides_qss(self._overrides)
 
-    def get_overrides_dict(self) -> dict:
-        """Return a JSON-serializable copy of the overrides."""
+    # ── Public API: full widget definitions ───────────────────────────────────
+
+    def get_widgets_dict(self) -> dict:
+        """Return ALL widget properties for ALL widget types as a complete,
+        JSON-serializable dict suitable for storing in themes.json.
+
+        For each property the value is: user override if set, otherwise the
+        current theme default (re-evaluated from live theme globals so that
+        freshly-switched themes produce correct defaults).
+
+        Structure:
+            { "Button": { "|background-color": "#83A598", ":hover|background-color": "#B8BB26", ... }, ... }
+        """
+        current_defs = _make_defs()   # fresh defaults from current theme globals
         result = {}
-        for wname, state_map in self._overrides.items():
-            result[wname] = {f"{st}|{qk}": v for (st, qk), v in state_map.items()}
+        for wname, wdef in current_defs.items():
+            props = {}
+            overrides_for = self._overrides.get(wname, {})
+            for p in wdef['props']:
+                if 'qss' not in p:
+                    continue   # section header row — skip
+                state   = p['state']
+                qss_key = p['qss']
+                key_str = f"{state}|{qss_key}"
+                val = overrides_for.get((state, qss_key), p['val'])
+                props[key_str] = val
+            if props:
+                result[wname] = props
         return result
 
-    def load_overrides(self, data: dict):
-        """Restore overrides from a JSON-serializable dict (as returned by get_overrides_dict)."""
+    def load_widgets_dict(self, data: dict):
+        """Load a full widgets dict (from themes.json 'widgets' key).
+        Treats every entry as an override of the computed theme defaults so that
+        the property panel reflects the saved values when a widget is selected.
+        """
         self._overrides.clear()
         for wname, flat in data.items():
             if wname not in WIDGET_DEFS:
@@ -747,3 +772,17 @@ class WidgetThemeEditor(QSplitter):
                     inner[(st, qk)] = val
             if inner:
                 self._overrides[wname] = inner
+
+    # ── Backward-compat aliases (used by load_preferences / config.json) ─────
+
+    def get_overrides_dict(self) -> dict:
+        """Deprecated — use get_widgets_dict() for themes.json.
+        Returns only the user-changed properties (not the full defaults)."""
+        result = {}
+        for wname, state_map in self._overrides.items():
+            result[wname] = {f"{st}|{qk}": v for (st, qk), v in state_map.items()}
+        return result
+
+    def load_overrides(self, data: dict):
+        """Load a previously-saved overrides dict (also accepts full widgets dict)."""
+        self.load_widgets_dict(data)
