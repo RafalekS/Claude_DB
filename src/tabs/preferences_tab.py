@@ -22,7 +22,7 @@ from utils import theme
 from utils.ui_state_manager import UIStateManager
 from tabs.config_sync_tab import ConfigSyncTab
 from tabs.widget_theme_editor import WidgetThemeEditor, ColorSwatch, WIDGET_DEFS
-from utils.widget_indexer import load_visible_ui_index
+from utils.widget_indexer import load_navigation_tree, get_widgets_for_nav_entry
 
 logger = logging.getLogger(__name__)
 
@@ -692,61 +692,27 @@ class PreferencesTab(QWidget):
         return self._widget_theme_editor
 
     def _build_elements_tab(self) -> QWidget:
-        """Elements tab — browse which widgets are used per Tab/SubTab/Dialog."""
-        import re
+        """Elements tab — browse widget usage per Tab/SubTab/Dialog/Window."""
+        from PyQt6.QtGui import QColor, QFont
 
-        # ── Build inverted index: location_class → [qt_classes] ──────────────
+        # Load nav tree (addTab-based, proper labels + parent info)
         try:
-            vis_idx = load_visible_ui_index()   # {qt_class: [location_names]}
+            nav_tree = load_navigation_tree()
         except Exception:
-            vis_idx = {}
+            nav_tree = []
 
-        loc_to_widgets: dict[str, list[str]] = {}
-        for qt_class, locations in vis_idx.items():
-            for loc in locations:
-                loc_to_widgets.setdefault(loc, []).append(qt_class)
-
-        # qt_class → first wdef_name that maps to it (for _preview_panel._select)
+        # qt_class → wdef_name for Widget Editor navigation
         qt_class_to_wdef: dict[str, str] = {}
         for wname, wdef in WIDGET_DEFS.items():
-            qc = wdef.get('qt_class', wdef['selector'].split('::')[0].split(' ')[0])
+            qc = wdef.get("qt_class", wdef["selector"].split("::")[0].split(" ")[0])
             qt_class_to_wdef.setdefault(qc, wname)
 
-        # Top-level tabs registered in the main window — everything else is a SubTab
-        _TOP_LEVEL_TABS = {
-            "UserConfigTab", "ProjectConfigTab", "PromptsTab", "PluginsTab",
-            "MemoryTab", "UsageTab", "DocumentationTab", "ClaudeKitTab",
-            "ToolsTab", "AboutTab", "PreferencesTab",
-            # dynamic user-created tabs also end with "Tab" — let suffix handle them
-        }
-
-        def _classify(class_name: str) -> str:
-            """Return group key: Tab | SubTab | Dialog | Window | Other."""
-            cl = class_name.lower()
-            if cl.endswith("subtab"):
-                return "SubTab"
-            if cl.endswith("dialog"):
-                return "Dialog"
-            if cl.endswith("window"):
-                return "Window"
-            if cl.endswith("tab"):
-                return "Tab" if class_name in _TOP_LEVEL_TABS else "SubTab"
-            return "Other"
-
-        def _display_name(class_name: str) -> str:
-            """'UserPermissionsSubTab' → 'User Permissions (SubTab)'"""
-            for suffix in ("SubTab", "Subtab", "Dialog", "Window", "Tab"):
-                if class_name.endswith(suffix):
-                    raw = class_name[: -len(suffix)]
-                    spaced = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', raw)
-                    badge = "SubTab" if suffix.lower() == "subtab" else suffix
-                    return f"{spaced} ({badge})"
-            return class_name
-
-        # ── Sort locations into groups ────────────────────────────────────────
-        groups: dict[str, list[str]] = {"Tab": [], "SubTab": [], "Dialog": [], "Window": [], "Other": []}
-        for loc in sorted(loc_to_widgets):
-            groups[_classify(loc)].append(loc)
+        # Organize tree: top-level entries + children by parent
+        top_level   = [e for e in nav_tree if not e.get("parent_id")]
+        by_parent: dict[str, list] = {}
+        for e in nav_tree:
+            if e.get("parent_id"):
+                by_parent.setdefault(e["parent_id"], []).append(e)
 
         # ── UI ────────────────────────────────────────────────────────────────
         container = QWidget()
@@ -757,96 +723,107 @@ class PreferencesTab(QWidget):
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.setHandleWidth(4)
 
-        # ── Left pane: location list ──────────────────────────────────────────
+        # ── Left: navigation tree list ────────────────────────────────────────
         left = QWidget()
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(4, 4, 4, 4)
         left_layout.setSpacing(2)
 
-        loc_title = QLabel("Locations")
-        loc_title.setStyleSheet(
-            f"color: {theme.FG_DIM}; font-style: italic; padding: 2px 0;"
-        )
-        left_layout.addWidget(loc_title)
+        lbl = QLabel("Navigation")
+        lbl.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic; padding: 2px 0;")
+        left_layout.addWidget(lbl)
 
-        self._elements_loc_list = QListWidget()
-        self._elements_loc_list.setAlternatingRowColors(False)
-        self._elements_loc_list.setStyleSheet(
+        self._elements_nav_list = QListWidget()
+        self._elements_nav_list.setAlternatingRowColors(False)
+        _list_style = (
             f"QListWidget {{ background: {theme.BG_MEDIUM}; border: 1px solid {theme.BG_LIGHT}; "
             f"border-radius: 4px; color: {theme.FG_PRIMARY}; }}"
             f"QListWidget::item:selected {{ background: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}"
             f"QListWidget::item:hover {{ background: {theme.BG_LIGHT}; }}"
         )
+        self._elements_nav_list.setStyleSheet(_list_style)
 
-        # Populate with group headers + items
-        _group_labels = {"Tab": "── Tabs ──", "SubTab": "── SubTabs ──",
-                         "Dialog": "── Dialogs ──", "Window": "── Windows ──", "Other": "── Other ──"}
-        self._elements_loc_data: dict[str, str] = {}   # display_text → class_name
+        def _add_header(text: str):
+            item = QListWidgetItem(text)
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
+            item.setForeground(QColor(theme.FG_DIM))
+            f = item.font(); f.setItalic(True); item.setFont(f)
+            self._elements_nav_list.addItem(item)
 
-        for group_key in ("Tab", "SubTab", "Dialog", "Window", "Other"):
-            items = groups.get(group_key, [])
-            if not items:
-                continue
-            header = QListWidgetItem(_group_labels[group_key])
-            header.setFlags(Qt.ItemFlag.NoItemFlags)
-            header.setForeground(
-                __import__('PyQt6.QtGui', fromlist=['QColor']).QColor(theme.FG_DIM)
-            )
-            self._elements_loc_list.addItem(header)
-            for cls in items:
-                label = _display_name(cls)
-                item = QListWidgetItem(f"  {label}")
-                item.setData(Qt.ItemDataRole.UserRole, cls)
-                self._elements_loc_list.addItem(item)
-                self._elements_loc_data[label] = cls
+        def _add_entry(entry: dict, indent: int = 0):
+            prefix = "    " * indent
+            icon = "📋" if entry["type"] == "Tab" else "  ·"
+            item = QListWidgetItem(f"{prefix}{icon} {entry['label']}")
+            item.setData(Qt.ItemDataRole.UserRole, entry)
+            self._elements_nav_list.addItem(item)
 
-        left_layout.addWidget(self._elements_loc_list, 1)
+        # Tabs + their subtabs (nested)
+        _add_header("── Tabs ──")
+        for tab in sorted(top_level, key=lambda e: e["label"]):
+            _add_entry(tab, indent=0)
+            for sub in sorted(by_parent.get(tab["id"], []), key=lambda e: e["label"]):
+                _add_entry(sub, indent=1)
+
+        # Dialogs (no parent in nav tree)
+        dialogs = [e for e in nav_tree if e.get("type") == "Dialog"]
+        if dialogs:
+            _add_header("── Dialogs ──")
+            for d in sorted(dialogs, key=lambda e: e["label"]):
+                _add_entry(d, indent=0)
+
+        left_layout.addWidget(self._elements_nav_list, 1)
         splitter.addWidget(left)
 
-        # ── Right pane: widgets in selected location ──────────────────────────
+        # ── Right: widget list ────────────────────────────────────────────────
         right = QWidget()
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(4, 4, 4, 4)
         right_layout.setSpacing(2)
 
-        widget_title = QLabel("Widgets used here  (click to open in Widget Editor)")
-        widget_title.setStyleSheet(
+        self._elements_detail_lbl = QLabel("Select a location")
+        self._elements_detail_lbl.setStyleSheet(
             f"color: {theme.FG_DIM}; font-style: italic; padding: 2px 0;"
         )
-        right_layout.addWidget(widget_title)
+        right_layout.addWidget(self._elements_detail_lbl)
 
         self._elements_widget_list = QListWidget()
         self._elements_widget_list.setAlternatingRowColors(False)
-        self._elements_widget_list.setStyleSheet(
-            f"QListWidget {{ background: {theme.BG_MEDIUM}; border: 1px solid {theme.BG_LIGHT}; "
-            f"border-radius: 4px; color: {theme.FG_PRIMARY}; }}"
-            f"QListWidget::item:selected {{ background: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}"
-            f"QListWidget::item:hover {{ background: {theme.BG_LIGHT}; }}"
-        )
+        self._elements_widget_list.setStyleSheet(_list_style)
         right_layout.addWidget(self._elements_widget_list, 1)
         splitter.addWidget(right)
 
-        splitter.setSizes([220, 400])
+        splitter.setSizes([230, 400])
         splitter.setCollapsible(0, False)
         splitter.setCollapsible(1, False)
         layout.addWidget(splitter, 1)
 
-        # ── Wire signals ──────────────────────────────────────────────────────
-        def _on_location_selected(item: QListWidgetItem):
-            cls_name = item.data(Qt.ItemDataRole.UserRole)
-            if not cls_name:
+        # ── Signals ───────────────────────────────────────────────────────────
+        def _on_nav_clicked(item: QListWidgetItem):
+            entry = item.data(Qt.ItemDataRole.UserRole)
+            if not entry:
                 return
+            parent_lbl = entry.get("parent_label")
+            if parent_lbl:
+                detail = f"{entry['label']}  (sub of {parent_lbl})"
+            else:
+                detail = f"{entry['label']}  ({entry['type']})"
+            self._elements_detail_lbl.setText(
+                f"Widgets in: {detail}  — click to open in Widget Editor"
+            )
+            try:
+                qt_classes = get_widgets_for_nav_entry(entry)
+            except Exception:
+                qt_classes = []
             self._elements_widget_list.clear()
-            qt_classes = sorted(loc_to_widgets.get(cls_name, []))
-            for qc in qt_classes:
+            for qc in sorted(qt_classes):
                 wname = qt_class_to_wdef.get(qc)
                 if wname:
                     wdef = WIDGET_DEFS[wname]
-                    label = f"{wdef.get('icon','•')}  {wname}  ({qc})"
+                    text = f"{wdef.get('icon', '•')}  {wname}  ({qc})"
                 else:
-                    label = f"•  {qc}"
+                    text = f"•  {qc}"
                     wname = None
-                wi = QListWidgetItem(label)
+                wi = QListWidgetItem(text)
                 wi.setData(Qt.ItemDataRole.UserRole, wname)
                 self._elements_widget_list.addItem(wi)
 
@@ -854,14 +831,12 @@ class PreferencesTab(QWidget):
             wname = item.data(Qt.ItemDataRole.UserRole)
             if not wname:
                 return
-            # Switch to Widget Editor tab (index 1) and select the widget
             self._inner_tabs.setCurrentIndex(1)
-            if hasattr(self, '_widget_theme_editor'):
+            if hasattr(self, "_widget_theme_editor"):
                 self._widget_theme_editor._preview_panel._select(wname)
-                # Also load the widget properties
                 self._widget_theme_editor._prop_panel.load_widget(wname)
 
-        self._elements_loc_list.itemClicked.connect(_on_location_selected)
+        self._elements_nav_list.itemClicked.connect(_on_nav_clicked)
         self._elements_widget_list.itemClicked.connect(_on_widget_clicked)
 
         return container
