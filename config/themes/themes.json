@@ -7288,5 +7288,329 @@
         "|padding": 4
       }
     }
+  },
+  "App Dark": {
+    "name": "App Dark",
+    "background": "#1e1e2e",
+    "foreground": "#cdd6f4",
+    "white": "#bac2de",
+    "brightBlack": "#6c7086",
+    "brightBlue": "#89b4fa",
+    "brightGreen": "#a6e3a1",
+    "brightRed": "#f38ba8",
+    "brightYellow": "#f9e2af",
+    "selection": "#313244",
+    "black": "#45475a",
+    "blue": "#89b4fa",
+    "cyan": "#94e2d5",
+    "green": "#a6e3a1",
+    "purple": "#cba6f7",
+    "red": "#f38ba8",
+    "yellow": "#f9e2af",
+    "brightCyan": "#94e2d5",
+    "brightPurple": "#cba6f7",
+    "brightWhite": "#cdd6f4",
+    "cursor": "#f5e0dc",
+    "widgets": {
+      "Button": {
+        "|background-color": "#89b4fa",
+        "|color": "#1e1e2e",
+        "|border-radius": 4,
+        "|padding-top": 4,
+        "|padding-left": 10,
+        ":hover|background-color": "#a6e3a1",
+        ":hover|color": "#1e1e2e",
+        ":pressed|background-color": "#4b4b57",
+        ":disabled|background-color": "#343442",
+        ":disabled|color": "#6c7086"
+      },
+      "Label": {
+        "|color": "#cdd6f4",
+        "|padding": 0,
+        "|background-color": "transparent"
+      },
+      "Input": {
+        "|background-color": "#1e1e2e",
+        "|color": "#cdd6f4",
+        "|border-color": "#4b4b57",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 4,
+        ":focus|border-color": "#89b4fa"
+      },
+      "TextEdit": {
+        "|background-color": "#1e1e2e",
+        "|color": "#cdd6f4",
+        "|border-color": "#4b4b57",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 4
+      },
+      "ComboBox": {
+        "|background-color": "#1e1e2e",
+        "|color": "#cdd6f4",
+        "|border-color": "#4b4b57",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 4,
+        ":hover|background-color": "#343442",
+        " QAbstractItemView|background-color": "#1e1e2e",
+        " QAbstractItemView|color": "#cdd6f4"
+      },
+      "CheckBox": {
+        "|color": "#cdd6f4",
+        "|spacing": 6,
+        "::indicator:checked|background-color": "#89b4fa",
+        "::indicator|width": 14
+      },
+      "RadioButton": {
+        "|color": "#cdd6f4",
+        "::indicator:checked|background-color": "#89b4fa",
+        "::indicator|width": 14
+      },
+      "Table": {
+        "|background-color": "#1e1e2e",
+        "|alternate-background-color": "#343442",
+        "|gridline-color": "#4b4b57",
+        "::section|background-color": "#343442",
+        "::section|color": "#cdd6f4",
+        "::item:selected|background-color": "#89b4fa",
+        "::item:selected|color": "#1e1e2e"
+      },
+      "List": {
+        "|background-color": "#1e1e2e",
+        "|color": "#cdd6f4",
+        "::item:hover|background-color": "#343442",
+        "::item:hover|color": "#cdd6f4",
+        "::item:selected|background-color": "#89b4fa",
+        "::item:selected|color": "#1e1e2e"
+      },
+      "GroupBox": {
+        "|color": "#89b4fa",
+        "|border-color": "#4b4b57",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding-top": 14
+      },
+      "ProgressBar": {
+        "|background-color": "#343442",
+        "|border-radius": 4,
+        "|color": "#cdd6f4",
+        "|max-height": 12,
+        "::chunk|background-color": "#89b4fa",
+        "::chunk|border-radius": 4
+      },
+      "Slider": {
+        "::handle:horizontal|background-color": "#89b4fa",
+        "::handle:horizontal|width": 14,
+        "::handle:horizontal|height": 14,
+        "::handle:horizontal|border-radius": 7,
+        "::groove:horizontal|background-color": "#343442",
+        "::groove:horizontal|height": 6,
+        "::groove:horizontal|border-radius": 3
+      },
+      "SpinBox": {
+        "|background-color": "#1e1e2e",
+        "|color": "#cdd6f4",
+        "|border-color": "#4b4b57",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 3,
+        ":focus|border-color": "#89b4fa"
+      },
+      "Tabs": {
+        "|background-color": "#343442",
+        "|color": "#bac2de",
+        "|padding": 6,
+        "|border-radius": 4,
+        ":selected|background-color": "#1e1e2e",
+        ":selected|color": "#cdd6f4",
+        ":hover|background-color": "#4b4b57",
+        ":hover|color": "#cdd6f4"
+      },
+      "Divider": {
+        "|color": "#4b4b57",
+        "|max-height": 1
+      },
+      "ScrollBar": {
+        "|background-color": "#1e1e2e",
+        ":vertical|width": 8,
+        ":horizontal|height": 8,
+        "::handle:vertical|background-color": "#4b4b57",
+        "::handle:vertical|border-radius": 4,
+        "::handle:vertical|min-height": 20,
+        "::handle:vertical:hover|background-color": "#89b4fa"
+      },
+      "ToolTip": {
+        "|background-color": "#343442",
+        "|color": "#cdd6f4",
+        "|border-color": "#4b4b57",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 4
+      }
+    }
+  },
+  "App Light": {
+    "name": "App Light",
+    "background": "#eff1f5",
+    "foreground": "#4c4f69",
+    "white": "#8c8fa1",
+    "brightBlack": "#9ca0b0",
+    "brightBlue": "#1e66f5",
+    "brightGreen": "#40a02b",
+    "brightRed": "#d20f39",
+    "brightYellow": "#df8e1d",
+    "selection": "#ccd0da",
+    "black": "#5c5f77",
+    "blue": "#1e66f5",
+    "cyan": "#179299",
+    "green": "#40a02b",
+    "purple": "#8839ef",
+    "red": "#d20f39",
+    "yellow": "#df8e1d",
+    "brightCyan": "#179299",
+    "brightPurple": "#8839ef",
+    "brightWhite": "#4c4f69",
+    "cursor": "#dc8a78",
+    "widgets": {
+      "Button": {
+        "|background-color": "#1e66f5",
+        "|color": "#eff1f5",
+        "|border-radius": 4,
+        "|padding-top": 4,
+        "|padding-left": 10,
+        ":hover|background-color": "#40a02b",
+        ":hover|color": "#eff1f5",
+        ":pressed|background-color": "#f2f3f7",
+        ":disabled|background-color": "#f0f2f6",
+        ":disabled|color": "#9ca0b0"
+      },
+      "Label": {
+        "|color": "#4c4f69",
+        "|padding": 0,
+        "|background-color": "transparent"
+      },
+      "Input": {
+        "|background-color": "#eff1f5",
+        "|color": "#4c4f69",
+        "|border-color": "#f2f3f7",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 4,
+        ":focus|border-color": "#1e66f5"
+      },
+      "TextEdit": {
+        "|background-color": "#eff1f5",
+        "|color": "#4c4f69",
+        "|border-color": "#f2f3f7",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 4
+      },
+      "ComboBox": {
+        "|background-color": "#eff1f5",
+        "|color": "#4c4f69",
+        "|border-color": "#f2f3f7",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 4,
+        ":hover|background-color": "#f0f2f6",
+        " QAbstractItemView|background-color": "#eff1f5",
+        " QAbstractItemView|color": "#4c4f69"
+      },
+      "CheckBox": {
+        "|color": "#4c4f69",
+        "|spacing": 6,
+        "::indicator:checked|background-color": "#1e66f5",
+        "::indicator|width": 14
+      },
+      "RadioButton": {
+        "|color": "#4c4f69",
+        "::indicator:checked|background-color": "#1e66f5",
+        "::indicator|width": 14
+      },
+      "Table": {
+        "|background-color": "#eff1f5",
+        "|alternate-background-color": "#f0f2f6",
+        "|gridline-color": "#f2f3f7",
+        "::section|background-color": "#f0f2f6",
+        "::section|color": "#4c4f69",
+        "::item:selected|background-color": "#1e66f5",
+        "::item:selected|color": "#eff1f5"
+      },
+      "List": {
+        "|background-color": "#eff1f5",
+        "|color": "#4c4f69",
+        "::item:hover|background-color": "#f0f2f6",
+        "::item:hover|color": "#4c4f69",
+        "::item:selected|background-color": "#1e66f5",
+        "::item:selected|color": "#eff1f5"
+      },
+      "GroupBox": {
+        "|color": "#1e66f5",
+        "|border-color": "#f2f3f7",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding-top": 14
+      },
+      "ProgressBar": {
+        "|background-color": "#f0f2f6",
+        "|border-radius": 4,
+        "|color": "#4c4f69",
+        "|max-height": 12,
+        "::chunk|background-color": "#1e66f5",
+        "::chunk|border-radius": 4
+      },
+      "Slider": {
+        "::handle:horizontal|background-color": "#1e66f5",
+        "::handle:horizontal|width": 14,
+        "::handle:horizontal|height": 14,
+        "::handle:horizontal|border-radius": 7,
+        "::groove:horizontal|background-color": "#f0f2f6",
+        "::groove:horizontal|height": 6,
+        "::groove:horizontal|border-radius": 3
+      },
+      "SpinBox": {
+        "|background-color": "#eff1f5",
+        "|color": "#4c4f69",
+        "|border-color": "#f2f3f7",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 3,
+        ":focus|border-color": "#1e66f5"
+      },
+      "Tabs": {
+        "|background-color": "#f0f2f6",
+        "|color": "#8c8fa1",
+        "|padding": 6,
+        "|border-radius": 4,
+        ":selected|background-color": "#eff1f5",
+        ":selected|color": "#4c4f69",
+        ":hover|background-color": "#f2f3f7",
+        ":hover|color": "#4c4f69"
+      },
+      "Divider": {
+        "|color": "#f2f3f7",
+        "|max-height": 1
+      },
+      "ScrollBar": {
+        "|background-color": "#eff1f5",
+        ":vertical|width": 8,
+        ":horizontal|height": 8,
+        "::handle:vertical|background-color": "#f2f3f7",
+        "::handle:vertical|border-radius": 4,
+        "::handle:vertical|min-height": 20,
+        "::handle:vertical:hover|background-color": "#1e66f5"
+      },
+      "ToolTip": {
+        "|background-color": "#f0f2f6",
+        "|color": "#4c4f69",
+        "|border-color": "#f2f3f7",
+        "|border-width": 1,
+        "|border-radius": 4,
+        "|padding": 4
+      }
+    }
   }
 }
