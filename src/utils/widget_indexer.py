@@ -439,6 +439,53 @@ def get_widgets_for_nav_entry(entry: dict) -> list[str]:
     return found
 
 
+def build_entries_by_qt_class() -> dict[str, list[dict]]:
+    """Build {qt_class: [nav_entries]} with accurate per-method-body detection.
+
+    Unlike using vis_idx (whole-file), this scans only the specific builder
+    method body for anonymous subtabs, so e.g. MemoryTab::Overview only lists
+    widgets actually present in _build_overview(), not the entire memory_tab.py.
+    """
+    nav_tree = load_navigation_tree()
+
+    # Preload all tab source files keyed by class name (read each file once)
+    _file_cache: dict[str, str] = {}
+    for py_file in _TABS_DIR.glob("*.py"):
+        if "__pycache__" in str(py_file):
+            continue
+        try:
+            txt = py_file.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        for cls in re.findall(r"^class\s+([A-Za-z_]\w*)", txt, re.MULTILINE):
+            _file_cache[cls] = txt
+
+    result: dict[str, list[dict]] = {}
+    seen: set[tuple] = set()
+
+    for entry in nav_tree:
+        source_cls = entry.get("source_class")
+        builder    = entry.get("builder")
+        if not source_cls:
+            continue
+        src_text = _file_cache.get(source_cls, "")
+        if not src_text:
+            continue
+        scan_src = _extract_method_body(src_text, builder) if builder else src_text
+        if not scan_src:
+            scan_src = src_text
+
+        for widget in INDEXED_WIDGETS:
+            pattern = _DETECTION_OVERRIDES.get(widget, r"\b" + re.escape(widget) + r"\b")
+            if re.search(pattern, scan_src):
+                key = (widget, entry["id"])
+                if key not in seen:
+                    seen.add(key)
+                    result.setdefault(widget, []).append(entry)
+
+    return result
+
+
 def save_navigation_tree(tree: list[dict]) -> None:
     """Persist the navigation tree to config/nav_tree.json."""
     _NAV_TREE_PATH.parent.mkdir(parents=True, exist_ok=True)

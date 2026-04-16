@@ -819,7 +819,7 @@ class PreferencesTab(QWidget):
                 wname = qt_class_to_wdef.get(qc)
                 if wname:
                     wdef = WIDGET_DEFS[wname]
-                    text = f"{wdef.get('icon', '•')}  {wname}  ({qc})"
+                    text = f"{wdef.get('icon', '•')}  ·  {qc}"
                 else:
                     text = f"•  {qc}"
                     wname = None

@@ -19,7 +19,7 @@ from PyQt6.QtGui import QIntValidator
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from utils import theme
-from utils.widget_indexer import load_visible_ui_index, load_navigation_tree
+from utils.widget_indexer import load_visible_ui_index, build_entries_by_qt_class
 
 # ── Property type tokens ──────────────────────────────────────────────────────
 COLOR  = 'color'
@@ -492,28 +492,13 @@ class WidgetPreviewPanel(QScrollArea):
         except Exception:
             self._vis_idx = {}
 
-        # Build {qt_class: [nav_entries]} using the navigation tree.
-        # Augments _vis_idx with anonymous subtabs (Memory's _build_xxx, etc.)
-        # and adds proper parent labels so UsagePanel can show "sub of Memory".
+        # Build {qt_class: [nav_entries]} with accurate per-method-body detection.
+        # Each anonymous subtab (e.g. MemoryTab::Overview) is scanned against
+        # only its builder method body, not the whole file.
         try:
-            _nav_tree = load_navigation_tree()
+            self._entries_by_qt_class = build_entries_by_qt_class()
         except Exception:
-            _nav_tree = []
-        # Invert vis_idx: {class_name: [qt_classes]}
-        _class_to_qt: dict[str, list[str]] = {}
-        for _qc, _cls_names in self._vis_idx.items():
-            for _cn in _cls_names:
-                _class_to_qt.setdefault(_cn, []).append(_qc)
-        # Map each nav entry to the qt_classes of its source class
-        self._entries_by_qt_class: dict[str, list[dict]] = {}
-        _seen: set[tuple] = set()
-        for _entry in _nav_tree:
-            _src = _entry.get("source_class", _entry["id"].split("::")[0])
-            for _qc in _class_to_qt.get(_src, []):
-                _key = (_qc, _entry["id"])
-                if _key not in _seen:
-                    _seen.add(_key)
-                    self._entries_by_qt_class.setdefault(_qc, []).append(_entry)
+            self._entries_by_qt_class = {}
 
         content = QWidget()
         vbox = QVBoxLayout(content)
