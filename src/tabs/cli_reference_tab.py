@@ -74,6 +74,10 @@ class CLIReferenceTab(QWidget):
         self.load_cli_reference()
         layout.addWidget(self.browser, 1)
 
+    def apply_theme(self):
+        """Reload HTML so inline styles pick up the new theme palette."""
+        self.load_cli_reference()
+
     def load_cli_reference(self):
         """Load CLI reference content"""
         html_content = f"""
