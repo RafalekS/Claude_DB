@@ -409,18 +409,19 @@ class PreferencesTab(QWidget):
 
     # ── Theme editor variable definitions ───────────────────────────────────────
 
+    # (label, var_name, usage_description)
     _THEME_COLOR_VARS = [
-        ("Background",     "BG_DARK"),
-        ("Surface",        "BG_MEDIUM"),
-        ("Surface Light",  "BG_LIGHT"),
-        ("Text Primary",   "FG_PRIMARY"),
-        ("Text Secondary", "FG_SECONDARY"),
-        ("Text Dim",       "FG_DIM"),
-        ("Accent",         "ACCENT_PRIMARY"),
-        ("Accent Alt",     "ACCENT_SECONDARY"),
-        ("Error",          "ERROR_COLOR"),
-        ("Warning",        "WARNING_COLOR"),
-        ("Success",        "SUCCESS_COLOR"),
+        ("Background",     "BG_DARK",           "main window bg, code blocks, text editors"),
+        ("Surface",        "BG_MEDIUM",          "panels, footers, inputs, header bg"),
+        ("Surface Light",  "BG_LIGHT",           "borders, dividers, scrollbars"),
+        ("Text Primary",   "FG_PRIMARY",         "headings, labels, primary text"),
+        ("Text Secondary", "FG_SECONDARY",       "descriptions, subtitles, dim labels"),
+        ("Text Dim",       "FG_DIM",             "disabled text, placeholders"),
+        ("Accent",         "ACCENT_PRIMARY",     "buttons, active tabs, links, key actions"),
+        ("Accent Alt",     "ACCENT_SECONDARY",   "footer borders, section markers, hover state"),
+        ("Error",          "ERROR_COLOR",        "error messages, destructive actions"),
+        ("Warning",        "WARNING_COLOR",      "warnings, caution indicators"),
+        ("Success",        "SUCCESS_COLOR",      "success messages, OK states"),
     ]
 
     # (label, var_name, min, max, default)
@@ -623,7 +624,8 @@ class PreferencesTab(QWidget):
         color_grid.setContentsMargins(0, 0, 0, 0)
 
         self._color_name_lbls = {}
-        for row_idx, (label, var_name) in enumerate(self._THEME_COLOR_VARS):
+        self._color_usage_lbls = {}
+        for row_idx, (label, var_name, usage) in enumerate(self._THEME_COLOR_VARS):
             name_lbl = QLabel(label)
             name_lbl.setStyleSheet(f"color: {theme.FG_PRIMARY};")
             self._color_name_lbls[var_name] = name_lbl
@@ -631,7 +633,7 @@ class PreferencesTab(QWidget):
 
             current_hex = getattr(theme, var_name, "#888888")
             swatch = ColorSwatch(current_hex)
-            swatch.setToolTip(f"Click to change {var_name}")
+            swatch.setToolTip(f"{var_name}\n\nUsed by: {usage}")
             swatch.clicked.connect(lambda vn=var_name: self._pick_color(vn))
             self._color_btns[var_name] = swatch
             color_grid.addWidget(swatch, row_idx, 1)
@@ -642,6 +644,13 @@ class PreferencesTab(QWidget):
             )
             self._color_hex_lbls[var_name] = hex_lbl
             color_grid.addWidget(hex_lbl, row_idx, 2)
+
+            usage_lbl = QLabel(usage)
+            usage_lbl.setStyleSheet(
+                f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px; font-style: italic;"
+            )
+            self._color_usage_lbls[var_name] = usage_lbl
+            color_grid.addWidget(usage_lbl, row_idx, 3)
 
         color_vbox.addWidget(color_grid_widget)
         reset_colors_btn = QPushButton("Reset Colors")
@@ -872,6 +881,12 @@ class PreferencesTab(QWidget):
         if hasattr(self, '_color_hex_lbls'):
             for lbl in self._color_hex_lbls.values():
                 lbl.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-family: {theme.FONT_MONOSPACE};")
+        # Color usage labels
+        if hasattr(self, '_color_usage_lbls'):
+            for lbl in self._color_usage_lbls.values():
+                lbl.setStyleSheet(
+                    f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px; font-style: italic;"
+                )
         # Widget theme editor left panel
         if hasattr(self, '_widget_theme_editor'):
             self._widget_theme_editor.apply_theme()

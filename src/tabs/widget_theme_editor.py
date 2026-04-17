@@ -1040,8 +1040,16 @@ class WidgetThemeEditor(QSplitter):
 
     def apply_theme(self):
         """Refresh colours after a global theme change."""
+        # Rebuild widget default values in-place so they reflect the new theme palette
+        new_defs = _make_defs()
+        WIDGET_DEFS.clear()
+        WIDGET_DEFS.update(new_defs)
+
         self._preview_panel.apply_theme()
         self._usage_panel.apply_theme()
+        # Re-render property panel so section headers / labels pick up new theme colors
+        if self._prop_panel._current:
+            self._prop_panel.load_widget(self._prop_panel._current)
 
     def _on_property_changed(self, wn: str, state: str, qss_key: str, value):
         if self._on_change:
@@ -1109,6 +1117,9 @@ class WidgetThemeEditor(QSplitter):
                     inner[(st, qk)] = val
             if inner:
                 self._overrides[wname] = inner
+        # Refresh the property panel if a widget is already selected
+        if self._prop_panel._current:
+            self._prop_panel.load_widget(self._prop_panel._current)
 
     # ── Backward-compat aliases (used by load_preferences / config.json) ─────
 
