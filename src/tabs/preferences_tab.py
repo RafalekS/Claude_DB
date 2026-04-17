@@ -1822,7 +1822,8 @@ class {class_name}Tab(QWidget):
                 "font_mono": self.font_mono_combo.currentText(),
                 "custom_colors": self._custom_colors,
                 "custom_numbers": self._custom_numbers,
-                "widget_overrides": self._widget_theme_editor.get_widgets_dict() if hasattr(self, '_widget_theme_editor') else {},
+                # Only save user-changed properties, not the full theme defaults
+                "widget_overrides": self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {},
             }
             _atomic_json_write(self.config_file, config_data)
         except Exception as e:
@@ -1863,7 +1864,8 @@ class {class_name}Tab(QWidget):
                 "font_mono": font_mono,
                 "custom_colors": self._custom_colors,
                 "custom_numbers": self._custom_numbers,
-                "widget_overrides": self._widget_theme_editor.get_widgets_dict() if hasattr(self, '_widget_theme_editor') else {},
+                # Only save user-changed properties, not the full theme defaults
+                "widget_overrides": self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {},
             }
             _atomic_json_write(self.config_file, config_data)
 
@@ -1919,8 +1921,18 @@ class {class_name}Tab(QWidget):
                 for widget in (self.theme_combo, self.font_family_combo, self.font_mono_combo):
                     widget.blockSignals(False)
 
-                if widget_overrides and hasattr(self, '_widget_theme_editor'):
-                    self._widget_theme_editor.load_widgets_dict(widget_overrides)
+                if hasattr(self, '_widget_theme_editor'):
+                    if widget_overrides:
+                        # Migration: strip out any props that match the theme defaults exactly
+                        # (old configs stored the full theme data; we only want user changes)
+                        theme_defaults = theme.get_theme_widgets(theme_name)
+                        actual_changes = {}
+                        for wname, wprops in widget_overrides.items():
+                            default_props = theme_defaults.get(wname, {})
+                            changed = {k: v for k, v in wprops.items() if default_props.get(k) != v}
+                            if changed:
+                                actual_changes[wname] = changed
+                        self._widget_theme_editor.load_widgets_dict(actual_changes)
 
                 self._refresh_color_buttons()
                 self._refresh_typo_spacing_controls()
