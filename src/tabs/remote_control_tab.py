@@ -62,6 +62,7 @@ class RemoteControlTab(QWidget):
         left_text.setReadOnly(True)
         left_text.setHtml(self._cli_patterns_html())
         left_layout.addWidget(left_text, 1)
+        self._left_text = left_text
 
         right = QWidget()
         right_layout = QVBoxLayout(right)
@@ -74,6 +75,7 @@ class RemoteControlTab(QWidget):
         right_text.setReadOnly(True)
         right_text.setHtml(self._sdk_html())
         right_layout.addWidget(right_text, 1)
+        self._right_text = right_text
 
         splitter.addWidget(left)
         splitter.addWidget(right)
@@ -98,6 +100,25 @@ class RemoteControlTab(QWidget):
             "</span>"
         )
         layout.addWidget(tip)
+        self._tip = tip
+
+    def apply_theme(self):
+        """Refresh HTML panels with current theme colors."""
+        self._left_text.setHtml(self._cli_patterns_html())
+        self._right_text.setHtml(self._sdk_html())
+        self._tip.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
+            f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        self._tip.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "💡 <b>Key flags:</b> "
+            "<code>-p</code>/<code>--print</code> — non-interactive &nbsp;|&nbsp; "
+            "<code>--output-format json</code> — machine-readable &nbsp;|&nbsp; "
+            "<code>--permission-prompt-tool mcp__server__tool</code> — delegate permissions &nbsp;|&nbsp; "
+            "<code>--no-markdown</code> — plain text for piping"
+            "</span>"
+        )
 
     def _cli_patterns_html(self) -> str:
         bg = theme.BG_DARK

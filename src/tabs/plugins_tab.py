@@ -201,6 +201,7 @@ class PluginsTab(QWidget):
         )
         plugin_ref_layout.addWidget(plugin_ref)
         right_layout.addWidget(plugin_ref_group)
+        self._plugin_ref = plugin_ref
 
         splitter.addWidget(right)
         splitter.setSizes([500, 500])
@@ -225,11 +226,50 @@ class PluginsTab(QWidget):
             "</span>"
         )
         layout.addWidget(cli_footer)
+        self._cli_footer = cli_footer
 
         # Store data
         self.settings_data = {}
         self.plugins_config_data = {}
         self.plugins_marketplaces_data = {}
+
+    def apply_theme(self):
+        """Refresh HTML widgets with current theme colors."""
+        self._plugin_ref.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "<b>LSP Servers</b> — expose a Language Server Protocol server:<br>"
+            f"<code style='font-size:{theme.FONT_SIZE_SMALL}px'>"
+            "&nbsp;&nbsp;\"lsp\": {{\"command\": \"node\", \"args\": [\"server.js\"], \"languages\": [\"python\"]}}"
+            "</code><br>"
+            "<b>Monitors</b> — background watchers fired on file/event changes:<br>"
+            f"<code style='font-size:{theme.FONT_SIZE_SMALL}px'>"
+            "&nbsp;&nbsp;\"monitors\": [{{\"event\": \"FileChanged\", \"pattern\": \"*.py\", \"command\": \"lint.sh\"}}]"
+            "</code><br>"
+            "<b>userConfig</b> — user-configurable settings schema (shown in UI):<br>"
+            f"<code style='font-size:{theme.FONT_SIZE_SMALL}px'>"
+            "&nbsp;&nbsp;\"userConfig\": {{\"apiKey\": {{\"type\": \"string\", \"description\": \"API key\"}}}}"
+            "</code><br>"
+            "<b>channels</b> — communication channels: "
+            "<code>\"channels\": [\"http\", \"stdio\"]</code><br>"
+            "<b>Vars:</b> <code>${{CLAUDE_PLUGIN_ROOT}}</code> install dir &nbsp; "
+            "<code>${{CLAUDE_PLUGIN_DATA}}</code> data dir"
+            "</span>"
+        )
+        self._cli_footer.setStyleSheet(
+            f"font-size: {theme.FONT_SIZE_SMALL}px; background: {theme.BG_MEDIUM}; "
+            f"border-left: 3px solid {theme.ACCENT_SECONDARY}; border-radius: {theme.BORDER_RADIUS}px;"
+        )
+        self._cli_footer.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px;'>"
+            "<b>CLI:</b> "
+            "<code>claude plugin install &lt;id&gt;@&lt;marketplace&gt;</code> · "
+            "<code>claude plugin uninstall &lt;id&gt; [--keep-data]</code> · "
+            "<code>claude plugin enable/disable &lt;id&gt;</code> · "
+            "<code>claude plugin update &lt;id&gt;</code> · "
+            "<code>claude plugin validate</code> &nbsp;|&nbsp; "
+            "<b>Cache:</b> <code>~/.claude/plugins/cache/</code>"
+            "</span>"
+        )
 
     def load_all_data(self):
         """Load all plugin data from both locations"""

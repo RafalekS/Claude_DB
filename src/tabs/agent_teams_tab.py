@@ -69,6 +69,7 @@ class AgentTeamsTab(QWidget):
         how_text.setReadOnly(True)
         how_text.setHtml(self._how_it_works_html())
         left_layout.addWidget(how_text, 1)
+        self._how_text = how_text
 
         # --- Right: Frontmatter reference ---
         right = QWidget()
@@ -84,6 +85,7 @@ class AgentTeamsTab(QWidget):
         ref_text.setReadOnly(True)
         ref_text.setHtml(self._frontmatter_reference_html())
         right_layout.addWidget(ref_text, 1)
+        self._ref_text = ref_text
 
         splitter.addWidget(left)
         splitter.addWidget(right)
@@ -102,6 +104,11 @@ class AgentTeamsTab(QWidget):
             f"padding: 8px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
         )
         layout.addWidget(tip)
+
+    def apply_theme(self):
+        """Refresh HTML panels with current theme colors."""
+        self._how_text.setHtml(self._how_it_works_html())
+        self._ref_text.setHtml(self._frontmatter_reference_html())
 
     def _how_it_works_html(self) -> str:
         bg = theme.BG_DARK

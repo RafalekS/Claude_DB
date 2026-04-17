@@ -247,6 +247,26 @@ class AgentsTab(QWidget):
             "</span>"
         )
         layout.addWidget(tip_label)
+        self._tip_label = tip_label
+
+    def apply_theme(self):
+        """Refresh HTML tip with current theme colors."""
+        self._tip_label.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
+            f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        self._tip_label.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "💡 <b>Best Practices:</b> One responsibility per agent • Least privilege • "
+            "Read-only for analysis • Write only where essential"
+            "<br><b>Usage:</b> <code>claude /agents</code> • "
+            "User: <code>~/.claude/agents/</code> (global) • "
+            "Project: <code>./.claude/agents/</code> (git-shared)"
+            "<br>🤖 <b>Subagents:</b> Agents can spawn subagents via the <code>Task</code> tool. "
+            "Subagents run in isolated contexts with their own tool permissions. "
+            "Use <code>subagent_type</code> to select a specific agent; omit to use the default."
+            "</span>"
+        )
 
     def create_agents_editor(self):
         """Create agents editor for the current scope"""

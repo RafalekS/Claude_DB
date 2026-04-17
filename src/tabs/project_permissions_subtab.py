@@ -36,6 +36,7 @@ class ProjectPermissionsSubTab(QWidget):
         self.project_context = project_context
         self.tables = {}
         self.mode_combos = {}
+        self._perm_footers = []
         self.init_ui()
 
         # Connect to project changes
@@ -189,11 +190,39 @@ class ProjectPermissionsSubTab(QWidget):
             "</span>"
         )
         layout.addWidget(footer)
+        self._perm_footers.append(footer)
 
         # Store table reference
         self.tables[scope] = perm_table
 
         return panel
+
+    def apply_theme(self):
+        """Refresh footer HTML widgets with current theme colors."""
+        footer_html = (
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "<b>Modes:</b> "
+            "<b>default</b> — normal prompting &nbsp;| "
+            "<b>acceptEdits</b> — auto-approve edits + filesystem commands &nbsp;| "
+            "<b>auto</b> — ML classifier approves safe actions automatically (Team/Enterprise; disable with <code>disableAutoMode</code>) &nbsp;| "
+            "<b>dontAsk</b> — skip prompts, CI use &nbsp;| "
+            "<b>bypassPermissions</b> — containers/VMs only"
+            "<br>• <b>Shift+Tab</b> cycles modes &nbsp;&nbsp; "
+            "• Protected: <code>~/.ssh</code> <code>~/.aws</code> <code>/etc/passwd</code> &nbsp;&nbsp; "
+            "• Managed flags: <code>disableAutoMode</code>, <code>disableBypassPermissionsMode</code>"
+            "</span>"
+        )
+        footer_style = (
+            f"color: {theme.FG_SECONDARY}; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"padding: {theme.PADDING_MD}px; "
+            f"background-color: {theme.BG_MEDIUM}; "
+            f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
+            f"border-radius: {theme.BORDER_RADIUS}px;"
+        )
+        for footer in self._perm_footers:
+            footer.setStyleSheet(footer_style)
+            footer.setHtml(footer_html)
 
     def on_project_changed(self, project_path: Path):
         """Handle project change"""

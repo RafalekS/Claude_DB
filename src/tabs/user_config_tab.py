@@ -149,3 +149,11 @@ class UserConfigTab(QWidget):
         self.sub_tabs.addTab(remote_control_tab, "🌐 Remote Control")
 
         layout.addWidget(self.sub_tabs, 1)
+
+    def apply_theme(self):
+        """Propagate theme change to all subtabs."""
+        for i in range(self.sub_tabs.count()):
+            widget = self.sub_tabs.widget(i)
+            if hasattr(widget, 'apply_theme'):
+                widget.apply_theme()
+

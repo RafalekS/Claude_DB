@@ -343,7 +343,24 @@ class UserSettingsSubTab(QWidget):
             "</span>"
         )
         layout.addWidget(ref)
+        self._output_styles_ref = ref
         return group
+
+    def apply_theme(self):
+        """Refresh HTML reference widget with current theme colors."""
+        if hasattr(self, '_output_styles_ref'):
+            self._output_styles_ref.setHtml(
+                f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+                "<b>--output-format</b> controls Claude's response format in non-interactive mode:<br>"
+                "<code>text</code> — plain text (default)<br>"
+                "<code>json</code> — single JSON object with result and metadata<br>"
+                "<code>stream-json</code> — newline-delimited JSON events streamed as they arrive<br><br>"
+                "<b>--no-markdown</b> — strip all markdown formatting from text output (useful for piping)<br>"
+                "<b>--verbose</b> — include thinking blocks and extended reasoning in output<br>"
+                "JSON output includes: <code>result</code>, <code>cost_usd</code>, "
+                "<code>duration_ms</code>, <code>num_turns</code>, <code>usage</code> fields"
+                "</span>"
+            )
 
     def create_preview_section(self) -> QGroupBox:
         """Create JSON preview section"""

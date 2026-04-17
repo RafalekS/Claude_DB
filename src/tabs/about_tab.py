@@ -387,6 +387,17 @@ class AboutTab(QWidget):
         html += "</ul>"
         content_widget.setHtml(html)
 
+    def apply_theme(self):
+        """Refresh all link displays with current theme colors."""
+        link_map = {
+            'official': self.official_links,
+            'community': self.community_links,
+            'frameworks': self.frameworks_links,
+            'marketplaces': self.marketplaces_links,
+        }
+        for category, widget in self.content_widgets.items():
+            self.refresh_link_display(widget, link_map[category])
+
     def open_local_docs(self):
         """Open the local documentation file in default browser"""
         docs_path = Path(__file__).parent.parent.parent / "help" / "Claude_DB.html"

@@ -377,6 +377,13 @@ class ProjectConfigTab(QWidget):
 
         layout.addWidget(self.sub_tabs, 1)
 
+    def apply_theme(self):
+        """Propagate theme change to all subtabs."""
+        for i in range(self.sub_tabs.count()):
+            widget = self.sub_tabs.widget(i)
+            if hasattr(widget, 'apply_theme'):
+                widget.apply_theme()
+
         # Load current project if set
         if self.project_context.has_project():
             current_project = self.project_context.get_project()

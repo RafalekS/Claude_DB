@@ -627,6 +627,42 @@ class MCPTab(QWidget):
             "</span>"
         )
         layout.addWidget(info_label)
+        self._info_label = info_label
+
+    def apply_theme(self):
+        """Refresh HTML widgets with current theme colors."""
+        self._info_label.setStyleSheet(
+            f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
+            f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        self._info_label.setHtml(
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "💡 <b>MCP Quick Commands:</b> "
+            "<code>claude mcp list</code> • "
+            "<code>claude mcp add &lt;name&gt; &lt;cmd&gt;</code> • "
+            "<code>claude mcp remove &lt;name&gt;</code> • "
+            "<code>claude mcp add-from-claude-desktop</code>"
+            "<br><b>Recommended:</b> "
+            "<code>npx @modelcontextprotocol/server-filesystem</code> • "
+            "<code>npx @modelcontextprotocol/server-github</code> (GITHUB_TOKEN) • "
+            "<code>npx @modelcontextprotocol/server-memory</code>"
+            "<br><b>Scopes:</b> user (~/.claude.json) • project (.mcp.json in git) • "
+            "local (gitignored) | use <code>-s user/project</code> flag"
+            "</span>"
+        )
+        if hasattr(self, '_oauth_info'):
+            self._oauth_info.setStyleSheet(
+                f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
+                f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
+            )
+            self._oauth_info.setHtml(
+                f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+                "🔐 <b>MCP OAuth:</b> Some MCP servers support OAuth 2.0 authentication. "
+                "Claude Code handles the OAuth flow automatically — run "
+                "<code>claude mcp add &lt;server&gt;</code> and follow the browser prompt. "
+                "Tokens are stored securely in the system keychain."
+                "</span>"
+            )
 
     def create_mcp_editor(self):
         """Create MCP editor for the current scope"""
@@ -884,6 +920,7 @@ class MCPTab(QWidget):
             "</span>"
         )
         layout.addWidget(oauth_info)
+        self._oauth_info = oauth_info
 
         return widget
 
