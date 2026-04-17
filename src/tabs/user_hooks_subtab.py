@@ -7,55 +7,17 @@ import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTextEdit, QMessageBox, QListWidget, QListWidgetItem, QSplitter, QTextBrowser
+    QTextEdit, QMessageBox, QTreeWidget, QTreeWidgetItem, QSplitter
 )
 from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtGui import QDesktopServices, QFont
 
 from utils import theme
+from tabs.hooks_shared import HOOK_EVENT_GROUPS, HOOK_EVENTS, HookReferenceDialog
+
 
 class UserHooksSubTab(QWidget):
     """Dedicated subtab for user-level hooks configuration"""
-
-    # All available hook events (EVENT-BASED, not name-based)
-    HOOK_EVENTS = [
-        # Core tool lifecycle
-        "PreToolUse",
-        "PostToolUse",
-        "PostToolUseFailure",
-        # User interaction
-        "Notification",
-        "UserPromptSubmit",
-        "Elicitation",
-        "ElicitationResult",
-        # Agent lifecycle
-        "Stop",
-        "StopFailure",
-        "SubagentStart",
-        "SubagentStop",
-        # Context & memory
-        "PreCompact",
-        "PostCompact",
-        "InstructionsLoaded",
-        # Permissions
-        "PermissionRequest",
-        "PermissionDenied",
-        # Tasks
-        "TaskCreated",
-        "TaskCompleted",
-        # Session
-        "SessionStart",
-        "SessionEnd",
-        # Environment
-        "CwdChanged",
-        "FileChanged",
-        "ConfigChange",
-        # Worktrees
-        "WorktreeCreate",
-        "WorktreeRemove",
-        # Agent teams
-        "TeammateIdle",
-    ]
 
     def __init__(self, config_manager, backup_manager, settings_manager):
         super().__init__()
@@ -101,48 +63,40 @@ class UserHooksSubTab(QWidget):
         # Main splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Left panel - Hook events list and info
+        # Left panel - Hook events tree + reference button
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(5)
 
-        # Hook events list
+        # Hook events label
         events_label = QLabel("Hook Events:")
         events_label.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY};")
         left_layout.addWidget(events_label)
 
-        self.events_list = QListWidget()
-        self.events_list.setStyleSheet(f"""
-            QListWidget {{
+        # Grouped tree widget
+        self.events_tree = QTreeWidget()
+        self.events_tree.setHeaderHidden(True)
+        self.events_tree.setStyleSheet(f"""
+            QTreeWidget {{
                 border-radius: 3px;
-                padding: 5px;
+                padding: 3px;
                 font-size: {theme.FONT_SIZE_NORMAL}px;
             }}
-            QListWidget::item {{
-                padding: 5px;
-            }}
-            
-        """)
-        self.events_list.itemClicked.connect(self.on_event_selected)
-        left_layout.addWidget(self.events_list)
-
-        # Info browser
-        info_label = QLabel("Hook Info:")
-        info_label.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY};")
-        left_layout.addWidget(info_label)
-
-        info_browser = QTextBrowser()
-        info_browser.setOpenExternalLinks(True)
-        info_browser.setStyleSheet(f"""
-            QTextBrowser {{
-                border-radius: 3px;
-                padding: 8px;
-                font-size: {theme.FONT_SIZE_SMALL}px;
+            QTreeWidget::item {{
+                padding: 3px;
             }}
         """)
-        self.load_hook_info(info_browser)
-        left_layout.addWidget(info_browser)
+        self._build_event_tree()
+        self.events_tree.expandAll()
+        self.events_tree.itemClicked.connect(self.on_event_selected)
+        left_layout.addWidget(self.events_tree)
+
+        # Reference button (replaces inline info browser)
+        ref_btn = QPushButton("ℹ️ Hook Reference")
+        ref_btn.setToolTip("Show full hooks reference documentation")
+        ref_btn.clicked.connect(lambda: HookReferenceDialog(self).exec())
+        left_layout.addWidget(ref_btn)
 
         splitter.addWidget(left_panel)
 
@@ -168,7 +122,7 @@ class UserHooksSubTab(QWidget):
         right_layout.addWidget(self.hooks_editor)
 
         splitter.addWidget(right_panel)
-        splitter.setSizes([400, 600])
+        splitter.setSizes([350, 650])
         layout.addWidget(splitter, 1)
 
         # Action buttons
@@ -205,115 +159,31 @@ class UserHooksSubTab(QWidget):
 
         layout.addLayout(button_layout)
 
-        # Info footer
-        footer = QLabel(
-            "💡 <b>26 Hook Events</b> — PreToolUse, PostToolUse, PostToolUseFailure, Stop, SubagentStart/Stop, "
-            "PreCompact, PostCompact, InstructionsLoaded, PermissionRequest/Denied, TaskCreated/Completed, "
-            "Elicitation, WorktreeCreate/Remove, TeammateIdle, and more • "
-            "<b>Handler types:</b> command, http, prompt, agent • "
-            "<b>Exit codes:</b> 0=success, 2=blocking, other=non-blocking • "
-            "<b>Default timeouts:</b> command=600s, http=30s, prompt=30s, agent=60s"
-        )
-        footer.setWordWrap(True)
-        footer.setStyleSheet(
-            f"color: {theme.FG_SECONDARY}; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; "
-            f"padding: 8px; "
-            f"background-color: {theme.BG_MEDIUM}; "
-            f"border-radius: 3px;"
-        )
-        layout.addWidget(footer)
+    # ── Tree helpers ──────────────────────────────────────────────────────────
 
-    def load_hook_info(self, info_browser):
-        """Load hook information into info browser"""
-        html = f"""
-        <html>
-        <body style="color: {theme.FG_PRIMARY};">
-            <h3 style="color: {theme.ACCENT_PRIMARY};">Tool Lifecycle</h3>
-            <p><b>PreToolUse</b> — Before a tool executes (can block/modify)</p>
-            <p><b>PostToolUse</b> — After a tool succeeds</p>
-            <p><b>PostToolUseFailure</b> — After a tool fails</p>
+    def _build_event_tree(self):
+        """Populate the QTreeWidget with grouped hook events."""
+        bold = QFont()
+        bold.setBold(True)
+        for group_label, events in HOOK_EVENT_GROUPS.items():
+            group_item = QTreeWidgetItem([group_label])
+            group_item.setFont(0, bold)
+            group_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            group_item.setData(0, Qt.ItemDataRole.UserRole, None)
+            self.events_tree.addTopLevelItem(group_item)
+            for event in events:
+                child = QTreeWidgetItem([f"○ {event}"])
+                child.setData(0, Qt.ItemDataRole.UserRole, event)
+                group_item.addChild(child)
 
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">User Interaction</h3>
-            <p><b>Notification</b> — When Claude sends a notification</p>
-            <p><b>UserPromptSubmit</b> — Before a user prompt is processed</p>
-            <p><b>Elicitation</b> — When Claude needs to ask the user something</p>
-            <p><b>ElicitationResult</b> — After elicitation gets a response</p>
+    def _get_selected_event(self) -> str | None:
+        """Return the selected event name, or None if nothing / group selected."""
+        selected = self.events_tree.selectedItems()
+        if not selected:
+            return None
+        return selected[0].data(0, Qt.ItemDataRole.UserRole)
 
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Agent Lifecycle</h3>
-            <p><b>Stop</b> — Agent finishes a response (exit 2 prevents stopping)</p>
-            <p><b>StopFailure</b> — Turn ends due to an API error</p>
-            <p><b>SubagentStart</b> — A subagent begins</p>
-            <p><b>SubagentStop</b> — A subagent finishes</p>
-            <p><b>TeammateIdle</b> — An agent team member is idle</p>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Context &amp; Memory</h3>
-            <p><b>PreCompact</b> — Before context compaction</p>
-            <p><b>PostCompact</b> — After context compaction completes</p>
-            <p><b>InstructionsLoaded</b> — After CLAUDE.md instructions are loaded</p>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Permissions</h3>
-            <p><b>PermissionRequest</b> — Claude requests a permission</p>
-            <p><b>PermissionDenied</b> — A permission is denied</p>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Tasks</h3>
-            <p><b>TaskCreated</b> — A TodoWrite task is created</p>
-            <p><b>TaskCompleted</b> — A task is marked complete</p>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Session &amp; Environment</h3>
-            <p><b>SessionStart</b> — Session begins</p>
-            <p><b>SessionEnd</b> — Session ends</p>
-            <p><b>CwdChanged</b> — Working directory changes</p>
-            <p><b>FileChanged</b> — A watched file changes</p>
-            <p><b>ConfigChange</b> — Claude Code config changes</p>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Worktrees</h3>
-            <p><b>WorktreeCreate</b> — A git worktree is created</p>
-            <p><b>WorktreeRemove</b> — A git worktree is removed</p>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Handler Types</h3>
-            <p><b>command</b> — Run a shell command (stdin: JSON event data)</p>
-            <p><b>http</b> — POST JSON to a URL (fields: url, headers, allowedEnvVars, timeout)</p>
-            <p><b>prompt</b> — Claude model evaluates yes/no (fields: model, prompt, timeout)</p>
-            <p><b>agent</b> — Invoke a subagent (fields: agent, model, timeout)</p>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Hook Fields</h3>
-            <p><b>type</b> — command | http | prompt | agent</p>
-            <p><b>timeout</b> — seconds (default: command=600, http=30, prompt=30, agent=60)</p>
-            <p><b>async</b> — true/false — run without blocking Claude (default false)</p>
-            <p><b>asyncRewake</b> — true/false — wake Claude when async hook completes</p>
-            <p><b>statusMessage</b> — string shown in UI while hook runs</p>
-            <p><b>once</b> — true/false — fire only once per session</p>
-            <p><b>if</b> — expression string for conditional execution</p>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Output Keys</h3>
-            <p><b>hookSpecificOutput</b> — arbitrary data passed back to Claude</p>
-            <p><b>updatedInput</b> — modified tool input (PreToolUse only)</p>
-            <p><b>additionalContext</b> — extra context appended to Claude's context</p>
-            <p><b>permissionDecision</b> — allow | deny (PermissionRequest only)</p>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 10px;">Example (command)</h3>
-            <pre style="background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;">{{
-  "hooks": {{
-    "PostToolUse": [{{
-      "matcher": "Write",
-      "hooks": [{{
-        "type": "command",
-        "command": "echo 'File written'",
-        "timeout": 600,
-        "async": false,
-        "statusMessage": "Running post-write hook"
-      }}]
-    }}]
-  }}
-}}</pre>
-            <p style="font-size: 11px; color: {theme.FG_SECONDARY};">
-            Exit codes: 0=success, 2=blocking error, other=non-blocking
-            </p>
-        </body>
-        </html>
-        """
-        info_browser.setHtml(html)
+    # ── Data methods ──────────────────────────────────────────────────────────
 
     def load_hooks(self):
         """Load hooks from user settings"""
@@ -322,18 +192,8 @@ class UserHooksSubTab(QWidget):
             self.hooks_config = settings.get("hooks", {})
 
             # Detect old name-based format (keys that aren't in HOOK_EVENTS)
-            old_format_hooks = []
-            new_format_hooks = {}
+            old_format_hooks = [key for key in self.hooks_config if key not in HOOK_EVENTS]
 
-            for key, value in self.hooks_config.items():
-                if key in self.HOOK_EVENTS:
-                    # New event-based format
-                    new_format_hooks[key] = value
-                else:
-                    # Old name-based format
-                    old_format_hooks.append(key)
-
-            # Display in editor with warning if old format detected
             if old_format_hooks:
                 warning = (
                     "# WARNING: Old name-based hooks detected!\n"
@@ -348,61 +208,37 @@ class UserHooksSubTab(QWidget):
                 formatted_json = json.dumps({"hooks": self.hooks_config}, indent=2)
                 self.hooks_editor.setPlainText(formatted_json)
 
-            # Update events list
             self.update_events_list()
 
         except Exception as e:
             QMessageBox.critical(self, "Load Error", f"Failed to load hooks:\n{str(e)}")
 
     def update_events_list(self):
-        """Update the events list with configured hooks"""
-        self.events_list.clear()
+        """Update tree icons to reflect configured hooks."""
+        for i in range(self.events_tree.topLevelItemCount()):
+            group = self.events_tree.topLevelItem(i)
+            for j in range(group.childCount()):
+                child = group.child(j)
+                event = child.data(0, Qt.ItemDataRole.UserRole)
+                has_config = event in self.hooks_config and len(self.hooks_config[event]) > 0
+                icon = "✓" if has_config else "○"
+                child.setText(0, f"{icon} {event}")
 
-        # Add new format events
-        for event in self.HOOK_EVENTS:
-            # Check if hook is configured
-            has_config = event in self.hooks_config and len(self.hooks_config[event]) > 0
-            icon = "✓" if has_config else "○"
+    def on_event_selected(self, item: QTreeWidgetItem, column: int):
+        """Handle event selection — scroll to it in the editor."""
+        event_name = item.data(0, Qt.ItemDataRole.UserRole)
+        if not event_name:
+            return  # group header clicked
 
-            item_text = f"{icon} {event}"
-            item = QListWidgetItem(item_text)
-            item.setData(Qt.ItemDataRole.UserRole, event)
-            self.events_list.addItem(item)
+        search_text = f'"{event_name}"'
+        doc = self.hooks_editor.document()
+        cursor = doc.find(search_text)
 
-        # Check for old format hooks (not in HOOK_EVENTS)
-        old_format_hooks = [key for key in self.hooks_config.keys() if key not in self.HOOK_EVENTS]
-
-        if old_format_hooks:
-            # Add separator
-            separator = QListWidgetItem("─── OLD FORMAT ───")
-            separator.setFlags(Qt.ItemFlag.NoItemFlags)
-            self.events_list.addItem(separator)
-
-            # Add old format hooks
-            for hook_name in old_format_hooks:
-                item_text = f"⚠️ {hook_name} (old format)"
-                item = QListWidgetItem(item_text)
-                item.setData(Qt.ItemDataRole.UserRole, hook_name)
-                self.events_list.addItem(item)
-
-    def on_event_selected(self, item):
-        """Handle event selection - scroll to it in editor"""
-        event_name = item.data(Qt.ItemDataRole.UserRole)
-
-        if event_name:
-            text = self.hooks_editor.toPlainText()
-            search_text = f'"{event_name}"'
-
-            # Find and highlight in editor
-            cursor = self.hooks_editor.textCursor()
-            doc = self.hooks_editor.document()
-            cursor = doc.find(search_text)
-
-            if not cursor.isNull():
-                cursor.movePosition(cursor.MoveOperation.StartOfLine)
-                cursor.movePosition(cursor.MoveOperation.Down, cursor.MoveMode.KeepAnchor, 10)
-                self.hooks_editor.setTextCursor(cursor)
-                self.hooks_editor.ensureCursorVisible()
+        if not cursor.isNull():
+            cursor.movePosition(cursor.MoveOperation.StartOfLine)
+            cursor.movePosition(cursor.MoveOperation.Down, cursor.MoveMode.KeepAnchor, 10)
+            self.hooks_editor.setTextCursor(cursor)
+            self.hooks_editor.ensureCursorVisible()
 
     def validate_json(self):
         """Validate JSON in editor"""
@@ -424,13 +260,8 @@ class UserHooksSubTab(QWidget):
             config = json.loads(content)
             hooks = config.get("hooks", {})
 
-            # Load existing settings
             settings = self.settings_manager.get_user_settings()
-
-            # Update hooks section
             settings["hooks"] = hooks
-
-            # Save
             self.settings_manager.save_settings(
                 self.config_manager.settings_file,
                 settings
@@ -475,14 +306,11 @@ class UserHooksSubTab(QWidget):
 
     def add_hook(self):
         """Add a new hook for selected event"""
-        selected_items = self.events_list.selectedItems()
-        if not selected_items:
+        event_name = self._get_selected_event()
+        if not event_name:
             QMessageBox.warning(self, "No Selection", "Please select a hook event from the list.")
             return
 
-        event_name = selected_items[0].data(Qt.ItemDataRole.UserRole)
-
-        # Ask which handler type to use
         from PyQt6.QtWidgets import QInputDialog
         hook_type, ok = QInputDialog.getItem(
             self,
@@ -496,11 +324,7 @@ class UserHooksSubTab(QWidget):
             return
 
         handler = dict(self.HOOK_TEMPLATES[hook_type])
-
-        template_hook = {
-            "matcher": "*",
-            "hooks": [handler]
-        }
+        template_hook = {"matcher": "*", "hooks": [handler]}
 
         if event_name not in self.hooks_config:
             self.hooks_config[event_name] = []
@@ -518,16 +342,10 @@ class UserHooksSubTab(QWidget):
 
     def edit_hook(self):
         """Edit hooks for selected event"""
-        selected_items = self.events_list.selectedItems()
-        if not selected_items:
-            QMessageBox.warning(
-                self,
-                "No Selection",
-                "Please select a hook event from the list to edit."
-            )
+        event_name = self._get_selected_event()
+        if not event_name:
+            QMessageBox.warning(self, "No Selection", "Please select a hook event from the list to edit.")
             return
-
-        event_name = selected_items[0].data(Qt.ItemDataRole.UserRole)
 
         if event_name not in self.hooks_config or len(self.hooks_config[event_name]) == 0:
             reply = QMessageBox.question(
@@ -540,17 +358,11 @@ class UserHooksSubTab(QWidget):
                 self.add_hook()
             return
 
-        # Find the hook in the editor and highlight it
-        text = self.hooks_editor.toPlainText()
         search_text = f'"{event_name}"'
-
-        # Find and highlight in editor
-        cursor = self.hooks_editor.textCursor()
         doc = self.hooks_editor.document()
         cursor = doc.find(search_text)
 
         if not cursor.isNull():
-            # Select the entire hook block (rough estimation)
             cursor.movePosition(cursor.MoveOperation.StartOfLine)
             cursor.movePosition(cursor.MoveOperation.Down, cursor.MoveMode.KeepAnchor, 15)
             self.hooks_editor.setTextCursor(cursor)
@@ -567,12 +379,10 @@ class UserHooksSubTab(QWidget):
 
     def remove_hook(self):
         """Remove hook for selected event"""
-        selected_items = self.events_list.selectedItems()
-        if not selected_items:
+        event_name = self._get_selected_event()
+        if not event_name:
             QMessageBox.warning(self, "No Selection", "Please select a hook event from the list.")
             return
-
-        event_name = selected_items[0].data(Qt.ItemDataRole.UserRole)
 
         if event_name not in self.hooks_config or len(self.hooks_config[event_name]) == 0:
             QMessageBox.warning(self, "No Hooks", f"No hooks configured for '{event_name}' event.")
@@ -588,7 +398,6 @@ class UserHooksSubTab(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             del self.hooks_config[event_name]
 
-            # Update editor
             formatted_json = json.dumps({"hooks": self.hooks_config}, indent=2)
             self.hooks_editor.setPlainText(formatted_json)
             self.update_events_list()
