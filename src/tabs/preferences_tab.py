@@ -539,10 +539,8 @@ class PreferencesTab(QWidget):
 
     def _build_theme_editor(self):
         """Build the full Theme Editor panel: colors + typography + spacing."""
-        self._custom_colors = {}
+        self._custom_colors = {}   # kept for backward-compat load from config.json
         self._custom_numbers = {}
-        self._color_btns = {}
-        self._color_hex_lbls = {}
         self._typo_spins = {}     # var_name → QSpinBox
         self._spacing_spins = {}  # var_name → QSpinBox
 
@@ -611,57 +609,7 @@ class PreferencesTab(QWidget):
         self.font_size_spin = self._typo_spins["FONT_SIZE_NORMAL"]
         col_layout.addWidget(typo_group)
 
-        # ── Column 2: COLORS ──────────────────────────────────────────────
-        color_group = QGroupBox("Colors  (click swatch to pick)")
-        color_group.setFixedWidth(290)
-        color_vbox = QVBoxLayout(color_group)
-        color_vbox.setContentsMargins(8, 12, 8, 8)
-        color_vbox.setSpacing(4)
-
-        color_grid_widget = QWidget()
-        color_grid = QGridLayout(color_grid_widget)
-        color_grid.setSpacing(4)
-        color_grid.setContentsMargins(0, 0, 0, 0)
-
-        self._color_name_lbls = {}
-        self._color_usage_lbls = {}
-        for row_idx, (label, var_name, usage) in enumerate(self._THEME_COLOR_VARS):
-            name_lbl = QLabel(label)
-            name_lbl.setStyleSheet(f"color: {theme.FG_PRIMARY};")
-            self._color_name_lbls[var_name] = name_lbl
-            color_grid.addWidget(name_lbl, row_idx, 0)
-
-            current_hex = getattr(theme, var_name, "#888888")
-            swatch = ColorSwatch(current_hex)
-            swatch.setToolTip(f"{var_name}\n\nUsed by: {usage}")
-            swatch.clicked.connect(lambda vn=var_name: self._pick_color(vn))
-            self._color_btns[var_name] = swatch
-            color_grid.addWidget(swatch, row_idx, 1)
-
-            hex_lbl = QLabel(current_hex)
-            hex_lbl.setStyleSheet(
-                f"color: {theme.FG_SECONDARY}; font-family: {theme.FONT_MONOSPACE};"
-            )
-            self._color_hex_lbls[var_name] = hex_lbl
-            color_grid.addWidget(hex_lbl, row_idx, 2)
-
-            usage_lbl = QLabel(usage)
-            usage_lbl.setStyleSheet(
-                f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px; font-style: italic;"
-            )
-            self._color_usage_lbls[var_name] = usage_lbl
-            color_grid.addWidget(usage_lbl, row_idx, 3)
-
-        color_vbox.addWidget(color_grid_widget)
-        reset_colors_btn = QPushButton("Reset Colors")
-        reset_colors_btn.setMaximumWidth(140)
-        reset_colors_btn.setToolTip("Discard all custom color overrides")
-        reset_colors_btn.clicked.connect(self._reset_custom_colors)
-        color_vbox.addWidget(reset_colors_btn)
-        color_vbox.addStretch()
-        col_layout.addWidget(color_group)
-
-        # ── Column 3: SPACING ─────────────────────────────────────────────
+        # ── Column 2: SPACING ─────────────────────────────────────────────
         spacing_group = QGroupBox("Spacing & Layout")
         spacing_group.setFixedWidth(230)
         spacing_form = QFormLayout(spacing_group)
@@ -873,20 +821,6 @@ class PreferencesTab(QWidget):
         # Typography note
         if hasattr(self, '_typo_note_lbl'):
             self._typo_note_lbl.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
-        # Color row labels
-        if hasattr(self, '_color_name_lbls'):
-            for lbl in self._color_name_lbls.values():
-                lbl.setStyleSheet(f"color: {theme.FG_PRIMARY};")
-        # Color hex labels
-        if hasattr(self, '_color_hex_lbls'):
-            for lbl in self._color_hex_lbls.values():
-                lbl.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-family: {theme.FONT_MONOSPACE};")
-        # Color usage labels
-        if hasattr(self, '_color_usage_lbls'):
-            for lbl in self._color_usage_lbls.values():
-                lbl.setStyleSheet(
-                    f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px; font-style: italic;"
-                )
         # Widget theme editor left panel
         if hasattr(self, '_widget_theme_editor'):
             self._widget_theme_editor.apply_theme()
@@ -917,29 +851,8 @@ class PreferencesTab(QWidget):
 
     # ── Color picker ─────────────────────────────────────────────────────────
 
-    def _pick_color(self, var_name: str):
-        """Open a color picker; immediately apply the chosen color to the whole app."""
-        from PyQt6.QtWidgets import QColorDialog
-        from PyQt6.QtGui import QColor
-        current_hex = self._custom_colors.get(var_name, getattr(theme, var_name, "#888888"))
-        color = QColorDialog.getColor(QColor(current_hex), self, f"Pick — {var_name}")
-        if not color.isValid():
-            return
-        new_hex = color.name()
-        # Track the override
-        self._custom_colors[var_name] = new_hex
-        # Apply directly to theme global — live
-        setattr(theme, var_name, new_hex)
-        self._push_app_stylesheet()
-        # Update swatch
-        if var_name in self._color_btns:
-            self._color_btns[var_name].set_color(new_hex)
-        if var_name in self._color_hex_lbls:
-            self._color_hex_lbls[var_name].setText(new_hex)
-        self._update_preview_html()
-
     def _reset_custom_colors(self):
-        """Re-apply the base theme colors, discarding all custom color overrides."""
+        """Re-apply the base theme colors, discarding any unsaved palette changes."""
         self._custom_colors.clear()
         theme.apply_theme(
             self.theme_combo.currentText(),
@@ -972,11 +885,9 @@ class PreferencesTab(QWidget):
         self._update_preview_html()
 
     def _refresh_color_buttons(self):
-        """Sync color swatches and hex labels to current theme globals."""
-        for var_name, swatch in self._color_btns.items():
-            swatch.set_color(getattr(theme, var_name, "#888888"))
-        for var_name, lbl in self._color_hex_lbls.items():
-            lbl.setText(getattr(theme, var_name, "#888888"))
+        """Palette colors are now in the Widget Theme Editor — refresh it instead."""
+        if hasattr(self, '_widget_theme_editor'):
+            self._widget_theme_editor.apply_theme()
 
     def _refresh_typo_spacing_controls(self):
         """Sync typography and spacing spinboxes to current theme globals."""

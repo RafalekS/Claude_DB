@@ -390,6 +390,27 @@ def _make_defs() -> dict:
 WIDGET_DEFS = _make_defs()
 
 
+# ── Palette definitions ───────────────────────────────────────────────────────
+# Maps theme variable name → display info.
+# Order determines display order in the palette list.
+
+PALETTE_DEFS = {
+    'BG_DARK':          {'label': '🌑 Background',    'usage': 'main window bg, code blocks, text editors'},
+    'BG_MEDIUM':        {'label': '⬛ Surface',        'usage': 'panels, footers, inputs, header bg'},
+    'BG_LIGHT':         {'label': '▫ Surface Light',  'usage': 'borders, dividers, scrollbars'},
+    'FG_PRIMARY':       {'label': '📝 Text Primary',   'usage': 'headings, labels, primary text'},
+    'FG_SECONDARY':     {'label': '📃 Text Secondary', 'usage': 'descriptions, subtitles, dim labels'},
+    'FG_DIM':           {'label': '🔅 Text Dim',       'usage': 'disabled text, placeholders'},
+    'ACCENT_PRIMARY':   {'label': '🔵 Accent',         'usage': 'buttons, active tabs, links, key actions'},
+    'ACCENT_SECONDARY': {'label': '🟢 Accent Alt',     'usage': 'footer borders, section markers, hover state'},
+    'ERROR_COLOR':      {'label': '🔴 Error',          'usage': 'error messages, destructive actions'},
+    'WARNING_COLOR':    {'label': '🟡 Warning',        'usage': 'warnings, caution indicators'},
+    'SUCCESS_COLOR':    {'label': '✅ Success',        'usage': 'success messages, OK states'},
+}
+
+_PALETTE_PREFIX = 'PALETTE/'
+
+
 # ── QSS generation ────────────────────────────────────────────────────────────
 
 def build_overrides_qss(overrides: dict) -> str:
@@ -520,6 +541,25 @@ class WidgetPreviewPanel(QScrollArea):
         self._usage_chk = usage_chk
         vbox.addWidget(usage_chk)
 
+        # ── Palette section ───────────────────────────────────────────────────
+        palette_hdr = QLabel("PALETTE COLORS")
+        palette_hdr.setStyleSheet(
+            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; padding: 4px 0 2px 0;"
+        )
+        vbox.addWidget(palette_hdr)
+
+        for var_name, pdef in PALETTE_DEFS.items():
+            key = _PALETTE_PREFIX + var_name
+            btn = QPushButton(pdef['label'])
+            btn.setCheckable(True)
+            btn.setFixedHeight(self._BTN_H)
+            btn.setStyleSheet(self._btn_style(False))
+            btn.setToolTip(pdef['usage'])
+            btn.clicked.connect(lambda _checked, n=key: self._select(n))
+            self._buttons[key] = btn
+            vbox.addWidget(btn)
+
         # ── Separator ─────────────────────────────────────────────────────────
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
@@ -528,11 +568,12 @@ class WidgetPreviewPanel(QScrollArea):
         vbox.addWidget(sep)
 
         # ── Widget list title ─────────────────────────────────────────────────
-        title = QLabel("Select widget:")
-        title.setStyleSheet(
-            f"color: {theme.FG_DIM}; font-style: italic; padding: 2px 0 2px 0;"
+        widget_hdr = QLabel("WIDGET STYLES")
+        widget_hdr.setStyleSheet(
+            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; padding: 4px 0 2px 0;"
         )
-        vbox.addWidget(title)
+        vbox.addWidget(widget_hdr)
 
         # ── Buttons — only widgets with ≥ 1 visible location ─────────────────
         for wname, wdef in WIDGET_DEFS.items():
@@ -769,9 +810,11 @@ _SPIN_W  = 90   # spinbox width
 
 
 class WidgetPropertyPanel(QScrollArea):
-    """Right panel — all editable QSS properties for the selected widget type."""
+    """Right panel — all editable QSS properties for the selected widget type,
+    plus palette color entries that edit global theme variables directly."""
 
     property_changed = pyqtSignal(str, str, str, object)
+    palette_changed  = pyqtSignal(str, str)   # (var_name, new_hex)
 
     def __init__(self, overrides: dict, parent=None):
         super().__init__(parent)
@@ -793,6 +836,9 @@ class WidgetPropertyPanel(QScrollArea):
     # ── public ────────────────────────────────────────────────────────────────
 
     def load_widget(self, widget_name: str):
+        if widget_name.startswith(_PALETTE_PREFIX):
+            self._load_palette_entry(widget_name[len(_PALETTE_PREFIX):])
+            return
         if widget_name not in WIDGET_DEFS:
             return
         self._current = widget_name
@@ -817,10 +863,101 @@ class WidgetPropertyPanel(QScrollArea):
     # ── private ───────────────────────────────────────────────────────────────
 
     def _show_placeholder(self):
-        ph = QLabel("← Select a widget type\nto edit its properties")
+        ph = QLabel("← Select a palette color\nor widget type to edit")
         ph.setAlignment(Qt.AlignmentFlag.AlignCenter)
         ph.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
         self._vbox.addWidget(ph)
+
+    def _load_palette_entry(self, var_name: str):
+        """Render a single color picker for a global palette variable."""
+        if var_name not in PALETTE_DEFS:
+            return
+        self._current = _PALETTE_PREFIX + var_name
+        self._clear()
+
+        pdef = PALETTE_DEFS[var_name]
+
+        title = QLabel(pdef['label'])
+        title.setStyleSheet(
+            f"font-weight: bold; color: {theme.ACCENT_PRIMARY}; padding: 0 0 6px 0;"
+        )
+        self._vbox.addWidget(title)
+
+        usage = QLabel(f"Used by:  {pdef['usage']}")
+        usage.setWordWrap(True)
+        usage.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-style: italic; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 10px 0;"
+        )
+        self._vbox.addWidget(usage)
+
+        cur_hex = getattr(theme, var_name, '#888888')
+        row = QWidget()
+        row.setFixedHeight(_ROW_H)
+        h = QHBoxLayout(row)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setSpacing(6)
+        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        lbl = QLabel("Color")
+        lbl.setFixedWidth(_LBL_W)
+        lbl.setStyleSheet(f"color: {theme.FG_PRIMARY}; background: transparent;")
+        h.addWidget(lbl)
+
+        editor = self._make_palette_color_editor(var_name, cur_hex)
+        editor.setFixedHeight(_ROW_H - 4)
+        editor.setFixedWidth(_SWATCH_W + 6 + _HEX_W)
+        h.addWidget(editor)
+        h.addStretch(1)
+        self._vbox.addWidget(row)
+        self._vbox.addStretch()
+
+    def _make_palette_color_editor(self, var_name: str, cur_hex: str) -> QWidget:
+        """Color swatch + hex field that updates theme.VAR_NAME directly."""
+        container = QWidget()
+        container.setFixedHeight(_ROW_H - 4)
+        h = QHBoxLayout(container)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setSpacing(6)
+        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        swatch = ColorSwatch(cur_hex)
+        hex_edit = QLineEdit(cur_hex)
+        hex_edit.setFixedWidth(_HEX_W)
+        hex_edit.setFixedHeight(_ROW_H - 6)
+        hex_edit.setStyleSheet(
+            f"QLineEdit {{ font-family: {theme.FONT_MONOSPACE}; font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"background: {theme.BG_DARK}; color: {theme.FG_PRIMARY}; "
+            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; padding: 0 4px; }}"
+        )
+
+        def _emit(hex_val: str):
+            self.palette_changed.emit(var_name, hex_val)
+
+        def _pick():
+            from PyQt6.QtWidgets import QColorDialog
+            c = QColorDialog.getColor(QColor(hex_edit.text()), container, f"Pick — {var_name}")
+            if c.isValid():
+                hex_edit.blockSignals(True)
+                hex_edit.setText(c.name())
+                hex_edit.blockSignals(False)
+                swatch.set_color(c.name())
+                _emit(c.name())
+
+        def _hex_typed(text: str):
+            if len(text) == 7 and text.startswith('#'):
+                try:
+                    QColor(text)
+                    swatch.set_color(text)
+                    _emit(text)
+                except Exception:
+                    pass
+
+        swatch.clicked.connect(_pick)
+        hex_edit.textChanged.connect(_hex_typed)
+        h.addWidget(swatch)
+        h.addWidget(hex_edit)
+        return container
 
     def _clear(self):
         while self._vbox.count():
@@ -1010,10 +1147,11 @@ class WidgetThemeEditor(QSplitter):
         self.setCollapsible(1, False)
         self.setCollapsible(2, False)
 
-        # Wire: selecting a widget → load props + update usage panel
+        # Wire: selecting a widget/palette entry → load props + update usage panel
         self._preview_panel.widget_selected.connect(self._prop_panel.load_widget)
         self._preview_panel.widget_selected.connect(self._on_widget_selected)
         self._prop_panel.property_changed.connect(self._on_property_changed)
+        self._prop_panel.palette_changed.connect(self._on_palette_changed)
 
         # Wire: checkbox toggle → show/hide usage panel
         self._preview_panel.usage_panel_toggled.connect(self._toggle_usage_panel)
@@ -1048,10 +1186,30 @@ class WidgetThemeEditor(QSplitter):
         self._preview_panel.apply_theme()
         self._usage_panel.apply_theme()
         # Re-render property panel so section headers / labels pick up new theme colors
+        # (palette entries also re-read their var so the swatch shows the new value)
         if self._prop_panel._current:
             self._prop_panel.load_widget(self._prop_panel._current)
 
     def _on_property_changed(self, wn: str, state: str, qss_key: str, value):
+        if self._on_change:
+            self._on_change()
+
+    def _on_palette_changed(self, var_name: str, new_hex: str):
+        """User edited a palette color — update theme globals and refresh the app."""
+        setattr(theme, var_name, new_hex)
+        # BG_MEDIUM and BG_LIGHT are derived from BG_DARK
+        if var_name == 'BG_DARK':
+            if theme.is_light_color(new_hex):
+                theme.BG_MEDIUM = theme.darken_color(new_hex, 0.08)
+                theme.BG_LIGHT  = theme.darken_color(new_hex, 0.17)
+            else:
+                theme.BG_MEDIUM = theme.lighten_color(new_hex, 0.1)
+                theme.BG_LIGHT  = theme.lighten_color(new_hex, 0.2)
+        # Rebuild widget defaults so they reflect the updated palette
+        new_defs = _make_defs()
+        WIDGET_DEFS.clear()
+        WIDGET_DEFS.update(new_defs)
+        # Push the new app stylesheet
         if self._on_change:
             self._on_change()
 
