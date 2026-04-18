@@ -734,13 +734,6 @@ class PreferencesTab(QWidget):
         if hasattr(self, '_widget_theme_editor'):
             self._widget_theme_editor.apply_theme()
 
-    def _refresh_typo_spacing_controls(self):
-        """Typo/spacing are now in the Widget Theme Editor — refresh its panel if shown."""
-        if hasattr(self, '_widget_theme_editor'):
-            cur = self._widget_theme_editor._prop_panel._current
-            if cur and (cur.startswith('TYPO/') or cur.startswith('SPACING/')):
-                self._widget_theme_editor._prop_panel.load_widget(cur)
-
     # ── Theme management ─────────────────────────────────────────────────────
 
     def _save_current_theme(self):
@@ -1521,7 +1514,6 @@ class {class_name}Tab(QWidget):
         self.theme_changed.emit(theme_name, font_size)
         # Sync editor controls to the new theme's values
         self._refresh_color_buttons()
-        self._refresh_typo_spacing_controls()
         self._update_preview_html()
 
     def _collect_number_overrides(self) -> dict:
@@ -1560,7 +1552,6 @@ class {class_name}Tab(QWidget):
             self._push_app_stylesheet()
 
         self._refresh_color_buttons()
-        self._refresh_typo_spacing_controls()
         self.theme_changed.emit(theme_name, font_size)
         self.save_preferences_silently()
 
@@ -1632,7 +1623,6 @@ class {class_name}Tab(QWidget):
             _atomic_json_write(self.config_file, config_data)
 
             self._refresh_color_buttons()
-            self._refresh_typo_spacing_controls()
             self.theme_changed.emit(theme_name, font_size)
 
             QMessageBox.information(
@@ -1687,7 +1677,6 @@ class {class_name}Tab(QWidget):
                         self._widget_theme_editor.load_widgets_dict(actual_changes)
 
                 self._refresh_color_buttons()
-                self._refresh_typo_spacing_controls()
                 self._push_app_stylesheet()
             else:
                 self._custom_colors = {}
@@ -1707,8 +1696,6 @@ class {class_name}Tab(QWidget):
         self._custom_colors.clear()
         self._custom_numbers.clear()
         self.theme_combo.setCurrentText("Gruvbox Dark")
-        if hasattr(self, '_widget_theme_editor'):
-            self._widget_theme_editor.reset_typo_spacing()
         self.apply_preferences()
 
     def create_full_backup(self):

@@ -395,87 +395,6 @@ def _make_defs() -> dict:
 WIDGET_DEFS = _make_defs()
 
 
-# ── Palette definitions ───────────────────────────────────────────────────────
-# Maps theme variable name → display info.
-# Order determines display order in the palette list.
-
-PALETTE_DEFS = {
-    'BG_DARK':          {'label': '🌑 Background',    'usage': 'main window bg, code blocks, text editors'},
-    'BG_MEDIUM':        {'label': '⬛ Surface',        'usage': 'panels, footers, inputs, header bg'},
-    'BG_LIGHT':         {'label': '▫ Surface Light',  'usage': 'borders, dividers, scrollbars'},
-    'FG_PRIMARY':       {'label': '📝 Text Primary',   'usage': 'headings, labels, primary text'},
-    'FG_SECONDARY':     {'label': '📃 Text Secondary', 'usage': 'descriptions, subtitles, dim labels'},
-    'FG_DIM':           {'label': '🔅 Text Dim',       'usage': 'disabled text, placeholders'},
-    'ACCENT_PRIMARY':   {'label': '🔵 Accent',         'usage': 'buttons, active tabs, links, key actions'},
-    'ACCENT_SECONDARY': {'label': '🟢 Accent Alt',     'usage': 'footer borders, section markers, hover state'},
-    'ERROR_COLOR':      {'label': '🔴 Error',          'usage': 'error messages, destructive actions'},
-    'WARNING_COLOR':    {'label': '🟡 Warning',        'usage': 'warnings, caution indicators'},
-    'SUCCESS_COLOR':    {'label': '✅ Success',        'usage': 'success messages, OK states'},
-}
-
-_PALETTE_PREFIX  = 'PALETTE/'
-
-# ── Typography and Spacing definitions ────────────────────────────────────────
-
-TYPO_DEFS = {
-    'FONT_FAMILY_UI':   {
-        'label': '🔤 UI Font',    'type': 'font_ui',
-        'choices': ["Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
-                    "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu", "Noto Sans", "Open Sans"],
-        'usage': 'All text in the app — labels, buttons, inputs, menus',
-    },
-    'FONT_MONOSPACE':   {
-        'label': '💻 Mono Font',  'type': 'font_mono',
-        'choices': ["Consolas", "Courier New", "DejaVu Sans Mono", "Liberation Mono",
-                    "Monaco", "Menlo", "SF Mono", "Cascadia Code", "Fira Code",
-                    "JetBrains Mono", "Source Code Pro"],
-        'usage': 'Code blocks, hex inputs, terminal-style text',
-    },
-    'FONT_SIZE_NORMAL': {'label': '🔡 Size Normal', 'type': 'px', 'lo': 8,  'hi': 24, 'default': 14,
-                         'usage': 'Default font size everywhere (labels, inputs, buttons)'},
-    'FONT_SIZE_LARGE':  {'label': '🔡 Size Large',  'type': 'px', 'lo': 10, 'hi': 28, 'default': 16,
-                         'usage': 'Section headers and large titles'},
-    'FONT_SIZE_SMALL':  {'label': '🔡 Size Small',  'type': 'px', 'lo': 7,  'hi': 20, 'default': 12,
-                         'usage': 'Descriptions, sub-labels, table cell text'},
-    'FONT_SIZE_TINY':   {'label': '🔡 Size Tiny',   'type': 'px', 'lo': 6,  'hi': 18, 'default': 11,
-                         'usage': 'Status bar, footnotes, very small hints'},
-    'FONT_SIZE_TAB':    {'label': '🔡 Size Tab',    'type': 'px', 'lo': 8,  'hi': 20, 'default': 13,
-                         'usage': 'Tab bar labels on QTabBar'},
-}
-
-SPACING_DEFS = {
-    'BORDER_RADIUS': {'label': '◻ Border Radius', 'type': 'px', 'lo': 0, 'hi': 20, 'default': 4,
-                      'usage': 'Widget corner radius (buttons, inputs, cards)'},
-    'MARGIN_SM':     {'label': '↔ Margin SM',     'type': 'px', 'lo': 0, 'hi': 20, 'default': 3,
-                      'usage': 'Smallest outer margin between elements'},
-    'MARGIN_MD':     {'label': '↔ Margin MD',     'type': 'px', 'lo': 0, 'hi': 30, 'default': 6,
-                      'usage': 'Medium outer margin between sections'},
-    'MARGIN_LG':     {'label': '↔ Margin LG',     'type': 'px', 'lo': 0, 'hi': 40, 'default': 10,
-                      'usage': 'Large outer margin for major sections'},
-    'PADDING_SM':    {'label': '⬜ Padding SM',    'type': 'px', 'lo': 0, 'hi': 20, 'default': 4,
-                      'usage': 'Small inner padding inside widgets'},
-    'PADDING_MD':    {'label': '⬜ Padding MD',    'type': 'px', 'lo': 0, 'hi': 30, 'default': 8,
-                      'usage': 'Standard inner padding for inputs and panels'},
-}
-
-_TYPO_PREFIX    = 'TYPO/'
-_SPACING_PREFIX = 'SPACING/'
-
-
-def _build_palette_usage() -> dict:
-    """Return {palette_var_name: [(widget_name, icon, prop_label, state), ...]}
-    Built by scanning WIDGET_DEFS for palette_key fields."""
-    usage: dict = {}
-    for wname, wdef in WIDGET_DEFS.items():
-        for prop in wdef.get('props', []):
-            pk = prop.get('palette_key')
-            if pk:
-                usage.setdefault(pk, []).append(
-                    (wname, wdef['icon'], prop['label'], prop.get('state', ''))
-                )
-    return usage
-
-
 # ── QSS generation ────────────────────────────────────────────────────────────
 
 def build_overrides_qss(overrides: dict) -> str:
@@ -605,91 +524,6 @@ class WidgetPreviewPanel(QScrollArea):
         )
         self._usage_chk = usage_chk
         vbox.addWidget(usage_chk)
-
-        # ── Palette section ───────────────────────────────────────────────────
-        palette_hdr = QLabel("PALETTE COLORS")
-        palette_hdr.setStyleSheet(
-            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; padding: 4px 0 2px 0;"
-        )
-        vbox.addWidget(palette_hdr)
-
-        for var_name, pdef in PALETTE_DEFS.items():
-            key = _PALETTE_PREFIX + var_name
-            btn = QPushButton(pdef['label'])
-            btn.setCheckable(True)
-            btn.setFixedHeight(self._BTN_H)
-            btn.setStyleSheet(self._btn_style(False))
-            btn.setToolTip(pdef['usage'])
-            btn.clicked.connect(lambda _checked, n=key: self._select(n))
-            self._buttons[key] = btn
-            vbox.addWidget(btn)
-
-        # ── Separator ─────────────────────────────────────────────────────────
-        sep1 = QFrame()
-        sep1.setFrameShape(QFrame.Shape.HLine)
-        sep1.setStyleSheet(f"color: {theme.BG_LIGHT};")
-        sep1.setFixedHeight(1)
-        vbox.addWidget(sep1)
-
-        # ── Typography section ────────────────────────────────────────────────
-        typo_hdr = QLabel("TYPOGRAPHY")
-        typo_hdr.setStyleSheet(
-            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; padding: 4px 0 2px 0;"
-        )
-        vbox.addWidget(typo_hdr)
-
-        for var_name, tdef in TYPO_DEFS.items():
-            key = _TYPO_PREFIX + var_name
-            btn = QPushButton(tdef['label'])
-            btn.setCheckable(True)
-            btn.setFixedHeight(self._BTN_H)
-            btn.setStyleSheet(self._btn_style(False))
-            btn.setToolTip(tdef['usage'])
-            btn.clicked.connect(lambda _checked, n=key: self._select(n))
-            self._buttons[key] = btn
-            vbox.addWidget(btn)
-
-        # ── Spacing section ───────────────────────────────────────────────────
-        sep2 = QFrame()
-        sep2.setFrameShape(QFrame.Shape.HLine)
-        sep2.setStyleSheet(f"color: {theme.BG_LIGHT};")
-        sep2.setFixedHeight(1)
-        vbox.addWidget(sep2)
-
-        spacing_hdr = QLabel("SPACING & LAYOUT")
-        spacing_hdr.setStyleSheet(
-            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; padding: 4px 0 2px 0;"
-        )
-        vbox.addWidget(spacing_hdr)
-
-        for var_name, sdef in SPACING_DEFS.items():
-            key = _SPACING_PREFIX + var_name
-            btn = QPushButton(sdef['label'])
-            btn.setCheckable(True)
-            btn.setFixedHeight(self._BTN_H)
-            btn.setStyleSheet(self._btn_style(False))
-            btn.setToolTip(sdef['usage'])
-            btn.clicked.connect(lambda _checked, n=key: self._select(n))
-            self._buttons[key] = btn
-            vbox.addWidget(btn)
-
-        # ── Separator ─────────────────────────────────────────────────────────
-        sep3 = QFrame()
-        sep3.setFrameShape(QFrame.Shape.HLine)
-        sep3.setStyleSheet(f"color: {theme.BG_LIGHT};")
-        sep3.setFixedHeight(1)
-        vbox.addWidget(sep3)
-
-        # ── Widget list title ─────────────────────────────────────────────────
-        widget_hdr = QLabel("WIDGET STYLES")
-        widget_hdr.setStyleSheet(
-            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; padding: 4px 0 2px 0;"
-        )
-        vbox.addWidget(widget_hdr)
 
         # ── Buttons — only widgets with ≥ 1 visible location ─────────────────
         for wname, wdef in WIDGET_DEFS.items():
@@ -929,10 +763,7 @@ class WidgetPropertyPanel(QScrollArea):
     """Right panel — all editable QSS properties for the selected widget type,
     plus palette color entries that edit global theme variables directly."""
 
-    property_changed   = pyqtSignal(str, str, str, object)
-    palette_changed    = pyqtSignal(str, str)   # (var_name, new_hex)
-    typo_changed       = pyqtSignal(str, object) # (var_name, value)
-    navigate_to_widget = pyqtSignal(str)          # wname — navigate to widget in left panel
+    property_changed = pyqtSignal(str, str, str, object)
 
     def __init__(self, overrides: dict, parent=None):
         super().__init__(parent)
@@ -954,15 +785,6 @@ class WidgetPropertyPanel(QScrollArea):
     # ── public ────────────────────────────────────────────────────────────────
 
     def load_widget(self, widget_name: str):
-        if widget_name.startswith(_PALETTE_PREFIX):
-            self._load_palette_entry(widget_name[len(_PALETTE_PREFIX):])
-            return
-        if widget_name.startswith(_TYPO_PREFIX):
-            self._load_typo_entry(widget_name[len(_TYPO_PREFIX):])
-            return
-        if widget_name.startswith(_SPACING_PREFIX):
-            self._load_spacing_entry(widget_name[len(_SPACING_PREFIX):])
-            return
         if widget_name not in WIDGET_DEFS:
             return
         self._current = widget_name
@@ -987,248 +809,10 @@ class WidgetPropertyPanel(QScrollArea):
     # ── private ───────────────────────────────────────────────────────────────
 
     def _show_placeholder(self):
-        ph = QLabel("← Select a palette color\nor widget type to edit")
+        ph = QLabel("← Select a widget type to edit")
         ph.setAlignment(Qt.AlignmentFlag.AlignCenter)
         ph.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
         self._vbox.addWidget(ph)
-
-    def _load_palette_entry(self, var_name: str):
-        """Render a color picker + affected-widgets list for a global palette variable."""
-        if var_name not in PALETTE_DEFS:
-            return
-        self._current = _PALETTE_PREFIX + var_name
-        self._clear()
-
-        pdef = PALETTE_DEFS[var_name]
-
-        title = QLabel(pdef['label'])
-        title.setStyleSheet(
-            f"font-weight: bold; color: {theme.ACCENT_PRIMARY}; padding: 0 0 4px 0;"
-        )
-        self._vbox.addWidget(title)
-
-        usage = QLabel(pdef['usage'])
-        usage.setWordWrap(True)
-        usage.setStyleSheet(
-            f"color: {theme.FG_DIM}; font-style: italic; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 8px 0;"
-        )
-        self._vbox.addWidget(usage)
-
-        # Color picker row
-        cur_hex = getattr(theme, var_name, '#888888')
-        row = QWidget()
-        row.setFixedHeight(_ROW_H)
-        h = QHBoxLayout(row)
-        h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(6)
-        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
-        lbl = QLabel("Color")
-        lbl.setFixedWidth(_LBL_W)
-        lbl.setStyleSheet(f"color: {theme.FG_PRIMARY}; background: transparent;")
-        h.addWidget(lbl)
-
-        editor = self._make_palette_color_editor(var_name, cur_hex)
-        editor.setFixedHeight(_ROW_H - 4)
-        editor.setFixedWidth(_SWATCH_W + 6 + _HEX_W)
-        h.addWidget(editor)
-        h.addStretch(1)
-        self._vbox.addWidget(row)
-
-        # ── Affected widget properties ─────────────────────────────────────
-        usage_map = _build_palette_usage()
-        affected = usage_map.get(var_name, [])
-        if affected:
-            sep = QFrame()
-            sep.setFrameShape(QFrame.Shape.HLine)
-            sep.setStyleSheet(f"color: {theme.BG_LIGHT};")
-            sep.setFixedHeight(1)
-            self._vbox.addWidget(sep)
-
-            hdr = QLabel("AFFECTS THESE WIDGET PROPERTIES")
-            hdr.setStyleSheet(
-                f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; letter-spacing: 1px; "
-                f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 6px 0 4px 0;"
-            )
-            self._vbox.addWidget(hdr)
-
-            hint = QLabel("Click any entry to open it in the Widget Editor →")
-            hint.setStyleSheet(
-                f"color: {theme.FG_DIM}; font-style: italic; font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 4px 0;"
-            )
-            self._vbox.addWidget(hint)
-
-            for wname, icon, prop_label, state in sorted(affected, key=lambda x: x[0]):
-                state_txt = f"  {state}" if state else ""
-                btn = QPushButton(f"{icon}  ›  {prop_label}{state_txt}")
-                btn.setStyleSheet(
-                    f"QPushButton {{ text-align: left; background: {theme.BG_MEDIUM}; "
-                    f"color: {theme.FG_PRIMARY}; border: 1px solid {theme.BG_LIGHT}; "
-                    f"border-radius: 3px; padding: 3px 8px; "
-                    f"font-size: {theme.FONT_SIZE_SMALL}px; }}"
-                    f"QPushButton:hover {{ background: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}"
-                )
-                btn.clicked.connect(lambda _c, n=wname: self.navigate_to_widget.emit(n))
-                self._vbox.addWidget(btn)
-
-        self._vbox.addStretch()
-
-    def _load_typo_entry(self, var_name: str):
-        """Render a font-family combo or px spinbox for a typography variable."""
-        if var_name not in TYPO_DEFS:
-            return
-        self._current = _TYPO_PREFIX + var_name
-        self._clear()
-
-        tdef = TYPO_DEFS[var_name]
-
-        title = QLabel(tdef['label'])
-        title.setStyleSheet(
-            f"font-weight: bold; color: {theme.ACCENT_PRIMARY}; padding: 0 0 4px 0;"
-        )
-        self._vbox.addWidget(title)
-
-        desc = QLabel(tdef['usage'])
-        desc.setWordWrap(True)
-        desc.setStyleSheet(
-            f"color: {theme.FG_DIM}; font-style: italic; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 10px 0;"
-        )
-        self._vbox.addWidget(desc)
-
-        row = QWidget()
-        row.setFixedHeight(_ROW_H)
-        h = QHBoxLayout(row)
-        h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(6)
-        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
-        lbl = QLabel("Value")
-        lbl.setFixedWidth(_LBL_W)
-        lbl.setStyleSheet(f"color: {theme.FG_PRIMARY}; background: transparent;")
-        h.addWidget(lbl)
-
-        typ = tdef['type']
-        if typ in ('font_ui', 'font_mono'):
-            from PyQt6.QtWidgets import QComboBox as _QCB
-            combo = _QCB()
-            combo.addItems(tdef['choices'])
-            combo.setStyleSheet("combobox-popup: 0;")
-            # current value: FONT_FAMILY_UI for font_ui, FONT_MONOSPACE for font_mono
-            cur_val = getattr(theme, var_name, tdef['choices'][0])
-            idx = combo.findText(cur_val)
-            if idx >= 0:
-                combo.setCurrentIndex(idx)
-            combo.currentTextChanged.connect(
-                lambda val, vn=var_name: self.typo_changed.emit(vn, val)
-            )
-            h.addWidget(combo)
-        else:  # 'px'
-            spin = IntLineEdit(tdef['lo'], tdef['hi'], getattr(theme, var_name, tdef['default']))
-            spin.setFixedWidth(_SPIN_W)
-            spin.setFixedHeight(_ROW_H - 6)
-            spin.valueChanged.connect(
-                lambda val, vn=var_name: self.typo_changed.emit(vn, val)
-            )
-            h.addWidget(spin)
-
-        h.addStretch(1)
-        self._vbox.addWidget(row)
-        self._vbox.addStretch()
-
-    def _load_spacing_entry(self, var_name: str):
-        """Render a px spinbox for a spacing/layout variable."""
-        if var_name not in SPACING_DEFS:
-            return
-        self._current = _SPACING_PREFIX + var_name
-        self._clear()
-
-        sdef = SPACING_DEFS[var_name]
-
-        title = QLabel(sdef['label'])
-        title.setStyleSheet(
-            f"font-weight: bold; color: {theme.ACCENT_PRIMARY}; padding: 0 0 4px 0;"
-        )
-        self._vbox.addWidget(title)
-
-        desc = QLabel(sdef['usage'])
-        desc.setWordWrap(True)
-        desc.setStyleSheet(
-            f"color: {theme.FG_DIM}; font-style: italic; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 10px 0;"
-        )
-        self._vbox.addWidget(desc)
-
-        row = QWidget()
-        row.setFixedHeight(_ROW_H)
-        h = QHBoxLayout(row)
-        h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(6)
-        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
-        lbl = QLabel("Value (px)")
-        lbl.setFixedWidth(_LBL_W)
-        lbl.setStyleSheet(f"color: {theme.FG_PRIMARY}; background: transparent;")
-        h.addWidget(lbl)
-
-        spin = IntLineEdit(sdef['lo'], sdef['hi'], getattr(theme, var_name, sdef['default']))
-        spin.setFixedWidth(_SPIN_W)
-        spin.setFixedHeight(_ROW_H - 6)
-        spin.valueChanged.connect(
-            lambda val, vn=var_name: self.typo_changed.emit(vn, val)
-        )
-        h.addWidget(spin)
-        h.addStretch(1)
-        self._vbox.addWidget(row)
-        self._vbox.addStretch()
-
-    def _make_palette_color_editor(self, var_name: str, cur_hex: str) -> QWidget:
-        """Color swatch + hex field that updates theme.VAR_NAME directly."""
-        container = QWidget()
-        container.setFixedHeight(_ROW_H - 4)
-        h = QHBoxLayout(container)
-        h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(6)
-        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
-        swatch = ColorSwatch(cur_hex)
-        hex_edit = QLineEdit(cur_hex)
-        hex_edit.setFixedWidth(_HEX_W)
-        hex_edit.setFixedHeight(_ROW_H - 6)
-        hex_edit.setStyleSheet(
-            f"QLineEdit {{ font-family: {theme.FONT_MONOSPACE}; font-size: {theme.FONT_SIZE_SMALL}px; "
-            f"background: {theme.BG_DARK}; color: {theme.FG_PRIMARY}; "
-            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; padding: 0 4px; }}"
-        )
-
-        def _emit(hex_val: str):
-            self.palette_changed.emit(var_name, hex_val)
-
-        def _pick():
-            from PyQt6.QtWidgets import QColorDialog
-            c = QColorDialog.getColor(QColor(hex_edit.text()), container, f"Pick — {var_name}")
-            if c.isValid():
-                hex_edit.blockSignals(True)
-                hex_edit.setText(c.name())
-                hex_edit.blockSignals(False)
-                swatch.set_color(c.name())
-                _emit(c.name())
-
-        def _hex_typed(text: str):
-            if len(text) == 7 and text.startswith('#'):
-                try:
-                    QColor(text)
-                    swatch.set_color(text)
-                    _emit(text)
-                except Exception:
-                    pass
-
-        swatch.clicked.connect(_pick)
-        hex_edit.textChanged.connect(_hex_typed)
-        h.addWidget(swatch)
-        h.addWidget(hex_edit)
-        return container
 
     def _clear(self):
         while self._vbox.count():
@@ -1422,11 +1006,6 @@ class WidgetThemeEditor(QSplitter):
         self._preview_panel.widget_selected.connect(self._prop_panel.load_widget)
         self._preview_panel.widget_selected.connect(self._on_widget_selected)
         self._prop_panel.property_changed.connect(self._on_property_changed)
-        self._prop_panel.palette_changed.connect(self._on_palette_changed)
-        self._prop_panel.typo_changed.connect(self._on_typo_changed)
-
-        # Wire: "Affected in:" buttons in palette panel → navigate to that widget
-        self._prop_panel.navigate_to_widget.connect(self._navigate_to_widget)
 
         # Wire: checkbox toggle → show/hide usage panel
         self._preview_panel.usage_panel_toggled.connect(self._toggle_usage_panel)
@@ -1465,66 +1044,7 @@ class WidgetThemeEditor(QSplitter):
         if self._prop_panel._current:
             self._prop_panel.load_widget(self._prop_panel._current)
 
-    def _navigate_to_widget(self, wname: str):
-        """Navigate left panel to wname and load its properties."""
-        self._preview_panel._select(wname)
-        self._prop_panel.load_widget(wname)
-
     def _on_property_changed(self, wn: str, state: str, qss_key: str, value):
-        if self._on_change:
-            self._on_change()
-
-    def _on_typo_changed(self, var_name: str, value):
-        """User changed a typography or spacing value — apply live."""
-        setattr(theme, var_name, value)
-        if var_name == 'FONT_FAMILY_UI':
-            theme.FONT_FAMILY = f"'{value}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-            app = QApplication.instance()
-            if app:
-                from PyQt6.QtGui import QFont
-                app.setFont(QFont(value, theme.FONT_SIZE_NORMAL))
-        elif var_name == 'FONT_MONOSPACE':
-            theme.FONT_FAMILY_MONO = f"'{value}', 'Courier New', monospace"
-        if self._on_change:
-            self._on_change()
-
-    def reset_typo_spacing(self):
-        """Reset all typography and spacing variables to their built-in defaults."""
-        defaults = {
-            'FONT_SIZE_NORMAL': 14, 'FONT_SIZE_LARGE': 16, 'FONT_SIZE_SMALL': 12,
-            'FONT_SIZE_TINY': 11, 'FONT_SIZE_TAB': 13,
-            'BORDER_RADIUS': 4, 'MARGIN_SM': 3, 'MARGIN_MD': 6,
-            'MARGIN_LG': 10, 'PADDING_SM': 4, 'PADDING_MD': 8,
-        }
-        for var_name, val in defaults.items():
-            setattr(theme, var_name, val)
-        theme.FONT_FAMILY_UI = 'Segoe UI'
-        theme.FONT_FAMILY = "'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        theme.FONT_MONOSPACE = 'Consolas'
-        theme.FONT_FAMILY_MONO = "'Consolas', 'Courier New', monospace"
-        # Refresh property panel if currently showing a typo/spacing entry
-        cur = self._prop_panel._current
-        if cur and (cur.startswith(_TYPO_PREFIX) or cur.startswith(_SPACING_PREFIX)):
-            self._prop_panel.load_widget(cur)
-        if self._on_change:
-            self._on_change()
-
-    def _on_palette_changed(self, var_name: str, new_hex: str):
-        """User edited a palette color — update theme globals and refresh the app."""
-        setattr(theme, var_name, new_hex)
-        # BG_MEDIUM and BG_LIGHT are derived from BG_DARK
-        if var_name == 'BG_DARK':
-            if theme.is_light_color(new_hex):
-                theme.BG_MEDIUM = theme.darken_color(new_hex, 0.08)
-                theme.BG_LIGHT  = theme.darken_color(new_hex, 0.17)
-            else:
-                theme.BG_MEDIUM = theme.lighten_color(new_hex, 0.1)
-                theme.BG_LIGHT  = theme.lighten_color(new_hex, 0.2)
-        # Rebuild widget defaults so they reflect the updated palette
-        new_defs = _make_defs()
-        WIDGET_DEFS.clear()
-        WIDGET_DEFS.update(new_defs)
-        # Push the new app stylesheet
         if self._on_change:
             self._on_change()
 
