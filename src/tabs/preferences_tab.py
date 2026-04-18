@@ -705,11 +705,18 @@ class PreferencesTab(QWidget):
 
     def _push_app_stylesheet(self):
         """Regenerate and push the full app stylesheet from current theme globals + widget overrides."""
+        from PyQt6.QtWidgets import QTextBrowser
         app = QApplication.instance()
         if app:
             base_qss = theme.generate_app_stylesheet()
             widget_qss = self._widget_theme_editor.get_overrides_qss() if hasattr(self, '_widget_theme_editor') else ''
             app.setStyleSheet(base_qss + '\n' + widget_qss)
+        # Apply HTML document CSS to every QTextBrowser in the window
+        if hasattr(self, '_widget_theme_editor'):
+            doc_css = self._widget_theme_editor.get_document_css()
+            main_win = self.window()
+            for browser in main_win.findChildren(QTextBrowser):
+                browser.document().setDefaultStyleSheet(doc_css)
 
     def apply_theme(self):
         """Re-apply inline styles that were baked at widget-creation time so they match the current theme."""

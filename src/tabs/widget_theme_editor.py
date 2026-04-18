@@ -419,6 +419,51 @@ def _make_defs() -> dict:
                 {'label': 'Font Family',   'qss': 'font-family',   'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
             ],
         },
+        # ── HTML Content (not QSS — applied via document().setDefaultStyleSheet) ──
+        'HTML_Content': {
+            'selector': '',  # not a QSS widget
+            'qt_class': '',
+            'icon': '🌐 HTML Content',
+            'props': [
+                {'section': 'Body Text'},
+                {'label': 'Color',       'qss': 'color',            'type': COLOR, 'state': 'body', 'val': _c('FG_PRIMARY')},
+                {'label': 'Font Size',   'qss': 'font-size',        'type': PX,    'state': 'body', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family', 'qss': 'font-family',      'type': FONT,  'state': 'body', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
+                {'section': 'H1'},
+                {'label': 'Color',       'qss': 'color',            'type': COLOR, 'state': 'h1',   'val': _c('FG_PRIMARY')},
+                {'label': 'Font Size',   'qss': 'font-size',        'type': PX,    'state': 'h1',   'val': 24},
+                {'label': 'Font Family', 'qss': 'font-family',      'type': FONT,  'state': 'h1',   'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
+                {'label': 'Bold',        'qss': 'font-weight',      'type': BOOL,  'state': 'h1',   'val': True},
+                {'section': 'H2'},
+                {'label': 'Color',       'qss': 'color',            'type': COLOR, 'state': 'h2',   'val': _c('ACCENT_PRIMARY')},
+                {'label': 'Font Size',   'qss': 'font-size',        'type': PX,    'state': 'h2',   'val': 18},
+                {'label': 'Font Family', 'qss': 'font-family',      'type': FONT,  'state': 'h2',   'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
+                {'label': 'Bold',        'qss': 'font-weight',      'type': BOOL,  'state': 'h2',   'val': True},
+                {'section': 'H3'},
+                {'label': 'Color',       'qss': 'color',            'type': COLOR, 'state': 'h3',   'val': _c('ACCENT_SECONDARY')},
+                {'label': 'Font Size',   'qss': 'font-size',        'type': PX,    'state': 'h3',   'val': 15},
+                {'label': 'Font Family', 'qss': 'font-family',      'type': FONT,  'state': 'h3',   'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
+                {'label': 'Bold',        'qss': 'font-weight',      'type': BOOL,  'state': 'h3',   'val': True},
+                {'section': 'H4'},
+                {'label': 'Color',       'qss': 'color',            'type': COLOR, 'state': 'h4',   'val': _c('FG_PRIMARY')},
+                {'label': 'Font Size',   'qss': 'font-size',        'type': PX,    'state': 'h4',   'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family', 'qss': 'font-family',      'type': FONT,  'state': 'h4',   'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
+                {'label': 'Bold',        'qss': 'font-weight',      'type': BOOL,  'state': 'h4',   'val': True},
+                {'section': 'Inline Code'},
+                {'label': 'Color',       'qss': 'color',            'type': COLOR, 'state': 'code', 'val': _c('ACCENT_SECONDARY')},
+                {'label': 'Background',  'qss': 'background-color', 'type': COLOR, 'state': 'code', 'val': _c('BG_MEDIUM')},
+                {'label': 'Font Size',   'qss': 'font-size',        'type': PX,    'state': 'code', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Family', 'qss': 'font-family',      'type': FONT,  'state': 'code', 'val': _s('FONT_MONOSPACE', 'Consolas')},
+                {'section': 'Code Block (pre)'},
+                {'label': 'Color',       'qss': 'color',            'type': COLOR, 'state': 'pre',  'val': _c('FG_PRIMARY')},
+                {'label': 'Background',  'qss': 'background-color', 'type': COLOR, 'state': 'pre',  'val': _c('BG_MEDIUM')},
+                {'label': 'Font Size',   'qss': 'font-size',        'type': PX,    'state': 'pre',  'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Family', 'qss': 'font-family',      'type': FONT,  'state': 'pre',  'val': _s('FONT_MONOSPACE', 'Consolas')},
+                {'label': 'Padding',     'qss': 'padding',          'type': PX,    'state': 'pre',  'val': 10},
+                {'section': 'Links (a)'},
+                {'label': 'Color',       'qss': 'color',            'type': COLOR, 'state': 'a',    'val': _c('ACCENT_PRIMARY')},
+            ],
+        },
     }
 
 
@@ -438,6 +483,8 @@ def build_overrides_qss(overrides: dict) -> str:
     for wname, state_map in overrides.items():
         if wname not in WIDGET_DEFS:
             continue
+        if not WIDGET_DEFS[wname]['selector']:   # HTML entries have no QSS selector
+            continue
         base_sel = WIDGET_DEFS[wname]['selector']
         for (state, qss_key), value in state_map.items():
             full_sel = base_sel + state
@@ -447,6 +494,37 @@ def build_overrides_qss(overrides: dict) -> str:
     for sel, decls in by_sel.items():
         decl_str = '; '.join(_fmt(k, v) for k, v in decls.items())
         parts.append(f"{sel} {{ {decl_str} }}")
+    return '\n'.join(parts)
+
+
+def build_document_css(overrides: dict) -> str:
+    """Generate CSS for QTextDocument.setDefaultStyleSheet() from HTML_Content overrides.
+    This controls h1–h4, body, code, pre, a inside any QTextBrowser."""
+    wdef = WIDGET_DEFS.get('HTML_Content')
+    if not wdef:
+        return ''
+    state_map = overrides.get('HTML_Content', {})
+
+    # Group declarations by HTML element name (stored in prop['state'])
+    by_el: dict[str, list[str]] = {}
+    for prop in wdef['props']:
+        if 'section' in prop:
+            continue
+        el = prop['state']
+        key = (el, prop['qss'])
+        val = state_map.get(key, prop['val'])
+        ptype = prop['type']
+        if ptype == BOOL:
+            decl = f"font-weight: {'bold' if val else 'normal'}"
+        elif ptype == PX and isinstance(val, int):
+            decl = f"{prop['qss']}: {val}px"
+        else:
+            decl = f"{prop['qss']}: {val}"
+        by_el.setdefault(el, []).append(decl)
+
+    parts = []
+    for el, decls in by_el.items():
+        parts.append(f"{el} {{ {'; '.join(decls)} }}")
     return '\n'.join(parts)
 
 
@@ -557,6 +635,8 @@ class WidgetPreviewPanel(QScrollArea):
 
         # ── Buttons — only widgets with ≥ 1 visible location ─────────────────
         for wname, wdef in WIDGET_DEFS.items():
+            if not wdef.get('selector'):   # skip HTML pseudo-entries here
+                continue
             qt_class = wdef.get('qt_class', wdef['selector'].split('::')[0].split(' ')[0])
             locations = self._vis_idx.get(qt_class, [])
             if not locations:
@@ -570,6 +650,22 @@ class WidgetPreviewPanel(QScrollArea):
             btn.clicked.connect(lambda _checked, n=wname: self._select(n))
             self._buttons[wname] = btn
             vbox.addWidget(btn)
+
+        # ── HTML Content — always present (applies to all QTextBrowser tabs) ──
+        sep = QLabel("── HTML ──")
+        sep.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px; "
+            f"padding: 6px 0 2px 0; background: transparent;"
+        )
+        vbox.addWidget(sep)
+        html_btn = QPushButton(WIDGET_DEFS['HTML_Content']['icon'])
+        html_btn.setCheckable(True)
+        html_btn.setFixedHeight(self._BTN_H)
+        html_btn.setStyleSheet(self._btn_style(False))
+        html_btn.setToolTip("Style h1–h4, body, code, pre and links inside any QTextBrowser")
+        html_btn.clicked.connect(lambda _: self._select('HTML_Content'))
+        self._buttons['HTML_Content'] = html_btn
+        vbox.addWidget(html_btn)
 
         vbox.addStretch()
         self.setWidget(content)
@@ -1104,6 +1200,10 @@ class WidgetThemeEditor(QSplitter):
     def get_overrides_qss(self) -> str:
         """Return the current per-widget overrides as a QSS string."""
         return build_overrides_qss(self._overrides)
+
+    def get_document_css(self) -> str:
+        """Return HTML CSS for QTextDocument.setDefaultStyleSheet()."""
+        return build_document_css(self._overrides)
 
     # ── Public API: full widget definitions ───────────────────────────────────
 
