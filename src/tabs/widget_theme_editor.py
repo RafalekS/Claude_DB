@@ -25,6 +25,15 @@ from utils.widget_indexer import load_visible_ui_index, build_entries_by_qt_clas
 COLOR  = 'color'
 PX     = 'px'
 BOOL   = 'bool'
+FONT   = 'font'
+
+_FONT_CHOICES = [
+    "Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
+    "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu",
+    "Noto Sans", "Open Sans", "Consolas", "Courier New",
+    "DejaVu Sans Mono", "Liberation Mono", "JetBrains Mono",
+    "Fira Code", "Source Code Pro", "Cascadia Code",
+]
 
 # ── Pixel-valued CSS properties (need "px" suffix in QSS) ────────────────────
 _PX_PROPS = {
@@ -54,6 +63,10 @@ def _n(key: str, fallback: int = 4) -> int:
     return getattr(theme, key, fallback)
 
 
+def _s(key: str, fallback: str = '') -> str:
+    return getattr(theme, key, fallback)
+
+
 # ── Widget definitions ────────────────────────────────────────────────────────
 #
 # Each entry:
@@ -79,11 +92,12 @@ def _make_defs() -> dict:
                 {'section': 'Normal'},
                 _cp('Background',    'background-color', '',          'ACCENT_PRIMARY'),
                 _cp('Text Color',    'color',            '',          'BG_DARK'),
-                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding V',     'qss': 'padding-top',   'type': PX, 'state': '', 'val': 4},
-                {'label': 'Padding H',     'qss': 'padding-left',  'type': PX, 'state': '', 'val': 10},
-                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
-                {'label': 'Bold',          'qss': 'font-weight',   'type': BOOL,'state': '', 'val': True},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX,   'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding V',     'qss': 'padding-top',   'type': PX,   'state': '', 'val': 4},
+                {'label': 'Padding H',     'qss': 'padding-left',  'type': PX,   'state': '', 'val': 10},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX,   'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family',   'qss': 'font-family',   'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
+                {'label': 'Bold',          'qss': 'font-weight',   'type': BOOL, 'state': '', 'val': True},
                 {'section': 'Hover'},
                 _cp('Background',    'background-color', ':hover',    'ACCENT_SECONDARY'),
                 _cp('Text Color',    'color',            ':hover',    'BG_DARK'),
@@ -100,8 +114,9 @@ def _make_defs() -> dict:
             'props': [
                 {'section': 'Normal'},
                 _cp('Text Color',    'color',            '',          'FG_PRIMARY'),
-                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
-                {'label': 'Bold',      'qss': 'font-weight','type': BOOL,'state': '', 'val': False},
+                {'label': 'Font Size',   'qss': 'font-size',   'type': PX,   'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family', 'qss': 'font-family', 'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
+                {'label': 'Bold',        'qss': 'font-weight', 'type': BOOL, 'state': '', 'val': False},
                 {'label': 'Padding',   'qss': 'padding',   'type': PX, 'state': '', 'val': 0},
                 {'label': 'Background','qss': 'background-color','type': COLOR,'state': '', 'val': 'transparent'},
             ],
@@ -116,8 +131,9 @@ def _make_defs() -> dict:
                 _cp('Border Color',  'border-color',     '',       'BG_LIGHT'),
                 {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
                 {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 4},
-                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX,   'state': '', 'val': 4},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX,   'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family',   'qss': 'font-family',   'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
                 {'section': 'Focus'},
                 _cp('Border Color',  'border-color',     ':focus', 'ACCENT_PRIMARY'),
             ],
@@ -132,8 +148,9 @@ def _make_defs() -> dict:
                 _cp('Border Color',  'border-color',     '',       'BG_LIGHT'),
                 {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
                 {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 4},
-                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX,   'state': '', 'val': 4},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX,   'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Family',   'qss': 'font-family',   'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
             ],
         },
         'TextBrowser': {
@@ -146,8 +163,9 @@ def _make_defs() -> dict:
                 _cp('Border Color',  'border-color',     '',       'BG_LIGHT'),
                 {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
                 {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 6},
-                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX,   'state': '', 'val': 6},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX,   'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Family',   'qss': 'font-family',   'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
             ],
         },
         'ComboBox': {
@@ -160,7 +178,9 @@ def _make_defs() -> dict:
                 _cp('Border Color',  'border-color',      '',                    'BG_LIGHT'),
                 {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
                 {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 4},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX,   'state': '', 'val': 4},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX,   'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family',   'qss': 'font-family',   'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
                 {'section': 'Hover'},
                 _cp('Background',    'background-color',  ':hover',              'BG_MEDIUM'),
                 {'section': 'Dropdown'},
@@ -174,8 +194,9 @@ def _make_defs() -> dict:
             'props': [
                 {'section': 'Normal'},
                 _cp('Text Color',    'color',             '',                    'FG_PRIMARY'),
-                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
-                {'label': 'Spacing',   'qss': 'spacing',   'type': PX, 'state': '', 'val': 6},
+                {'label': 'Font Size',   'qss': 'font-size',   'type': PX,   'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family', 'qss': 'font-family', 'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
+                {'label': 'Spacing',     'qss': 'spacing',     'type': PX,   'state': '', 'val': 6},
                 {'section': 'Checked Indicator'},
                 _cp('Indicator BG',  'background-color',  '::indicator:checked', 'ACCENT_PRIMARY'),
                 {'label': 'Indicator Size', 'qss': 'width', 'type': PX, 'state': '::indicator', 'val': 14},
@@ -187,7 +208,8 @@ def _make_defs() -> dict:
             'props': [
                 {'section': 'Normal'},
                 _cp('Text Color',    'color',             '',                    'FG_PRIMARY'),
-                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Size',   'qss': 'font-size',   'type': PX,   'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family', 'qss': 'font-family', 'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
                 {'section': 'Checked Indicator'},
                 _cp('Indicator BG',  'background-color',  '::indicator:checked', 'ACCENT_PRIMARY'),
                 {'label': 'Indicator Size', 'qss': 'width', 'type': PX, 'state': '::indicator', 'val': 14},
@@ -201,7 +223,8 @@ def _make_defs() -> dict:
                 _cp('Background',    'background-color',           '',               'BG_DARK'),
                 _cp('Alt Row Color', 'alternate-background-color', '',               'BG_MEDIUM'),
                 _cp('Grid Color',    'gridline-color',             '',               'BG_LIGHT'),
-                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Size',   'qss': 'font-size',   'type': PX,   'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Family', 'qss': 'font-family', 'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
                 {'section': 'Header (QHeaderView)'},
                 _cp('Header BG',     'background-color',           '::section',      'BG_MEDIUM'),
                 _cp('Header Text',   'color',                      '::section',      'FG_PRIMARY'),
@@ -217,7 +240,8 @@ def _make_defs() -> dict:
                 {'section': 'List'},
                 _cp('Background',    'background-color', '',              'BG_DARK'),
                 _cp('Text Color',    'color',            '',              'FG_PRIMARY'),
-                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Size',   'qss': 'font-size',   'type': PX,   'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Family', 'qss': 'font-family', 'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
                 {'section': 'Item Hover'},
                 _cp('Hover BG',      'background-color', '::item:hover',  'BG_MEDIUM'),
                 _cp('Hover Text',    'color',            '::item:hover',  'FG_PRIMARY'),
@@ -233,7 +257,8 @@ def _make_defs() -> dict:
                 {'section': 'Tree'},
                 _cp('Background',    'background-color', '',               'BG_DARK'),
                 _cp('Text Color',    'color',            '',               'FG_PRIMARY'),
-                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Size',   'qss': 'font-size',   'type': PX,   'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Family', 'qss': 'font-family', 'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
                 {'section': 'Item Hover'},
                 _cp('Hover BG',      'background-color', '::item:hover',   'BG_MEDIUM'),
                 {'section': 'Selected Item'},
@@ -307,7 +332,9 @@ def _make_defs() -> dict:
                 _cp('Border Color',  'border-color',     '',       'BG_LIGHT'),
                 {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
                 {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 3},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX,   'state': '', 'val': 3},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX,   'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family',   'qss': 'font-family',   'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
                 {'section': 'Focus'},
                 _cp('Border Color',  'border-color',     ':focus', 'ACCENT_PRIMARY'),
             ],
@@ -321,7 +348,8 @@ def _make_defs() -> dict:
                 _cp('Text Color',    'color',            '',          'FG_SECONDARY'),
                 {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 6},
                 {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': 4},
-                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_TAB', 11)},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX,   'state': '', 'val': _n('FONT_SIZE_TAB', 11)},
+                {'label': 'Font Family',   'qss': 'font-family',   'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
                 {'section': 'Selected'},
                 _cp('Background',    'background-color', ':selected', 'BG_DARK'),
                 _cp('Text Color',    'color',            ':selected', 'FG_PRIMARY'),
@@ -372,7 +400,8 @@ def _make_defs() -> dict:
                 {'section': 'Normal'},
                 _cp('Background',    'background-color', '',          'BG_DARK'),
                 _cp('Text Color',    'color',            '',          'FG_PRIMARY'),
-                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Size',   'qss': 'font-size',   'type': PX,   'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Font Family', 'qss': 'font-family', 'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
             ],
         },
         'ToolTip': {
@@ -386,7 +415,8 @@ def _make_defs() -> dict:
                 {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
                 {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
                 {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 4},
-                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX,   'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                {'label': 'Font Family',   'qss': 'font-family',   'type': FONT, 'state': '', 'val': _s('FONT_FAMILY_UI', 'Segoe UI')},
             ],
         },
     }
@@ -752,11 +782,12 @@ class UsagePanel(QWidget):
 
 # ── WidgetPropertyPanel ───────────────────────────────────────────────────────
 
-_ROW_H   = 30   # every editor row same height
-_LBL_W   = 130  # label column width
-_SWATCH_W = 40  # colour swatch width
-_HEX_W   = 90   # hex input width
-_SPIN_W  = 90   # spinbox width
+_ROW_H    = 30   # every editor row same height
+_LBL_W    = 130  # label column width
+_SWATCH_W = 40   # colour swatch width
+_HEX_W    = 90   # hex input width
+_SPIN_W   = 90   # spinbox width
+_COMBO_W  = 160  # font-family combo width
 
 
 class WidgetPropertyPanel(QScrollArea):
@@ -862,6 +893,9 @@ class WidgetPropertyPanel(QScrollArea):
         elif ptype == BOOL:
             editor = self._make_bool_editor(widget_name, state, qss_key, cur_val)
             editor.setFixedWidth(24)
+        elif ptype == FONT:
+            editor = self._make_font_editor(widget_name, state, qss_key, cur_val)
+            editor.setFixedWidth(_COMBO_W)
         else:
             editor = QLabel(f"({ptype}?)")
             editor.setFixedWidth(60)
@@ -958,6 +992,25 @@ class WidgetPropertyPanel(QScrollArea):
         )
         h.addWidget(cb)
         return container
+
+    def _make_font_editor(self, wn, state, qss_key, cur_val) -> QWidget:
+        from PyQt6.QtWidgets import QComboBox
+        combo = QComboBox()
+        combo.addItems(_FONT_CHOICES)
+        combo.setStyleSheet(
+            f"QComboBox {{ background: {theme.BG_DARK}; color: {theme.FG_PRIMARY}; "
+            f"border: 1px solid {theme.BG_LIGHT}; border-radius: 3px; padding: 2px 4px; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; }} combobox-popup: 0;"
+        )
+        combo.view().setStyleSheet(f"max-height: 300px;")
+        cur = str(cur_val) if cur_val else _FONT_CHOICES[0]
+        idx = combo.findText(cur)
+        if idx >= 0:
+            combo.setCurrentIndex(idx)
+        combo.currentTextChanged.connect(
+            lambda val, _wn=wn, _st=state, _qk=qss_key: self._emit_change(_wn, _st, _qk, val)
+        )
+        return combo
 
     def _emit_change(self, wn: str, state: str, qss_key: str, value):
         self._overrides.setdefault(wn, {})[(state, qss_key)] = value

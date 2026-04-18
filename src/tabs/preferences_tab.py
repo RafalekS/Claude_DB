@@ -688,7 +688,7 @@ class PreferencesTab(QWidget):
             wname = item.data(Qt.ItemDataRole.UserRole)
             if not wname:
                 return
-            self._inner_tabs.setCurrentIndex(1)
+            self._inner_tabs.setCurrentIndex(0)
             if hasattr(self, "_widget_theme_editor"):
                 self._widget_theme_editor._preview_panel._select(wname)
                 self._widget_theme_editor._prop_panel.load_widget(wname)
