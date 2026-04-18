@@ -706,25 +706,41 @@ class PreferencesTab(QWidget):
     def _push_app_stylesheet(self):
         """Regenerate and push the full app stylesheet from current theme globals + widget overrides."""
         from PyQt6.QtWidgets import QTextBrowser
+        from PyQt6.QtGui import QPalette, QColor
         app = QApplication.instance()
         if app:
             base_qss = theme.generate_app_stylesheet()
             widget_qss = self._widget_theme_editor.get_overrides_qss() if hasattr(self, '_widget_theme_editor') else ''
             app.setStyleSheet(base_qss + '\n' + widget_qss)
-        # Apply HTML document CSS to every QTextBrowser in the window.
-        # We use the original HTML source stored by the monkey-patched setHtml()
-        # in main.py rather than toHtml(), which would destroy <code>/<h2>/etc.
-        if hasattr(self, '_widget_theme_editor'):
-            doc_css = self._widget_theme_editor.get_document_css()
-            main_win = self.window()
-            for browser in main_win.findChildren(QTextBrowser):
-                orig_html = browser.property("_html_source")
-                if orig_html is None:
-                    continue  # browser hasn't been set via setHtml, skip
-                scroll = browser.verticalScrollBar().value()
-                browser.document().setDefaultStyleSheet(doc_css)
-                browser.setHtml(orig_html)
-                browser.verticalScrollBar().setValue(scroll)
+
+        if not hasattr(self, '_widget_theme_editor'):
+            return
+
+        doc_css = self._widget_theme_editor.get_document_css()
+
+        # Extract body color/bg from HTML_Content overrides so we can apply them
+        # via QPalette — necessary because QSS "color" on QTextBrowser overrides
+        # any CSS set through setDefaultStyleSheet.
+        html_ov = self._widget_theme_editor._overrides.get('HTML_Content', {})
+        body_color = html_ov.get(('body', 'color'))
+        body_bg    = html_ov.get(('body', 'background-color'))
+
+        main_win = self.window()
+        for browser in main_win.findChildren(QTextBrowser):
+            orig_html = browser.property("_html_source")
+            if orig_html is None:
+                continue  # browser not set via setHtml; skip
+
+            # Apply body color/bg via palette so it wins over QSS
+            pal = browser.palette()
+            pal.setColor(QPalette.ColorRole.Text,   QColor(body_color) if body_color else QColor(theme.FG_PRIMARY))
+            pal.setColor(QPalette.ColorRole.Base,   QColor(body_bg)    if body_bg    else QColor(theme.BG_DARK))
+            browser.setPalette(pal)
+
+            scroll = browser.verticalScrollBar().value()
+            browser.document().setDefaultStyleSheet(doc_css)
+            browser.setHtml(orig_html)
+            browser.verticalScrollBar().setValue(scroll)
 
     def apply_theme(self):
         """Re-apply inline styles that were baked at widget-creation time so they match the current theme."""

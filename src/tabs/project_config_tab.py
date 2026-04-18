@@ -309,9 +309,8 @@ class ProjectConfigTab(QWidget):
         separator.setStyleSheet(f"background-color: {theme.BG_LIGHT};")
         layout.addWidget(separator)
 
-        # Tab widget for sub-tabs — uses global app stylesheet, no per-widget override
+        # Tab widget for sub-tabs — always enabled; each subtab handles "no project" state
         self.sub_tabs = QTabWidget()
-        self.sub_tabs.setEnabled(False)  # Disabled until project is selected
 
         # Add sub-tabs with actual implementations
 
@@ -389,7 +388,6 @@ class ProjectConfigTab(QWidget):
             current_project = self.project_context.get_project()
             self.project_path_input.setText(str(current_project))
             self.update_status(current_project)
-            self.sub_tabs.setEnabled(True)
 
     def browse_project_folder(self):
         """Open folder picker dialog"""
@@ -407,8 +405,7 @@ class ProjectConfigTab(QWidget):
             if self.project_context.set_project(project_path):
                 self.project_path_input.setText(str(project_path))
                 self.update_status(project_path)
-                self.sub_tabs.setEnabled(True)
-
+    
                 # Ensure .claude folder exists
                 if not self.project_context.validate_claude_folder():
                     reply = QMessageBox.question(
@@ -453,14 +450,12 @@ class ProjectConfigTab(QWidget):
             f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
             f"border-radius: 3px;"
         )
-        self.sub_tabs.setEnabled(False)
 
     def on_project_changed(self, new_project: Path):
         """Handle project context changes (from external sources)"""
         if new_project:
             self.project_path_input.setText(str(new_project))
             self.update_status(new_project)
-            self.sub_tabs.setEnabled(True)
         else:
             self.clear_project()
 

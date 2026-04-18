@@ -1024,19 +1024,47 @@ class WidgetPropertyPanel(QScrollArea):
 
         def _pick():
             from PyQt6.QtWidgets import QColorDialog
-            c = QColorDialog.getColor(QColor(hex_edit.text()), container, f"Pick — {qss_key}")
+            initial = QColor(hex_edit.text())
+            # Parse alpha from 9-char hex (#aarrggbb) if present
+            if len(hex_edit.text()) == 9:
+                try:
+                    a = int(hex_edit.text()[1:3], 16)
+                    initial.setAlpha(a)
+                except ValueError:
+                    pass
+            c = QColorDialog.getColor(
+                initial, container, f"Pick — {qss_key}",
+                QColorDialog.ColorDialogOption.ShowAlphaChannel,
+            )
             if c.isValid():
+                # Use #rrggbb when fully opaque, rgba(...) when translucent
+                if c.alpha() == 255:
+                    hex_val = c.name()
+                else:
+                    hex_val = f"rgba({c.red()},{c.green()},{c.blue()},{c.alpha()/255:.2f})"
                 hex_edit.blockSignals(True)
-                hex_edit.setText(c.name())
+                hex_edit.setText(hex_val)
                 hex_edit.blockSignals(False)
-                swatch.set_color(c.name())
-                self._emit_change(wn, state, qss_key, c.name())
+                swatch.set_color(c.name())   # swatch shows the solid RGB colour
+                self._emit_change(wn, state, qss_key, hex_val)
 
         def _hex_typed(text: str):
-            if len(text) == 7 and text.startswith('#'):
+            is_hex6 = len(text) == 7 and text.startswith('#')
+            is_rgba = text.startswith('rgba(')
+            if is_hex6:
                 try:
-                    QColor(text)
-                    swatch.set_color(text)
+                    col = QColor(text)
+                    if col.isValid():
+                        swatch.set_color(text)
+                        self._emit_change(wn, state, qss_key, text)
+                except Exception:
+                    pass
+            elif is_rgba and text.endswith(')'):
+                # rgba values are valid CSS — update swatch with RGB part
+                try:
+                    parts = text[5:-1].split(',')
+                    r, g, b = int(parts[0]), int(parts[1]), int(parts[2])
+                    swatch.set_color(f"#{r:02x}{g:02x}{b:02x}")
                     self._emit_change(wn, state, qss_key, text)
                 except Exception:
                     pass
