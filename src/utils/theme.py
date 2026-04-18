@@ -11,26 +11,59 @@ logger = logging.getLogger(__name__)
 # Path to themes config
 THEMES_FILE = Path(__file__).parent.parent.parent / "config" / "themes" / "themes.json"
 
-# Load all available themes from config
-def load_themes():
-    """Load themes from config/themes.json"""
+# Meta-keys stored at the top level of themes.json that are NOT theme entries
+_META_KEYS = {"active_theme"}
+
+_FALLBACK_THEMES = {
+    "Gruvbox Dark": {
+        "background": "#282828",
+        "foreground": "#EBDBB2",
+        "brightBlue": "#83A598",
+        "brightGreen": "#B8BB26",
+        "brightRed": "#FB4934",
+        "brightYellow": "#FABD2F",
+        "selection": "#504945",
+        "font_size": 14,
+        "font_family": "Segoe UI",
+        "font_mono": "Consolas",
+        "custom_colors": {},
+        "custom_numbers": {},
+    }
+}
+
+
+def _load_raw_themes() -> dict:
+    """Load the raw themes.json dict (including meta-keys like active_theme)."""
     try:
         with open(THEMES_FILE, 'r') as f:
             return json.load(f)
     except Exception as e:
         logger.error("Error loading themes: %s", e)
-        # Return default Gruvbox Dark if file can't be loaded
-        return {
-            "Gruvbox Dark": {
-                "background": "#282828",
-                "foreground": "#EBDBB2",
-                "brightBlue": "#83A598",
-                "brightGreen": "#B8BB26",
-                "brightRed": "#FB4934",
-                "brightYellow": "#FABD2F",
-                "selection": "#504945"
-            }
-        }
+        return {"active_theme": "Gruvbox Dark", **_FALLBACK_THEMES}
+
+
+def load_themes() -> dict:
+    """Return only theme entries (excludes meta-keys like active_theme)."""
+    raw = _load_raw_themes()
+    return {k: v for k, v in raw.items() if k not in _META_KEYS}
+
+
+def get_active_theme_name() -> str:
+    """Return the name of the active theme stored in themes.json."""
+    raw = _load_raw_themes()
+    return raw.get("active_theme", "Gruvbox Dark")
+
+
+def set_active_theme_name(name: str) -> None:
+    """Persist the active theme name to themes.json."""
+    try:
+        raw = _load_raw_themes()
+        raw["active_theme"] = name
+        with open(THEMES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(raw, f, indent=2)
+    except Exception as e:
+        logger.error("Failed to set active theme '%s': %s", name, e)
+
 
 # Load themes once
 AVAILABLE_THEMES = load_themes()
@@ -820,32 +853,53 @@ def get_current_colors_dict() -> dict:
     }
 
 
-def save_theme_to_file(name: str, widgets: dict | None = None) -> bool:
+def save_theme_to_file(
+    name: str,
+    widgets: dict | None = None,
+    font_size: int | None = None,
+    font_family: str | None = None,
+    font_mono: str | None = None,
+    custom_colors: dict | None = None,
+    custom_numbers: dict | None = None,
+    set_active: bool = False,
+) -> bool:
     """Snapshot current color globals and save as a named entry in themes.json.
 
-    If *widgets* is supplied (a complete per-widget dict from
-    WidgetThemeEditor.get_widgets_dict()), it is stored under the ``widgets``
-    key inside the theme entry so every widget's appearance is part of the
-    theme definition.
+    All per-theme data (fonts, overrides, widget styles) is stored under the
+    theme entry so themes.json is the single source of truth.
 
     Returns True on success.
     """
     global AVAILABLE_THEMES
     try:
-        existing = load_themes()
+        raw = _load_raw_themes()
+        existing = {k: v for k, v in raw.items() if k not in _META_KEYS}
         entry = get_current_colors_dict()
-        if widgets:
+
+        # Persist per-theme font settings
+        entry["font_size"] = font_size if font_size is not None else FONT_SIZE_NORMAL
+        entry["font_family"] = font_family if font_family is not None else FONT_FAMILY_UI
+        entry["font_mono"] = font_mono if font_mono is not None else FONT_MONOSPACE
+
+        # Persist per-theme color/number overrides
+        entry["custom_colors"] = custom_colors if custom_colors is not None else {}
+        entry["custom_numbers"] = custom_numbers if custom_numbers is not None else {}
+
+        # Persist widget overrides
+        if widgets is not None:
             entry["widgets"] = widgets
         elif name in existing:
-            # Preserve any previously-saved widget definitions
             for key in ("widgets", "__widget_overrides"):
                 if key in existing[name]:
                     entry["widgets"] = existing[name][key]
                     break
-        existing[name] = entry
+
+        raw[name] = entry
+        if set_active:
+            raw["active_theme"] = name
         with open(THEMES_FILE, 'w', encoding='utf-8') as f:
-            json.dump(existing, f, indent=2)
-        AVAILABLE_THEMES = existing
+            json.dump(raw, f, indent=2)
+        AVAILABLE_THEMES = load_themes()
         return True
     except Exception as e:
         logger.error("Failed to save theme '%s': %s", name, e)
@@ -865,13 +919,17 @@ def delete_theme_from_file(name: str) -> bool:
     """Remove a named theme from themes.json. Returns True on success."""
     global AVAILABLE_THEMES
     try:
-        existing = load_themes()
-        if name not in existing:
+        raw = _load_raw_themes()
+        if name not in raw:
             return False
-        del existing[name]
+        del raw[name]
+        # If deleted theme was active, reset to first available theme
+        if raw.get("active_theme") == name:
+            remaining = [k for k in raw if k not in _META_KEYS]
+            raw["active_theme"] = remaining[0] if remaining else "Gruvbox Dark"
         with open(THEMES_FILE, 'w', encoding='utf-8') as f:
-            json.dump(existing, f, indent=2)
-        AVAILABLE_THEMES = existing
+            json.dump(raw, f, indent=2)
+        AVAILABLE_THEMES = load_themes()
         return True
     except Exception as e:
         logger.error("Failed to delete theme '%s': %s", name, e)

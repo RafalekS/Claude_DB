@@ -39,6 +39,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ── QTextBrowser HTML-source tracking ────────────────────────────────────────
+# toHtml() destroys original tag structure (converts <code>, <h2>, etc. to
+# <span> with baked-in inline styles).  We monkey-patch setHtml to store the
+# original source so that _push_app_stylesheet() can re-apply it unchanged.
+from PyQt6.QtWidgets import QTextBrowser as _QTextBrowser
+
+_orig_setHtml = _QTextBrowser.setHtml
+
+
+def _tracked_setHtml(self, html: str) -> None:  # type: ignore[override]
+    self.setProperty("_html_source", html)
+    _orig_setHtml(self, html)
+
+
+_QTextBrowser.setHtml = _tracked_setHtml  # type: ignore[method-assign]
+
 # Import tab modules
 from tabs.prompts_tab import PromptsTab
 from tabs.plugins_tab import PluginsTab
@@ -539,34 +555,21 @@ class ClaudeDBApp(QMainWindow):
         """Load saved preferences and apply theme on startup"""
         try:
             from utils import theme
-            import json
 
-            # Use project's config/config.json
-            config_file = Path(__file__).parent.parent / "config" / "config.json"
+            # Read active theme name and per-theme settings from themes.json
+            theme_name = theme.get_active_theme_name()
+            all_themes = theme.load_themes()
+            entry = all_themes.get(theme_name, all_themes.get("Gruvbox Dark", {}))
+            font_size = entry.get("font_size", 14)
+            font_family = entry.get("font_family", "Segoe UI")
 
-            if config_file.exists():
-                with open(config_file, 'r') as f:
-                    config_data = json.load(f)
+            theme.apply_theme(theme_name, font_size, font_family)
 
-                # Get preferences section
-                prefs = config_data.get("preferences", {})
-                theme_name = prefs.get("theme", "Gruvbox Dark")
-                font_size = prefs.get("font_size", 14)
+            app = QApplication.instance()
+            if app:
+                app.setStyleSheet(theme.generate_app_stylesheet())
 
-                # Apply the saved theme
-                theme.apply_theme(theme_name, font_size)
-
-                # Apply stylesheet to the application
-                app = QApplication.instance()
-                if app:
-                    app.setStyleSheet(theme.generate_app_stylesheet())
-
-                logger.info(f"Loaded preferences: {theme_name} theme with {font_size}px font")
-            else:
-                logger.info("No config file found, using default Gruvbox Dark")
-                app = QApplication.instance()
-                if app:
-                    app.setStyleSheet(theme.generate_app_stylesheet())
+            logger.info(f"Loaded preferences: {theme_name} theme with {font_size}px font")
         except Exception as e:
             logger.warning(f"Failed to load preferences: {e}")
             app = QApplication.instance()

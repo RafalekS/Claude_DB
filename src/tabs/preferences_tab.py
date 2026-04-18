@@ -712,16 +712,18 @@ class PreferencesTab(QWidget):
             widget_qss = self._widget_theme_editor.get_overrides_qss() if hasattr(self, '_widget_theme_editor') else ''
             app.setStyleSheet(base_qss + '\n' + widget_qss)
         # Apply HTML document CSS to every QTextBrowser in the window.
-        # setDefaultStyleSheet() only affects subsequent setHtml() calls, so we
-        # must re-set the current HTML to trigger an immediate re-render.
+        # We use the original HTML source stored by the monkey-patched setHtml()
+        # in main.py rather than toHtml(), which would destroy <code>/<h2>/etc.
         if hasattr(self, '_widget_theme_editor'):
             doc_css = self._widget_theme_editor.get_document_css()
             main_win = self.window()
             for browser in main_win.findChildren(QTextBrowser):
+                orig_html = browser.property("_html_source")
+                if orig_html is None:
+                    continue  # browser hasn't been set via setHtml, skip
                 scroll = browser.verticalScrollBar().value()
-                html = browser.toHtml()
                 browser.document().setDefaultStyleSheet(doc_css)
-                browser.setHtml(html)
+                browser.setHtml(orig_html)
                 browser.verticalScrollBar().setValue(scroll)
 
     def apply_theme(self):
@@ -754,8 +756,18 @@ class PreferencesTab(QWidget):
         name = self.theme_combo.currentText()
         if not name:
             return
-        widgets = self._widget_theme_editor.get_widgets_dict() if hasattr(self, '_widget_theme_editor') else {}
-        if theme.save_theme_to_file(name, widgets or None):
+        widget_overrides = self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {}
+        ok = theme.save_theme_to_file(
+            name=name,
+            widgets=widget_overrides or None,
+            font_size=theme.FONT_SIZE_NORMAL,
+            font_family=theme.FONT_FAMILY_UI,
+            font_mono=theme.FONT_MONOSPACE,
+            custom_colors=self._custom_colors,
+            custom_numbers=self._custom_numbers,
+            set_active=True,
+        )
+        if ok:
             self._custom_colors.clear()
             main_win = self.window()
             if hasattr(main_win, "set_status"):
@@ -775,8 +787,17 @@ class PreferencesTab(QWidget):
         if not ok or not name.strip():
             return
         name = name.strip()
-        widgets = self._widget_theme_editor.get_widgets_dict() if hasattr(self, '_widget_theme_editor') else {}
-        if theme.save_theme_to_file(name, widgets or None):
+        widget_overrides = self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {}
+        if theme.save_theme_to_file(
+            name=name,
+            widgets=widget_overrides or None,
+            font_size=theme.FONT_SIZE_NORMAL,
+            font_family=theme.FONT_FAMILY_UI,
+            font_mono=theme.FONT_MONOSPACE,
+            custom_colors=self._custom_colors,
+            custom_numbers=self._custom_numbers,
+            set_active=True,
+        ):
             global THEMES
             THEMES = theme.AVAILABLE_THEMES
             self.theme_combo.blockSignals(True)
@@ -1571,33 +1592,36 @@ class {class_name}Tab(QWidget):
         main_win = self.window()
         if hasattr(main_win, "set_status"):
             main_win.set_status(
-                f"Session saved — theme '{theme_name}', {font_family} {font_size}px  →  config/config.json"
+                f"Session saved — theme '{theme_name}', {font_family} {font_size}px  →  config/themes/themes.json"
             )
 
-    def save_preferences_silently(self):
-        """Save preferences to file without showing message"""
-        try:
-            config_data = {}
-            if self.config_file.exists():
-                with open(self.config_file, 'r') as f:
-                    config_data = json.load(f)
+    def _save_to_themes_json(self, set_active: bool = False) -> None:
+        """Write current theme state (fonts, overrides, widgets) to themes.json."""
+        theme_name = self.theme_combo.currentText()
+        widget_overrides = (
+            self._widget_theme_editor.get_overrides_dict()
+            if hasattr(self, '_widget_theme_editor') else {}
+        )
+        theme.save_theme_to_file(
+            name=theme_name,
+            widgets=widget_overrides,
+            font_size=theme.FONT_SIZE_NORMAL,
+            font_family=theme.FONT_FAMILY_UI,
+            font_mono=theme.FONT_MONOSPACE,
+            custom_colors=self._custom_colors,
+            custom_numbers=self._custom_numbers,
+            set_active=set_active,
+        )
 
-            config_data["preferences"] = {
-                "theme": self.theme_combo.currentText(),
-                "font_size": theme.FONT_SIZE_NORMAL,
-                "font_family": theme.FONT_FAMILY_UI,
-                "font_mono": theme.FONT_MONOSPACE,
-                "custom_colors": self._custom_colors,
-                "custom_numbers": self._custom_numbers,
-                # Only save user-changed properties, not the full theme defaults
-                "widget_overrides": self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {},
-            }
-            _atomic_json_write(self.config_file, config_data)
+    def save_preferences_silently(self):
+        """Persist current session state to themes.json (no dialog)."""
+        try:
+            self._save_to_themes_json(set_active=True)
         except Exception as e:
             logger.warning("Failed to auto-save preferences: %s", e)
 
     def save_preferences(self):
-        """Save preferences to file and apply theme"""
+        """Save preferences, apply theme and show confirmation dialog."""
         try:
             theme_name  = self.theme_combo.currentText()
             font_size   = theme.FONT_SIZE_NORMAL
@@ -1618,22 +1642,7 @@ class {class_name}Tab(QWidget):
                 app.setFont(QFont(font_family, font_size))
                 self._push_app_stylesheet()
 
-            config_data = {}
-            if self.config_file.exists():
-                with open(self.config_file, 'r') as f:
-                    config_data = json.load(f)
-
-            config_data["preferences"] = {
-                "theme": theme_name,
-                "font_size": font_size,
-                "font_family": font_family,
-                "font_mono": font_mono,
-                "custom_colors": self._custom_colors,
-                "custom_numbers": self._custom_numbers,
-                # Only save user-changed properties, not the full theme defaults
-                "widget_overrides": self._widget_theme_editor.get_overrides_dict() if hasattr(self, '_widget_theme_editor') else {},
-            }
-            _atomic_json_write(self.config_file, config_data)
+            self._save_to_themes_json(set_active=True)
 
             self._refresh_color_buttons()
             self.theme_changed.emit(theme_name, font_size)
@@ -1646,55 +1655,52 @@ class {class_name}Tab(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to save preferences:\n{str(e)}")
 
     def load_preferences(self):
-        """Load preferences from file and apply theme"""
+        """Load active theme and per-theme settings from themes.json."""
         try:
-            if self.config_file.exists():
-                with open(self.config_file, 'r') as f:
-                    config_data = json.load(f)
+            # Primary: read active theme name from themes.json
+            theme_name = theme.get_active_theme_name()
 
-                prefs = config_data.get("preferences", {})
-                theme_name = prefs.get("theme", "Gruvbox Dark")
-                font_size = prefs.get("font_size", 14)
-                font_family = prefs.get("font_family", "Segoe UI")
-                font_mono = prefs.get("font_mono", "Consolas")
-                self._custom_colors = prefs.get("custom_colors", {})
-                self._custom_numbers = prefs.get("custom_numbers", {})
-                widget_overrides = prefs.get("widget_overrides", {})
+            # Fallback: migrate from old config.json preferences section
+            if theme_name == "Gruvbox Dark" and self.config_file.exists():
+                try:
+                    with open(self.config_file, 'r') as f:
+                        config_data = json.load(f)
+                    old_prefs = config_data.get("preferences", {})
+                    if old_prefs.get("theme"):
+                        theme_name = old_prefs["theme"]
+                except Exception:
+                    pass
 
-                theme.apply_theme(theme_name, font_size, font_family)
-                if self._custom_colors:
-                    theme.apply_color_overrides(self._custom_colors)
-                theme.FONT_MONOSPACE = font_mono
-                theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
-                if self._custom_numbers:
-                    theme.apply_number_overrides(self._custom_numbers)
+            all_themes = theme.load_themes()
+            entry = all_themes.get(theme_name, all_themes.get("Gruvbox Dark", {}))
 
-                # Block signals so setCurrentIndex doesn't trigger preview_theme mid-load
-                self.theme_combo.blockSignals(True)
-                index = self.theme_combo.findText(theme_name)
-                if index >= 0:
-                    self.theme_combo.setCurrentIndex(index)
-                self.theme_combo.blockSignals(False)
+            font_size = entry.get("font_size", 14)
+            font_family = entry.get("font_family", "Segoe UI")
+            font_mono = entry.get("font_mono", "Consolas")
+            self._custom_colors = entry.get("custom_colors", {})
+            self._custom_numbers = entry.get("custom_numbers", {})
+            widget_overrides = entry.get("widgets", entry.get("__widget_overrides", {}))
 
-                if hasattr(self, '_widget_theme_editor'):
-                    if widget_overrides:
-                        # Migration: strip out any props that match the theme defaults exactly
-                        # (old configs stored the full theme data; we only want user changes)
-                        theme_defaults = theme.get_theme_widgets(theme_name)
-                        actual_changes = {}
-                        for wname, wprops in widget_overrides.items():
-                            default_props = theme_defaults.get(wname, {})
-                            changed = {k: v for k, v in wprops.items() if default_props.get(k) != v}
-                            if changed:
-                                actual_changes[wname] = changed
-                        self._widget_theme_editor.load_widgets_dict(actual_changes)
+            theme.apply_theme(theme_name, font_size, font_family)
+            if self._custom_colors:
+                theme.apply_color_overrides(self._custom_colors)
+            theme.FONT_MONOSPACE = font_mono
+            theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
+            if self._custom_numbers:
+                theme.apply_number_overrides(self._custom_numbers)
 
-                self._refresh_color_buttons()
-                self._push_app_stylesheet()
-            else:
-                self._custom_colors = {}
-                self._custom_numbers = {}
-                self.theme_combo.setCurrentText("Gruvbox Dark")
+            # Block signals so setCurrentIndex doesn't trigger preview_theme mid-load
+            self.theme_combo.blockSignals(True)
+            index = self.theme_combo.findText(theme_name)
+            if index >= 0:
+                self.theme_combo.setCurrentIndex(index)
+            self.theme_combo.blockSignals(False)
+
+            if hasattr(self, '_widget_theme_editor') and widget_overrides:
+                self._widget_theme_editor.load_widgets_dict(widget_overrides)
+
+            self._refresh_color_buttons()
+            self._push_app_stylesheet()
         except Exception as e:
             logger.warning("Failed to load preferences: %s", e)
             self._custom_colors = {}
