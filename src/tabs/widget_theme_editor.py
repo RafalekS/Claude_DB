@@ -66,27 +66,32 @@ def _n(key: str, fallback: int = 4) -> int:
 #       state is appended to selector verbatim (e.g. ':hover', '::chunk')
 
 def _make_defs() -> dict:
+    def _cp(label, qss, state, val_key):
+        """Color prop with palette_key set."""
+        return {'label': label, 'qss': qss, 'type': COLOR, 'state': state,
+                'val': _c(val_key), 'palette_key': val_key}
+
     return {
         'Button': {
             'selector': 'QPushButton', 'qt_class': 'QPushButton',
             'icon': '⬜ Button',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('ACCENT_PRIMARY')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding V',     'qss': 'padding-top',      'type': PX,    'state': '', 'val': 4},
-                {'label': 'Padding H',     'qss': 'padding-left',     'type': PX,    'state': '', 'val': 10},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_NORMAL')},
-                {'label': 'Bold',          'qss': 'font-weight',      'type': BOOL,  'state': '', 'val': True},
+                _cp('Background',    'background-color', '',          'ACCENT_PRIMARY'),
+                _cp('Text Color',    'color',            '',          'BG_DARK'),
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding V',     'qss': 'padding-top',   'type': PX, 'state': '', 'val': 4},
+                {'label': 'Padding H',     'qss': 'padding-left',  'type': PX, 'state': '', 'val': 10},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Bold',          'qss': 'font-weight',   'type': BOOL,'state': '', 'val': True},
                 {'section': 'Hover'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': ':hover', 'val': _c('ACCENT_SECONDARY')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': ':hover', 'val': _c('BG_DARK')},
+                _cp('Background',    'background-color', ':hover',    'ACCENT_SECONDARY'),
+                _cp('Text Color',    'color',            ':hover',    'BG_DARK'),
                 {'section': 'Pressed'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': ':pressed', 'val': _c('BG_LIGHT')},
+                _cp('Background',    'background-color', ':pressed',  'BG_LIGHT'),
                 {'section': 'Disabled'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': ':disabled', 'val': _c('BG_MEDIUM')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': ':disabled', 'val': _c('FG_DIM')},
+                _cp('Background',    'background-color', ':disabled', 'BG_MEDIUM'),
+                _cp('Text Color',    'color',            ':disabled', 'FG_DIM'),
             ],
         },
         'Label': {
@@ -94,11 +99,11 @@ def _make_defs() -> dict:
             'icon': '🔤 Label',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_NORMAL')},
-                {'label': 'Bold',          'qss': 'font-weight',      'type': BOOL,  'state': '', 'val': False},
-                {'label': 'Padding',       'qss': 'padding',          'type': PX,    'state': '', 'val': 0},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': 'transparent'},
+                _cp('Text Color',    'color',            '',          'FG_PRIMARY'),
+                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Bold',      'qss': 'font-weight','type': BOOL,'state': '', 'val': False},
+                {'label': 'Padding',   'qss': 'padding',   'type': PX, 'state': '', 'val': 0},
+                {'label': 'Background','qss': 'background-color','type': COLOR,'state': '', 'val': 'transparent'},
             ],
         },
         'Input': {
@@ -106,15 +111,15 @@ def _make_defs() -> dict:
             'icon': '📝 Input',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',          'type': PX,    'state': '', 'val': 4},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                _cp('Background',    'background-color', '',       'BG_DARK'),
+                _cp('Text Color',    'color',            '',       'FG_PRIMARY'),
+                _cp('Border Color',  'border-color',     '',       'BG_LIGHT'),
+                {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 4},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
                 {'section': 'Focus'},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': ':focus', 'val': _c('ACCENT_PRIMARY')},
+                _cp('Border Color',  'border-color',     ':focus', 'ACCENT_PRIMARY'),
             ],
         },
         'TextEdit': {
@@ -122,13 +127,13 @@ def _make_defs() -> dict:
             'icon': '📄 Text Editor',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',          'type': PX,    'state': '', 'val': 4},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                _cp('Background',    'background-color', '',       'BG_DARK'),
+                _cp('Text Color',    'color',            '',       'FG_PRIMARY'),
+                _cp('Border Color',  'border-color',     '',       'BG_LIGHT'),
+                {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 4},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
             ],
         },
         'TextBrowser': {
@@ -136,13 +141,13 @@ def _make_defs() -> dict:
             'icon': '📰 Text Browser',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',          'type': PX,    'state': '', 'val': 6},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                _cp('Background',    'background-color', '',       'BG_DARK'),
+                _cp('Text Color',    'color',            '',       'FG_PRIMARY'),
+                _cp('Border Color',  'border-color',     '',       'BG_LIGHT'),
+                {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 6},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
             ],
         },
         'ComboBox': {
@@ -150,17 +155,17 @@ def _make_defs() -> dict:
             'icon': '▼ ComboBox',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',          'type': PX,    'state': '', 'val': 4},
+                _cp('Background',    'background-color',  '',                    'BG_DARK'),
+                _cp('Text Color',    'color',             '',                    'FG_PRIMARY'),
+                _cp('Border Color',  'border-color',      '',                    'BG_LIGHT'),
+                {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 4},
                 {'section': 'Hover'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': ':hover', 'val': _c('BG_MEDIUM')},
+                _cp('Background',    'background-color',  ':hover',              'BG_MEDIUM'),
                 {'section': 'Dropdown'},
-                {'label': 'Drop BG',       'qss': 'background-color', 'type': COLOR, 'state': ' QAbstractItemView', 'val': _c('BG_DARK')},
-                {'label': 'Drop Text',     'qss': 'color',            'type': COLOR, 'state': ' QAbstractItemView', 'val': _c('FG_PRIMARY')},
+                _cp('Drop BG',       'background-color',  ' QAbstractItemView',  'BG_DARK'),
+                _cp('Drop Text',     'color',             ' QAbstractItemView',  'FG_PRIMARY'),
             ],
         },
         'CheckBox': {
@@ -168,12 +173,12 @@ def _make_defs() -> dict:
             'icon': '☑ CheckBox',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_NORMAL')},
-                {'label': 'Spacing',       'qss': 'spacing',          'type': PX,    'state': '', 'val': 6},
+                _cp('Text Color',    'color',             '',                    'FG_PRIMARY'),
+                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                {'label': 'Spacing',   'qss': 'spacing',   'type': PX, 'state': '', 'val': 6},
                 {'section': 'Checked Indicator'},
-                {'label': 'Indicator BG',  'qss': 'background-color', 'type': COLOR, 'state': '::indicator:checked', 'val': _c('ACCENT_PRIMARY')},
-                {'label': 'Indicator Size','qss': 'width',            'type': PX,    'state': '::indicator', 'val': 14},
+                _cp('Indicator BG',  'background-color',  '::indicator:checked', 'ACCENT_PRIMARY'),
+                {'label': 'Indicator Size', 'qss': 'width', 'type': PX, 'state': '::indicator', 'val': 14},
             ],
         },
         'RadioButton': {
@@ -181,11 +186,11 @@ def _make_defs() -> dict:
             'icon': '○ RadioButton',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                _cp('Text Color',    'color',             '',                    'FG_PRIMARY'),
+                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
                 {'section': 'Checked Indicator'},
-                {'label': 'Indicator BG',  'qss': 'background-color', 'type': COLOR, 'state': '::indicator:checked', 'val': _c('ACCENT_PRIMARY')},
-                {'label': 'Indicator Size','qss': 'width',            'type': PX,    'state': '::indicator', 'val': 14},
+                _cp('Indicator BG',  'background-color',  '::indicator:checked', 'ACCENT_PRIMARY'),
+                {'label': 'Indicator Size', 'qss': 'width', 'type': PX, 'state': '::indicator', 'val': 14},
             ],
         },
         'Table': {
@@ -193,16 +198,16 @@ def _make_defs() -> dict:
             'icon': '⊞ Table',
             'props': [
                 {'section': 'Table'},
-                {'label': 'Background',    'qss': 'background-color',           'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Alt Row Color', 'qss': 'alternate-background-color', 'type': COLOR, 'state': '', 'val': _c('BG_MEDIUM')},
-                {'label': 'Grid Color',    'qss': 'gridline-color',             'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Font Size',     'qss': 'font-size',                  'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                _cp('Background',    'background-color',           '',               'BG_DARK'),
+                _cp('Alt Row Color', 'alternate-background-color', '',               'BG_MEDIUM'),
+                _cp('Grid Color',    'gridline-color',             '',               'BG_LIGHT'),
+                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
                 {'section': 'Header (QHeaderView)'},
-                {'label': 'Header BG',     'qss': 'background-color',           'type': COLOR, 'state': '::section', 'val': _c('BG_MEDIUM')},
-                {'label': 'Header Text',   'qss': 'color',                      'type': COLOR, 'state': '::section', 'val': _c('FG_PRIMARY')},
+                _cp('Header BG',     'background-color',           '::section',      'BG_MEDIUM'),
+                _cp('Header Text',   'color',                      '::section',      'FG_PRIMARY'),
                 {'section': 'Selection'},
-                {'label': 'Selected BG',   'qss': 'background-color',           'type': COLOR, 'state': '::item:selected', 'val': _c('ACCENT_PRIMARY')},
-                {'label': 'Selected Text', 'qss': 'color',                      'type': COLOR, 'state': '::item:selected', 'val': _c('BG_DARK')},
+                _cp('Selected BG',   'background-color',           '::item:selected','ACCENT_PRIMARY'),
+                _cp('Selected Text', 'color',                      '::item:selected','BG_DARK'),
             ],
         },
         'List': {
@@ -210,15 +215,15 @@ def _make_defs() -> dict:
             'icon': '≡ List',
             'props': [
                 {'section': 'List'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                _cp('Background',    'background-color', '',              'BG_DARK'),
+                _cp('Text Color',    'color',            '',              'FG_PRIMARY'),
+                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
                 {'section': 'Item Hover'},
-                {'label': 'Hover BG',      'qss': 'background-color', 'type': COLOR, 'state': '::item:hover', 'val': _c('BG_MEDIUM')},
-                {'label': 'Hover Text',    'qss': 'color',            'type': COLOR, 'state': '::item:hover', 'val': _c('FG_PRIMARY')},
+                _cp('Hover BG',      'background-color', '::item:hover',  'BG_MEDIUM'),
+                _cp('Hover Text',    'color',            '::item:hover',  'FG_PRIMARY'),
                 {'section': 'Selected Item'},
-                {'label': 'Selected BG',   'qss': 'background-color', 'type': COLOR, 'state': '::item:selected', 'val': _c('ACCENT_PRIMARY')},
-                {'label': 'Selected Text', 'qss': 'color',            'type': COLOR, 'state': '::item:selected', 'val': _c('BG_DARK')},
+                _cp('Selected BG',   'background-color', '::item:selected','ACCENT_PRIMARY'),
+                _cp('Selected Text', 'color',            '::item:selected','BG_DARK'),
             ],
         },
         'TreeWidget': {
@@ -226,16 +231,16 @@ def _make_defs() -> dict:
             'icon': '🌲 Tree',
             'props': [
                 {'section': 'Tree'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                _cp('Background',    'background-color', '',               'BG_DARK'),
+                _cp('Text Color',    'color',            '',               'FG_PRIMARY'),
+                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
                 {'section': 'Item Hover'},
-                {'label': 'Hover BG',      'qss': 'background-color', 'type': COLOR, 'state': '::item:hover', 'val': _c('BG_MEDIUM')},
+                _cp('Hover BG',      'background-color', '::item:hover',   'BG_MEDIUM'),
                 {'section': 'Selected Item'},
-                {'label': 'Selected BG',   'qss': 'background-color', 'type': COLOR, 'state': '::item:selected', 'val': _c('ACCENT_PRIMARY')},
-                {'label': 'Selected Text', 'qss': 'color',            'type': COLOR, 'state': '::item:selected', 'val': _c('BG_DARK')},
+                _cp('Selected BG',   'background-color', '::item:selected','ACCENT_PRIMARY'),
+                _cp('Selected Text', 'color',            '::item:selected','BG_DARK'),
                 {'section': 'Branch indicator'},
-                {'label': 'Branch BG',     'qss': 'background-color', 'type': COLOR, 'state': '::branch', 'val': _c('BG_DARK')},
+                _cp('Branch BG',     'background-color', '::branch',       'BG_DARK'),
             ],
         },
         'GroupBox': {
@@ -243,13 +248,13 @@ def _make_defs() -> dict:
             'icon': '▣ GroupBox',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Title Color',   'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_MEDIUM')},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding Top',   'qss': 'padding-top',      'type': PX,    'state': '', 'val': 14},
-                {'label': 'Font Bold',     'qss': 'font-weight',      'type': BOOL,  'state': '', 'val': True},
+                _cp('Title Color',   'color',            '',               'FG_PRIMARY'),
+                _cp('Background',    'background-color', '',               'BG_MEDIUM'),
+                _cp('Border Color',  'border-color',     '',               'BG_LIGHT'),
+                {'label': 'Border Width',  'qss': 'border-width',  'type': PX,   'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX,   'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding Top',   'qss': 'padding-top',   'type': PX,   'state': '', 'val': 14},
+                {'label': 'Font Bold',     'qss': 'font-weight',   'type': BOOL, 'state': '', 'val': True},
             ],
         },
         'TabPane': {
@@ -257,10 +262,10 @@ def _make_defs() -> dict:
             'icon': '🗂 Tab Pane',
             'props': [
                 {'section': 'Pane'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
+                _cp('Background',    'background-color', '',               'BG_DARK'),
+                _cp('Border Color',  'border-color',     '',               'BG_LIGHT'),
+                {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
             ],
         },
         'ProgressBar': {
@@ -268,13 +273,13 @@ def _make_defs() -> dict:
             'icon': '░ ProgressBar',
             'props': [
                 {'section': 'Track'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_MEDIUM')},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': 4},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Max Height',    'qss': 'max-height',       'type': PX,    'state': '', 'val': 12},
+                _cp('Background',    'background-color', '',        'BG_MEDIUM'),
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': 4},
+                _cp('Text Color',    'color',            '',        'FG_PRIMARY'),
+                {'label': 'Max Height',    'qss': 'max-height',    'type': PX, 'state': '', 'val': 12},
                 {'section': 'Fill (::chunk)'},
-                {'label': 'Fill Color',    'qss': 'background-color', 'type': COLOR, 'state': '::chunk', 'val': _c('ACCENT_PRIMARY')},
-                {'label': 'Fill Radius',   'qss': 'border-radius',    'type': PX,    'state': '::chunk', 'val': 4},
+                _cp('Fill Color',    'background-color', '::chunk', 'ACCENT_PRIMARY'),
+                {'label': 'Fill Radius',   'qss': 'border-radius', 'type': PX, 'state': '::chunk', 'val': 4},
             ],
         },
         'Slider': {
@@ -282,14 +287,14 @@ def _make_defs() -> dict:
             'icon': '▬ Slider',
             'props': [
                 {'section': 'Handle'},
-                {'label': 'Handle Color',  'qss': 'background-color', 'type': COLOR, 'state': '::handle:horizontal', 'val': _c('ACCENT_PRIMARY')},
-                {'label': 'Handle Width',  'qss': 'width',            'type': PX,    'state': '::handle:horizontal', 'val': 14},
-                {'label': 'Handle Height', 'qss': 'height',           'type': PX,    'state': '::handle:horizontal', 'val': 14},
-                {'label': 'Handle Radius', 'qss': 'border-radius',    'type': PX,    'state': '::handle:horizontal', 'val': 7},
+                _cp('Handle Color',  'background-color', '::handle:horizontal', 'ACCENT_PRIMARY'),
+                {'label': 'Handle Width',  'qss': 'width',        'type': PX, 'state': '::handle:horizontal', 'val': 14},
+                {'label': 'Handle Height', 'qss': 'height',       'type': PX, 'state': '::handle:horizontal', 'val': 14},
+                {'label': 'Handle Radius', 'qss': 'border-radius','type': PX, 'state': '::handle:horizontal', 'val': 7},
                 {'section': 'Groove'},
-                {'label': 'Groove Color',  'qss': 'background-color', 'type': COLOR, 'state': '::groove:horizontal', 'val': _c('BG_MEDIUM')},
-                {'label': 'Groove Height', 'qss': 'height',           'type': PX,    'state': '::groove:horizontal', 'val': 6},
-                {'label': 'Groove Radius', 'qss': 'border-radius',    'type': PX,    'state': '::groove:horizontal', 'val': 3},
+                _cp('Groove Color',  'background-color', '::groove:horizontal', 'BG_MEDIUM'),
+                {'label': 'Groove Height', 'qss': 'height',       'type': PX, 'state': '::groove:horizontal', 'val': 6},
+                {'label': 'Groove Radius', 'qss': 'border-radius','type': PX, 'state': '::groove:horizontal', 'val': 3},
             ],
         },
         'SpinBox': {
@@ -297,14 +302,14 @@ def _make_defs() -> dict:
             'icon': '123 SpinBox',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',          'type': PX,    'state': '', 'val': 3},
+                _cp('Background',    'background-color', '',       'BG_DARK'),
+                _cp('Text Color',    'color',            '',       'FG_PRIMARY'),
+                _cp('Border Color',  'border-color',     '',       'BG_LIGHT'),
+                {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 3},
                 {'section': 'Focus'},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': ':focus', 'val': _c('ACCENT_PRIMARY')},
+                _cp('Border Color',  'border-color',     ':focus', 'ACCENT_PRIMARY'),
             ],
         },
         'Tabs': {
@@ -312,17 +317,17 @@ def _make_defs() -> dict:
             'icon': '📑 Tab Bar',
             'props': [
                 {'section': 'Normal Tab'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_MEDIUM')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_SECONDARY')},
-                {'label': 'Padding',       'qss': 'padding',          'type': PX,    'state': '', 'val': 6},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': 4},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_TAB', 11)},
+                _cp('Background',    'background-color', '',          'BG_MEDIUM'),
+                _cp('Text Color',    'color',            '',          'FG_SECONDARY'),
+                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 6},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': 4},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_TAB', 11)},
                 {'section': 'Selected'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': ':selected', 'val': _c('BG_DARK')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': ':selected', 'val': _c('FG_PRIMARY')},
+                _cp('Background',    'background-color', ':selected', 'BG_DARK'),
+                _cp('Text Color',    'color',            ':selected', 'FG_PRIMARY'),
                 {'section': 'Hover'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': ':hover', 'val': _c('BG_LIGHT')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': ':hover', 'val': _c('FG_PRIMARY')},
+                _cp('Background',    'background-color', ':hover',    'BG_LIGHT'),
+                _cp('Text Color',    'color',            ':hover',    'FG_PRIMARY'),
             ],
         },
         'Splitter': {
@@ -330,9 +335,9 @@ def _make_defs() -> dict:
             'icon': '┃ Splitter',
             'props': [
                 {'section': 'Handle'},
-                {'label': 'Color',         'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Width',         'qss': 'width',            'type': PX,    'state': ':horizontal', 'val': 4},
-                {'label': 'Height',        'qss': 'height',           'type': PX,    'state': ':vertical', 'val': 4},
+                _cp('Color',         'background-color', '',          'BG_LIGHT'),
+                {'label': 'Width',  'qss': 'width',  'type': PX, 'state': ':horizontal', 'val': 4},
+                {'label': 'Height', 'qss': 'height', 'type': PX, 'state': ':vertical',   'val': 4},
             ],
         },
         'Divider': {
@@ -340,8 +345,8 @@ def _make_defs() -> dict:
             'icon': '─── Divider',
             'props': [
                 {'section': 'Line'},
-                {'label': 'Color',         'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Max Height',    'qss': 'max-height',       'type': PX,    'state': '', 'val': 1},
+                _cp('Color',         'color',            '',          'BG_LIGHT'),
+                {'label': 'Max Height', 'qss': 'max-height', 'type': PX, 'state': '', 'val': 1},
             ],
         },
         'ScrollBar': {
@@ -349,15 +354,15 @@ def _make_defs() -> dict:
             'icon': '│ ScrollBar',
             'props': [
                 {'section': 'Track'},
-                {'label': 'Track Color',   'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Width',         'qss': 'width',            'type': PX,    'state': ':vertical', 'val': 8},
-                {'label': 'Height',        'qss': 'height',           'type': PX,    'state': ':horizontal', 'val': 8},
+                _cp('Track Color',   'background-color', '',                    'BG_DARK'),
+                {'label': 'Width',  'qss': 'width',  'type': PX, 'state': ':vertical',   'val': 8},
+                {'label': 'Height', 'qss': 'height', 'type': PX, 'state': ':horizontal', 'val': 8},
                 {'section': 'Handle'},
-                {'label': 'Handle Color',  'qss': 'background-color', 'type': COLOR, 'state': '::handle:vertical', 'val': _c('BG_LIGHT')},
-                {'label': 'Handle Radius', 'qss': 'border-radius',    'type': PX,    'state': '::handle:vertical', 'val': 4},
-                {'label': 'Min Length',    'qss': 'min-height',       'type': PX,    'state': '::handle:vertical', 'val': 20},
+                _cp('Handle Color',  'background-color', '::handle:vertical',        'BG_LIGHT'),
+                {'label': 'Handle Radius', 'qss': 'border-radius', 'type': PX, 'state': '::handle:vertical', 'val': 4},
+                {'label': 'Min Length',    'qss': 'min-height',    'type': PX, 'state': '::handle:vertical', 'val': 20},
                 {'section': 'Handle Hover'},
-                {'label': 'Hover Color',   'qss': 'background-color', 'type': COLOR, 'state': '::handle:vertical:hover', 'val': _c('ACCENT_PRIMARY')},
+                _cp('Hover Color',   'background-color', '::handle:vertical:hover', 'ACCENT_PRIMARY'),
             ],
         },
         'Dialog': {
@@ -365,9 +370,9 @@ def _make_defs() -> dict:
             'icon': '🪟 Dialog',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_DARK')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_NORMAL')},
+                _cp('Background',    'background-color', '',          'BG_DARK'),
+                _cp('Text Color',    'color',            '',          'FG_PRIMARY'),
+                {'label': 'Font Size', 'qss': 'font-size', 'type': PX, 'state': '', 'val': _n('FONT_SIZE_NORMAL')},
             ],
         },
         'ToolTip': {
@@ -375,13 +380,13 @@ def _make_defs() -> dict:
             'icon': '💬 ToolTip',
             'props': [
                 {'section': 'Normal'},
-                {'label': 'Background',    'qss': 'background-color', 'type': COLOR, 'state': '', 'val': _c('BG_MEDIUM')},
-                {'label': 'Text Color',    'qss': 'color',            'type': COLOR, 'state': '', 'val': _c('FG_PRIMARY')},
-                {'label': 'Border Color',  'qss': 'border-color',     'type': COLOR, 'state': '', 'val': _c('BG_LIGHT')},
-                {'label': 'Border Width',  'qss': 'border-width',     'type': PX,    'state': '', 'val': 1},
-                {'label': 'Border Radius', 'qss': 'border-radius',    'type': PX,    'state': '', 'val': _n('BORDER_RADIUS')},
-                {'label': 'Padding',       'qss': 'padding',          'type': PX,    'state': '', 'val': 4},
-                {'label': 'Font Size',     'qss': 'font-size',        'type': PX,    'state': '', 'val': _n('FONT_SIZE_SMALL')},
+                _cp('Background',    'background-color', '',          'BG_MEDIUM'),
+                _cp('Text Color',    'color',            '',          'FG_PRIMARY'),
+                _cp('Border Color',  'border-color',     '',          'BG_LIGHT'),
+                {'label': 'Border Width',  'qss': 'border-width',  'type': PX, 'state': '', 'val': 1},
+                {'label': 'Border Radius', 'qss': 'border-radius', 'type': PX, 'state': '', 'val': _n('BORDER_RADIUS')},
+                {'label': 'Padding',       'qss': 'padding',       'type': PX, 'state': '', 'val': 4},
+                {'label': 'Font Size',     'qss': 'font-size',     'type': PX, 'state': '', 'val': _n('FONT_SIZE_SMALL')},
             ],
         },
     }
@@ -408,7 +413,67 @@ PALETTE_DEFS = {
     'SUCCESS_COLOR':    {'label': '✅ Success',        'usage': 'success messages, OK states'},
 }
 
-_PALETTE_PREFIX = 'PALETTE/'
+_PALETTE_PREFIX  = 'PALETTE/'
+
+# ── Typography and Spacing definitions ────────────────────────────────────────
+
+TYPO_DEFS = {
+    'FONT_FAMILY_UI':   {
+        'label': '🔤 UI Font',    'type': 'font_ui',
+        'choices': ["Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
+                    "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu", "Noto Sans", "Open Sans"],
+        'usage': 'All text in the app — labels, buttons, inputs, menus',
+    },
+    'FONT_MONOSPACE':   {
+        'label': '💻 Mono Font',  'type': 'font_mono',
+        'choices': ["Consolas", "Courier New", "DejaVu Sans Mono", "Liberation Mono",
+                    "Monaco", "Menlo", "SF Mono", "Cascadia Code", "Fira Code",
+                    "JetBrains Mono", "Source Code Pro"],
+        'usage': 'Code blocks, hex inputs, terminal-style text',
+    },
+    'FONT_SIZE_NORMAL': {'label': '🔡 Size Normal', 'type': 'px', 'lo': 8,  'hi': 24, 'default': 14,
+                         'usage': 'Default font size everywhere (labels, inputs, buttons)'},
+    'FONT_SIZE_LARGE':  {'label': '🔡 Size Large',  'type': 'px', 'lo': 10, 'hi': 28, 'default': 16,
+                         'usage': 'Section headers and large titles'},
+    'FONT_SIZE_SMALL':  {'label': '🔡 Size Small',  'type': 'px', 'lo': 7,  'hi': 20, 'default': 12,
+                         'usage': 'Descriptions, sub-labels, table cell text'},
+    'FONT_SIZE_TINY':   {'label': '🔡 Size Tiny',   'type': 'px', 'lo': 6,  'hi': 18, 'default': 11,
+                         'usage': 'Status bar, footnotes, very small hints'},
+    'FONT_SIZE_TAB':    {'label': '🔡 Size Tab',    'type': 'px', 'lo': 8,  'hi': 20, 'default': 13,
+                         'usage': 'Tab bar labels on QTabBar'},
+}
+
+SPACING_DEFS = {
+    'BORDER_RADIUS': {'label': '◻ Border Radius', 'type': 'px', 'lo': 0, 'hi': 20, 'default': 4,
+                      'usage': 'Widget corner radius (buttons, inputs, cards)'},
+    'MARGIN_SM':     {'label': '↔ Margin SM',     'type': 'px', 'lo': 0, 'hi': 20, 'default': 3,
+                      'usage': 'Smallest outer margin between elements'},
+    'MARGIN_MD':     {'label': '↔ Margin MD',     'type': 'px', 'lo': 0, 'hi': 30, 'default': 6,
+                      'usage': 'Medium outer margin between sections'},
+    'MARGIN_LG':     {'label': '↔ Margin LG',     'type': 'px', 'lo': 0, 'hi': 40, 'default': 10,
+                      'usage': 'Large outer margin for major sections'},
+    'PADDING_SM':    {'label': '⬜ Padding SM',    'type': 'px', 'lo': 0, 'hi': 20, 'default': 4,
+                      'usage': 'Small inner padding inside widgets'},
+    'PADDING_MD':    {'label': '⬜ Padding MD',    'type': 'px', 'lo': 0, 'hi': 30, 'default': 8,
+                      'usage': 'Standard inner padding for inputs and panels'},
+}
+
+_TYPO_PREFIX    = 'TYPO/'
+_SPACING_PREFIX = 'SPACING/'
+
+
+def _build_palette_usage() -> dict:
+    """Return {palette_var_name: [(widget_name, icon, prop_label, state), ...]}
+    Built by scanning WIDGET_DEFS for palette_key fields."""
+    usage: dict = {}
+    for wname, wdef in WIDGET_DEFS.items():
+        for prop in wdef.get('props', []):
+            pk = prop.get('palette_key')
+            if pk:
+                usage.setdefault(pk, []).append(
+                    (wname, wdef['icon'], prop['label'], prop.get('state', ''))
+                )
+    return usage
 
 
 # ── QSS generation ────────────────────────────────────────────────────────────
@@ -561,11 +626,62 @@ class WidgetPreviewPanel(QScrollArea):
             vbox.addWidget(btn)
 
         # ── Separator ─────────────────────────────────────────────────────────
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet(f"color: {theme.BG_LIGHT};")
-        sep.setFixedHeight(1)
-        vbox.addWidget(sep)
+        sep1 = QFrame()
+        sep1.setFrameShape(QFrame.Shape.HLine)
+        sep1.setStyleSheet(f"color: {theme.BG_LIGHT};")
+        sep1.setFixedHeight(1)
+        vbox.addWidget(sep1)
+
+        # ── Typography section ────────────────────────────────────────────────
+        typo_hdr = QLabel("TYPOGRAPHY")
+        typo_hdr.setStyleSheet(
+            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; padding: 4px 0 2px 0;"
+        )
+        vbox.addWidget(typo_hdr)
+
+        for var_name, tdef in TYPO_DEFS.items():
+            key = _TYPO_PREFIX + var_name
+            btn = QPushButton(tdef['label'])
+            btn.setCheckable(True)
+            btn.setFixedHeight(self._BTN_H)
+            btn.setStyleSheet(self._btn_style(False))
+            btn.setToolTip(tdef['usage'])
+            btn.clicked.connect(lambda _checked, n=key: self._select(n))
+            self._buttons[key] = btn
+            vbox.addWidget(btn)
+
+        # ── Spacing section ───────────────────────────────────────────────────
+        sep2 = QFrame()
+        sep2.setFrameShape(QFrame.Shape.HLine)
+        sep2.setStyleSheet(f"color: {theme.BG_LIGHT};")
+        sep2.setFixedHeight(1)
+        vbox.addWidget(sep2)
+
+        spacing_hdr = QLabel("SPACING & LAYOUT")
+        spacing_hdr.setStyleSheet(
+            f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; letter-spacing: 1px; padding: 4px 0 2px 0;"
+        )
+        vbox.addWidget(spacing_hdr)
+
+        for var_name, sdef in SPACING_DEFS.items():
+            key = _SPACING_PREFIX + var_name
+            btn = QPushButton(sdef['label'])
+            btn.setCheckable(True)
+            btn.setFixedHeight(self._BTN_H)
+            btn.setStyleSheet(self._btn_style(False))
+            btn.setToolTip(sdef['usage'])
+            btn.clicked.connect(lambda _checked, n=key: self._select(n))
+            self._buttons[key] = btn
+            vbox.addWidget(btn)
+
+        # ── Separator ─────────────────────────────────────────────────────────
+        sep3 = QFrame()
+        sep3.setFrameShape(QFrame.Shape.HLine)
+        sep3.setStyleSheet(f"color: {theme.BG_LIGHT};")
+        sep3.setFixedHeight(1)
+        vbox.addWidget(sep3)
 
         # ── Widget list title ─────────────────────────────────────────────────
         widget_hdr = QLabel("WIDGET STYLES")
@@ -813,8 +929,10 @@ class WidgetPropertyPanel(QScrollArea):
     """Right panel — all editable QSS properties for the selected widget type,
     plus palette color entries that edit global theme variables directly."""
 
-    property_changed = pyqtSignal(str, str, str, object)
-    palette_changed  = pyqtSignal(str, str)   # (var_name, new_hex)
+    property_changed   = pyqtSignal(str, str, str, object)
+    palette_changed    = pyqtSignal(str, str)   # (var_name, new_hex)
+    typo_changed       = pyqtSignal(str, object) # (var_name, value)
+    navigate_to_widget = pyqtSignal(str)          # wname — navigate to widget in left panel
 
     def __init__(self, overrides: dict, parent=None):
         super().__init__(parent)
@@ -838,6 +956,12 @@ class WidgetPropertyPanel(QScrollArea):
     def load_widget(self, widget_name: str):
         if widget_name.startswith(_PALETTE_PREFIX):
             self._load_palette_entry(widget_name[len(_PALETTE_PREFIX):])
+            return
+        if widget_name.startswith(_TYPO_PREFIX):
+            self._load_typo_entry(widget_name[len(_TYPO_PREFIX):])
+            return
+        if widget_name.startswith(_SPACING_PREFIX):
+            self._load_spacing_entry(widget_name[len(_SPACING_PREFIX):])
             return
         if widget_name not in WIDGET_DEFS:
             return
@@ -869,7 +993,7 @@ class WidgetPropertyPanel(QScrollArea):
         self._vbox.addWidget(ph)
 
     def _load_palette_entry(self, var_name: str):
-        """Render a single color picker for a global palette variable."""
+        """Render a color picker + affected-widgets list for a global palette variable."""
         if var_name not in PALETTE_DEFS:
             return
         self._current = _PALETTE_PREFIX + var_name
@@ -879,18 +1003,19 @@ class WidgetPropertyPanel(QScrollArea):
 
         title = QLabel(pdef['label'])
         title.setStyleSheet(
-            f"font-weight: bold; color: {theme.ACCENT_PRIMARY}; padding: 0 0 6px 0;"
+            f"font-weight: bold; color: {theme.ACCENT_PRIMARY}; padding: 0 0 4px 0;"
         )
         self._vbox.addWidget(title)
 
-        usage = QLabel(f"Used by:  {pdef['usage']}")
+        usage = QLabel(pdef['usage'])
         usage.setWordWrap(True)
         usage.setStyleSheet(
             f"color: {theme.FG_DIM}; font-style: italic; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 10px 0;"
+            f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 8px 0;"
         )
         self._vbox.addWidget(usage)
 
+        # Color picker row
         cur_hex = getattr(theme, var_name, '#888888')
         row = QWidget()
         row.setFixedHeight(_ROW_H)
@@ -908,6 +1033,152 @@ class WidgetPropertyPanel(QScrollArea):
         editor.setFixedHeight(_ROW_H - 4)
         editor.setFixedWidth(_SWATCH_W + 6 + _HEX_W)
         h.addWidget(editor)
+        h.addStretch(1)
+        self._vbox.addWidget(row)
+
+        # ── Affected widget properties ─────────────────────────────────────
+        usage_map = _build_palette_usage()
+        affected = usage_map.get(var_name, [])
+        if affected:
+            sep = QFrame()
+            sep.setFrameShape(QFrame.Shape.HLine)
+            sep.setStyleSheet(f"color: {theme.BG_LIGHT};")
+            sep.setFixedHeight(1)
+            self._vbox.addWidget(sep)
+
+            hdr = QLabel("AFFECTS THESE WIDGET PROPERTIES")
+            hdr.setStyleSheet(
+                f"color: {theme.ACCENT_SECONDARY}; font-weight: bold; letter-spacing: 1px; "
+                f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 6px 0 4px 0;"
+            )
+            self._vbox.addWidget(hdr)
+
+            hint = QLabel("Click any entry to open it in the Widget Editor →")
+            hint.setStyleSheet(
+                f"color: {theme.FG_DIM}; font-style: italic; font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 4px 0;"
+            )
+            self._vbox.addWidget(hint)
+
+            for wname, icon, prop_label, state in sorted(affected, key=lambda x: x[0]):
+                state_txt = f"  {state}" if state else ""
+                btn = QPushButton(f"{icon}  ›  {prop_label}{state_txt}")
+                btn.setStyleSheet(
+                    f"QPushButton {{ text-align: left; background: {theme.BG_MEDIUM}; "
+                    f"color: {theme.FG_PRIMARY}; border: 1px solid {theme.BG_LIGHT}; "
+                    f"border-radius: 3px; padding: 3px 8px; "
+                    f"font-size: {theme.FONT_SIZE_SMALL}px; }}"
+                    f"QPushButton:hover {{ background: {theme.ACCENT_PRIMARY}; color: {theme.BG_DARK}; }}"
+                )
+                btn.clicked.connect(lambda _c, n=wname: self.navigate_to_widget.emit(n))
+                self._vbox.addWidget(btn)
+
+        self._vbox.addStretch()
+
+    def _load_typo_entry(self, var_name: str):
+        """Render a font-family combo or px spinbox for a typography variable."""
+        if var_name not in TYPO_DEFS:
+            return
+        self._current = _TYPO_PREFIX + var_name
+        self._clear()
+
+        tdef = TYPO_DEFS[var_name]
+
+        title = QLabel(tdef['label'])
+        title.setStyleSheet(
+            f"font-weight: bold; color: {theme.ACCENT_PRIMARY}; padding: 0 0 4px 0;"
+        )
+        self._vbox.addWidget(title)
+
+        desc = QLabel(tdef['usage'])
+        desc.setWordWrap(True)
+        desc.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-style: italic; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 10px 0;"
+        )
+        self._vbox.addWidget(desc)
+
+        row = QWidget()
+        row.setFixedHeight(_ROW_H)
+        h = QHBoxLayout(row)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setSpacing(6)
+        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        lbl = QLabel("Value")
+        lbl.setFixedWidth(_LBL_W)
+        lbl.setStyleSheet(f"color: {theme.FG_PRIMARY}; background: transparent;")
+        h.addWidget(lbl)
+
+        typ = tdef['type']
+        if typ in ('font_ui', 'font_mono'):
+            from PyQt6.QtWidgets import QComboBox as _QCB
+            combo = _QCB()
+            combo.addItems(tdef['choices'])
+            combo.setStyleSheet("combobox-popup: 0;")
+            # current value: FONT_FAMILY_UI for font_ui, FONT_MONOSPACE for font_mono
+            cur_val = getattr(theme, var_name, tdef['choices'][0])
+            idx = combo.findText(cur_val)
+            if idx >= 0:
+                combo.setCurrentIndex(idx)
+            combo.currentTextChanged.connect(
+                lambda val, vn=var_name: self.typo_changed.emit(vn, val)
+            )
+            h.addWidget(combo)
+        else:  # 'px'
+            spin = IntLineEdit(tdef['lo'], tdef['hi'], getattr(theme, var_name, tdef['default']))
+            spin.setFixedWidth(_SPIN_W)
+            spin.setFixedHeight(_ROW_H - 6)
+            spin.valueChanged.connect(
+                lambda val, vn=var_name: self.typo_changed.emit(vn, val)
+            )
+            h.addWidget(spin)
+
+        h.addStretch(1)
+        self._vbox.addWidget(row)
+        self._vbox.addStretch()
+
+    def _load_spacing_entry(self, var_name: str):
+        """Render a px spinbox for a spacing/layout variable."""
+        if var_name not in SPACING_DEFS:
+            return
+        self._current = _SPACING_PREFIX + var_name
+        self._clear()
+
+        sdef = SPACING_DEFS[var_name]
+
+        title = QLabel(sdef['label'])
+        title.setStyleSheet(
+            f"font-weight: bold; color: {theme.ACCENT_PRIMARY}; padding: 0 0 4px 0;"
+        )
+        self._vbox.addWidget(title)
+
+        desc = QLabel(sdef['usage'])
+        desc.setWordWrap(True)
+        desc.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-style: italic; "
+            f"font-size: {theme.FONT_SIZE_SMALL}px; padding: 0 0 10px 0;"
+        )
+        self._vbox.addWidget(desc)
+
+        row = QWidget()
+        row.setFixedHeight(_ROW_H)
+        h = QHBoxLayout(row)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setSpacing(6)
+        h.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        lbl = QLabel("Value (px)")
+        lbl.setFixedWidth(_LBL_W)
+        lbl.setStyleSheet(f"color: {theme.FG_PRIMARY}; background: transparent;")
+        h.addWidget(lbl)
+
+        spin = IntLineEdit(sdef['lo'], sdef['hi'], getattr(theme, var_name, sdef['default']))
+        spin.setFixedWidth(_SPIN_W)
+        spin.setFixedHeight(_ROW_H - 6)
+        spin.valueChanged.connect(
+            lambda val, vn=var_name: self.typo_changed.emit(vn, val)
+        )
+        h.addWidget(spin)
         h.addStretch(1)
         self._vbox.addWidget(row)
         self._vbox.addStretch()
@@ -1152,6 +1423,10 @@ class WidgetThemeEditor(QSplitter):
         self._preview_panel.widget_selected.connect(self._on_widget_selected)
         self._prop_panel.property_changed.connect(self._on_property_changed)
         self._prop_panel.palette_changed.connect(self._on_palette_changed)
+        self._prop_panel.typo_changed.connect(self._on_typo_changed)
+
+        # Wire: "Affected in:" buttons in palette panel → navigate to that widget
+        self._prop_panel.navigate_to_widget.connect(self._navigate_to_widget)
 
         # Wire: checkbox toggle → show/hide usage panel
         self._preview_panel.usage_panel_toggled.connect(self._toggle_usage_panel)
@@ -1190,7 +1465,47 @@ class WidgetThemeEditor(QSplitter):
         if self._prop_panel._current:
             self._prop_panel.load_widget(self._prop_panel._current)
 
+    def _navigate_to_widget(self, wname: str):
+        """Navigate left panel to wname and load its properties."""
+        self._preview_panel._select(wname)
+        self._prop_panel.load_widget(wname)
+
     def _on_property_changed(self, wn: str, state: str, qss_key: str, value):
+        if self._on_change:
+            self._on_change()
+
+    def _on_typo_changed(self, var_name: str, value):
+        """User changed a typography or spacing value — apply live."""
+        setattr(theme, var_name, value)
+        if var_name == 'FONT_FAMILY_UI':
+            theme.FONT_FAMILY = f"'{value}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+            app = QApplication.instance()
+            if app:
+                from PyQt6.QtGui import QFont
+                app.setFont(QFont(value, theme.FONT_SIZE_NORMAL))
+        elif var_name == 'FONT_MONOSPACE':
+            theme.FONT_FAMILY_MONO = f"'{value}', 'Courier New', monospace"
+        if self._on_change:
+            self._on_change()
+
+    def reset_typo_spacing(self):
+        """Reset all typography and spacing variables to their built-in defaults."""
+        defaults = {
+            'FONT_SIZE_NORMAL': 14, 'FONT_SIZE_LARGE': 16, 'FONT_SIZE_SMALL': 12,
+            'FONT_SIZE_TINY': 11, 'FONT_SIZE_TAB': 13,
+            'BORDER_RADIUS': 4, 'MARGIN_SM': 3, 'MARGIN_MD': 6,
+            'MARGIN_LG': 10, 'PADDING_SM': 4, 'PADDING_MD': 8,
+        }
+        for var_name, val in defaults.items():
+            setattr(theme, var_name, val)
+        theme.FONT_FAMILY_UI = 'Segoe UI'
+        theme.FONT_FAMILY = "'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        theme.FONT_MONOSPACE = 'Consolas'
+        theme.FONT_FAMILY_MONO = "'Consolas', 'Courier New', monospace"
+        # Refresh property panel if currently showing a typo/spacing entry
+        cur = self._prop_panel._current
+        if cur and (cur.startswith(_TYPO_PREFIX) or cur.startswith(_SPACING_PREFIX)):
+            self._prop_panel.load_widget(cur)
         if self._on_change:
             self._on_change()
 

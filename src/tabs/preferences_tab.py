@@ -443,7 +443,10 @@ class PreferencesTab(QWidget):
     ]
 
     def create_appearance_subtab(self):
-        """Create Appearance subtab — full theme editor + live preview."""
+        """Create Appearance subtab — widget theme editor + elements browser."""
+        # Initialize backward-compat state (read from / written to config.json)
+        self._custom_colors  = {}
+        self._custom_numbers = {}
         appearance_widget = QWidget()
         main_layout = QVBoxLayout(appearance_widget)
         main_layout.setContentsMargins(6, 6, 6, 6)
@@ -478,10 +481,9 @@ class PreferencesTab(QWidget):
 
         main_layout.addLayout(top_row)
 
-        # ── Inner tabs: Global Theme | Widget Editor | Elements ──────────
+        # ── Inner tabs: Widget Editor | Elements ─────────────────────────
         self._inner_tabs = QTabWidget()
         self._inner_tabs.setDocumentMode(True)
-        self._inner_tabs.addTab(self._build_theme_editor(), "🎨 Global Theme")
         self._inner_tabs.addTab(self._build_widget_preview(), "🧩 Widget Editor")
         self._inner_tabs.addTab(self._build_elements_tab(), "🔍 Elements")
         main_layout.addWidget(self._inner_tabs, 1)
@@ -536,108 +538,6 @@ class PreferencesTab(QWidget):
         main_layout.addLayout(button_layout)
 
         self.subtabs.addTab(appearance_widget, "🎨 Appearance")
-
-    def _build_theme_editor(self):
-        """Build the full Theme Editor panel: colors + typography + spacing."""
-        self._custom_colors = {}   # kept for backward-compat load from config.json
-        self._custom_numbers = {}
-        self._typo_spins = {}     # var_name → QSpinBox
-        self._spacing_spins = {}  # var_name → QSpinBox
-
-        outer_widget = QWidget()
-        outer_layout = QVBoxLayout(outer_widget)
-        outer_layout.setContentsMargins(0, 0, 0, 0)
-        outer_layout.setSpacing(0)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-
-        # ── 3-column layout: Typography | Colors | Spacing ────────────────
-        columns = QWidget()
-        col_layout = QHBoxLayout(columns)
-        col_layout.setContentsMargins(6, 6, 6, 6)
-        col_layout.setSpacing(10)
-        col_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-
-        # ── Column 1: TYPOGRAPHY ──────────────────────────────────────────
-        typo_group = QGroupBox("Typography")
-        typo_group.setFixedWidth(250)
-        typo_form = QFormLayout(typo_group)
-        typo_form.setSpacing(6)
-        typo_form.setContentsMargins(8, 12, 8, 8)
-        typo_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
-
-        self.font_family_combo = QComboBox()
-        self.font_family_combo.addItems([
-            "Segoe UI", "Arial", "Calibri", "Tahoma", "Verdana",
-            "Trebuchet MS", "Georgia", "Helvetica", "Ubuntu", "Noto Sans", "Open Sans",
-        ])
-        self.font_family_combo.setMaximumWidth(170)
-        self.font_family_combo.setStyleSheet("combobox-popup: 0;")
-        self.font_family_combo.setToolTip("UI font — changes all text. Live.")
-        self.font_family_combo.currentTextChanged.connect(self._live_apply_font_family)
-        typo_form.addRow("UI Font:", self.font_family_combo)
-
-        self.font_mono_combo = QComboBox()
-        self.font_mono_combo.addItems([
-            "Consolas", "Courier New", "DejaVu Sans Mono", "Liberation Mono",
-            "Monaco", "Menlo", "SF Mono", "Cascadia Code", "Fira Code",
-            "JetBrains Mono", "Source Code Pro",
-        ])
-        self.font_mono_combo.setMaximumWidth(170)
-        self.font_mono_combo.setStyleSheet("combobox-popup: 0;")
-        self.font_mono_combo.setToolTip("Mono font — code/terminal text. Live.")
-        self.font_mono_combo.currentTextChanged.connect(self._live_apply_font_mono)
-        typo_form.addRow("Mono Font:", self.font_mono_combo)
-
-        # Size fields — IntLineEdit (type the number, no arrow buttons)
-        self._typo_note_lbl = QLabel("'Normal' = font size used everywhere in the app, including this editor UI")
-        self._typo_note_lbl.setWordWrap(True)
-        self._typo_note_lbl.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
-        typo_form.addRow("", self._typo_note_lbl)
-
-        for label, var_name, lo, hi, default in self._THEME_TYPO_VARS:
-            le = IntLineEdit(lo, hi, getattr(theme, var_name, default))
-            le.setFixedWidth(70)
-            le.setFixedHeight(26)
-            le.setToolTip(f"{var_name}  ({lo}–{hi} px)")
-            le.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
-            self._typo_spins[var_name] = le
-            typo_form.addRow(f"{label}:", le)
-
-        self.font_size_spin = self._typo_spins["FONT_SIZE_NORMAL"]
-        col_layout.addWidget(typo_group)
-
-        # ── Column 2: SPACING ─────────────────────────────────────────────
-        spacing_group = QGroupBox("Spacing & Layout")
-        spacing_group.setFixedWidth(230)
-        spacing_form = QFormLayout(spacing_group)
-        spacing_form.setSpacing(6)
-        spacing_form.setContentsMargins(8, 12, 8, 8)
-        spacing_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
-
-        for label, var_name, lo, hi, default in self._THEME_SPACING_VARS:
-            le = IntLineEdit(lo, hi, getattr(theme, var_name, default))
-            le.setFixedWidth(70)
-            le.setFixedHeight(26)
-            le.setToolTip(f"{var_name}  ({lo}–{hi} px)")
-            le.valueChanged.connect(lambda val, vn=var_name: self._live_apply_spinbox(vn, val))
-            self._spacing_spins[var_name] = le
-            spacing_form.addRow(f"{label}:", le)
-
-        reset_spacing_btn = QPushButton("Reset Spacing")
-        reset_spacing_btn.setMaximumWidth(140)
-        reset_spacing_btn.clicked.connect(self._reset_custom_numbers)
-        spacing_form.addRow("", reset_spacing_btn)
-        col_layout.addWidget(spacing_group)
-
-        col_layout.addStretch(1)
-
-        scroll.setWidget(columns)
-
-        outer_layout.addWidget(scroll)
-        return outer_widget
 
     def _build_widget_preview(self):
         """Build the interactive widget theme editor (real Qt widgets, click to edit)."""
@@ -818,71 +718,16 @@ class PreferencesTab(QWidget):
             self._pref_header.setStyleSheet(
                 f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY}; margin-bottom: 10px;"
             )
-        # Typography note
-        if hasattr(self, '_typo_note_lbl'):
-            self._typo_note_lbl.setStyleSheet(f"color: {theme.FG_DIM}; font-style: italic;")
         # Widget theme editor left panel
         if hasattr(self, '_widget_theme_editor'):
             self._widget_theme_editor.apply_theme()
 
-    def _live_apply_font_family(self, family: str):
-        """Immediately apply a UI font family change to the whole app."""
-        theme.FONT_FAMILY_UI = family
-        theme.FONT_FAMILY = f"'{family}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        app = QApplication.instance()
-        if app:
-            from PyQt6.QtGui import QFont
-            app.setFont(QFont(family, self.font_size_spin.value()))
-            app.setStyleSheet(theme.generate_app_stylesheet())
-        self._update_preview_html()
-
-    def _live_apply_font_mono(self, mono: str):
-        """Immediately apply a monospace font change."""
-        theme.FONT_MONOSPACE = mono
-        theme.FONT_FAMILY_MONO = f"'{mono}', 'Courier New', monospace"
-        self._push_app_stylesheet()
-        self._update_preview_html()
-
-    def _live_apply_spinbox(self, var_name: str, val: int):
-        """Immediately apply a font-size or spacing change to theme globals and app."""
-        setattr(theme, var_name, val)
-        self._push_app_stylesheet()
-        self._update_preview_html()
-
-    # ── Color picker ─────────────────────────────────────────────────────────
-
     def _reset_custom_colors(self):
         """Re-apply the base theme colors, discarding any unsaved palette changes."""
         self._custom_colors.clear()
-        theme.apply_theme(
-            self.theme_combo.currentText(),
-            self.font_size_spin.value(),
-            self.font_family_combo.currentText(),
-        )
+        theme.apply_theme(self.theme_combo.currentText(), theme.FONT_SIZE_NORMAL, theme.FONT_FAMILY_UI)
         self._push_app_stylesheet()
         self._refresh_color_buttons()
-        self._update_preview_html()
-
-    def _reset_custom_numbers(self):
-        """Reset all font size and spacing spinboxes to base theme defaults."""
-        self._custom_numbers.clear()
-        theme.apply_theme(
-            self.theme_combo.currentText(),
-            self.font_size_spin.value(),
-            self.font_family_combo.currentText(),
-        )
-        for _, var_name, _, _, default in self._THEME_TYPO_VARS:
-            if var_name in self._typo_spins:
-                self._typo_spins[var_name].blockSignals(True)
-                self._typo_spins[var_name].setValue(getattr(theme, var_name, default))
-                self._typo_spins[var_name].blockSignals(False)
-        for _, var_name, _, _, default in self._THEME_SPACING_VARS:
-            if var_name in self._spacing_spins:
-                self._spacing_spins[var_name].blockSignals(True)
-                self._spacing_spins[var_name].setValue(getattr(theme, var_name, default))
-                self._spacing_spins[var_name].blockSignals(False)
-        self._push_app_stylesheet()
-        self._update_preview_html()
 
     def _refresh_color_buttons(self):
         """Palette colors are now in the Widget Theme Editor — refresh it instead."""
@@ -890,17 +735,11 @@ class PreferencesTab(QWidget):
             self._widget_theme_editor.apply_theme()
 
     def _refresh_typo_spacing_controls(self):
-        """Sync typography and spacing spinboxes to current theme globals."""
-        for _, var_name, _, _, default in self._THEME_TYPO_VARS:
-            if var_name in self._typo_spins:
-                self._typo_spins[var_name].blockSignals(True)
-                self._typo_spins[var_name].setValue(getattr(theme, var_name, default))
-                self._typo_spins[var_name].blockSignals(False)
-        for _, var_name, _, _, default in self._THEME_SPACING_VARS:
-            if var_name in self._spacing_spins:
-                self._spacing_spins[var_name].blockSignals(True)
-                self._spacing_spins[var_name].setValue(getattr(theme, var_name, default))
-                self._spacing_spins[var_name].blockSignals(False)
+        """Typo/spacing are now in the Widget Theme Editor — refresh its panel if shown."""
+        if hasattr(self, '_widget_theme_editor'):
+            cur = self._widget_theme_editor._prop_panel._current
+            if cur and (cur.startswith('TYPO/') or cur.startswith('SPACING/')):
+                self._widget_theme_editor._prop_panel.load_widget(cur)
 
     # ── Theme management ─────────────────────────────────────────────────────
 
@@ -1662,9 +1501,9 @@ class {class_name}Tab(QWidget):
         # Switching themes discards any unsaved customizations
         self._custom_colors.clear()
         self._custom_numbers.clear()
-        font_size = self.font_size_spin.value()
-        font_family = self.font_family_combo.currentText()
-        font_mono = self.font_mono_combo.currentText()
+        font_size   = theme.FONT_SIZE_NORMAL
+        font_family = theme.FONT_FAMILY_UI
+        font_mono   = theme.FONT_MONOSPACE
         theme.apply_theme(theme_name, font_size, font_family)
         theme.FONT_MONOSPACE = font_mono
         theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
@@ -1686,25 +1525,24 @@ class {class_name}Tab(QWidget):
         self._update_preview_html()
 
     def _collect_number_overrides(self) -> dict:
-        """Read current spinbox values and build the custom_numbers dict."""
-        nums = {}
-        for _, var_name, _, _, default in self._THEME_TYPO_VARS:
-            if var_name in self._typo_spins:
-                nums[var_name] = self._typo_spins[var_name].value()
-        for _, var_name, _, _, default in self._THEME_SPACING_VARS:
-            if var_name in self._spacing_spins:
-                nums[var_name] = self._spacing_spins[var_name].value()
-        # Only keep values that differ from current theme globals
-        return {k: v for k, v in nums.items() if getattr(theme, k, None) != v}
+        """Read current theme globals and build the custom_numbers dict.
+        Only keeps values that differ from theme defaults."""
+        all_vars = [
+            ("FONT_SIZE_NORMAL", 14), ("FONT_SIZE_LARGE", 16), ("FONT_SIZE_SMALL", 12),
+            ("FONT_SIZE_TINY", 11), ("FONT_SIZE_TAB", 13),
+            ("BORDER_RADIUS", 4), ("MARGIN_SM", 3), ("MARGIN_MD", 6),
+            ("MARGIN_LG", 10), ("PADDING_SM", 4), ("PADDING_MD", 8),
+        ]
+        return {vn: getattr(theme, vn) for vn, _default in all_vars}
 
     def apply_preferences(self):
         """Save current session state to config/config.json so it restores on next startup.
         Changes are already applied live — this just persists them.
         """
-        theme_name = self.theme_combo.currentText()
-        font_size = self.font_size_spin.value()
-        font_family = self.font_family_combo.currentText()
-        font_mono = self.font_mono_combo.currentText()
+        theme_name  = self.theme_combo.currentText()
+        font_size   = theme.FONT_SIZE_NORMAL
+        font_family = theme.FONT_FAMILY_UI
+        font_mono   = theme.FONT_MONOSPACE
 
         # Re-apply to make sure the running app state is fully consistent
         theme.apply_theme(theme_name, font_size, font_family)
@@ -1713,8 +1551,7 @@ class {class_name}Tab(QWidget):
         theme.FONT_MONOSPACE = font_mono
         theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
         self._custom_numbers = self._collect_number_overrides()
-        if self._custom_numbers:
-            theme.apply_number_overrides(self._custom_numbers)
+        theme.apply_number_overrides(self._custom_numbers)
 
         app = QApplication.instance()
         if app:
@@ -1743,9 +1580,9 @@ class {class_name}Tab(QWidget):
 
             config_data["preferences"] = {
                 "theme": self.theme_combo.currentText(),
-                "font_size": self.font_size_spin.value(),
-                "font_family": self.font_family_combo.currentText(),
-                "font_mono": self.font_mono_combo.currentText(),
+                "font_size": theme.FONT_SIZE_NORMAL,
+                "font_family": theme.FONT_FAMILY_UI,
+                "font_mono": theme.FONT_MONOSPACE,
                 "custom_colors": self._custom_colors,
                 "custom_numbers": self._custom_numbers,
                 # Only save user-changed properties, not the full theme defaults
@@ -1758,10 +1595,10 @@ class {class_name}Tab(QWidget):
     def save_preferences(self):
         """Save preferences to file and apply theme"""
         try:
-            theme_name = self.theme_combo.currentText()
-            font_size = self.font_size_spin.value()
-            font_family = self.font_family_combo.currentText()
-            font_mono = self.font_mono_combo.currentText()
+            theme_name  = self.theme_combo.currentText()
+            font_size   = theme.FONT_SIZE_NORMAL
+            font_family = theme.FONT_FAMILY_UI
+            font_mono   = theme.FONT_MONOSPACE
 
             theme.apply_theme(theme_name, font_size, font_family)
             if self._custom_colors:
@@ -1769,8 +1606,7 @@ class {class_name}Tab(QWidget):
             theme.FONT_MONOSPACE = font_mono
             theme.FONT_FAMILY_MONO = f"'{font_mono}', 'Courier New', monospace"
             self._custom_numbers = self._collect_number_overrides()
-            if self._custom_numbers:
-                theme.apply_number_overrides(self._custom_numbers)
+            theme.apply_number_overrides(self._custom_numbers)
 
             app = QApplication.instance()
             if app:
@@ -1831,21 +1667,11 @@ class {class_name}Tab(QWidget):
                     theme.apply_number_overrides(self._custom_numbers)
 
                 # Block signals so setCurrentIndex doesn't trigger preview_theme mid-load
-                for widget in (self.theme_combo, self.font_family_combo, self.font_mono_combo):
-                    widget.blockSignals(True)
-
+                self.theme_combo.blockSignals(True)
                 index = self.theme_combo.findText(theme_name)
                 if index >= 0:
                     self.theme_combo.setCurrentIndex(index)
-                ff_index = self.font_family_combo.findText(font_family)
-                if ff_index >= 0:
-                    self.font_family_combo.setCurrentIndex(ff_index)
-                fm_index = self.font_mono_combo.findText(font_mono)
-                if fm_index >= 0:
-                    self.font_mono_combo.setCurrentIndex(fm_index)
-
-                for widget in (self.theme_combo, self.font_family_combo, self.font_mono_combo):
-                    widget.blockSignals(False)
+                self.theme_combo.blockSignals(False)
 
                 if hasattr(self, '_widget_theme_editor'):
                     if widget_overrides:
@@ -1867,15 +1693,11 @@ class {class_name}Tab(QWidget):
                 self._custom_colors = {}
                 self._custom_numbers = {}
                 self.theme_combo.setCurrentText("Gruvbox Dark")
-                self.font_family_combo.setCurrentText("Segoe UI")
-                self.font_mono_combo.setCurrentText("Consolas")
         except Exception as e:
             logger.warning("Failed to load preferences: %s", e)
             self._custom_colors = {}
             self._custom_numbers = {}
             self.theme_combo.setCurrentText("Gruvbox Dark")
-            self.font_family_combo.setCurrentText("Segoe UI")
-            self.font_mono_combo.setCurrentText("Consolas")
 
         self._load_search_settings()
         self._load_skills_settings()
@@ -1885,15 +1707,8 @@ class {class_name}Tab(QWidget):
         self._custom_colors.clear()
         self._custom_numbers.clear()
         self.theme_combo.setCurrentText("Gruvbox Dark")
-        self.font_family_combo.setCurrentText("Segoe UI")
-        self.font_mono_combo.setCurrentText("Consolas")
-        # Reset all size/spacing spinboxes to default values
-        for _, var_name, _, _, default in self._THEME_TYPO_VARS:
-            if var_name in self._typo_spins:
-                self._typo_spins[var_name].setValue(default)
-        for _, var_name, _, _, default in self._THEME_SPACING_VARS:
-            if var_name in self._spacing_spins:
-                self._spacing_spins[var_name].setValue(default)
+        if hasattr(self, '_widget_theme_editor'):
+            self._widget_theme_editor.reset_typo_spacing()
         self.apply_preferences()
 
     def create_full_backup(self):
