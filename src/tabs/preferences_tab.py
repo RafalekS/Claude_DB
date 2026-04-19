@@ -683,6 +683,12 @@ class PreferencesTab(QWidget):
                 wi = QListWidgetItem(text)
                 wi.setData(Qt.ItemDataRole.UserRole, wname)
                 self._elements_widget_list.addItem(wi)
+            # If this entry uses QTextBrowser, also list the virtual HTML_Content widget
+            if 'QTextBrowser' in qt_classes and 'HTML_Content' in WIDGET_DEFS:
+                html_wdef = WIDGET_DEFS['HTML_Content']
+                wi = QListWidgetItem(f"{html_wdef.get('icon', '🌐')}  ·  HTML Content (inline styles)")
+                wi.setData(Qt.ItemDataRole.UserRole, 'HTML_Content')
+                self._elements_widget_list.addItem(wi)
 
         def _on_widget_clicked(item: QListWidgetItem):
             wname = item.data(Qt.ItemDataRole.UserRole)
@@ -703,6 +709,22 @@ class PreferencesTab(QWidget):
 
     # ── Live-apply helpers ───────────────────────────────────────────────────
 
+    @staticmethod
+    def _inject_css_into_html(html: str, css: str) -> str:
+        """Inject a marked <style> block into HTML.
+
+        The marker attribute (data-claudedb="1") lets the monkey-patched
+        setHtml() in main.py strip the block before saving _html_source, so
+        the stored original is always clean and re-injection is idempotent.
+        """
+        import re
+        style_block = f'<style data-claudedb="1">{css}</style>'
+        if '</head>' in html:
+            return html.replace('</head>', style_block + '</head>', 1)
+        if re.search(r'<body[^>]*>', html):
+            return re.sub(r'(<body[^>]*>)', r'\1' + style_block, html, count=1)
+        return style_block + html
+
     def _push_app_stylesheet(self):
         """Regenerate and push the full app stylesheet from current theme globals + widget overrides."""
         from PyQt6.QtWidgets import QTextBrowser
@@ -715,20 +737,10 @@ class PreferencesTab(QWidget):
         if not hasattr(self, '_widget_theme_editor'):
             return
 
+        # Build the full HTML CSS including body color/bg.
+        # Injecting it as a <style> block inside the HTML is the only approach
+        # that reliably overrides Qt's QSS cascade for HTML-rendered content.
         doc_css = self._widget_theme_editor.get_document_css()
-
-        # Body color/bg must be applied via per-widget setStyleSheet() because:
-        #   app-level QSS  >  palette  >  document CSS
-        # Only a per-widget stylesheet beats the app-level QSS rule for QTextBrowser.
-        html_ov    = self._widget_theme_editor._overrides.get('HTML_Content', {})
-        body_color = html_ov.get(('body', 'color'))
-        body_bg    = html_ov.get(('body', 'background-color'))
-
-        # Build the per-browser body QSS override (empty string = no override)
-        body_qss_props = []
-        body_qss_props.append(f"color: {body_color};" if body_color else f"color: {theme.FG_PRIMARY};")
-        body_qss_props.append(f"background-color: {body_bg};" if body_bg else f"background-color: {theme.BG_DARK};")
-        browser_qss = "QTextBrowser {{ {props} }}".format(props=" ".join(body_qss_props))
 
         main_win = self.window()
         for browser in main_win.findChildren(QTextBrowser):
@@ -736,12 +748,9 @@ class PreferencesTab(QWidget):
             if orig_html is None:
                 continue  # browser not set via setHtml; skip
 
-            # Per-widget stylesheet wins over app QSS — sets base body color
-            browser.setStyleSheet(browser_qss)
-
             scroll = browser.verticalScrollBar().value()
-            browser.document().setDefaultStyleSheet(doc_css)
-            browser.setHtml(orig_html)
+            styled_html = self._inject_css_into_html(orig_html, doc_css)
+            browser.setHtml(styled_html)   # monkey-patch strips marker → _html_source stays clean
             browser.verticalScrollBar().setValue(scroll)
 
     def apply_theme(self):

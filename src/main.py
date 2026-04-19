@@ -42,14 +42,23 @@ logger = logging.getLogger(__name__)
 # ── QTextBrowser HTML-source tracking ────────────────────────────────────────
 # toHtml() destroys original tag structure (converts <code>, <h2>, etc. to
 # <span> with baked-in inline styles).  We monkey-patch setHtml to store the
-# original source so that _push_app_stylesheet() can re-apply it unchanged.
+# CLEAN original source (with any injected <style> blocks stripped) so that
+# _push_app_stylesheet() always re-injects from the clean base.
+import re as _re
 from PyQt6.QtWidgets import QTextBrowser as _QTextBrowser
 
 _orig_setHtml = _QTextBrowser.setHtml
+_CSS_INJECT_MARKER = 'data-claudedb="1"'
 
 
 def _tracked_setHtml(self, html: str) -> None:  # type: ignore[override]
-    self.setProperty("_html_source", html)
+    # Strip any previously-injected style block before storing so _html_source
+    # always holds the clean original HTML.
+    clean = _re.sub(
+        r'<style\s+data-claudedb="1"[^>]*>.*?</style>',
+        '', html, flags=_re.DOTALL
+    )
+    self.setProperty("_html_source", clean)
     _orig_setHtml(self, html)
 
 
