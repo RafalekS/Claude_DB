@@ -498,8 +498,13 @@ def build_overrides_qss(overrides: dict) -> str:
 
 
 def build_document_css(overrides: dict) -> str:
-    """Generate CSS for QTextDocument.setDefaultStyleSheet() from HTML_Content overrides.
-    This controls h1–h4, body, code, pre, a inside any QTextBrowser."""
+    """Generate CSS for injection into QTextBrowser HTML <head>.
+
+    Qt's HTML renderer supports font-size / font-family from body {} CSS, but
+    does NOT cascade color/background-color from body to child elements the
+    way browsers do.  So body color is expanded to an explicit multi-selector
+    rule covering all common text elements, ensuring the color actually shows.
+    """
     wdef = WIDGET_DEFS.get('HTML_Content')
     if not wdef:
         return ''
@@ -523,7 +528,23 @@ def build_document_css(overrides: dict) -> str:
         by_el.setdefault(el, []).append(decl)
 
     parts = []
+    # Qt does not cascade color/background from body to p/li/td etc.
+    # Expand those properties into an explicit multi-element rule so the
+    # colors actually render.
+    _TEXT_ELEMENTS = 'body, p, li, td, th, dt, dd, span'
+    body_decls = by_el.get('body', [])
+    if body_decls:
+        # Separate font declarations (body {} handles these fine) from
+        # color declarations (need the multi-selector expansion).
+        color_decls = [d for d in body_decls if d.startswith('color') or d.startswith('background')]
+        font_decls  = [d for d in body_decls if not d.startswith('color') and not d.startswith('background')]
+        if font_decls:
+            parts.append(f"body {{ {'; '.join(font_decls)} }}")
+        if color_decls:
+            parts.append(f"{_TEXT_ELEMENTS} {{ {'; '.join(color_decls)} }}")
     for el, decls in by_el.items():
+        if el == 'body':
+            continue  # already handled above
         parts.append(f"{el} {{ {'; '.join(decls)} }}")
     return '\n'.join(parts)
 
