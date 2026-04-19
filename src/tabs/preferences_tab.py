@@ -706,7 +706,6 @@ class PreferencesTab(QWidget):
     def _push_app_stylesheet(self):
         """Regenerate and push the full app stylesheet from current theme globals + widget overrides."""
         from PyQt6.QtWidgets import QTextBrowser
-        from PyQt6.QtGui import QPalette, QColor
         app = QApplication.instance()
         if app:
             base_qss = theme.generate_app_stylesheet()
@@ -718,12 +717,18 @@ class PreferencesTab(QWidget):
 
         doc_css = self._widget_theme_editor.get_document_css()
 
-        # Extract body color/bg from HTML_Content overrides so we can apply them
-        # via QPalette — necessary because QSS "color" on QTextBrowser overrides
-        # any CSS set through setDefaultStyleSheet.
-        html_ov = self._widget_theme_editor._overrides.get('HTML_Content', {})
+        # Body color/bg must be applied via per-widget setStyleSheet() because:
+        #   app-level QSS  >  palette  >  document CSS
+        # Only a per-widget stylesheet beats the app-level QSS rule for QTextBrowser.
+        html_ov    = self._widget_theme_editor._overrides.get('HTML_Content', {})
         body_color = html_ov.get(('body', 'color'))
         body_bg    = html_ov.get(('body', 'background-color'))
+
+        # Build the per-browser body QSS override (empty string = no override)
+        body_qss_props = []
+        body_qss_props.append(f"color: {body_color};" if body_color else f"color: {theme.FG_PRIMARY};")
+        body_qss_props.append(f"background-color: {body_bg};" if body_bg else f"background-color: {theme.BG_DARK};")
+        browser_qss = "QTextBrowser {{ {props} }}".format(props=" ".join(body_qss_props))
 
         main_win = self.window()
         for browser in main_win.findChildren(QTextBrowser):
@@ -731,11 +736,8 @@ class PreferencesTab(QWidget):
             if orig_html is None:
                 continue  # browser not set via setHtml; skip
 
-            # Apply body color/bg via palette so it wins over QSS
-            pal = browser.palette()
-            pal.setColor(QPalette.ColorRole.Text,   QColor(body_color) if body_color else QColor(theme.FG_PRIMARY))
-            pal.setColor(QPalette.ColorRole.Base,   QColor(body_bg)    if body_bg    else QColor(theme.BG_DARK))
-            browser.setPalette(pal)
+            # Per-widget stylesheet wins over app QSS — sets base body color
+            browser.setStyleSheet(browser_qss)
 
             scroll = browser.verticalScrollBar().value()
             browser.document().setDefaultStyleSheet(doc_css)
