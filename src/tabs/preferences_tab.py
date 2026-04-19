@@ -744,22 +744,34 @@ class PreferencesTab(QWidget):
         return f'<html><head>{style_block}</head><body>' + html + '</body></html>'
 
     def _push_app_stylesheet(self):
-        """Regenerate and push the full app stylesheet from current theme globals + widget overrides."""
-        from PyQt6.QtWidgets import QTextBrowser
+        """Regenerate and push the full app stylesheet from current theme globals + widget overrides.
+
+        QSS is applied immediately. HTML CSS injection is deferred via QTimer so it runs
+        AFTER all tab apply_theme() calls triggered by the QSS change have completed —
+        otherwise tabs like CLIReferenceTab that call setHtml() in their apply_theme()
+        would overwrite the injected <style> block.
+        """
+        from PyQt6.QtCore import QTimer
         app = QApplication.instance()
         if app:
             base_qss = theme.generate_app_stylesheet()
             widget_qss = self._widget_theme_editor.get_overrides_qss() if hasattr(self, '_widget_theme_editor') else ''
             app.setStyleSheet(base_qss + '\n' + widget_qss)
 
+        # Defer HTML injection until the event loop has processed all apply_theme() callbacks
+        QTimer.singleShot(0, self._reinject_html_css)
+
+    def _reinject_html_css(self):
+        """Inject the current document CSS into every QTextBrowser that was set via setHtml().
+
+        Called via QTimer.singleShot(0) from _push_app_stylesheet so it runs after all
+        tab apply_theme() methods have already finished calling setHtml().
+        """
+        from PyQt6.QtWidgets import QTextBrowser
         if not hasattr(self, '_widget_theme_editor'):
             return
 
-        # Build the full HTML CSS including body color/bg.
-        # Injecting it as a <style> block inside the HTML is the only approach
-        # that reliably overrides Qt's QSS cascade for HTML-rendered content.
         doc_css = self._widget_theme_editor.get_document_css()
-
         main_win = self.window()
         for browser in main_win.findChildren(QTextBrowser):
             orig_html = browser.property("_html_source")
