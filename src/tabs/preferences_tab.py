@@ -683,11 +683,19 @@ class PreferencesTab(QWidget):
                 wi = QListWidgetItem(text)
                 wi.setData(Qt.ItemDataRole.UserRole, wname)
                 self._elements_widget_list.addItem(wi)
-            # If this entry uses QTextBrowser, also list the virtual HTML_Content widget
+            # QTextBrowser can contain HTML — also expose the HTML Content editor
+            # (controls body text, h1-h4, code, links *inside* the browser)
             if 'QTextBrowser' in qt_classes and 'HTML_Content' in WIDGET_DEFS:
                 html_wdef = WIDGET_DEFS['HTML_Content']
-                wi = QListWidgetItem(f"{html_wdef.get('icon', '🌐')}  ·  HTML Content (inline styles)")
+                wi = QListWidgetItem(
+                    f"  └─ {html_wdef.get('icon', '🌐')}  HTML Content  "
+                    f"(body / h1-h4 / code / links inside Text Browser)"
+                )
                 wi.setData(Qt.ItemDataRole.UserRole, 'HTML_Content')
+                wi.setToolTip(
+                    "Text Browser is the widget frame.\n"
+                    "HTML Content controls the text/colors rendered inside it."
+                )
                 self._elements_widget_list.addItem(wi)
 
         def _on_widget_clicked(item: QListWidgetItem):
@@ -711,19 +719,29 @@ class PreferencesTab(QWidget):
 
     @staticmethod
     def _inject_css_into_html(html: str, css: str) -> str:
-        """Inject a marked <style> block into HTML.
+        """Inject a marked <style> block into the HTML <head>.
 
-        The marker attribute (data-claudedb="1") lets the monkey-patched
-        setHtml() in main.py strip the block before saving _html_source, so
-        the stored original is always clean and re-injection is idempotent.
+        Qt's HTML renderer only processes <style> tags from <head> — a <style>
+        inside <body> is silently ignored.  If the HTML has no <head>, one is
+        inserted.  The marker attribute lets the monkey-patched setHtml() in
+        main.py strip the block before saving _html_source so re-injection is
+        always idempotent (no style stacking across calls).
         """
         import re
         style_block = f'<style data-claudedb="1">{css}</style>'
+
+        # Case 1: HTML already has a <head> — insert before </head>
         if '</head>' in html:
             return html.replace('</head>', style_block + '</head>', 1)
-        if re.search(r'<body[^>]*>', html):
-            return re.sub(r'(<body[^>]*>)', r'\1' + style_block, html, count=1)
-        return style_block + html
+
+        # Case 2: has <html> but no <head> — insert a <head> right after <html …>
+        m = re.search(r'(<html[^>]*>)', html, re.IGNORECASE)
+        if m:
+            insert_pos = m.end()
+            return html[:insert_pos] + f'<head>{style_block}</head>' + html[insert_pos:]
+
+        # Case 3: bare fragment — prepend a minimal wrapper
+        return f'<html><head>{style_block}</head><body>' + html + '</body></html>'
 
     def _push_app_stylesheet(self):
         """Regenerate and push the full app stylesheet from current theme globals + widget overrides."""
