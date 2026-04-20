@@ -91,29 +91,34 @@ class DocPage(QWidget):
 # ─── HTML helpers ─────────────────────────────────────────────────────────────
 
 def _h(level, text):
-    color = theme.ACCENT_PRIMARY if level <= 2 else theme.FG_PRIMARY
-    return (f"<h{level} style='color:{color};"
+    # No inline color — body text color comes from the HTML Content widget editor
+    # (setDefaultStyleSheet). Accent heading colors are set there too.
+    return (f"<h{level} style='"
             f"margin-top:{theme.MARGIN_LG}px;margin-bottom:{theme.MARGIN_SM}px;'>{text}</h{level}>")
 
 
 def _p(text):
-    return f"<p style='color:{theme.FG_PRIMARY};line-height:1.6;margin:{theme.MARGIN_SM}px 0;'>{text}</p>"
+    # No inline color — inherited from body via the document default stylesheet.
+    return f"<p style='line-height:1.6;margin:{theme.MARGIN_SM}px 0;'>{text}</p>"
 
 
 def _code(text):
-    return (f"<code style='background:{theme.BG_MEDIUM};color:{theme.ACCENT_SECONDARY};"
+    # Keep background/font-family inline (layout); remove color (from stylesheet).
+    return (f"<code style='background:{theme.BG_MEDIUM};"
             f"padding:1px {theme.PADDING_SM}px;border-radius:{theme.BORDER_RADIUS}px;"
             f"font-family:{theme.FONT_FAMILY_MONO};'>{text}</code>")
 
 
 def _pre(text):
-    return (f"<pre style='background:{theme.BG_MEDIUM};color:{theme.FG_PRIMARY};"
+    # Keep layout/font inline; remove color (from stylesheet).
+    return (f"<pre style='background:{theme.BG_MEDIUM};"
             f"padding:{theme.PADDING_MD}px;border-radius:{theme.BORDER_RADIUS}px;"
             f"font-family:{theme.FONT_FAMILY_MONO};"
             f"font-size:{theme.FONT_SIZE_SMALL}px;white-space:pre-wrap;'>{text}</pre>")
 
 
 def _table(headers, rows):
+    # Header cells keep accent color (structural); body cells drop color.
     th = "".join(f"<th style='padding:{theme.PADDING_SM}px {theme.PADDING_MD}px;"
                  f"border-bottom:2px solid {theme.ACCENT_PRIMARY};"
                  f"text-align:left;color:{theme.ACCENT_PRIMARY};'>{h}</th>" for h in headers)
@@ -121,8 +126,8 @@ def _table(headers, rows):
     for row in rows:
         body += f"<tr style='background:{theme.BG_DARK};border-bottom:1px solid {theme.BG_LIGHT};'>"
         body += "".join(
-            f"<td style='padding:{theme.PADDING_SM}px {theme.PADDING_MD}px;"
-            f"color:{theme.FG_PRIMARY};'>{c}</td>" for c in row)
+            f"<td style='padding:{theme.PADDING_SM}px {theme.PADDING_MD}px;'>{c}</td>"
+            for c in row)
         body += "</tr>"
     return (f"<table style='border-collapse:collapse;width:100%;margin:{theme.MARGIN_MD}px 0;'>"
             f"<thead><tr style='background:{theme.BG_MEDIUM};'>{th}</tr></thead>"
@@ -130,7 +135,8 @@ def _table(headers, rows):
 
 
 def _wrap(*parts):
-    return (f"<html><body style='background:{theme.BG_DARK};color:{theme.FG_PRIMARY};"
+    # Drop color from body — comes from the HTML Content widget editor stylesheet.
+    return (f"<html><body style='background:{theme.BG_DARK};"
             f"font-size:{theme.FONT_SIZE_NORMAL}px;"
             f"padding:{theme.PADDING_MD}px;'>{''.join(parts)}</body></html>")
 

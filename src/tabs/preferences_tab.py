@@ -763,51 +763,61 @@ class PreferencesTab(QWidget):
         browser.setStyleSheet((cleaned + '\n' + override) if cleaned else override)
 
     def _reinject_html_css(self):
-        """Push document CSS to every tracked QTextBrowser.
+        """Pass 1 of 2: patch each browser's LOCAL stylesheet with the body colour.
 
-        Two-pronged approach required to beat Qt's QPalette override:
+        Qt's setStyleSheet() is asynchronous — it schedules a re-polish event that
+        updates the widget's QPalette.  Calling setHtml() immediately after would
+        render the document with the OLD palette colour.
 
-        1. Local widget stylesheet: 'QTextBrowser { color: BODY_COLOR }' on the
-           individual browser has higher priority than the app-level QSS rule of
-           the same name.  This makes Qt bake the correct palette WindowText colour
-           into the document before parsing, so body / paragraph text gets the right
-           colour.
+        So: set stylesheets on all browsers in this pass, then fire a second
+        QTimer.singleShot(0) to do the actual setHtml() calls AFTER the re-polish
+        events have been processed by the event loop.
+        """
+        from PyQt6.QtWidgets import QTextBrowser
+        from PyQt6.QtCore import QTimer
+        if not hasattr(self, '_widget_theme_editor'):
+            return
 
-        2. document().setDefaultStyleSheet(css): sets CSS for headings, code, pre,
-           links — elements that have explicit colours in the generated CSS.
+        doc_css = self._widget_theme_editor.get_document_css()
+        body_color = self._get_body_text_color()
+        logger.debug("_reinject_html_css pass1: body_color=%s", body_color)
 
-        Called via QTimer.singleShot(0) so all tab apply_theme() / setHtml() calls
-        have already finished before we re-render.
+        main_win = self.window()
+        for browser in main_win.findChildren(QTextBrowser):
+            if browser.property("_html_source") is None:
+                continue
+            browser.setProperty("_doc_css", doc_css)
+            # Override app-level QSS via local stylesheet — local wins in Qt's cascade.
+            # This triggers an async re-polish that updates QPalette.WindowText.
+            self._patch_browser_color(browser, body_color)
+
+        # Pass 2: after the re-polish fires and the palette is updated, re-render.
+        QTimer.singleShot(0, self._rerender_browsers)
+
+    def _rerender_browsers(self):
+        """Pass 2 of 2: re-render every tracked browser now that the palette is up-to-date.
+
+        By the time this fires the re-polish from _reinject_html_css has completed and
+        Qt has baked the new QPalette.WindowText colour into each browser.  Now calling
+        setHtml() will parse the document with the correct foreground colour.
         """
         from PyQt6.QtWidgets import QTextBrowser
         if not hasattr(self, '_widget_theme_editor'):
             return
 
         doc_css = self._widget_theme_editor.get_document_css()
-        body_color = self._get_body_text_color()
-        logger.debug("_reinject_html_css: body_color=%s  css=%r", body_color, doc_css[:80] if doc_css else '(empty)')
-
         main_win = self.window()
-        browsers = main_win.findChildren(QTextBrowser)
-        logger.debug("_reinject_html_css: found %d browser(s)", len(browsers))
-
-        for browser in browsers:
+        count = 0
+        for browser in main_win.findChildren(QTextBrowser):
             orig_html = browser.property("_html_source")
             if orig_html is None:
-                continue  # never set via setHtml; skip
-
-            browser.setProperty("_doc_css", doc_css)
-
-            # (1) Override palette via local stylesheet — this beats app QSS.
-            self._patch_browser_color(browser, body_color)
-
-            # (2) Apply headings/code/link CSS at document level.
+                continue
             browser.document().setDefaultStyleSheet(doc_css)
-
-            # Re-render so Qt picks up the new palette and stylesheet.
             scroll = browser.verticalScrollBar().value()
             browser.setHtml(orig_html)
             browser.verticalScrollBar().setValue(scroll)
+            count += 1
+        logger.debug("_rerender_browsers: updated %d browser(s)", count)
 
     def apply_theme(self):
         """Re-apply inline styles that were baked at widget-creation time so they match the current theme."""
