@@ -735,45 +735,79 @@ class PreferencesTab(QWidget):
 
         QTimer.singleShot(0, self._reinject_html_css)
 
+    def _get_body_text_color(self) -> str:
+        """Return the current body text color from widget editor overrides."""
+        if not hasattr(self, '_widget_theme_editor'):
+            return theme.FG_PRIMARY
+        html_overrides = self._widget_theme_editor._overrides.get('HTML_Content', {})
+        return html_overrides.get(('body', 'color'), '') or theme.FG_PRIMARY
+
+    @staticmethod
+    def _patch_browser_color(browser, color: str) -> None:
+        """Add a local-stylesheet color rule to *browser* so it wins over the app QSS.
+
+        Qt's cascade: local widget stylesheet > parent stylesheet > app stylesheet.
+        The app-level QSS sets 'QTextBrowser { color: FG_PRIMARY }' which overrides
+        the document's setDefaultStyleSheet colors for body/paragraph text.
+        Setting the same rule in the widget's LOCAL stylesheet beats the app rule
+        and causes Qt to bake the correct palette WindowText colour into the HTML
+        renderer BEFORE it parses the document.
+        """
+        import re
+        existing = browser.styleSheet() or ''
+        # Remove any previous override block we inserted (identified by comment marker)
+        cleaned = re.sub(
+            r'/\*cdb-body-color\*/\s*QTextBrowser\s*\{[^}]*\}', '', existing
+        ).strip()
+        override = f'/*cdb-body-color*/ QTextBrowser {{ color: {color}; }}'
+        browser.setStyleSheet((cleaned + '\n' + override) if cleaned else override)
+
     def _reinject_html_css(self):
         """Push document CSS to every tracked QTextBrowser.
 
-        Strategy: store the CSS as a '_doc_css' property on each browser.  The
-        monkey-patched setHtml() in main.py reads this property and calls
-        document().setDefaultStyleSheet(css) BEFORE parsing the HTML — this is
-        the only Qt API that reliably overrides the QPalette color (which would
-        otherwise win over inline CSS color rules).
+        Two-pronged approach required to beat Qt's QPalette override:
 
-        Called via QTimer.singleShot(0) from _push_app_stylesheet so that all
-        tab apply_theme() / setHtml() calls have already completed.
+        1. Local widget stylesheet: 'QTextBrowser { color: BODY_COLOR }' on the
+           individual browser has higher priority than the app-level QSS rule of
+           the same name.  This makes Qt bake the correct palette WindowText colour
+           into the document before parsing, so body / paragraph text gets the right
+           colour.
+
+        2. document().setDefaultStyleSheet(css): sets CSS for headings, code, pre,
+           links — elements that have explicit colours in the generated CSS.
+
+        Called via QTimer.singleShot(0) so all tab apply_theme() / setHtml() calls
+        have already finished before we re-render.
         """
         from PyQt6.QtWidgets import QTextBrowser
         if not hasattr(self, '_widget_theme_editor'):
             return
 
         doc_css = self._widget_theme_editor.get_document_css()
-        logger.debug("_reinject_html_css: css=%r", doc_css[:120] if doc_css else '(empty)')
+        body_color = self._get_body_text_color()
+        logger.debug("_reinject_html_css: body_color=%s  css=%r", body_color, doc_css[:80] if doc_css else '(empty)')
 
         main_win = self.window()
         browsers = main_win.findChildren(QTextBrowser)
-        logger.debug("_reinject_html_css: found %d browser(s) in %s", len(browsers), type(main_win).__name__)
+        logger.debug("_reinject_html_css: found %d browser(s)", len(browsers))
 
         for browser in browsers:
             orig_html = browser.property("_html_source")
             if orig_html is None:
                 continue  # never set via setHtml; skip
 
-            # Store CSS on the browser so the monkey-patch applies it automatically
-            # on every future setHtml() call (including those from apply_theme()).
             browser.setProperty("_doc_css", doc_css)
 
-            # Re-render with the new stylesheet.  The monkey-patch in main.py
-            # will call document().setDefaultStyleSheet(doc_css) before parsing.
-            scroll = browser.verticalScrollBar().value()
+            # (1) Override palette via local stylesheet — this beats app QSS.
+            self._patch_browser_color(browser, body_color)
+
+            # (2) Apply headings/code/link CSS at document level.
             browser.document().setDefaultStyleSheet(doc_css)
+
+            # Re-render so Qt picks up the new palette and stylesheet.
+            scroll = browser.verticalScrollBar().value()
             browser.setHtml(orig_html)
             browser.verticalScrollBar().setValue(scroll)
-            logger.debug("_reinject_html_css: updated browser %s", id(browser))
 
     def apply_theme(self):
         """Re-apply inline styles that were baked at widget-creation time so they match the current theme."""
