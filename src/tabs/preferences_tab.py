@@ -717,43 +717,14 @@ class PreferencesTab(QWidget):
 
     # ── Live-apply helpers ───────────────────────────────────────────────────
 
-    @staticmethod
-    def _inject_css_into_html(html: str, css: str) -> str:
-        """Inject a marked <style> block into the HTML <head>.
-
-        Qt's HTML renderer only processes <style> tags from <head> — a <style>
-        inside <body> is silently ignored.  If the HTML has no <head>, one is
-        inserted.  The marker attribute lets the monkey-patched setHtml() in
-        main.py strip the block before saving _html_source so re-injection is
-        always idempotent (no style stacking across calls).
-        """
-        import re
-        # Use a plain <style> tag — Qt's strict HTML4 parser silently drops
-        # <style> elements that have unrecognised attributes.  We identify our
-        # injected block by a CSS comment so the monkey-patch in main.py can
-        # strip it before storing _html_source (keeps re-injection idempotent).
-        style_block = f'<style>/* claudedb-injected */\n{css}</style>'
-
-        # Case 1: HTML already has a <head> — insert before </head>
-        if '</head>' in html:
-            return html.replace('</head>', style_block + '</head>', 1)
-
-        # Case 2: has <html> but no <head> — insert a <head> right after <html …>
-        m = re.search(r'(<html[^>]*>)', html, re.IGNORECASE)
-        if m:
-            insert_pos = m.end()
-            return html[:insert_pos] + f'<head>{style_block}</head>' + html[insert_pos:]
-
-        # Case 3: bare fragment — prepend a minimal wrapper
-        return f'<html><head>{style_block}</head><body>' + html + '</body></html>'
-
     def _push_app_stylesheet(self):
         """Regenerate and push the full app stylesheet from current theme globals + widget overrides.
 
-        QSS is applied immediately. HTML CSS injection is deferred via QTimer so it runs
-        AFTER all tab apply_theme() calls triggered by the QSS change have completed —
-        otherwise tabs like CLIReferenceTab that call setHtml() in their apply_theme()
-        would overwrite the injected <style> block.
+        QSS is applied immediately.  HTML CSS (colors, heading styles) is pushed
+        via QTimer.singleShot(0) so it runs AFTER any apply_theme() calls that
+        tabs trigger in response to the QSS change — otherwise tabs like
+        CLIReferenceTab that call setHtml() inside apply_theme() would wipe the
+        CSS before it could take effect.
         """
         from PyQt6.QtCore import QTimer
         app = QApplication.instance()
@@ -762,38 +733,47 @@ class PreferencesTab(QWidget):
             widget_qss = self._widget_theme_editor.get_overrides_qss() if hasattr(self, '_widget_theme_editor') else ''
             app.setStyleSheet(base_qss + '\n' + widget_qss)
 
-        # Defer HTML injection until the event loop has processed all apply_theme() callbacks
         QTimer.singleShot(0, self._reinject_html_css)
 
     def _reinject_html_css(self):
-        """Inject the current document CSS into every QTextBrowser that was set via setHtml().
+        """Push document CSS to every tracked QTextBrowser.
 
-        Called via QTimer.singleShot(0) from _push_app_stylesheet so it runs after all
-        tab apply_theme() methods have already finished calling setHtml().
+        Strategy: store the CSS as a '_doc_css' property on each browser.  The
+        monkey-patched setHtml() in main.py reads this property and calls
+        document().setDefaultStyleSheet(css) BEFORE parsing the HTML — this is
+        the only Qt API that reliably overrides the QPalette color (which would
+        otherwise win over inline CSS color rules).
+
+        Called via QTimer.singleShot(0) from _push_app_stylesheet so that all
+        tab apply_theme() / setHtml() calls have already completed.
         """
         from PyQt6.QtWidgets import QTextBrowser
         if not hasattr(self, '_widget_theme_editor'):
-            logger.debug("_reinject_html_css: no _widget_theme_editor, skipping")
             return
 
         doc_css = self._widget_theme_editor.get_document_css()
-        logger.debug("_reinject_html_css: doc_css=%r", doc_css[:200] if doc_css else '(empty)')
+        logger.debug("_reinject_html_css: css=%r", doc_css[:120] if doc_css else '(empty)')
 
         main_win = self.window()
         browsers = main_win.findChildren(QTextBrowser)
-        logger.debug("_reinject_html_css: found %d QTextBrowser(s) in window %s", len(browsers), type(main_win).__name__)
+        logger.debug("_reinject_html_css: found %d browser(s) in %s", len(browsers), type(main_win).__name__)
 
         for browser in browsers:
             orig_html = browser.property("_html_source")
             if orig_html is None:
-                logger.debug("_reinject_html_css: browser %s has no _html_source, skipping", id(browser))
-                continue
+                continue  # never set via setHtml; skip
 
-            logger.debug("_reinject_html_css: injecting into browser %s (html len=%d)", id(browser), len(orig_html))
+            # Store CSS on the browser so the monkey-patch applies it automatically
+            # on every future setHtml() call (including those from apply_theme()).
+            browser.setProperty("_doc_css", doc_css)
+
+            # Re-render with the new stylesheet.  The monkey-patch in main.py
+            # will call document().setDefaultStyleSheet(doc_css) before parsing.
             scroll = browser.verticalScrollBar().value()
-            styled_html = self._inject_css_into_html(orig_html, doc_css)
-            browser.setHtml(styled_html)   # monkey-patch strips marker → _html_source stays clean
+            browser.document().setDefaultStyleSheet(doc_css)
+            browser.setHtml(orig_html)
             browser.verticalScrollBar().setValue(scroll)
+            logger.debug("_reinject_html_css: updated browser %s", id(browser))
 
     def apply_theme(self):
         """Re-apply inline styles that were baked at widget-creation time so they match the current theme."""

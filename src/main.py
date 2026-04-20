@@ -48,23 +48,27 @@ import re as _re
 from PyQt6.QtWidgets import QTextBrowser as _QTextBrowser
 
 _orig_setHtml = _QTextBrowser.setHtml
-# Marker used inside a CSS comment — avoids custom HTML attributes that Qt's
-# strict HTML4 parser may silently discard, causing the <style> block to be ignored.
-_CSS_INJECT_MARKER = '/* claudedb-injected */'
 
 
 def _tracked_setHtml(self, html: str) -> None:  # type: ignore[override]
     import logging as _logging
     _log = _logging.getLogger("setHtml_patch")
-    # Strip any previously-injected style block before storing so _html_source
-    # always holds the clean original HTML.
-    clean = _re.sub(
-        r'<style>\s*/\*\s*claudedb-injected\s*\*/.*?</style>',
-        '', html, flags=_re.DOTALL
-    )
-    self.setProperty("_html_source", clean)
-    _log.debug("setHtml called on browser %s, html len=%d, clean len=%d", id(self), len(html), len(clean))
+
+    # Store the clean source so _reinject_html_css can call setHtml again later.
+    self.setProperty("_html_source", html)
+
+    # Apply stored document CSS via setDefaultStyleSheet BEFORE the HTML is
+    # parsed — this is the only reliable way to get Qt's HTML renderer to
+    # honour custom colors.  The QPalette color (from QSS) overrides inline CSS
+    # in Qt's HTML renderer, but setDefaultStyleSheet is applied at parse time
+    # before the palette override kicks in.
+    stored_css = self.property("_doc_css") or ""
+    if stored_css:
+        self.document().setDefaultStyleSheet(stored_css)
+        _log.debug("setHtml: applied _doc_css (%d chars) to browser %s", len(stored_css), id(self))
+
     _orig_setHtml(self, html)
+    _log.debug("setHtml done on browser %s, html len=%d", id(self), len(html))
 
 
 _QTextBrowser.setHtml = _tracked_setHtml  # type: ignore[method-assign]
