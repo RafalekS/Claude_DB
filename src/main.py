@@ -48,17 +48,22 @@ import re as _re
 from PyQt6.QtWidgets import QTextBrowser as _QTextBrowser
 
 _orig_setHtml = _QTextBrowser.setHtml
-_CSS_INJECT_MARKER = 'data-claudedb="1"'
+# Marker used inside a CSS comment — avoids custom HTML attributes that Qt's
+# strict HTML4 parser may silently discard, causing the <style> block to be ignored.
+_CSS_INJECT_MARKER = '/* claudedb-injected */'
 
 
 def _tracked_setHtml(self, html: str) -> None:  # type: ignore[override]
+    import logging as _logging
+    _log = _logging.getLogger("setHtml_patch")
     # Strip any previously-injected style block before storing so _html_source
     # always holds the clean original HTML.
     clean = _re.sub(
-        r'<style\s+data-claudedb="1"[^>]*>.*?</style>',
+        r'<style>\s*/\*\s*claudedb-injected\s*\*/.*?</style>',
         '', html, flags=_re.DOTALL
     )
     self.setProperty("_html_source", clean)
+    _log.debug("setHtml called on browser %s, html len=%d, clean len=%d", id(self), len(html), len(clean))
     _orig_setHtml(self, html)
 
 

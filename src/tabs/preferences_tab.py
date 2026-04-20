@@ -728,7 +728,11 @@ class PreferencesTab(QWidget):
         always idempotent (no style stacking across calls).
         """
         import re
-        style_block = f'<style data-claudedb="1">{css}</style>'
+        # Use a plain <style> tag — Qt's strict HTML4 parser silently drops
+        # <style> elements that have unrecognised attributes.  We identify our
+        # injected block by a CSS comment so the monkey-patch in main.py can
+        # strip it before storing _html_source (keeps re-injection idempotent).
+        style_block = f'<style>/* claudedb-injected */\n{css}</style>'
 
         # Case 1: HTML already has a <head> — insert before </head>
         if '</head>' in html:
@@ -769,15 +773,23 @@ class PreferencesTab(QWidget):
         """
         from PyQt6.QtWidgets import QTextBrowser
         if not hasattr(self, '_widget_theme_editor'):
+            logger.debug("_reinject_html_css: no _widget_theme_editor, skipping")
             return
 
         doc_css = self._widget_theme_editor.get_document_css()
+        logger.debug("_reinject_html_css: doc_css=%r", doc_css[:200] if doc_css else '(empty)')
+
         main_win = self.window()
-        for browser in main_win.findChildren(QTextBrowser):
+        browsers = main_win.findChildren(QTextBrowser)
+        logger.debug("_reinject_html_css: found %d QTextBrowser(s) in window %s", len(browsers), type(main_win).__name__)
+
+        for browser in browsers:
             orig_html = browser.property("_html_source")
             if orig_html is None:
-                continue  # browser not set via setHtml; skip
+                logger.debug("_reinject_html_css: browser %s has no _html_source, skipping", id(browser))
+                continue
 
+            logger.debug("_reinject_html_css: injecting into browser %s (html len=%d)", id(browser), len(orig_html))
             scroll = browser.verticalScrollBar().value()
             styled_html = self._inject_css_into_html(orig_html, doc_css)
             browser.setHtml(styled_html)   # monkey-patch strips marker → _html_source stays clean
