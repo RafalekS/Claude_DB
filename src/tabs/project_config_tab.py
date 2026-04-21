@@ -502,21 +502,6 @@ class ProjectConfigTab(QWidget):
         self._populate_combo(keep_selection=project_path)
         self.update_status(project_path)
 
-        # Offer to create .claude folder if missing
-        if not self.project_context.validate_claude_folder():
-            reply = QMessageBox.question(
-                self,
-                "Create .claude Folder?",
-                f"The selected project does not have a .claude folder.\n\n"
-                f"Create .claude folder in:\n{project_path}",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-            )
-            if reply == QMessageBox.StandardButton.Yes:
-                if self.project_context.ensure_claude_folder():
-                    QMessageBox.information(self, "Created", f"Created .claude folder in:\n{project_path}")
-                else:
-                    QMessageBox.critical(self, "Error", "Failed to create .claude folder")
-
     def clear_project(self):
         """Clear current project"""
         self.project_context.clear_project()
