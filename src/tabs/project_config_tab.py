@@ -36,6 +36,8 @@ from tabs.rules_tab import RulesTab
 from tabs.worktrees_tab import WorktreesTab
 from tabs.agent_teams_tab import AgentTeamsTab
 from tabs.remote_control_tab import RemoteControlTab
+from tabs.project_conversations_subtab import ProjectConversationsSubTab
+from tabs.project_file_history_subtab import ProjectFileHistorySubTab
 
 class ProjectClaudeMDSubTab(QWidget):
     """Simple CLAUDE.md viewer/editor for project context"""
@@ -373,6 +375,14 @@ class ProjectConfigTab(QWidget):
         # Projects sub-tab (projects management - reads project from central project_context)
         projects_tab = ProjectsTab(self.config_manager, self.backup_manager, self.project_context)
         self.sub_tabs.addTab(projects_tab, "📂 Projects")
+
+        # Conversations sub-tab (sessions for current project)
+        conversations_tab = ProjectConversationsSubTab(self.project_context)
+        self.sub_tabs.addTab(conversations_tab, "💬 Conversations")
+
+        # File History sub-tab (pre-edit snapshots for current project)
+        file_history_tab = ProjectFileHistorySubTab(self.project_context)
+        self.sub_tabs.addTab(file_history_tab, "📋 File History")
 
         # Rules sub-tab (project-level rules)
         rules_tab = RulesTab(self.config_manager, self.backup_manager)

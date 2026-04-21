@@ -76,6 +76,45 @@ def decode_project_directory_name(dir_name: str) -> Path | None:
     return None
 
 
+def find_project_encoded_dir(project_path: Path, projects_dir: Path | None = None) -> Path | None:
+    """Return the ~/.claude/projects/<encoded>/ directory for a given decoded project path."""
+    if projects_dir is None:
+        projects_dir = CLAUDE_PROJECTS_DIR
+    if not projects_dir.exists():
+        return None
+    try:
+        for pdir in projects_dir.iterdir():
+            if not pdir.is_dir():
+                continue
+            decoded = decode_project_directory_name(pdir.name)
+            if decoded is not None:
+                try:
+                    if decoded.resolve() == project_path.resolve():
+                        return pdir
+                except Exception:
+                    if decoded == project_path:
+                        return pdir
+    except Exception:
+        pass
+    return None
+
+
+def get_project_sessions(project_path: Path, projects_dir: Path | None = None) -> list[dict]:
+    """Return session info for a project, sorted newest first.
+
+    Returns:
+        list of {"uuid": str, "path": Path, "mtime": float}
+    """
+    encoded_dir = find_project_encoded_dir(project_path, projects_dir)
+    if encoded_dir is None:
+        return []
+    sessions = []
+    for jf in encoded_dir.glob("*.jsonl"):
+        sessions.append({"uuid": jf.stem, "path": jf, "mtime": jf.stat().st_mtime})
+    sessions.sort(key=lambda x: x["mtime"], reverse=True)
+    return sessions
+
+
 def scan_projects(projects_dir: Path | None = None) -> list[dict]:
     """
     Scan ~/.claude/projects/ and return decoded project entries.
