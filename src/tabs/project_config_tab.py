@@ -448,10 +448,14 @@ class ProjectConfigTab(QWidget):
             self._sync_combo_to_path(self.project_context.get_project())
 
     def _sync_combo_to_path(self, path: Path):
-        for i in range(self.project_combo.count()):
-            if self.project_combo.itemData(i) == path:
-                self.project_combo.setCurrentIndex(i)
-                return
+        self.project_combo.blockSignals(True)
+        try:
+            for i in range(self.project_combo.count()):
+                if self.project_combo.itemData(i) == path:
+                    self.project_combo.setCurrentIndex(i)
+                    return
+        finally:
+            self.project_combo.blockSignals(False)
 
     def _on_combo_changed(self, index: int):
         """Handle combo selection — update project_context."""
@@ -530,12 +534,28 @@ class ProjectConfigTab(QWidget):
         )
 
     def on_project_changed(self, new_project: Path):
-        """Handle project context changes from external sources."""
+        """Handle project context changes — sync combo selection and status label.
+
+        Only syncs the visual state; does NOT repopulate the combo (which would
+        re-trigger _on_combo_changed → set_project → this handler recursively).
+        Browse-picked paths that need a repopulate are handled in browse_project_folder.
+        """
         if new_project:
-            self._populate_combo(keep_selection=new_project)
+            self._sync_combo_to_path(new_project)
             self.update_status(new_project)
         else:
-            self.clear_project()
+            self.project_combo.blockSignals(True)
+            self.project_combo.setCurrentIndex(0)
+            self.project_combo.blockSignals(False)
+            self.status_label.setText("ℹ️ No project selected")
+            self.status_label.setStyleSheet(
+                f"color: {theme.FG_SECONDARY}; "
+                f"font-size: {theme.FONT_SIZE_SMALL}px; "
+                f"padding: 5px; "
+                f"background-color: {theme.BG_MEDIUM}; "
+                f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
+                f"border-radius: 3px;"
+            )
 
     def update_status(self, project_path: Path):
         """Update status label with project info"""
