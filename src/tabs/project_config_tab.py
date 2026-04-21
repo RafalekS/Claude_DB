@@ -14,9 +14,12 @@ Includes centralized project folder picker and 8 sub-tabs:
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTabWidget, QLineEdit, QFileDialog, QMessageBox, QTextEdit
+    QTabWidget, QComboBox, QFileDialog, QMessageBox, QTextEdit
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QStandardItem, QStandardItemModel
+
+from utils.project_scanner import scan_projects
 
 from utils import theme
 # Import subtabs (using OLD correct implementations)
@@ -271,23 +274,36 @@ class ProjectConfigTab(QWidget):
         picker_layout = QHBoxLayout()
         picker_layout.setSpacing(5)
 
-        self.project_path_input = QLineEdit()
-        self.project_path_input.setReadOnly(True)
-        self.project_path_input.setPlaceholderText("No project selected - click Browse to select")
+        # Tracked custom (Browse-picked) paths not in the scanned list
+        self._custom_paths: list[Path] = []
+
+        self.project_combo = QComboBox()
+        self.project_combo.setStyleSheet("QComboBox { combobox-popup: 0; }")
+        self.project_combo.setMaxVisibleItems(15)
+        self.project_combo.view().setStyleSheet("QListView { max-height: 350px; }")
+        self.project_combo.currentIndexChanged.connect(self._on_combo_changed)
+
+        refresh_btn = QPushButton("🔄")
+        refresh_btn.setToolTip("Rescan projects")
+        refresh_btn.clicked.connect(self.refresh_projects)
 
         browse_btn = QPushButton("📁 Browse")
-        browse_btn.setToolTip("Select project folder")
+        browse_btn.setToolTip("Select project folder manually")
         browse_btn.clicked.connect(self.browse_project_folder)
 
         clear_btn = QPushButton("✖ Clear")
         clear_btn.setToolTip("Clear current project")
         clear_btn.clicked.connect(self.clear_project)
 
-        picker_layout.addWidget(self.project_path_input)
+        picker_layout.addWidget(self.project_combo, 1)
+        picker_layout.addWidget(refresh_btn)
         picker_layout.addWidget(browse_btn)
         picker_layout.addWidget(clear_btn)
 
         picker_group_layout.addLayout(picker_layout)
+
+        # Populate combo on init
+        self._populate_combo()
 
         # Project status label
         self.status_label = QLabel("ℹ️ No project selected")
@@ -354,8 +370,8 @@ class ProjectConfigTab(QWidget):
         mcp_tab = MCPTab(self.config_manager, self.backup_manager, "project", self.project_context)
         self.sub_tabs.addTab(mcp_tab, "🔌 MCP Servers")
 
-        # Projects sub-tab (projects management - simplified to only Project Info)
-        projects_tab = ProjectsTab(self.config_manager, self.backup_manager)
+        # Projects sub-tab (projects management - reads project from central project_context)
+        projects_tab = ProjectsTab(self.config_manager, self.backup_manager, self.project_context)
         self.sub_tabs.addTab(projects_tab, "📂 Projects")
 
         # Rules sub-tab (project-level rules)
@@ -383,11 +399,78 @@ class ProjectConfigTab(QWidget):
             if hasattr(widget, 'apply_theme'):
                 widget.apply_theme()
 
-        # Load current project if set
+        # Reflect current project selection in combo after theme reapply
         if self.project_context.has_project():
-            current_project = self.project_context.get_project()
-            self.project_path_input.setText(str(current_project))
-            self.update_status(current_project)
+            self._sync_combo_to_context()
+
+    # ------------------------------------------------------------------ #
+    # Combo helpers
+    # ------------------------------------------------------------------ #
+
+    _SEPARATOR_DATA = "__separator__"
+
+    def _populate_combo(self, keep_selection: Path | None = None):
+        """Rebuild combo items from scanned + custom paths."""
+        self.project_combo.blockSignals(True)
+        self.project_combo.clear()
+
+        scanned = scan_projects()
+        scanned_paths = {p["path"] for p in scanned}
+
+        self.project_combo.addItem("-- Select Project --", None)
+
+        for project in scanned:
+            sessions = project["sessions"]
+            label = f"{project['path']}  ({sessions} session{'s' if sessions != 1 else ''})"
+            self.project_combo.addItem(label, project["path"])
+
+        # Custom paths (Browse-picked) not already in scanned list
+        custom = [p for p in self._custom_paths if p not in scanned_paths]
+        if custom:
+            # Non-selectable separator
+            model = self.project_combo.model()
+            sep = QStandardItem("── Custom Folders ──")
+            sep.setEnabled(False)
+            sep.setData(self._SEPARATOR_DATA)
+            model.appendRow(sep)
+
+            for path in custom:
+                self.project_combo.addItem(str(path), path)
+
+        self.project_combo.blockSignals(False)
+
+        # Re-select previous item if provided
+        if keep_selection:
+            self._sync_combo_to_path(keep_selection)
+
+    def _sync_combo_to_context(self):
+        if self.project_context.has_project():
+            self._sync_combo_to_path(self.project_context.get_project())
+
+    def _sync_combo_to_path(self, path: Path):
+        for i in range(self.project_combo.count()):
+            if self.project_combo.itemData(i) == path:
+                self.project_combo.setCurrentIndex(i)
+                return
+
+    def _on_combo_changed(self, index: int):
+        """Handle combo selection — update project_context."""
+        path = self.project_combo.itemData(index)
+        if not isinstance(path, Path):
+            return
+        if self.project_context.set_project(path):
+            self.update_status(path)
+        else:
+            QMessageBox.warning(self, "Invalid Path", f"Invalid project path:\n{path}")
+
+    def refresh_projects(self):
+        """Rescan ~/.claude/projects/ and rebuild combo."""
+        current = self.project_context.get_project() if self.project_context.has_project() else None
+        self._populate_combo(keep_selection=current)
+
+    # ------------------------------------------------------------------ #
+    # Browse / Clear
+    # ------------------------------------------------------------------ #
 
     def browse_project_folder(self):
         """Open folder picker dialog"""
@@ -398,49 +481,44 @@ class ProjectConfigTab(QWidget):
             QFileDialog.Option.ShowDirsOnly
         )
 
-        if folder:
-            project_path = Path(folder)
+        if not folder:
+            return
 
-            # Set in project context
-            if self.project_context.set_project(project_path):
-                self.project_path_input.setText(str(project_path))
-                self.update_status(project_path)
-    
-                # Ensure .claude folder exists
-                if not self.project_context.validate_claude_folder():
-                    reply = QMessageBox.question(
-                        self,
-                        "Create .claude Folder?",
-                        f"The selected project does not have a .claude folder.\n\n"
-                        f"Create .claude folder in:\n{project_path}",
-                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-                    )
+        project_path = Path(folder)
 
-                    if reply == QMessageBox.StandardButton.Yes:
-                        if self.project_context.ensure_claude_folder():
-                            QMessageBox.information(
-                                self,
-                                "Created",
-                                f"Created .claude folder in:\n{project_path}"
-                            )
-                        else:
-                            QMessageBox.critical(
-                                self,
-                                "Error",
-                                "Failed to create .claude folder"
-                            )
-            else:
-                QMessageBox.warning(
-                    self,
-                    "Invalid Path",
-                    f"Invalid project path:\n{project_path}"
-                )
+        if not self.project_context.set_project(project_path):
+            QMessageBox.warning(self, "Invalid Path", f"Invalid project path:\n{project_path}")
+            return
+
+        # Add to custom list if not already in scanned projects
+        scanned_paths = {p["path"] for p in scan_projects()}
+        if project_path not in scanned_paths and project_path not in self._custom_paths:
+            self._custom_paths.append(project_path)
+
+        self._populate_combo(keep_selection=project_path)
+        self.update_status(project_path)
+
+        # Offer to create .claude folder if missing
+        if not self.project_context.validate_claude_folder():
+            reply = QMessageBox.question(
+                self,
+                "Create .claude Folder?",
+                f"The selected project does not have a .claude folder.\n\n"
+                f"Create .claude folder in:\n{project_path}",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                if self.project_context.ensure_claude_folder():
+                    QMessageBox.information(self, "Created", f"Created .claude folder in:\n{project_path}")
+                else:
+                    QMessageBox.critical(self, "Error", "Failed to create .claude folder")
 
     def clear_project(self):
         """Clear current project"""
         self.project_context.clear_project()
-        self.project_path_input.clear()
-        self.project_path_input.setPlaceholderText("No project selected - click Browse to select")
+        self.project_combo.blockSignals(True)
+        self.project_combo.setCurrentIndex(0)
+        self.project_combo.blockSignals(False)
         self.status_label.setText("ℹ️ No project selected")
         self.status_label.setStyleSheet(
             f"color: {theme.FG_SECONDARY}; "
@@ -452,9 +530,9 @@ class ProjectConfigTab(QWidget):
         )
 
     def on_project_changed(self, new_project: Path):
-        """Handle project context changes (from external sources)"""
+        """Handle project context changes from external sources."""
         if new_project:
-            self.project_path_input.setText(str(new_project))
+            self._populate_combo(keep_selection=new_project)
             self.update_status(new_project)
         else:
             self.clear_project()

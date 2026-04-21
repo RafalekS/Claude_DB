@@ -2,12 +2,10 @@
 Projects Tab - Manage Claude Code projects
 """
 
-import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QComboBox, QTextEdit, QGroupBox, QCheckBox, QMessageBox,
-    QTabWidget
+    QTextEdit, QGroupBox, QCheckBox, QMessageBox,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
@@ -17,20 +15,22 @@ from utils.terminal_utils import run_in_terminal
 class ProjectsTab(QWidget):
     """Tab for managing Claude Code projects"""
 
-    def __init__(self, config_manager, backup_manager):
+    def __init__(self, config_manager, backup_manager, project_context=None):
         super().__init__()
         self.config_manager = config_manager
         self.backup_manager = backup_manager
+        self.project_context = project_context
 
-        # Paths
-        self.claude_dir = Path.home() / ".claude"
-        self.projects_dir = self.claude_dir / "projects"
-
-        # Current selection
+        # Current selection — synced from project_context if provided
         self.current_project_path = None
 
         self.init_ui()
-        self.load_projects()
+
+        if self.project_context is not None:
+            self.project_context.project_changed.connect(self._on_context_changed)
+            # Initialise from current context state
+            if self.project_context.has_project():
+                self._on_context_changed(self.project_context.get_project())
 
     def init_ui(self):
         """Initialize the UI"""
@@ -43,11 +43,7 @@ class ProjectsTab(QWidget):
         header.setStyleSheet(f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};")
         layout.addWidget(header)
 
-        # Project Selector
-        selector_group = self.create_selector_group()
-        layout.addWidget(selector_group)
-
-        # Project Info Tabs
+        # Project Info
         info_tabs = self.create_info_tabs()
         layout.addWidget(info_tabs, 1)
 
@@ -59,28 +55,10 @@ class ProjectsTab(QWidget):
         terminal_group = self.create_terminal_group()
         layout.addWidget(terminal_group)
 
-    def create_selector_group(self):
-        """Create project selector group"""
-        group = QGroupBox("Select Project")
-        layout = QHBoxLayout()
-
-        # Project dropdown
-        self.project_combo = QComboBox()
-        self.project_combo.setStyleSheet("QComboBox { combobox-popup: 0; }")
-        self.project_combo.setMaxVisibleItems(10)
-        # Limit dropdown height
-        self.project_combo.view().setStyleSheet("QListView { max-height: 300px; }")
-        self.project_combo.currentIndexChanged.connect(self.on_project_selected)
-        layout.addWidget(self.project_combo, 1)
-
-        # Refresh button
-        refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setToolTip("Reload projects list")
-        refresh_btn.clicked.connect(self.load_projects)
-        layout.addWidget(refresh_btn)
-
-        group.setLayout(layout)
-        return group
+    def _on_context_changed(self, new_project):
+        """Sync current_project_path from project_context signal"""
+        self.current_project_path = new_project
+        self.load_project_info()
 
     def create_info_tabs(self):
         """Create project info viewer (simplified - only Project Info remains)"""
@@ -96,57 +74,42 @@ class ProjectsTab(QWidget):
         group = QGroupBox("Execute Commands")
         layout = QVBoxLayout()
 
-        # Info commands row
-        info_layout = QHBoxLayout()
+        def _row(commands):
+            row = QHBoxLayout()
+            for label, cmd, tooltip in commands:
+                btn = QPushButton(label)
+                btn.setToolTip(tooltip)
+                btn.clicked.connect(lambda checked, c=cmd: self.execute_command(c))
+                row.addWidget(btn)
+            return row
 
-        commands_info = [
+        layout.addLayout(_row([
             ("📊 /status", "/status", "Show project status"),
             ("📈 /context", "/context", "Show context usage"),
-            ("💰 /usage", "/usage", "Show token usage"),
-            ("🔐 /permissions", "/permissions", "Show permissions")
-        ]
+            ("💰 /cost", "/cost", "Show token cost for current session"),
+            ("🔐 /permissions", "/permissions", "Show permissions"),
+        ]))
 
-        for label, cmd, tooltip in commands_info:
-            btn = QPushButton(label)
-            btn.setToolTip(tooltip)
-            btn.clicked.connect(lambda checked, c=cmd: self.execute_command(c))
-            info_layout.addWidget(btn)
-
-        layout.addLayout(info_layout)
-
-        # Session commands row
-        session_layout = QHBoxLayout()
-
-        commands_session = [
-            ("📦 /compact", "/compact", "Compact conversation"),
-            ("▶️ /resume", "/resume", "Resume session"),
+        layout.addLayout(_row([
+            ("📦 /compact", "/compact", "Compact conversation to free context"),
+            ("▶️ /resume", "/resume", "Open session picker or resume by ID"),
             ("🔄 /continue", "/continue", "Continue working"),
-            ("👁️ /review", "/review", "Review changes")
-        ]
+            ("🌿 /branch", "/branch", "Fork conversation from this point"),
+        ]))
 
-        for label, cmd, tooltip in commands_session:
-            btn = QPushButton(label)
-            btn.setToolTip(tooltip)
-            btn.clicked.connect(lambda checked, c=cmd: self.execute_command(c))
-            session_layout.addWidget(btn)
-
-        layout.addLayout(session_layout)
-
-        # Config commands row
-        config_layout = QHBoxLayout()
-
-        commands_config = [
+        layout.addLayout(_row([
+            ("🤖 /agents", "/agents", "Browse subagents; create new ones"),
+            ("🪝 /hooks", "/hooks", "Browse configured hooks"),
+            ("🧠 /memory", "/memory", "Browse and edit memory files"),
             ("🔌 /mcp", "/mcp", "Manage MCP servers"),
-            ("🤖 /model", "/model", "Select model")
-        ]
+        ]))
 
-        for label, cmd, tooltip in commands_config:
-            btn = QPushButton(label)
-            btn.setToolTip(tooltip)
-            btn.clicked.connect(lambda checked, c=cmd: self.execute_command(c))
-            config_layout.addWidget(btn)
-
-        layout.addLayout(config_layout)
+        layout.addLayout(_row([
+            ("🏥 /doctors", "/doctors", "Check Claude Code installation health"),
+            ("📝 /init", "/init", "Generate CLAUDE.md from codebase analysis"),
+            ("🤖 /model", "/model", "Switch Claude model"),
+            ("❓ /help", "/help", "Show all commands and shortcuts"),
+        ]))
 
         group.setLayout(layout)
         return group
@@ -174,165 +137,6 @@ class ProjectsTab(QWidget):
         group.setLayout(layout)
         return group
 
-    def decode_project_directory_name(self, dir_name):
-        """
-        Decode project directory name to actual path
-
-        Example: C--Scripts-python-Claude_DB -> C:\\Scripts\\python\\Claude_DB
-
-        Encoding: : becomes --, both \\ and - become -, _ becomes -
-        Special: -- in middle means \\. (dot directory)
-
-        Since encoding is ambiguous (both - and _ become -), try all combinations.
-
-        Args:
-            dir_name: Encoded directory name
-
-        Returns:
-            Path object or None if can't decode
-        """
-        # Find first occurrence of --
-        idx = dir_name.find('--')
-        if idx == -1:
-            return None
-
-        # Everything before -- is drive letter
-        drive = dir_name[:idx]
-
-        # Everything after first -- is the rest
-        rest = dir_name[idx+2:]
-
-        # Handle dot directories: -- means \. (backslash-dot)
-        # Example: C--Users-USERNAME--claude → C:\Users\USERNAME\.claude
-        # Replace -- with special marker that becomes \. (not just .)
-        rest = rest.replace('--', '\x00BSDOT\x00')
-
-        # Now we have rest with single - characters
-        # Each - could be either \ or - or _ or .
-        # Try combinations by replacing - with \ first (most common)
-
-        def try_path(s):
-            """Helper to restore backslash-dots and try path"""
-            # \x00BSDOT\x00 → \.
-            return Path(f"{drive}:\\{s.replace('\x00BSDOT\x00', '\\.')}")
-
-        # Strategy 1: All - become \
-        path1 = try_path(rest.replace('-', '\\'))
-        if path1.exists():
-            return path1
-
-        # Strategy 2: All - stay as -
-        path2 = try_path(rest)
-        if path2.exists():
-            return path2
-
-        # Strategy 3: All - become _
-        path3 = try_path(rest.replace('-', '_'))
-        if path3.exists():
-            return path3
-
-        # Strategy 3b: All - become . (for files like Microsoft.WindowsTerminal)
-        path3b = try_path(rest.replace('-', '.'))
-        if path3b.exists():
-            return path3b
-
-        # Strategy 4: Try mixed combinations
-        # Most common: path\separator\with-dashes-in-name or dots/underscores
-        parts = rest.split('-')
-
-        if len(parts) >= 2:
-            # Try: first parts are path separators, last part keeps dashes/dots/underscores
-            for split_point in range(1, len(parts)):
-                path_part = '\\'.join(parts[:split_point])
-                name_part = '-'.join(parts[split_point:])
-
-                # Try different encodings in the name part
-                variants = [
-                    name_part,  # Keep dashes
-                    name_part.replace('-', '_'),  # All underscores
-                    name_part.replace('-', '.'),  # All dots
-                ]
-
-                # Also try mixed dot and underscore (like Microsoft.WindowsTerminal_8wekyb3d8bbwe)
-                if '-' in name_part:
-                    name_parts = name_part.split('-')
-                    if len(name_parts) >= 2:
-                        # Try first dot, rest underscore
-                        mixed = '.'.join(name_parts[:2]) + '_' + '_'.join(name_parts[2:]) if len(name_parts) > 2 else '.'.join(name_parts)
-                        variants.append(mixed)
-
-                for variant in variants:
-                    combined = f"{path_part}\\{variant}"
-                    test_path = try_path(combined)
-                    if test_path.exists():
-                        return test_path
-
-        return None
-
-    def scan_projects(self):
-        """
-        Scan for Claude Code projects by reading ~/.claude/projects/
-
-        Returns:
-            list of dict: [{"name": "project_name", "path": Path, "sessions": int}]
-        """
-        projects = []
-
-        if not self.projects_dir.exists():
-            return projects
-
-        # Each subdirectory represents a project
-        for project_dir in self.projects_dir.iterdir():
-            if not project_dir.is_dir():
-                continue
-
-            # Decode directory name to get actual path
-            project_path = self.decode_project_directory_name(project_dir.name)
-
-            # Only include if decoding succeeded AND path exists
-            if project_path is not None:
-                projects.append({
-                    "name": project_path.name,
-                    "path": project_path,
-                    "sessions": len(list(project_dir.glob("*.jsonl")))
-                })
-
-        return projects
-
-    def load_projects(self):
-        """Load and populate projects list"""
-        self.project_combo.clear()
-        projects = self.scan_projects()
-
-        if not projects:
-            self.project_combo.addItem("No projects found")
-            self.current_project_path = None
-            self.clear_info_viewers()
-            return
-
-        # Sort by full path
-        projects.sort(key=lambda x: str(x["path"]).lower())
-
-        for project in projects:
-            # Show full path, not just name
-            display_name = f"{project['path']} ({project['sessions']} sessions)"
-            self.project_combo.addItem(display_name, project["path"])
-
-        # Auto-select first project
-        if self.project_combo.count() > 0:
-            self.on_project_selected(0)
-
-    def on_project_selected(self, index):
-        """Handle project selection"""
-        if index < 0 or self.project_combo.count() == 0:
-            return
-
-        project_path = self.project_combo.itemData(index)
-        if not project_path:
-            return
-
-        self.current_project_path = project_path
-        self.load_project_info()
 
     def load_project_info(self):
         """Load project info into viewers"""
