@@ -29,8 +29,6 @@ from tabs.skills_tab import SkillsTab
 from tabs.rules_tab import RulesTab
 from tabs.claude_local_md_tab import ClaudeLocalMDTab
 from tabs.claude_md_tab import ClaudeMDTab
-from tabs.agent_teams_tab import AgentTeamsTab
-from tabs.remote_control_tab import RemoteControlTab
 from tabs.env_vars_tab import EnvVarsTab
 
 class UserConfigTab(QWidget):
@@ -139,14 +137,6 @@ class UserConfigTab(QWidget):
         # CLAUDE.local.md sub-tab
         local_md_tab = ClaudeLocalMDTab(self.config_manager, self.backup_manager)
         self.sub_tabs.addTab(local_md_tab, "📝 CLAUDE.local.md")
-
-        # Agent Teams reference sub-tab
-        agent_teams_tab = AgentTeamsTab(self.config_manager, self.backup_manager)
-        self.sub_tabs.addTab(agent_teams_tab, "👥 Agent Teams")
-
-        # Remote Control reference sub-tab
-        remote_control_tab = RemoteControlTab(self.config_manager, self.backup_manager)
-        self.sub_tabs.addTab(remote_control_tab, "🌐 Remote Control")
 
         layout.addWidget(self.sub_tabs, 1)
 

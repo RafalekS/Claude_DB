@@ -1,7 +1,8 @@
 """
 Documentation Tab - Static reference docs for Claude Code with search.
 Subtabs: CLI Reference, Workflows, Prompts, Commands, Tools Reference,
-         Keyboard Shortcuts, Remote, Chrome, Computer Use, Plugins Reference
+         Keyboard Shortcuts, Remote, Chrome, Computer Use, Plugins Reference,
+         Agent Teams, Remote Control
 """
 
 from PyQt6.QtWidgets import (
@@ -10,6 +11,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
+from tabs.agent_teams_tab import AgentTeamsTab
+from tabs.remote_control_tab import RemoteControlTab
 
 from utils import theme
 
@@ -879,6 +882,7 @@ class DocumentationTab(QWidget):
         super().__init__(parent)
         self._header = None
         self._pages: list[DocPage] = []
+        self._themed_widgets: list = []
         self._build_ui()
 
     def _build_ui(self):
@@ -924,6 +928,14 @@ class DocumentationTab(QWidget):
             self._pages.append(page)
             self._tabs.addTab(page, label)
 
+        agent_teams = AgentTeamsTab(None, None)
+        self._themed_widgets.append(agent_teams)
+        self._tabs.addTab(agent_teams, "👥 Agent Teams")
+
+        remote_control = RemoteControlTab(None, None)
+        self._themed_widgets.append(remote_control)
+        self._tabs.addTab(remote_control, "🌐 Remote Control")
+
     def apply_theme(self):
         """Refresh header style and regenerate all HTML pages with current theme."""
         if self._header:
@@ -932,3 +944,5 @@ class DocumentationTab(QWidget):
             )
         for page in self._pages:
             page.apply_theme()
+        for w in self._themed_widgets:
+            w.apply_theme()
