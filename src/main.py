@@ -178,7 +178,7 @@ class ClaudeDBApp(QMainWindow):
             "projectconfig": ("📁 Project Config", ProjectConfigTab(self.config_manager, self.backup_manager, self.settings_manager, self.project_context)),
             "prompts": ("💬 Prompts", PromptsTab(self.config_manager, self.backup_manager)),
             "plugins": ("🧩 Plugins", PluginsTab(self.config_manager, self.backup_manager)),
-            "memory": ("💾 Memory", MemoryTab(self.config_manager, self.backup_manager)),
+            "memory": ("📁 Files", MemoryTab(self.config_manager, self.backup_manager)),
             "usage": ("📈 Usage & Analytics", UsageTab(self.config_manager, self.backup_manager)),
             "docs": ("📚 Documentation", DocumentationTab()),
             "claudekit": ("🛠️ ClaudeKit", ClaudeKitTab()),

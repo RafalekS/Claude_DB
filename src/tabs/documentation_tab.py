@@ -828,6 +828,48 @@ def _github_actions_html():
     )
 
 
+def _memory_system_html():
+    return _wrap(
+        _h(1, "Memory System"),
+        _h(2, "Memory Hierarchy (Highest → Lowest)"),
+        _p("<ol style='line-height:1.8;margin:0;padding-left:1.4em;'>"
+           "<li><b>Enterprise Policy:</b> " + _code("/etc/claude/CLAUDE.md") + "</li>"
+           "<li><b>User Memory:</b> " + _code("~/.claude/CLAUDE.md") + " — applies to all projects</li>"
+           "<li><b>Project Memory:</b> " + _code("./CLAUDE.md") + " — in git, shared with team</li>"
+           "<li><b>Local Project:</b> " + _code("./CLAUDE.local.md") + " — personal, gitignored</li>"
+           "</ol>"),
+        _p("<b>Quick add:</b> prefix prompt with " + _code("#") + " to save instantly to memory.&nbsp;&nbsp;"
+           "<b>Edit:</b> " + _code("/memory") + " opens CLAUDE.md in editor."),
+        _h(2, "Auto Memory"),
+        _p("When " + _code("autoMemoryEnabled: true") + " in settings, Claude Code automatically "
+           "extracts key information to " + _code("autoMemoryDirectory") +
+           " (default: " + _code("~/.claude/memory/") + ")."),
+        _h(2, "Context Compaction"),
+        _p("<ul style='line-height:1.8;margin:0;padding-left:1.4em;'>"
+           "<li>" + _code("/compact") + " — compact history to free context window</li>"
+           "<li>" + _code("/compact &lt;instructions&gt;") + " — compact with focus</li>"
+           "<li>Hook: " + _code("PostCompact") + " fires after compaction</li>"
+           "</ul>"),
+        _h(2, "Conversation Storage"),
+        _p("<ul style='line-height:1.8;margin:0;padding-left:1.4em;'>"
+           "<li><b>Global history:</b> " + _code("~/.claude/history.jsonl") + "</li>"
+           "<li><b>Per-project:</b> " + _code("~/.claude/projects/&lt;encoded-path&gt;/&lt;uuid&gt;.jsonl") + "</li>"
+           "<li><b>Resume:</b> " + _code("claude -c") + " (last) or " + _code("claude -r &lt;uuid&gt;") + "</li>"
+           "</ul>"),
+        _h(2, "Project Memories"),
+        _p("Per-project memory files live at "
+           + _code("~/.claude/projects/&lt;encoded-path&gt;/memory/") + ". "
+           "View them per-project in <b>Project Config → Memories</b>."),
+        _h(2, "File History"),
+        _p("Before every Write or Edit, Claude Code saves a pre-edit snapshot to "
+           + _code("~/.claude/file-history/&lt;session-uuid&gt;/&lt;hash&gt;@v&lt;n&gt;") + ". "
+           "Browse per-project in <b>Project Config → File History</b>."),
+        _h(2, "Shell Snapshots"),
+        _p("Bash state snapshots saved to " + _code("~/.claude/shell-snapshots/") +
+           " when Claude Code captures the shell environment."),
+    )
+
+
 # ─── Main Documentation Tab ───────────────────────────────────────────────────
 
 class DocumentationTab(QWidget):
@@ -875,6 +917,7 @@ class DocumentationTab(QWidget):
             (_telemetry_html,        "https://code.claude.com/docs/en/telemetry",        "📡 Telemetry"),
             (_ide_integration_html,  "https://code.claude.com/docs/en/vs-code",          "🖥️ IDE Integration"),
             (_github_actions_html,   "https://code.claude.com/docs/en/github-actions",   "🔁 GitHub Actions"),
+            (_memory_system_html,    "https://code.claude.com/docs/en/memory",            "🧠 Memory"),
         ]
         for fn, url, label in _page_defs:
             page = DocPage(fn, url)

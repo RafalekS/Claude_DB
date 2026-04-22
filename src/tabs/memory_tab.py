@@ -1,8 +1,7 @@
 """
-Memory Tab — Claude Code memory and conversation history.
+Files Tab — Claude Code memory and conversation history.
 
 Subtabs:
-  Overview          — docs on how Claude Code memory works
   Conversations     — project sessions parsed from JSONL; QTreeWidget grouped by project
   Project Memories  — .md files from ~/.claude/projects/<encoded>/memory/
   File History      — per-file pre-edit snapshots
@@ -145,59 +144,12 @@ class MemoryTab(QWidget):
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget, 1)
 
-        self.tab_widget.addTab(self._build_overview(), "Overview")
         self.tab_widget.addTab(self._build_conversations_tab(), "Conversations")
         self.tab_widget.addTab(self._build_project_memories_tab(), "Project Memories")
         self.tab_widget.addTab(self._build_file_history_tab(), "File History")
         self.tab_widget.addTab(self._build_shell_snapshots_tab(), "Shell Snapshots")
 
         self.refresh_all()
-
-    # ── Overview ──────────────────────────────────────────────────────────────
-
-    def _build_overview(self):
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        layout.setContentsMargins(6, 6, 6, 6)
-        info = QTextBrowser()
-        info.setHtml(f"""
-            <h3 style="color:{theme.ACCENT_PRIMARY};">Claude Code Memory System</h3>
-
-            <h4 style="color:{theme.ACCENT_PRIMARY}; margin-top:12px;">Memory Hierarchy (Highest → Lowest)</h4>
-            <ol style="line-height:1.8;">
-                <li><b>Enterprise Policy:</b> <code>/etc/claude/CLAUDE.md</code></li>
-                <li><b>User Memory:</b> <code>~/.claude/CLAUDE.md</code> — all projects</li>
-                <li><b>Project Memory:</b> <code>./CLAUDE.md</code> — in git, shared with team</li>
-                <li><b>Local Project:</b> <code>./CLAUDE.local.md</code> — personal, gitignored</li>
-            </ol>
-            <p><b>Quick add:</b> prefix prompt with <code>#</code> to save to memory. &nbsp;|&nbsp;
-               <b>Edit:</b> <code>/memory</code> opens CLAUDE.md in editor.</p>
-
-            <h4 style="color:{theme.ACCENT_PRIMARY}; margin-top:12px;">Auto Memory</h4>
-            <p>When <code>autoMemoryEnabled: true</code> in settings, Claude Code automatically
-            extracts key information to <code>autoMemoryDirectory</code>
-            (default: <code>~/.claude/memory/</code>).</p>
-
-            <h4 style="color:{theme.ACCENT_PRIMARY}; margin-top:12px;">Context Compaction</h4>
-            <ul style="line-height:1.8;">
-                <li><code>/compact</code> — compact history to free context window</li>
-                <li><code>/compact &lt;instructions&gt;</code> — compact with focus</li>
-                <li>Hook: <code>PostCompact</code> fires after compaction</li>
-            </ul>
-
-            <h4 style="color:{theme.ACCENT_PRIMARY}; margin-top:12px;">Conversation Storage</h4>
-            <ul style="line-height:1.8;">
-                <li><b>Global history:</b> <code>~/.claude/history.jsonl</code></li>
-                <li><b>Per-project:</b> <code>~/.claude/projects/&lt;encoded-path&gt;/&lt;uuid&gt;.jsonl</code></li>
-                <li><b>Resume:</b> <code>claude -c</code> (last) or <code>claude -r &lt;uuid&gt;</code></li>
-            </ul>
-
-            <h4 style="color:{theme.ACCENT_PRIMARY}; margin-top:12px;">Project Memories</h4>
-            <p>Per-project memory files at <code>~/.claude/projects/&lt;encoded-path&gt;/memory/</code> —
-            shown in the <b>Project Memories</b> tab.</p>
-        """)
-        layout.addWidget(info)
-        return widget
 
     # ── Conversations ─────────────────────────────────────────────────────────
 

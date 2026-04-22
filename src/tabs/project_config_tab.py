@@ -38,6 +38,8 @@ from tabs.agent_teams_tab import AgentTeamsTab
 from tabs.remote_control_tab import RemoteControlTab
 from tabs.project_conversations_subtab import ProjectConversationsSubTab
 from tabs.project_file_history_subtab import ProjectFileHistorySubTab
+from tabs.project_memories_subtab import ProjectMemoriesSubTab
+from tabs.project_shell_snapshots_subtab import ProjectShellSnapshotsSubTab
 
 class ProjectClaudeMDSubTab(QWidget):
     """Simple CLAUDE.md viewer/editor for project context"""
@@ -383,6 +385,14 @@ class ProjectConfigTab(QWidget):
         # File History sub-tab (pre-edit snapshots for current project)
         file_history_tab = ProjectFileHistorySubTab(self.project_context)
         self.sub_tabs.addTab(file_history_tab, "📋 File History")
+
+        # Memories sub-tab (per-project memory .md files)
+        memories_tab = ProjectMemoriesSubTab(self.project_context)
+        self.sub_tabs.addTab(memories_tab, "🧠 Memories")
+
+        # Shell Snapshots sub-tab (time-filtered shell environment snapshots)
+        shell_snapshots_tab = ProjectShellSnapshotsSubTab(self.project_context)
+        self.sub_tabs.addTab(shell_snapshots_tab, "🐚 Shell Snapshots")
 
         # Rules sub-tab (project-level rules)
         rules_tab = RulesTab(self.config_manager, self.backup_manager)
