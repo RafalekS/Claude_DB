@@ -242,7 +242,7 @@ class MemoryTab(QWidget):
         mgr.restore_splitter_state("memory.conv_splitter", splitter)
         mgr.connect_splitter("memory.conv_splitter", splitter)
 
-        layout.addWidget(splitter)
+        layout.addWidget(splitter, 1)
         return widget
 
     def _refresh_conversations(self):
