@@ -9,14 +9,15 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QSplitter, QTextEdit, QTreeWidget, QTreeWidgetItem, QHeaderView,
+    QLineEdit, QApplication,
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
 
 from utils import theme
 from utils.project_scanner import get_project_sessions
 from utils.ui_state_manager import UIStateManager
-from tabs.memory_tab import _parse_conversation, _extract_text
+from tabs.memory_tab import _parse_conversation, _extract_text, _get_snippet, _highlight_in_viewer
 
 
 class ProjectConversationsSubTab(QWidget):
@@ -37,6 +38,8 @@ class ProjectConversationsSubTab(QWidget):
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
+        self._active_search = ""
+
         # Toolbar
         bar = QHBoxLayout()
         self._project_label = QLabel("No project selected")
@@ -47,6 +50,26 @@ class ProjectConversationsSubTab(QWidget):
         bar.addStretch()
         bar.addWidget(refresh_btn)
         layout.addLayout(bar)
+
+        # Search bar
+        search_row = QHBoxLayout()
+        search_row.setSpacing(4)
+        self._search_bar = QLineEdit()
+        self._search_bar.setPlaceholderText("Search sessions for this project…")
+        self._search_bar.returnPressed.connect(self._search_sessions)
+        search_btn = QPushButton("🔍 Search")
+        search_btn.clicked.connect(self._search_sessions)
+        clear_btn = QPushButton("✕ Clear")
+        clear_btn.clicked.connect(self._clear_search)
+        self._search_status = QLabel("")
+        self._search_status.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        search_row.addWidget(self._search_bar, 1)
+        search_row.addWidget(search_btn)
+        search_row.addWidget(clear_btn)
+        search_row.addWidget(self._search_status)
+        layout.addLayout(search_row)
 
         # Splitter: session tree | conversation viewer
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -75,9 +98,14 @@ class ProjectConversationsSubTab(QWidget):
     # ── Slots ─────────────────────────────────────────────────────────────────
 
     def _on_project_changed(self, new_project):
+        self._active_search = ""
+        self._search_bar.clear()
+        self._search_status.setText("")
         self._refresh()
 
     def _refresh(self):
+        if self._active_search:
+            return  # keep search results; user clears with ✕ Clear
         self._tree.clear()
         self._viewer.clear()
 
@@ -128,3 +156,74 @@ class ProjectConversationsSubTab(QWidget):
             lines.append(f"\n{'─'*40}\n{role_label}{ts}\n{'─'*40}\n{m['text']}\n")
 
         self._viewer.setPlainText("".join(lines))
+        if self._active_search:
+            _highlight_in_viewer(self._viewer, self._active_search)
+
+    # ── Session search ────────────────────────────────────────────────────────
+
+    def _search_sessions(self):
+        term = self._search_bar.text().strip()
+        if not term:
+            self._clear_search()
+            return
+
+        if not self.project_context.has_project():
+            self._search_status.setText("No project selected")
+            return
+
+        self._active_search = term
+        self._search_status.setText("Searching…")
+        QApplication.processEvents()
+
+        self._tree.clear()
+        self._viewer.clear()
+        self._viewer.setExtraSelections([])
+
+        project_path = self.project_context.get_project()
+        sessions = get_project_sessions(project_path)
+        if not sessions:
+            self._search_status.setText("No sessions found")
+            return
+
+        term_lower = term.lower()
+        matches = []
+        for s in sessions:
+            messages = _parse_conversation(Path(s["path"]))
+            snippet = ""
+            for m in messages:
+                if term_lower in m["text"].lower():
+                    snippet = _get_snippet(m["text"], term)
+                    break
+            if snippet:
+                matches.append({**s, "snippet": snippet})
+
+        if not matches:
+            self._search_status.setText("No matches found")
+            self._tree.addTopLevelItem(QTreeWidgetItem([f"No sessions contain '{term}'"]))
+            return
+
+        total = len(sessions)
+        self._search_status.setText(f"{len(matches)} of {total} session(s) match")
+
+        for s in matches:
+            mod = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
+            sess_item = QTreeWidgetItem([f"{mod}   {s['uuid'][:24]}…"])
+            sess_item.setData(0, Qt.ItemDataRole.UserRole, str(s["path"]))
+            sess_item.setForeground(0, QColor(theme.FG_SECONDARY))
+
+            snip_item = QTreeWidgetItem(sess_item, [f"  ↳ {s['snippet']}"])
+            snip_item.setForeground(0, QColor(theme.FG_DIM))
+
+            self._tree.addTopLevelItem(sess_item)
+
+        self._tree.expandAll()
+        self._tree.setCurrentItem(self._tree.topLevelItem(0))
+        self._load_conversation(self._tree.topLevelItem(0))
+
+    def _clear_search(self):
+        self._active_search = ""
+        self._search_bar.clear()
+        self._search_status.setText("")
+        self._viewer.clear()
+        self._viewer.setExtraSelections([])
+        self._refresh()

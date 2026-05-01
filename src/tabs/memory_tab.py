@@ -16,10 +16,10 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextBrowser, QPushButton,
     QTabWidget, QSplitter, QTextEdit, QTreeWidget, QTreeWidgetItem,
-    QListWidget, QListWidgetItem, QHeaderView
+    QListWidget, QListWidgetItem, QHeaderView, QLineEdit, QApplication,
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QColor
+from PyQt6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor
 
 from utils import theme
 from utils.ui_state_manager import UIStateManager
@@ -110,6 +110,44 @@ def _decode_project_path(folder_name: str) -> str:
     return path
 
 
+# ─── Search helpers ───────────────────────────────────────────────────────────
+
+def _get_snippet(text: str, term: str, context: int = 80) -> str:
+    """Extract a short text snippet centred on the first occurrence of term."""
+    lo = text.lower().find(term.lower())
+    if lo == -1:
+        return (text[:context] + "…").replace("\n", " ")
+    start = max(0, lo - context // 2)
+    end = min(len(text), lo + len(term) + context // 2)
+    snippet = text[start:end].replace("\n", " ")
+    return ("…" if start > 0 else "") + snippet + ("…" if end < len(text) else "")
+
+
+def _highlight_in_viewer(viewer: QTextEdit, term: str) -> None:
+    """Highlight all occurrences of term in a QTextEdit via extra selections."""
+    if not term:
+        viewer.setExtraSelections([])
+        return
+    fmt = QTextCharFormat()
+    fmt.setBackground(QColor("#E8B000"))
+    fmt.setForeground(QColor("#000000"))
+    doc = viewer.document()
+    cursor = QTextCursor(doc)
+    selections = []
+    while True:
+        cursor = doc.find(term, cursor)
+        if cursor.isNull():
+            break
+        sel = QTextEdit.ExtraSelection()
+        sel.cursor = cursor
+        sel.format = fmt
+        selections.append(sel)
+    viewer.setExtraSelections(selections)
+    if selections:
+        viewer.setTextCursor(selections[0].cursor)
+        viewer.ensureCursorVisible()
+
+
 # ─── Main Tab ─────────────────────────────────────────────────────────────────
 
 class MemoryTab(QWidget):
@@ -156,7 +194,30 @@ class MemoryTab(QWidget):
     def _build_conversations_tab(self):
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 4, 0, 0)
+        layout.setSpacing(4)
+
+        self._conv_active_search = ""
+
+        # Search bar
+        search_row = QHBoxLayout()
+        search_row.setSpacing(4)
+        self._conv_search_bar = QLineEdit()
+        self._conv_search_bar.setPlaceholderText("Search all conversations…")
+        self._conv_search_bar.returnPressed.connect(self._search_conversations)
+        search_btn = QPushButton("🔍 Search")
+        search_btn.clicked.connect(self._search_conversations)
+        clear_btn = QPushButton("✕ Clear")
+        clear_btn.clicked.connect(self._clear_conv_search)
+        self._conv_search_status = QLabel("")
+        self._conv_search_status.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        search_row.addWidget(self._conv_search_bar, 1)
+        search_row.addWidget(search_btn)
+        search_row.addWidget(clear_btn)
+        search_row.addWidget(self._conv_search_status)
+        layout.addLayout(search_row)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.setHandleWidth(5)
@@ -185,6 +246,8 @@ class MemoryTab(QWidget):
         return widget
 
     def _refresh_conversations(self):
+        if self._conv_active_search:
+            return  # keep search results; user clears with ✕ Clear
         self.conv_tree.clear()
         projects_dir = self.config_manager.claude_dir / "projects"
         if not projects_dir.exists():
@@ -255,6 +318,101 @@ class MemoryTab(QWidget):
             lines.append(f"\n{'─'*40}\n{role_label}{time_str}\n{'─'*40}\n{m['text']}\n")
 
         self.conv_viewer.setPlainText("".join(lines))
+        if self._conv_active_search:
+            _highlight_in_viewer(self.conv_viewer, self._conv_active_search)
+
+    # ── Conversation search ───────────────────────────────────────────────────
+
+    def _search_conversations(self):
+        term = self._conv_search_bar.text().strip()
+        if not term:
+            self._clear_conv_search()
+            return
+
+        self._conv_active_search = term
+        self._conv_search_status.setText("Searching…")
+        QApplication.processEvents()
+
+        self.conv_tree.clear()
+        self.conv_viewer.clear()
+        self.conv_viewer.setExtraSelections([])
+
+        projects_dir = self.config_manager.claude_dir / "projects"
+        if not projects_dir.exists():
+            self._conv_search_status.setText("No projects directory found")
+            return
+
+        term_lower = term.lower()
+        by_project: dict[str, list[dict]] = {}
+
+        try:
+            for pdir in projects_dir.iterdir():
+                if not pdir.is_dir():
+                    continue
+                readable = _decode_project_path(pdir.name)
+                project_matches = []
+                for jf in pdir.glob("*.jsonl"):
+                    messages = _parse_conversation(jf)
+                    snippet = ""
+                    for m in messages:
+                        if term_lower in m["text"].lower():
+                            snippet = _get_snippet(m["text"], term)
+                            break
+                    if snippet:
+                        project_matches.append({
+                            "path": jf,
+                            "uuid": jf.stem,
+                            "mtime": jf.stat().st_mtime,
+                            "snippet": snippet,
+                        })
+                if project_matches:
+                    by_project[readable] = sorted(
+                        project_matches, key=lambda x: x["mtime"], reverse=True
+                    )
+        except Exception as e:
+            self._conv_search_status.setText(f"Error: {e}")
+            return
+
+        total = sum(len(v) for v in by_project.values())
+        if total == 0:
+            self._conv_search_status.setText("No matches found")
+            self.conv_tree.addTopLevelItem(
+                QTreeWidgetItem([f"No sessions contain '{term}'"])
+            )
+            return
+
+        self._conv_search_status.setText(
+            f"{total} session(s) in {len(by_project)} project(s)"
+        )
+
+        sorted_projects = sorted(
+            by_project.items(), key=lambda kv: kv[1][0]["mtime"], reverse=True
+        )
+        for proj_name, sessions in sorted_projects:
+            n = len(sessions)
+            label = f"📁 {proj_name}  ({n} match{'es' if n != 1 else ''})"
+            proj_item = QTreeWidgetItem(self.conv_tree, [label])
+            proj_item.setForeground(0, QColor(theme.ACCENT_PRIMARY))
+            proj_item.setFont(0, QFont(self.conv_tree.font().family(), -1, QFont.Weight.Bold))
+
+            for s in sessions:
+                mod = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
+                sess_item = QTreeWidgetItem(proj_item, [f"{mod}  {s['uuid'][:16]}…"])
+                sess_item.setData(0, Qt.ItemDataRole.UserRole, str(s["path"]))
+                sess_item.setForeground(0, QColor(theme.FG_SECONDARY))
+
+                snip_item = QTreeWidgetItem(sess_item, [f"  ↳ {s['snippet']}"])
+                snip_item.setForeground(0, QColor(theme.FG_DIM))
+
+        self.conv_tree.expandAll()
+
+    def _clear_conv_search(self):
+        self._conv_active_search = ""
+        self._conv_search_bar.clear()
+        self._conv_search_status.setText("")
+        self.conv_viewer.clear()
+        self.conv_viewer.setExtraSelections([])
+        self._refresh_conversations()
 
     # ── Project Memories ──────────────────────────────────────────────────────
 
