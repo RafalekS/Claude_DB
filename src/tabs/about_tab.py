@@ -207,7 +207,7 @@ class AboutTab(QWidget):
         """Load links from config file or use defaults"""
         if self.links_file.exists():
             try:
-                with open(self.links_file, 'r') as f:
+                with open(self.links_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     self.official_links = data.get("official", [])
                     self.community_links = data.get("community", [])
@@ -272,7 +272,7 @@ class AboutTab(QWidget):
                 "frameworks": self.frameworks_links,
                 "marketplaces": self.marketplaces_links
             }
-            with open(self.links_file, 'w') as f:
+            with open(self.links_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save links:\n{str(e)}")

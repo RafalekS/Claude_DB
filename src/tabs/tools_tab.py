@@ -139,7 +139,7 @@ class ToolsConfigDialog(QDialog):
     def load_config(self):
         """Load configuration from file"""
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
             QMessageBox.critical(
@@ -649,7 +649,7 @@ class ToolsConfigDialog(QDialog):
             return
 
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 imported_config = json.load(f)
 
             if "external_tools" not in imported_config:
@@ -694,7 +694,7 @@ class ToolsConfigDialog(QDialog):
                 "external_tools": self.config.get("external_tools", {})
             }
 
-            with open(file_path, 'w') as f:
+            with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(export_data, f, indent=2)
 
             QMessageBox.information(
@@ -709,7 +709,7 @@ class ToolsConfigDialog(QDialog):
     def save_config(self):
         """Save configuration back to config.json"""
         try:
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, indent=2)
 
             # Ask user if they want to restart now
@@ -771,7 +771,7 @@ class ToolsTab(QWidget):
     def load_commands(self):
         """Load commands from config/config.json"""
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
             return config.get("external_tools", {})
         except Exception as e:

@@ -1115,7 +1115,7 @@ class PreferencesTab(QWidget):
         try:
             config_data = {}
             if self.config_file.exists():
-                with open(self.config_file, "r") as f:
+                with open(self.config_file, "r", encoding='utf-8') as f:
                     config_data = json.load(f)
 
             config_data.setdefault("github", {})
@@ -1276,7 +1276,7 @@ class PreferencesTab(QWidget):
         try:
             config_data = {}
             if self.config_file.exists():
-                with open(self.config_file, "r") as f:
+                with open(self.config_file, "r", encoding='utf-8') as f:
                     config_data = json.load(f)
 
             config_data.setdefault("paths", {})
@@ -1313,7 +1313,7 @@ class PreferencesTab(QWidget):
     def _load_skills_settings(self):
         try:
             if self.config_file.exists():
-                with open(self.config_file, "r") as f:
+                with open(self.config_file, "r", encoding='utf-8') as f:
                     config_data = json.load(f)
                 paths = config_data.get("paths", {})
                 self._skills_user_dir.setText(paths.get("user_skills_dir", ""))
@@ -1329,7 +1329,7 @@ class PreferencesTab(QWidget):
         try:
             if not self.config_file.exists():
                 return
-            with open(self.config_file, "r") as f:
+            with open(self.config_file, "r", encoding='utf-8') as f:
                 config_data = json.load(f)
 
             gh = config_data.get("github", {})
@@ -1360,7 +1360,7 @@ class PreferencesTab(QWidget):
 
         try:
             if self.config_file.exists():
-                with open(self.config_file, 'r') as f:
+                with open(self.config_file, 'r', encoding='utf-8') as f:
                     config_data = json.load(f)
 
                 tabs_config = config_data.get("tabs", {})
@@ -1398,7 +1398,7 @@ class PreferencesTab(QWidget):
 
             try:
                 if self.config_file.exists():
-                    with open(self.config_file, 'r') as f:
+                    with open(self.config_file, 'r', encoding='utf-8') as f:
                         config_data = json.load(f)
 
                     tabs_config = config_data.get("tabs", {})
@@ -1484,7 +1484,7 @@ class PreferencesTab(QWidget):
         try:
             config_data = {}
             if self.config_file.exists():
-                with open(self.config_file, 'r') as f:
+                with open(self.config_file, 'r', encoding='utf-8') as f:
                     config_data = json.load(f)
 
             # Build new format: [{"key": "...", "name": "..."}, ...]
@@ -1530,7 +1530,7 @@ class PreferencesTab(QWidget):
             # Save to config
             config_data = {}
             if self.config_file.exists():
-                with open(self.config_file, 'r') as f:
+                with open(self.config_file, 'r', encoding='utf-8') as f:
                     config_data = json.load(f)
 
             if "custom_tabs" not in config_data:
@@ -1756,7 +1756,7 @@ class {class_name}Tab(QWidget):
             # Fallback: migrate from old config.json preferences section
             if theme_name == "Gruvbox Dark" and self.config_file.exists():
                 try:
-                    with open(self.config_file, 'r') as f:
+                    with open(self.config_file, 'r', encoding='utf-8') as f:
                         config_data = json.load(f)
                     old_prefs = config_data.get("preferences", {})
                     if old_prefs.get("theme"):

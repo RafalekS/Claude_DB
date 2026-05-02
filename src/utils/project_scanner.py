@@ -246,8 +246,13 @@ def get_project_sessions(project_path, projects_dir=None, fs=None) -> list[dict]
 
     else:
         # ── Remote ────────────────────────────────────────────────────────────
-        # project_path is the encoded_dir RemotePath
-        encoded_dir = project_path
+        # project_path is the cwd str / RemotePath — same convention as local.
+        # Find the encoded directory first, then list its JSONL files.
+        if projects_dir is None:
+            raise ValueError("projects_dir is required in remote mode")
+        encoded_dir = find_project_encoded_dir(project_path, projects_dir, fs)
+        if encoded_dir is None:
+            return []
         try:
             jsonl_files = fs.glob(encoded_dir, "*.jsonl")
         except Exception:

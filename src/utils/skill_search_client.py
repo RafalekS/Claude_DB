@@ -38,7 +38,7 @@ class SkillResult:
 def load_skill_sources() -> list[dict]:
     """Load curated skill sources from config/skill_sources.json."""
     try:
-        with open(_SOURCES_FILE) as f:
+        with open(_SOURCES_FILE, encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
         logger.warning(f"Could not load skill_sources.json: {e}")

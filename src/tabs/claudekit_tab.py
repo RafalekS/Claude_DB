@@ -23,7 +23,7 @@ class ClaudeKitTab(QWidget):
     def load_commands(self):
         """Load commands from config/config.json"""
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
             return config.get("claudekit_commands", {})
         except Exception as e:

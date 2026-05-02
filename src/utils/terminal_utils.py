@@ -21,7 +21,7 @@ _CONFIG_FILE = Path(__file__).parent.parent.parent / "config" / "config.json"
 def _get_terminal_command() -> str:
     """Return user-configured terminal command, or empty string for auto-detect."""
     try:
-        with open(_CONFIG_FILE) as f:
+        with open(_CONFIG_FILE, encoding='utf-8') as f:
             cfg = json.load(f)
         return cfg.get("terminal", {}).get("command", "")
     except Exception:

@@ -22,7 +22,7 @@ class TemplatesTab(QWidget):
     def load_commands(self):
         """Load template commands from config/config.json"""
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
             return config.get("templates_tools", [])
         except Exception as e:

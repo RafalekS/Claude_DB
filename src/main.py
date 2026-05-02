@@ -668,7 +668,7 @@ class ClaudeDBApp(QMainWindow):
             config_file = Path(__file__).parent.parent / "config" / "config.json"
 
             if config_file.exists():
-                with open(config_file, 'r') as f:
+                with open(config_file, 'r', encoding='utf-8') as f:
                     config_data = json.load(f)
 
                 # Get tabs configuration

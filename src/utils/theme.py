@@ -35,7 +35,7 @@ _FALLBACK_THEMES = {
 def _load_raw_themes() -> dict:
     """Load the raw themes.json dict (including meta-keys like active_theme)."""
     try:
-        with open(THEMES_FILE, 'r') as f:
+        with open(THEMES_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
         logger.error("Error loading themes: %s", e)

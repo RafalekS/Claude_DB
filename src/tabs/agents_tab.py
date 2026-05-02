@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # Load AVAILABLE_TOOLS from config, fall back to defaults
 _config_file = Path(__file__).parent.parent.parent / "config" / "config.json"
 try:
-    with open(_config_file) as f:
+    with open(_config_file, encoding='utf-8') as f:
         _app_config = json.load(f)
     AVAILABLE_TOOLS = _app_config.get("claude_tools", {}).get("available_tools", [
         "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",

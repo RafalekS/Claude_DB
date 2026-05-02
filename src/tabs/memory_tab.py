@@ -63,36 +63,44 @@ def _is_noise(entry: dict) -> bool:
     return False
 
 
-def _parse_conversation(path: Path) -> list[dict]:
-    """Parse a JSONL file into a list of {role, text, time} dicts."""
+def _parse_conversation(path, fs=None) -> list[dict]:
+    """Parse a JSONL file into a list of {role, text, time} dicts.
+
+    fs — when provided (remote mode), content is read via fs.read_text().
+         When None, the file is opened locally with open().
+    """
     messages = []
     try:
-        with open(path, encoding="utf-8", errors="replace") as f:
-            for raw in f:
-                raw = raw.strip()
-                if not raw:
-                    continue
-                try:
-                    entry = json.loads(raw)
-                except json.JSONDecodeError:
-                    continue
-                if _is_noise(entry):
-                    continue
-                msg = entry.get("message") or {}
-                role = msg.get("role") or entry.get("type", "?")
-                if role not in ("user", "assistant"):
-                    continue
-                content = msg.get("content", "")
-                text = _extract_text(content).strip()
-                if not text:
-                    continue
-                ts = entry.get("timestamp", "")
-                try:
-                    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-                    time_str = dt.strftime("%H:%M:%S")
-                except Exception:
-                    time_str = ""
-                messages.append({"role": role, "text": text, "time": time_str})
+        if fs is not None:
+            lines = fs.read_text(path).splitlines()
+        else:
+            with open(path, encoding="utf-8", errors="replace") as f:
+                lines = f.readlines()
+        for raw in lines:
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                entry = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            if _is_noise(entry):
+                continue
+            msg = entry.get("message") or {}
+            role = msg.get("role") or entry.get("type", "?")
+            if role not in ("user", "assistant"):
+                continue
+            content = msg.get("content", "")
+            text = _extract_text(content).strip()
+            if not text:
+                continue
+            ts = entry.get("timestamp", "")
+            try:
+                dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                time_str = dt.strftime("%H:%M:%S")
+            except Exception:
+                time_str = ""
+            messages.append({"role": role, "text": text, "time": time_str})
     except Exception:
         pass
     return messages
@@ -249,26 +257,27 @@ class MemoryTab(QWidget):
         if self._conv_active_search:
             return  # keep search results; user clears with ✕ Clear
         self.conv_tree.clear()
+        fs = self.config_manager.fs
         projects_dir = self.config_manager.claude_dir / "projects"
-        if not projects_dir.exists():
+        if not fs.exists(projects_dir):
             return
 
         by_project: dict[str, list[dict]] = {}
         try:
-            for pdir in projects_dir.iterdir():
-                if not pdir.is_dir():
+            for pdir in fs.iterdir(projects_dir):
+                if not fs.is_dir(pdir):
                     continue
                 sessions = []
-                for jf in pdir.glob("*.jsonl"):
+                for jf in fs.glob(pdir, "*.jsonl"):
                     sessions.append({
                         "path": jf,
                         "uuid": jf.stem,
-                        "mtime": jf.stat().st_mtime,
+                        "mtime": fs.stat(jf).st_mtime,
                     })
                 if sessions:
                     by_project[pdir.name] = sorted(sessions, key=lambda x: x["mtime"], reverse=True)
         except Exception as e:
-            root = QTreeWidgetItem(self.conv_tree, [f"Error: {e}"])
+            QTreeWidgetItem(self.conv_tree, [f"Error: {e}"])
             return
 
         sorted_projects = sorted(
@@ -298,20 +307,21 @@ class MemoryTab(QWidget):
         path = item.data(0, Qt.ItemDataRole.UserRole)
         if not path:
             return
-        file_path = Path(path)
-        if not file_path.exists():
+        fs = self.config_manager.fs
+        if not fs.exists(path):
             self.conv_viewer.setPlainText("File not found")
             return
 
-        messages = _parse_conversation(file_path)
+        messages = _parse_conversation(path, fs)
         if not messages:
             self.conv_viewer.setPlainText(
-                f"No readable messages found in:\n{file_path}\n\n"
+                f"No readable messages found in:\n{path}\n\n"
                 "(All entries may be progress/tool/snapshot records.)"
             )
             return
 
-        lines = [f"Session: {file_path.stem}\nMessages: {len(messages)}\n{'─'*60}\n"]
+        stem = Path(str(path)).stem
+        lines = [f"Session: {stem}\nMessages: {len(messages)}\n{'─'*60}\n"]
         for m in messages:
             role_label = "You" if m["role"] == "user" else "Claude"
             time_str = f"  [{m['time']}]" if m["time"] else ""
@@ -337,8 +347,9 @@ class MemoryTab(QWidget):
         self.conv_viewer.clear()
         self.conv_viewer.setExtraSelections([])
 
+        fs = self.config_manager.fs
         projects_dir = self.config_manager.claude_dir / "projects"
-        if not projects_dir.exists():
+        if not fs.exists(projects_dir):
             self._conv_search_status.setText("No projects directory found")
             return
 
@@ -346,13 +357,13 @@ class MemoryTab(QWidget):
         by_project: dict[str, list[dict]] = {}
 
         try:
-            for pdir in projects_dir.iterdir():
-                if not pdir.is_dir():
+            for pdir in fs.iterdir(projects_dir):
+                if not fs.is_dir(pdir):
                     continue
                 readable = _decode_project_path(pdir.name)
                 project_matches = []
-                for jf in pdir.glob("*.jsonl"):
-                    messages = _parse_conversation(jf)
+                for jf in fs.glob(pdir, "*.jsonl"):
+                    messages = _parse_conversation(jf, fs)
                     snippet = ""
                     for m in messages:
                         if term_lower in m["text"].lower():
@@ -362,7 +373,7 @@ class MemoryTab(QWidget):
                         project_matches.append({
                             "path": jf,
                             "uuid": jf.stem,
-                            "mtime": jf.stat().st_mtime,
+                            "mtime": fs.stat(jf).st_mtime,
                             "snippet": snippet,
                         })
                 if project_matches:
@@ -449,19 +460,20 @@ class MemoryTab(QWidget):
 
     def _refresh_project_memories(self):
         self.mem_tree.clear()
+        fs = self.config_manager.fs
         projects_dir = self.config_manager.claude_dir / "projects"
-        if not projects_dir.exists():
+        if not fs.exists(projects_dir):
             return
 
         found = False
         try:
-            for pdir in sorted(projects_dir.iterdir()):
-                if not pdir.is_dir():
+            for pdir in sorted(fs.iterdir(projects_dir), key=lambda p: str(p)):
+                if not fs.is_dir(pdir):
                     continue
                 mem_dir = pdir / "memory"
-                if not mem_dir.exists():
+                if not fs.exists(mem_dir):
                     continue
-                md_files = sorted(mem_dir.glob("*.md"))
+                md_files = sorted(fs.glob(mem_dir, "*.md"), key=lambda p: str(p))
                 if not md_files:
                     continue
                 found = True
@@ -470,7 +482,7 @@ class MemoryTab(QWidget):
                 proj_item.setForeground(0, QColor(theme.ACCENT_PRIMARY))
                 proj_item.setFont(0, QFont(self.mem_tree.font().family(), -1, QFont.Weight.Bold))
                 for md in md_files:
-                    size = md.stat().st_size
+                    size = fs.stat(md).st_size
                     file_item = QTreeWidgetItem(proj_item, [f"{md.name}  ({size} bytes)"])
                     file_item.setData(0, Qt.ItemDataRole.UserRole, str(md))
                     file_item.setForeground(0, QColor(theme.FG_SECONDARY))
@@ -485,12 +497,12 @@ class MemoryTab(QWidget):
         path = item.data(0, Qt.ItemDataRole.UserRole)
         if not path:
             return
-        fp = Path(path)
-        if not fp.exists():
+        fs = self.config_manager.fs
+        if not fs.exists(path):
             self.mem_viewer.setPlainText("File not found")
             return
         try:
-            self.mem_viewer.setPlainText(fp.read_text(encoding="utf-8", errors="replace"))
+            self.mem_viewer.setPlainText(fs.read_text(path))
         except Exception as e:
             self.mem_viewer.setPlainText(f"Error: {e}")
 
@@ -524,22 +536,23 @@ class MemoryTab(QWidget):
 
     def _refresh_file_history(self):
         self.file_history_list.clear()
+        fs = self.config_manager.fs
         fh_dir = self.config_manager.claude_dir / "file-history"
-        if not fh_dir.exists():
+        if not fs.exists(fh_dir):
             self.file_history_list.addItem("No file history directory")
             return
 
         all_files = []
         try:
-            for conv_dir in fh_dir.iterdir():
-                if conv_dir.is_dir():
-                    for f in conv_dir.iterdir():
-                        if f.is_file():
+            for conv_dir in fs.iterdir(fh_dir):
+                if fs.is_dir(conv_dir):
+                    for f in fs.iterdir(conv_dir):
+                        if fs.is_file(f):
                             all_files.append({
                                 "path": f,
                                 "conv_id": conv_dir.name,
                                 "name": f.name,
-                                "mtime": f.stat().st_mtime,
+                                "mtime": fs.stat(f).st_mtime,
                             })
         except Exception as e:
             self.file_history_list.addItem(f"Error: {e}")
@@ -560,14 +573,15 @@ class MemoryTab(QWidget):
         path = item.data(Qt.ItemDataRole.UserRole)
         if not path:
             return
-        fp = Path(path)
-        if not fp.exists():
+        fs = self.config_manager.fs
+        if not fs.exists(path):
             self.file_history_viewer.setPlainText("File not found")
             return
         try:
-            content = fp.read_text(encoding="utf-8", errors="replace")
+            content = fs.read_text(path)
+            name = Path(str(path)).name
             self.file_history_viewer.setPlainText(
-                f"File: {fp.name}\nPath: {fp}\n{'─'*60}\n\n{content}"
+                f"File: {name}\nPath: {path}\n{'─'*60}\n\n{content}"
             )
         except Exception as e:
             self.file_history_viewer.setPlainText(f"Error: {e}")
@@ -602,36 +616,47 @@ class MemoryTab(QWidget):
 
     def _refresh_shell_snapshots(self):
         self.shell_list.clear()
+        fs = self.config_manager.fs
         snap_dir = self.config_manager.claude_dir / "shell-snapshots"
-        if not snap_dir.exists():
+        if not fs.exists(snap_dir):
             self.shell_list.addItem("No shell snapshots directory")
             return
-        files = sorted(snap_dir.glob("*"), key=lambda x: x.stat().st_mtime, reverse=True)
-        for f in files:
-            if f.is_file():
-                mod = datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-                item = QListWidgetItem(f"{f.name}  ({mod})")
-                item.setData(Qt.ItemDataRole.UserRole, str(f))
-                self.shell_list.addItem(item)
+        try:
+            all_items = fs.glob(snap_dir, "*")
+            files = sorted(
+                [f for f in all_items if fs.is_file(f)],
+                key=lambda x: fs.stat(x).st_mtime,
+                reverse=True,
+            )
+        except Exception as e:
+            self.shell_list.addItem(f"Error: {e}")
+            return
         if not files:
             self.shell_list.addItem("No shell snapshots found")
+            return
+        for f in files:
+            mod = datetime.fromtimestamp(fs.stat(f).st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+            item = QListWidgetItem(f"{f.name}  ({mod})")
+            item.setData(Qt.ItemDataRole.UserRole, str(f))
+            self.shell_list.addItem(item)
 
     def _load_shell_content(self, item: QListWidgetItem):
         path = item.data(Qt.ItemDataRole.UserRole)
         if not path:
             return
-        fp = Path(path)
-        if not fp.exists():
+        fs = self.config_manager.fs
+        if not fs.exists(path):
             self.shell_viewer.setPlainText("File not found")
             return
         try:
-            self.shell_viewer.setPlainText(fp.read_text(encoding="utf-8", errors="replace"))
+            self.shell_viewer.setPlainText(fs.read_text(path))
         except Exception as e:
             self.shell_viewer.setPlainText(f"Error: {e}")
 
     # ── Refresh all ───────────────────────────────────────────────────────────
 
     def refresh_all(self):
+        self.config_manager.clear_fs_cache()
         self._refresh_conversations()
         self._refresh_project_memories()
         self._refresh_file_history()
