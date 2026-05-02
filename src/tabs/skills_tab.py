@@ -253,7 +253,7 @@ class SkillsTab(QWidget):
 
         # File path label
         skills_dir = self.get_scope_skills_dir()
-        self.path_label = QLabel(f"Directory: {skills_dir}")
+        self.path_label = QLabel(f"Directory: {skills_dir or 'N/A'}")
         self.path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(self.path_label)
 
@@ -838,11 +838,6 @@ class SkillsTab(QWidget):
 
     def on_project_changed(self, project_path: Path):
         """Handle project context change"""
-        # Update path label
-        skills_dir = self.get_scope_skills_dir()
-        if skills_dir:
-            self.path_label.setText(f"Directory: {skills_dir}")
-        # Reload skills from new project
         self.load_skills()
 
     def get_scope_skills_dir(self):

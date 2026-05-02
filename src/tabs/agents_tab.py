@@ -277,7 +277,7 @@ class AgentsTab(QWidget):
 
         # File path label
         agents_dir = self.get_scope_agents_dir()
-        path_label = QLabel(f"Directory: {agents_dir}")
+        path_label = QLabel(f"Directory: {agents_dir or 'N/A'}")
         path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(path_label)
 
@@ -401,11 +401,6 @@ class AgentsTab(QWidget):
 
     def on_project_changed(self, project_path: Path):
         """Handle project context change"""
-        # Update path label
-        agents_dir = self.get_scope_agents_dir()
-        if agents_dir:
-            self.path_label.setText(f"Directory: {agents_dir}")
-        # Reload agents from new project
         self.load_agents()
 
     def load_agents(self):

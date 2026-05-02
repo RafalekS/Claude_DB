@@ -101,7 +101,7 @@ class CommandsTab(QWidget):
 
         # File path label
         commands_dir = self.get_scope_commands_dir()
-        path_label = QLabel(f"Directory: {commands_dir}")
+        path_label = QLabel(f"Directory: {commands_dir or 'N/A'}")
         path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(path_label)
 
@@ -225,11 +225,6 @@ class CommandsTab(QWidget):
 
     def on_project_changed(self, project_path: Path):
         """Handle project context change"""
-        # Update path label
-        commands_dir = self.get_scope_commands_dir()
-        if commands_dir:
-            self.path_label.setText(f"Directory: {commands_dir}")
-        # Reload commands from new project
         self.load_commands()
 
     def load_commands(self):

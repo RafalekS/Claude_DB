@@ -673,7 +673,7 @@ class MCPTab(QWidget):
 
         # File path label
         file_path = self.get_scope_file_path()
-        self.path_label = QLabel(f"File: {file_path}")
+        self.path_label = QLabel(f"File: {file_path or 'N/A'}")
         self.path_label.setStyleSheet(f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY};")
         layout.addWidget(self.path_label)
 
