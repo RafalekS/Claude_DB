@@ -95,8 +95,8 @@ class UserConfigTab(QWidget):
         self.sub_tabs.addTab(self._settings_tab, "🎛️ Settings")
 
         # Env Vars sub-tab
-        env_vars_tab = EnvVarsTab(self.config_manager, self.backup_manager)
-        self.sub_tabs.addTab(env_vars_tab, "🔑 Env Vars")
+        self._env_vars_tab = EnvVarsTab(self.config_manager, self.backup_manager)
+        self.sub_tabs.addTab(self._env_vars_tab, "🔑 Env Vars")
 
         # Hooks sub-tab (User - uses settings.json)
         self._hooks_tab = UserHooksSubTab(self.config_manager, self.backup_manager, self.settings_manager)
@@ -119,8 +119,8 @@ class UserConfigTab(QWidget):
         self.sub_tabs.addTab(self._commands_tab, "⚡ Commands")
 
         # MCP Servers sub-tab (Phase 3 - MCPTab with user scope)
-        mcp_tab = MCPTab(self.config_manager, self.backup_manager, "user", None)
-        self.sub_tabs.addTab(mcp_tab, "🔌 MCP Servers")
+        self._mcp_tab = MCPTab(self.config_manager, self.backup_manager, "user", None)
+        self.sub_tabs.addTab(self._mcp_tab, "🔌 MCP Servers")
 
         # Skills sub-tab (Phase 3 - SkillsTab with user scope)
         self._skills_tab = SkillsTab(self.config_manager, self.backup_manager, "user", None)
@@ -143,11 +143,13 @@ class UserConfigTab(QWidget):
     def refresh_all(self):
         """Reload all subtabs from the current config_manager source (local or remote)."""
         self._settings_tab.load_settings()
+        self._env_vars_tab.load_env_vars()
         self._hooks_tab.load_hooks()
         self._permissions_tab.load_permissions()
         self._statusline_tab.load_statusline()
         self._agents_tab.load_agents()
         self._commands_tab.load_commands()
+        self._mcp_tab.load_mcp_config()
         self._skills_tab.load_skills()
         self._claude_md_tab.load_content()
         self._local_md_tab.load_content()
