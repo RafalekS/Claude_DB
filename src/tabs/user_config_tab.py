@@ -131,12 +131,12 @@ class UserConfigTab(QWidget):
         self.sub_tabs.addTab(rules_tab, "📋 Rules")
 
         # CLAUDE.md sub-tab (editor for ~/.claude/CLAUDE.md)
-        claude_md_tab = ClaudeMDTab(self.config_manager, self.backup_manager)
-        self.sub_tabs.addTab(claude_md_tab, "📝 CLAUDE.md")
+        self._claude_md_tab = ClaudeMDTab(self.config_manager, self.backup_manager)
+        self.sub_tabs.addTab(self._claude_md_tab, "📝 CLAUDE.md")
 
         # CLAUDE.local.md sub-tab
-        local_md_tab = ClaudeLocalMDTab(self.config_manager, self.backup_manager)
-        self.sub_tabs.addTab(local_md_tab, "📝 CLAUDE.local.md")
+        self._local_md_tab = ClaudeLocalMDTab(self.config_manager, self.backup_manager)
+        self.sub_tabs.addTab(self._local_md_tab, "📝 CLAUDE.local.md")
 
         layout.addWidget(self.sub_tabs, 1)
 
@@ -149,6 +149,8 @@ class UserConfigTab(QWidget):
         self._agents_tab.load_agents()
         self._commands_tab.load_commands()
         self._skills_tab.load_skills()
+        self._claude_md_tab.load_content()
+        self._local_md_tab.load_content()
         # Update header path label
         self.info_label.setText(str(self.config_manager.claude_dir))
 

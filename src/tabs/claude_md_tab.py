@@ -49,7 +49,7 @@ class ClaudeMDTab(QWidget):
         layout.addLayout(title_layout)
 
         # ── File path ────────────────────────────────────────────────────
-        self.file_label = QLabel(f"File: {self.config_manager.claude_md}")
+        self.file_label = QLabel()
         self.file_label.setStyleSheet(
             f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px; font-family: {theme.FONT_FAMILY_MONO};"
         )
@@ -141,8 +141,9 @@ class ClaudeMDTab(QWidget):
         estimated_tokens = char_count // 4
 
         file_size = "N/A"
-        if self.config_manager.claude_md.exists():
-            size_bytes = self.config_manager.claude_md.stat().st_size
+        claude_md = self.config_manager.claude_md
+        if isinstance(claude_md, Path) and claude_md.exists():
+            size_bytes = claude_md.stat().st_size
             if size_bytes < 1024:
                 file_size = f"{size_bytes} B"
             elif size_bytes < 1024 * 1024:
@@ -166,6 +167,7 @@ class ClaudeMDTab(QWidget):
 
     def load_content(self):
         """Load CLAUDE.md content from disk."""
+        self.file_label.setText(f"File: {self.config_manager.claude_md}")
         try:
             content = self.config_manager.get_claude_md()
             self.editor.blockSignals(True)
@@ -192,7 +194,9 @@ class ClaudeMDTab(QWidget):
     def backup_and_save(self):
         """Create a backup then save."""
         try:
-            self.backup_manager.create_file_backup(self.config_manager.claude_md)
+            cm = self.config_manager.claude_md
+            if isinstance(cm, Path) and cm.exists():
+                self.backup_manager.create_file_backup(cm)
             content = self.editor.toPlainText()
             self.config_manager.save_claude_md(content)
             self._modified = False

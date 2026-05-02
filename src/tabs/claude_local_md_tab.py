@@ -28,7 +28,7 @@ class ClaudeLocalMDTab(QWidget):
         header_layout = QHBoxLayout()
         header_layout.setSpacing(5)
 
-        self.file_label = QLabel(str(self.config_manager.claude_local_md))
+        self.file_label = QLabel()
         self.file_label.setStyleSheet(f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px;")
 
         self.save_btn = QPushButton("Save")
@@ -89,13 +89,14 @@ class ClaudeLocalMDTab(QWidget):
         words = len(content.split()) if content else 0
         tokens = chars // 4
 
-        exists = self.config_manager.claude_local_md.exists()
+        lmd = self.config_manager.claude_local_md
         file_info = ""
-        if exists:
-            size = self.config_manager.claude_local_md.stat().st_size
-            file_info = f" • File: {size:,} B"
-        else:
-            file_info = " • File: not yet created"
+        if isinstance(lmd, Path):
+            if lmd.exists():
+                size = lmd.stat().st_size
+                file_info = f" • File: {size:,} B"
+            else:
+                file_info = " • File: not yet created"
 
         self.stats_label.setText(
             f"📊 Characters: {chars:,} • Words: {words:,} • "
@@ -103,6 +104,7 @@ class ClaudeLocalMDTab(QWidget):
         )
 
     def load_content(self):
+        self.file_label.setText(str(self.config_manager.claude_local_md))
         try:
             content = self.config_manager.get_claude_local_md()
             self.editor.setPlainText(content)
@@ -120,8 +122,9 @@ class ClaudeLocalMDTab(QWidget):
 
     def backup_and_save(self):
         try:
-            if self.config_manager.claude_local_md.exists():
-                self.backup_manager.create_file_backup(self.config_manager.claude_local_md)
+            lmd = self.config_manager.claude_local_md
+            if isinstance(lmd, Path) and lmd.exists():
+                self.backup_manager.create_file_backup(lmd)
             self.config_manager.save_claude_local_md(self.editor.toPlainText())
             self._update_stats()
             QMessageBox.information(self, "Saved", "Backup created and CLAUDE.local.md saved.")
@@ -129,7 +132,11 @@ class ClaudeLocalMDTab(QWidget):
             QMessageBox.critical(self, "Error", f"Failed:\n{e}")
 
     def delete_file(self):
-        if not self.config_manager.claude_local_md.exists():
+        lmd = self.config_manager.claude_local_md
+        if not isinstance(lmd, Path):
+            QMessageBox.information(self, "Not Supported", "Deleting files is not supported for remote connections.")
+            return
+        if not lmd.exists():
             QMessageBox.information(self, "Not Found", "CLAUDE.local.md does not exist.")
             return
         reply = QMessageBox.question(
@@ -139,7 +146,7 @@ class ClaudeLocalMDTab(QWidget):
         )
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                self.config_manager.claude_local_md.unlink()
+                lmd.unlink()
                 self.editor.clear()
                 self._update_stats()
                 QMessageBox.information(self, "Deleted", "CLAUDE.local.md deleted.")

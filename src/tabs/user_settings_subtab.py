@@ -42,12 +42,12 @@ class UserSettingsSubTab(QWidget):
         main_layout.addWidget(header)
 
         # File path info
-        file_info = QLabel(f"File: {self.config_manager.settings_file}")
-        file_info.setStyleSheet(
+        self._file_info = QLabel(f"File: {self.config_manager.settings_file}")
+        self._file_info.setStyleSheet(
             f"color: {theme.FG_SECONDARY}; "
             f"font-size: {theme.FONT_SIZE_SMALL}px;"
         )
-        main_layout.addWidget(file_info)
+        main_layout.addWidget(self._file_info)
 
         # Scroll area for sections
         scroll = QScrollArea()
@@ -390,6 +390,7 @@ class UserSettingsSubTab(QWidget):
 
     def load_settings(self):
         """Load settings from file"""
+        self._file_info.setText(f"File: {self.config_manager.settings_file}")
         try:
             settings = self.config_manager.get_settings()
 

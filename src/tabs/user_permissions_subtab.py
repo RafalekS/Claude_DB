@@ -390,9 +390,9 @@ class UserPermissionsSubTab(QWidget):
         layout.addLayout(header_layout)
 
         # File path
-        path_label = QLabel(f"File: {self.config_manager.settings_file}")
-        path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
-        layout.addWidget(path_label)
+        self._path_label = QLabel(f"File: {self.config_manager.settings_file}")
+        self._path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
+        layout.addWidget(self._path_label)
 
         # defaultMode row
         mode_row = QHBoxLayout()
@@ -517,6 +517,7 @@ class UserPermissionsSubTab(QWidget):
 
     def load_permissions(self):
         """Load permissions from user settings"""
+        self._path_label.setText(f"File: {self.config_manager.settings_file}")
         try:
             self.perm_table.setRowCount(0)
             settings = self.config_manager.get_settings()

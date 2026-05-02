@@ -53,9 +53,9 @@ class UserStatuslineSubTab(QWidget):
         layout.addLayout(header_layout)
 
         # File path info
-        path_label = QLabel(f"File: {self.config_manager.settings_file}")
-        path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
-        layout.addWidget(path_label)
+        self._path_label = QLabel(f"File: {self.config_manager.settings_file}")
+        self._path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
+        layout.addWidget(self._path_label)
 
         # Configuration section
         config_group = QGroupBox("Statusline Configuration")
@@ -143,6 +143,7 @@ class UserStatuslineSubTab(QWidget):
 
     def load_statusline(self):
         """Load statusline from user settings"""
+        self._path_label.setText(f"File: {self.config_manager.settings_file}")
         try:
             settings = self.config_manager.get_settings()
             # Note: Settings.json uses 'statusLine' (camelCase), not 'statusline'
