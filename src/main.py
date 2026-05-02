@@ -14,7 +14,7 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QLabel, QMessageBox,
-    QTabBar, QStackedWidget
+    QTabBar, QStackedWidget, QFrame
 )
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPalette, QColor, QIcon
@@ -85,12 +85,14 @@ from tabs.about_tab import AboutTab
 from tabs.preferences_tab import PreferencesTab
 from tabs.user_config_tab import UserConfigTab
 from tabs.project_config_tab import ProjectConfigTab
+from tabs.remote_servers_tab import RemoteServersTab
 
-from utils.config_manager import ConfigManager
+from utils.config_manager import ConfigManager, ConfigManagerProxy
 from utils.backup_manager import BackupManager
 from utils.settings_manager import SettingsManager
 from utils.project_context import ProjectContext
 from utils import theme
+from modules.remote import ServerRegistry, ServerContext, ConnectionManager
 
 class ClaudeDBApp(QMainWindow):
     """Main application window for Claude_DB"""
@@ -98,8 +100,18 @@ class ClaudeDBApp(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app  # Store QApplication instance for dynamic theme switching
-        self.config_manager = ConfigManager()
+
+        # Local config manager (always available as the local baseline)
+        self._local_config_manager = ConfigManager()
+        # Proxy wraps the local CM at startup; swapped to remote CM on connect
+        self.config_manager = ConfigManagerProxy(self._local_config_manager)
+
         self.backup_manager = BackupManager()
+
+        # Remote infrastructure
+        self.server_registry = ServerRegistry()
+        self.server_context = ServerContext()
+        self.connection_manager = ConnectionManager()
 
         # Initialize utilities for new refactored tabs
         user_settings_path = Path.home() / ".claude" / "settings.json"
@@ -185,11 +197,12 @@ class ClaudeDBApp(QMainWindow):
             "tools": ("🔧 Tools", ToolsTab()),
             "about": ("ℹ️ About", AboutTab()),
             "preferences": ("🎨 Preferences", PreferencesTab(self.config_manager, self.backup_manager, self.app)),
+            "remote_servers": ("🌐 Remote", RemoteServersTab(self.server_registry, self.connection_manager, self.server_context)),
         }
 
         # Default tab order (using keys)
         default_row1 = ["userconfig", "projectconfig", "prompts", "plugins", "memory"]
-        default_row2 = ["usage", "docs", "claudekit", "tools", "about", "preferences"]
+        default_row2 = ["usage", "docs", "claudekit", "tools", "about", "preferences", "remote_servers"]
 
         # Load custom tab configuration from config
         row1_tabs, row2_tabs = self.load_tab_configuration(self.all_tabs, default_row1, default_row2)
@@ -210,7 +223,30 @@ class ClaudeDBApp(QMainWindow):
         self.tab_bar_row1.tabBarClicked.connect(self.switch_to_row1_tab)
         self.tab_bar_row2.tabBarClicked.connect(self.switch_to_row2_tab)
 
-        # Add to layout
+        # ── Amber remote banner (hidden when local) ───────────────────────────
+        self._remote_banner = QFrame()
+        self._remote_banner.setVisible(False)
+        self._remote_banner.setStyleSheet(
+            "QFrame { background: #E8A000; border-radius: 3px; }"
+        )
+        banner_row = QHBoxLayout(self._remote_banner)
+        banner_row.setContentsMargins(10, 4, 10, 4)
+        self._remote_banner_lbl = QLabel("Remote: —")
+        self._remote_banner_lbl.setStyleSheet(
+            "color: #000; font-weight: bold; background: transparent;"
+        )
+        self._remote_discon_btn = QPushButton("Disconnect")
+        self._remote_discon_btn.setStyleSheet(
+            "QPushButton { background: rgba(0,0,0,0.15); color: #000;"
+            " border: 1px solid rgba(0,0,0,0.3); border-radius: 3px; padding: 2px 8px; }"
+            "QPushButton:hover { background: rgba(0,0,0,0.25); }"
+        )
+        self._remote_discon_btn.clicked.connect(self._on_remote_disconnect)
+        banner_row.addWidget(self._remote_banner_lbl, 1)
+        banner_row.addWidget(self._remote_discon_btn)
+
+        # ── Add to layout ─────────────────────────────────────────────────────
+        main_layout.addWidget(self._remote_banner)
         main_layout.addWidget(self.tab_bar_row1)
         main_layout.addWidget(self.tab_bar_row2)
         main_layout.addWidget(self.content_stack)
@@ -223,6 +259,9 @@ class ClaudeDBApp(QMainWindow):
         self._github_label = QLabel("")
         self._github_label.hide()  # kept for API compatibility but not displayed
 
+        # Connect server_changed → rebuild ConfigManager proxy delegate
+        self.server_context.server_changed.connect(self._on_server_changed)
+
         # Connect preferences signals → MainWindow handlers
         prefs_widget = self.all_tabs.get("preferences")
         if prefs_widget:
@@ -231,6 +270,41 @@ class ClaudeDBApp(QMainWindow):
                 prefs_tab.theme_changed.connect(self.apply_theme_change)
             if hasattr(prefs_tab, "navigate_to"):
                 prefs_tab.navigate_to.connect(self.navigate_to_class)
+
+    # ── Remote mode ───────────────────────────────────────────────────────────
+
+    def _on_server_changed(self, server_cfg) -> None:
+        """Called when ServerContext fires server_changed (None = local)."""
+        if server_cfg is None:
+            # Back to local
+            self._remote_banner.setVisible(False)
+            self.config_manager.set_delegate(self._local_config_manager)
+            logger.info("Switched to local mode")
+        else:
+            # Switched to a remote server
+            label = self.server_context.get_label()
+            self._remote_banner_lbl.setText(f"  Remote: {label}")
+            self._remote_banner.setVisible(True)
+
+            # Build a ConfigManager backed by the remote filesystem
+            try:
+                from utils.config_manager import ConfigManager as _CM
+                from modules.remote.remote_path import RemotePath
+                claude_dir = self.connection_manager.get_claude_dir()
+                remote_cm = _CM(
+                    fs=self.connection_manager.fs,
+                    claude_dir=RemotePath(claude_dir) if claude_dir else None,
+                )
+                self.config_manager.set_delegate(remote_cm)
+                logger.info("Switched to remote mode: %s (claude_dir=%s)", label, claude_dir)
+            except Exception as exc:
+                logger.error("Failed to build remote ConfigManager: %s", exc)
+                self._remote_banner_lbl.setText(f"  Remote: {label}  ⚠ config error")
+
+    def _on_remote_disconnect(self) -> None:
+        """Disconnect button in amber banner clicked."""
+        self.connection_manager.disconnect()
+        self.server_context.set_active(None)
 
     def set_dark_theme(self):
         """Set dark theme for better visibility"""

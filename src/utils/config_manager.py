@@ -219,3 +219,30 @@ class ConfigManager:
                 })
 
         return results
+
+
+class ConfigManagerProxy:
+    """Delegates all attribute access to the currently active ConfigManager.
+
+    All tabs hold a reference to this proxy at startup.  When the user switches
+    to a remote server, main calls set_delegate(remote_cm) and every subsequent
+    tab call automatically hits the remote backend — no tab code needs to change.
+    When returning to local, set_delegate(local_cm) restores local behaviour.
+    """
+
+    def __init__(self, initial_cm: ConfigManager):
+        object.__setattr__(self, "_delegate", initial_cm)
+
+    def set_delegate(self, cm: ConfigManager) -> None:
+        object.__setattr__(self, "_delegate", cm)
+
+    def get_delegate(self) -> ConfigManager:
+        return object.__getattribute__(self, "_delegate")
+
+    def __getattr__(self, name: str):
+        delegate = object.__getattribute__(self, "_delegate")
+        return getattr(delegate, name)
+
+    def __setattr__(self, name: str, value) -> None:
+        delegate = object.__getattribute__(self, "_delegate")
+        setattr(delegate, name, value)
