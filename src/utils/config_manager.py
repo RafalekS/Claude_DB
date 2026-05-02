@@ -183,6 +183,17 @@ class ConfigManager:
     def save_claude_local_md(self, content: str) -> None:
         self.write_text_file(self.claude_local_md, content)
 
+    # ── Filesystem access ─────────────────────────────────────────────────────
+
+    @property
+    def fs(self):
+        """Return the underlying filesystem (LocalFileSystem or RemoteFileSystem)."""
+        return self._fs
+
+    def clear_fs_cache(self) -> None:
+        """Clear the filesystem read cache (no-op for local)."""
+        self._fs.clear_cache()
+
     # ── Search ─────────────────────────────────────────────────────────────────
 
     def search_in_files(self, query: str, file_type: str = "all") -> List[Dict]:
