@@ -15,34 +15,28 @@ class ProjectContext(QObject):
     """Manages current project context and provides helper methods for project paths"""
 
     # Signals
-    project_changed = pyqtSignal(Path)  # Emits when project folder changes
+    project_changed = pyqtSignal(object)  # Emits Path (local) or RemotePath (remote)
 
     def __init__(self):
         super().__init__()
         self._current_project: Optional[Path] = None
 
-    def set_project(self, path: Path) -> bool:
-        """Set current project path
+    def set_project(self, path) -> bool:
+        """Set current project path.
 
-        Args:
-            path: Path to project folder
-
-        Returns:
-            True if valid project path, False otherwise
+        For local Path objects the directory is validated to exist.
+        For remote RemotePath / str objects validation is skipped because the
+        path lives on a remote machine and may not exist locally.
         """
-        if not path or not path.exists():
+        if not path:
             return False
 
-        # Validate it's a directory
-        if not path.is_dir():
-            return False
+        if isinstance(path, Path):
+            if not path.exists() or not path.is_dir():
+                return False
 
-        # Store project path
         self._current_project = path
-
-        # Emit signal
         self.project_changed.emit(path)
-
         return True
 
     def get_project(self) -> Optional[Path]:
@@ -69,9 +63,11 @@ class ProjectContext(QObject):
         """
         if not self._current_project:
             return False
-
-        claude_folder = self._current_project / ".claude"
-        return claude_folder.exists() and claude_folder.is_dir()
+        try:
+            claude_folder = self._current_project / ".claude"
+            return claude_folder.exists() and claude_folder.is_dir()
+        except Exception:
+            return False
 
     def ensure_claude_folder(self) -> bool:
         """Ensure .claude folder exists, create if needed

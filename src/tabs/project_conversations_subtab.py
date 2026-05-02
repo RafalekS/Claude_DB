@@ -23,9 +23,10 @@ from tabs.memory_tab import _parse_conversation, _extract_text, _get_snippet, _h
 class ProjectConversationsSubTab(QWidget):
     """Sessions viewer filtered to the current project."""
 
-    def __init__(self, project_context):
+    def __init__(self, project_context, config_manager=None):
         super().__init__()
         self.project_context = project_context
+        self.config_manager = config_manager
         self._init_ui()
         self.project_context.project_changed.connect(self._on_project_changed)
         if self.project_context.has_project():
@@ -117,7 +118,8 @@ class ProjectConversationsSubTab(QWidget):
         project_path = self.project_context.get_project()
         self._project_label.setText(str(project_path))
 
-        sessions = get_project_sessions(project_path)
+        fs, projects_dir = self._get_fs_and_projects_dir()
+        sessions = get_project_sessions(project_path, projects_dir, fs)
         if not sessions:
             self._tree.addTopLevelItem(QTreeWidgetItem(["No sessions found for this project."]))
             return
@@ -132,24 +134,34 @@ class ProjectConversationsSubTab(QWidget):
         self._tree.setCurrentItem(self._tree.topLevelItem(0))
         self._load_conversation(self._tree.topLevelItem(0))
 
+    def _get_fs_and_projects_dir(self):
+        """Return (fs, projects_dir) — None/None for local, remote fs + dir for remote."""
+        if self.config_manager is None:
+            return None, None
+        fs = self.config_manager.fs
+        projects_dir = self.config_manager.claude_dir / "projects"
+        return fs, projects_dir
+
     def _load_conversation(self, item: QTreeWidgetItem, _col: int = 0):
         path = item.data(0, Qt.ItemDataRole.UserRole)
         if not path:
             return
-        file_path = Path(path)
-        if not file_path.exists():
+        fs, _ = self._get_fs_and_projects_dir()
+        exists = fs.exists(path) if fs else Path(path).exists()
+        if not exists:
             self._viewer.setPlainText("File not found.")
             return
 
-        messages = _parse_conversation(file_path)
+        messages = _parse_conversation(path, fs)
         if not messages:
             self._viewer.setPlainText(
-                f"No readable messages in:\n{file_path}\n\n"
+                f"No readable messages in:\n{path}\n\n"
                 "(All entries are progress / tool / snapshot records.)"
             )
             return
 
-        lines = [f"Session: {file_path.stem}\nMessages: {len(messages)}\n{'─'*60}\n"]
+        stem = Path(str(path)).stem
+        lines = [f"Session: {stem}\nMessages: {len(messages)}\n{'─'*60}\n"]
         for m in messages:
             role_label = "You" if m["role"] == "user" else "Claude"
             ts = f"  [{m['time']}]" if m["time"] else ""
@@ -180,7 +192,8 @@ class ProjectConversationsSubTab(QWidget):
         self._viewer.setExtraSelections([])
 
         project_path = self.project_context.get_project()
-        sessions = get_project_sessions(project_path)
+        fs, projects_dir = self._get_fs_and_projects_dir()
+        sessions = get_project_sessions(project_path, projects_dir, fs)
         if not sessions:
             self._search_status.setText("No sessions found")
             return
@@ -188,7 +201,7 @@ class ProjectConversationsSubTab(QWidget):
         term_lower = term.lower()
         matches = []
         for s in sessions:
-            messages = _parse_conversation(Path(s["path"]))
+            messages = _parse_conversation(s["path"], fs)
             snippet = ""
             for m in messages:
                 if term_lower in m["text"].lower():

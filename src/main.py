@@ -262,6 +262,14 @@ class ClaudeDBApp(QMainWindow):
         # Connect server_changed → rebuild ConfigManager proxy delegate
         self.server_context.server_changed.connect(self._on_server_changed)
 
+        # Health-check timer: poll connection every 30 s while remote is active
+        self._health_timer = QTimer(self)
+        self._health_timer.setInterval(30_000)
+        self._health_timer.timeout.connect(self._check_connection_health)
+
+        # Auto-reconnect to last-used server (deferred so all tabs are ready)
+        QTimer.singleShot(500, self._try_reconnect_last_server)
+
         # Connect preferences signals → MainWindow handlers
         prefs_widget = self.all_tabs.get("preferences")
         if prefs_widget:
@@ -277,8 +285,11 @@ class ClaudeDBApp(QMainWindow):
         """Called when ServerContext fires server_changed (None = local)."""
         if server_cfg is None:
             # Back to local
+            self._health_timer.stop()
             self._remote_banner.setVisible(False)
             self.config_manager.set_delegate(self._local_config_manager)
+            self._save_last_server(None)
+            self.project_context.clear_project()
             logger.info("Switched to local mode")
         else:
             # Switched to a remote server
@@ -301,10 +312,112 @@ class ClaudeDBApp(QMainWindow):
                 logger.error("Failed to build remote ConfigManager: %s", exc)
                 self._remote_banner_lbl.setText(f"  Remote: {label}  ⚠ config error")
 
+            self._save_last_server(server_cfg.get("id"))
+            self.project_context.clear_project()
+            self._health_timer.start()
+
+        # Refresh tabs that show server-dependent data (deferred so CM proxy is ready)
+        QTimer.singleShot(0, self._refresh_server_dependent_tabs)
+
     def _on_remote_disconnect(self) -> None:
         """Disconnect button in amber banner clicked."""
         self.connection_manager.disconnect()
         self.server_context.set_active(None)
+
+    def _check_connection_health(self) -> None:
+        """Called every 30 s while connected; reverts to local if connection dropped."""
+        if not self._remote_banner.isVisible():
+            self._health_timer.stop()
+            return
+        if not self.connection_manager.is_connected():
+            logger.warning("Health check: remote connection lost — reverting to local")
+            self._remote_banner_lbl.setText(
+                self._remote_banner_lbl.text() + "  ⚠ connection lost"
+            )
+            self._on_remote_disconnect()
+
+    def _refresh_server_dependent_tabs(self) -> None:
+        """Refresh memory and project-config tabs after a server switch."""
+        memory_entry = self.all_tabs.get("memory")
+        if memory_entry:
+            _, memory_tab = memory_entry
+            if hasattr(memory_tab, "refresh_all"):
+                try:
+                    memory_tab.refresh_all()
+                except Exception as exc:
+                    logger.warning("memory_tab.refresh_all failed: %s", exc)
+
+        proj_entry = self.all_tabs.get("projectconfig")
+        if proj_entry:
+            _, proj_tab = proj_entry
+            if hasattr(proj_tab, "refresh_projects"):
+                try:
+                    proj_tab.refresh_projects()
+                except Exception as exc:
+                    logger.warning("project_config_tab.refresh_projects failed: %s", exc)
+
+    # ── Last-server persistence ────────────────────────────────────────────────
+
+    def _config_file_path(self) -> Path:
+        return Path(__file__).parent.parent / "config" / "config.json"
+
+    def _save_last_server(self, server_id: str | None) -> None:
+        try:
+            cfg_path = self._config_file_path()
+            data: dict = {}
+            if cfg_path.exists():
+                with open(cfg_path, encoding="utf-8") as f:
+                    data = json.load(f)
+            if server_id:
+                data["last_server_id"] = server_id
+            else:
+                data.pop("last_server_id", None)
+            with open(cfg_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        except Exception as exc:
+            logger.warning("Could not save last_server_id: %s", exc)
+
+    def _try_reconnect_last_server(self) -> None:
+        """On startup, silently reconnect to the last used remote server if available."""
+        try:
+            cfg_path = self._config_file_path()
+            if not cfg_path.exists():
+                return
+            with open(cfg_path, encoding="utf-8") as f:
+                data = json.load(f)
+            last_id = data.get("last_server_id")
+            if not last_id:
+                return
+            server = self.server_registry.get_server(last_id)
+            if not server:
+                return
+            logger.info("Auto-reconnecting to last server: %s", last_id)
+            remote_entry = self.all_tabs.get("remote_servers")
+            if remote_entry:
+                _, remote_tab = remote_entry
+                if hasattr(remote_tab, "_connect"):
+                    # Select the server in the table then trigger connect
+                    self._auto_connect_server(remote_tab, server)
+        except Exception as exc:
+            logger.warning("Auto-reconnect skipped: %s", exc)
+
+    def _auto_connect_server(self, remote_tab, server_cfg: dict) -> None:
+        """Select server in the table and trigger the connect flow."""
+        try:
+            from PyQt6.QtCore import QThread
+            from modules.remote.ssh_client import SSHConnectionError
+
+            # Find the row matching this server id in the table
+            table = remote_tab._table
+            sid = server_cfg.get("id", "")
+            for row in range(table.rowCount()):
+                item = table.item(row, 0)
+                if item and item.data(Qt.ItemDataRole.UserRole) == sid:
+                    table.selectRow(row)
+                    break
+            remote_tab._connect()
+        except Exception as exc:
+            logger.warning("_auto_connect_server failed: %s", exc)
 
     def set_dark_theme(self):
         """Set dark theme for better visibility"""

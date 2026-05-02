@@ -377,19 +377,19 @@ class ProjectConfigTab(QWidget):
         self.sub_tabs.addTab(projects_tab, "📂 Projects")
 
         # Conversations sub-tab (sessions for current project)
-        conversations_tab = ProjectConversationsSubTab(self.project_context)
+        conversations_tab = ProjectConversationsSubTab(self.project_context, config_manager=self.config_manager)
         self.sub_tabs.addTab(conversations_tab, "💬 Conversations")
 
         # File History sub-tab (pre-edit snapshots for current project)
-        file_history_tab = ProjectFileHistorySubTab(self.project_context)
+        file_history_tab = ProjectFileHistorySubTab(self.project_context, config_manager=self.config_manager)
         self.sub_tabs.addTab(file_history_tab, "📋 File History")
 
         # Memories sub-tab (per-project memory .md files)
-        memories_tab = ProjectMemoriesSubTab(self.project_context)
+        memories_tab = ProjectMemoriesSubTab(self.project_context, config_manager=self.config_manager)
         self.sub_tabs.addTab(memories_tab, "🧠 Memories")
 
         # Shell Snapshots sub-tab (time-filtered shell environment snapshots)
-        shell_snapshots_tab = ProjectShellSnapshotsSubTab(self.project_context)
+        shell_snapshots_tab = ProjectShellSnapshotsSubTab(self.project_context, config_manager=self.config_manager)
         self.sub_tabs.addTab(shell_snapshots_tab, "🐚 Shell Snapshots")
 
         # Rules sub-tab (project-level rules)
@@ -419,13 +419,35 @@ class ProjectConfigTab(QWidget):
 
     _SEPARATOR_DATA = "__separator__"
 
-    def _populate_combo(self, keep_selection: Path | None = None):
+    def _get_fs_and_projects_dir(self):
+        """Return (fs, projects_dir) for scan_projects(). None/None → local scan."""
+        try:
+            from modules.remote.filesystem import LocalFileSystem
+            fs = self.config_manager.fs
+            if isinstance(fs, LocalFileSystem):
+                return None, None
+            return fs, self.config_manager.claude_dir / "projects"
+        except Exception:
+            return None, None
+
+    def _populate_combo(self, keep_selection=None):
         """Rebuild combo items from scanned + custom paths."""
         self.project_combo.blockSignals(True)
         self.project_combo.clear()
 
-        scanned = scan_projects()
-        scanned_paths = {p["path"] for p in scanned}
+        fs, projects_dir = self._get_fs_and_projects_dir()
+        if fs is not None:
+            from modules.remote.remote_path import RemotePath
+            raw_scanned = scan_projects(projects_dir=projects_dir, fs=fs)
+            # Wrap path strings as RemotePath so project_context gets a proper path object
+            scanned = [
+                {**p, "path": RemotePath(str(p["path"])) if not isinstance(p["path"], RemotePath) else p["path"]}
+                for p in raw_scanned
+            ]
+        else:
+            scanned = scan_projects()
+
+        scanned_paths = {str(p["path"]) for p in scanned}
 
         self.project_combo.addItem("-- Select Project --", None)
 
@@ -435,7 +457,7 @@ class ProjectConfigTab(QWidget):
             self.project_combo.addItem(label, project["path"])
 
         # Custom paths (Browse-picked) not already in scanned list
-        custom = [p for p in self._custom_paths if p not in scanned_paths]
+        custom = [p for p in self._custom_paths if str(p) not in scanned_paths]
         if custom:
             # Non-selectable separator
             model = self.project_combo.model()
@@ -450,18 +472,20 @@ class ProjectConfigTab(QWidget):
         self.project_combo.blockSignals(False)
 
         # Re-select previous item if provided
-        if keep_selection:
+        if keep_selection is not None:
             self._sync_combo_to_path(keep_selection)
 
     def _sync_combo_to_context(self):
         if self.project_context.has_project():
             self._sync_combo_to_path(self.project_context.get_project())
 
-    def _sync_combo_to_path(self, path: Path):
+    def _sync_combo_to_path(self, path):
         self.project_combo.blockSignals(True)
         try:
+            path_str = str(path)
             for i in range(self.project_combo.count()):
-                if self.project_combo.itemData(i) == path:
+                item_data = self.project_combo.itemData(i)
+                if item_data is not None and str(item_data) == path_str:
                     self.project_combo.setCurrentIndex(i)
                     return
         finally:
@@ -470,7 +494,7 @@ class ProjectConfigTab(QWidget):
     def _on_combo_changed(self, index: int):
         """Handle combo selection — update project_context."""
         path = self.project_combo.itemData(index)
-        if not isinstance(path, Path):
+        if path is None or path == self._SEPARATOR_DATA:
             return
         if self.project_context.set_project(path):
             self.update_status(path)
@@ -505,8 +529,8 @@ class ProjectConfigTab(QWidget):
             return
 
         # Add to custom list if not already in scanned projects
-        scanned_paths = {p["path"] for p in scan_projects()}
-        if project_path not in scanned_paths and project_path not in self._custom_paths:
+        scanned_paths = {str(p["path"]) for p in scan_projects()}
+        if str(project_path) not in scanned_paths and project_path not in self._custom_paths:
             self._custom_paths.append(project_path)
 
         self._populate_combo(keep_selection=project_path)

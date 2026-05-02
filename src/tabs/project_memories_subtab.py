@@ -15,16 +15,17 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
 from utils import theme
-from utils.project_scanner import find_project_encoded_dir, CLAUDE_PROJECTS_DIR
+from utils.project_scanner import find_project_encoded_dir
 from utils.ui_state_manager import UIStateManager
 
 
 class ProjectMemoriesSubTab(QWidget):
     """Memory .md viewer filtered to the current project."""
 
-    def __init__(self, project_context):
+    def __init__(self, project_context, config_manager=None):
         super().__init__()
         self.project_context = project_context
+        self.config_manager = config_manager
         self._init_ui()
         self.project_context.project_changed.connect(self._on_project_changed)
         if self.project_context.has_project():
@@ -70,6 +71,16 @@ class ProjectMemoriesSubTab(QWidget):
 
         layout.addWidget(splitter, 1)
 
+    # ── Helpers ───────────────────────────────────────────────────────────────
+
+    def _get_fs_and_projects_dir(self):
+        """Return (fs, projects_dir). None/None for local."""
+        if self.config_manager is None:
+            return None, None
+        fs = self.config_manager.fs
+        projects_dir = self.config_manager.claude_dir / "projects"
+        return fs, projects_dir
+
     # ── Slots ─────────────────────────────────────────────────────────────────
 
     def _on_project_changed(self, _):
@@ -87,25 +98,48 @@ class ProjectMemoriesSubTab(QWidget):
         project_path = self.project_context.get_project()
         self._project_label.setText(str(project_path))
 
-        encoded_dir = find_project_encoded_dir(project_path, CLAUDE_PROJECTS_DIR)
+        fs, projects_dir = self._get_fs_and_projects_dir()
+        encoded_dir = find_project_encoded_dir(project_path, projects_dir, fs)
         if not encoded_dir:
             self._list.addItem("No Claude project directory found for this path.")
             return
 
         memory_dir = encoded_dir / "memory"
-        if not memory_dir.exists():
-            self._list.addItem("No memory/ directory found for this project.")
-            return
 
-        md_files = sorted(memory_dir.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True)
-        if not md_files:
-            self._list.addItem("No memory files found.")
-            return
-
-        for f in md_files:
-            item = QListWidgetItem(f.name)
-            item.setData(Qt.ItemDataRole.UserRole, str(f))
-            self._list.addItem(item)
+        if fs is not None:
+            # ── Remote ────────────────────────────────────────────────────────
+            if not fs.exists(memory_dir):
+                self._list.addItem("No memory/ directory found for this project.")
+                return
+            try:
+                md_files_all = fs.glob(memory_dir, "*.md")
+            except Exception:
+                md_files_all = []
+            if not md_files_all:
+                self._list.addItem("No memory files found.")
+                return
+            try:
+                md_files = sorted(md_files_all, key=lambda f: fs.stat(f).st_mtime, reverse=True)
+            except Exception:
+                md_files = md_files_all
+            for f in md_files:
+                fname = f.name if hasattr(f, "name") else str(f).rsplit("/", 1)[-1]
+                item = QListWidgetItem(fname)
+                item.setData(Qt.ItemDataRole.UserRole, str(f))
+                self._list.addItem(item)
+        else:
+            # ── Local ──────────────────────────────────────────────────────────
+            if not memory_dir.exists():
+                self._list.addItem("No memory/ directory found for this project.")
+                return
+            md_files = sorted(memory_dir.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True)
+            if not md_files:
+                self._list.addItem("No memory files found.")
+                return
+            for f in md_files:
+                item = QListWidgetItem(f.name)
+                item.setData(Qt.ItemDataRole.UserRole, str(f))
+                self._list.addItem(item)
 
         if self._list.count():
             self._list.setCurrentRow(0)
@@ -116,11 +150,22 @@ class ProjectMemoriesSubTab(QWidget):
         path = current.data(Qt.ItemDataRole.UserRole)
         if not path:
             return
-        fp = Path(path)
-        if not fp.exists():
-            self._viewer.setPlainText("File not found.")
-            return
-        try:
-            self._viewer.setPlainText(fp.read_text(encoding="utf-8", errors="replace"))
-        except Exception as e:
-            self._viewer.setPlainText(f"Error reading file: {e}")
+
+        fs, _ = self._get_fs_and_projects_dir()
+        if fs is not None:
+            if not fs.exists(path):
+                self._viewer.setPlainText("File not found.")
+                return
+            try:
+                self._viewer.setPlainText(fs.read_text(path))
+            except Exception as e:
+                self._viewer.setPlainText(f"Error reading file: {e}")
+        else:
+            fp = Path(path)
+            if not fp.exists():
+                self._viewer.setPlainText("File not found.")
+                return
+            try:
+                self._viewer.setPlainText(fp.read_text(encoding="utf-8", errors="replace"))
+            except Exception as e:
+                self._viewer.setPlainText(f"Error reading file: {e}")

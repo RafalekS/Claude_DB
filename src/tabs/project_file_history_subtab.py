@@ -26,33 +26,43 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont
 
 from utils import theme
-from utils.project_scanner import get_project_sessions, CLAUDE_PROJECTS_DIR
+from utils.project_scanner import get_project_sessions
 from utils.ui_state_manager import UIStateManager
 
+_LOCAL_FH_BASE = Path.home() / ".claude" / "file-history"
 
-def _parse_file_history(session_uuid: str, jsonl_path: Path, fh_base: Path) -> list[dict]:
+
+def _parse_file_history(session_uuid: str, jsonl_path, fh_base, fs=None) -> list[dict]:
     """
     Parse a session JSONL and return snapshot records for files that exist in file-history.
 
     Returns list of:
         {"file_path": str, "backup_name": str, "version": int, "backup_time": str,
-         "backup_file": Path, "session_uuid": str}
+         "backup_file": path, "session_uuid": str}
     """
     fh_dir = fh_base / session_uuid
-    if not fh_dir.exists():
-        return []
 
-    # Build set of available backup filenames for quick lookup
-    available = {f.name: f for f in fh_dir.iterdir() if f.is_file()}
-    if not available:
-        return []
+    if fs is not None:
+        # ── Remote ────────────────────────────────────────────────────────────
+        if not fs.exists(fh_dir):
+            return []
+        try:
+            all_files = fs.glob(fh_dir, "*")
+        except Exception:
+            return []
+        available = {}
+        for f in all_files:
+            if fs.is_file(f):
+                fname = f.name if hasattr(f, "name") else str(f).rsplit("/", 1)[-1]
+                available[fname] = f
+        if not available:
+            return []
 
-    records = []
-    seen_backups: set[str] = set()
-
-    try:
-        with open(jsonl_path, encoding="utf-8", errors="replace") as fh:
-            for raw in fh:
+        records = []
+        seen_backups: set[str] = set()
+        try:
+            text = fs.read_text(jsonl_path)
+            for raw in text.splitlines():
                 raw = raw.strip()
                 if not raw:
                     continue
@@ -84,19 +94,69 @@ def _parse_file_history(session_uuid: str, jsonl_path: Path, fh_base: Path) -> l
                         "backup_file": available[backup_name],
                         "session_uuid": session_uuid,
                     })
-    except Exception:
-        pass
+        except Exception:
+            pass
+        return records
 
-    return records
+    else:
+        # ── Local ─────────────────────────────────────────────────────────────
+        if not fh_dir.exists():
+            return []
+
+        available = {f.name: f for f in fh_dir.iterdir() if f.is_file()}
+        if not available:
+            return []
+
+        records = []
+        seen_backups: set[str] = set()
+
+        try:
+            with open(jsonl_path, encoding="utf-8", errors="replace") as fh:
+                for raw in fh:
+                    raw = raw.strip()
+                    if not raw:
+                        continue
+                    try:
+                        entry = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+                    if entry.get("type") != "file-history-snapshot":
+                        continue
+                    backups = entry.get("snapshot", {}).get("trackedFileBackups", {})
+                    for file_path, info in backups.items():
+                        backup_name = info.get("backupFileName", "")
+                        if not backup_name or backup_name in seen_backups:
+                            continue
+                        if backup_name not in available:
+                            continue
+                        seen_backups.add(backup_name)
+                        try:
+                            bt = datetime.fromisoformat(
+                                info.get("backupTime", "").replace("Z", "+00:00")
+                            ).strftime("%Y-%m-%d %H:%M:%S")
+                        except Exception:
+                            bt = info.get("backupTime", "")
+                        records.append({
+                            "file_path": file_path,
+                            "backup_name": backup_name,
+                            "version": info.get("version", 0),
+                            "backup_time": bt,
+                            "backup_file": available[backup_name],
+                            "session_uuid": session_uuid,
+                        })
+        except Exception:
+            pass
+
+        return records
 
 
 class ProjectFileHistorySubTab(QWidget):
     """File-history snapshot viewer filtered to the current project."""
 
-    def __init__(self, project_context):
+    def __init__(self, project_context, config_manager=None):
         super().__init__()
         self.project_context = project_context
-        self._fh_base = Path.home() / ".claude" / "file-history"
+        self.config_manager = config_manager
         self._init_ui()
         self.project_context.project_changed.connect(self._on_project_changed)
         if self.project_context.has_project():
@@ -148,6 +208,22 @@ class ProjectFileHistorySubTab(QWidget):
 
         layout.addWidget(splitter, 1)
 
+    # ── Helpers ───────────────────────────────────────────────────────────────
+
+    def _get_fs_and_projects_dir(self):
+        """Return (fs, projects_dir). None/None for local."""
+        if self.config_manager is None:
+            return None, None
+        fs = self.config_manager.fs
+        projects_dir = self.config_manager.claude_dir / "projects"
+        return fs, projects_dir
+
+    def _get_fh_base(self):
+        """Return file-history base directory (local or remote)."""
+        if self.config_manager is not None:
+            return self.config_manager.claude_dir / "file-history"
+        return _LOCAL_FH_BASE
+
     # ── Slots ─────────────────────────────────────────────────────────────────
 
     def _on_project_changed(self, _):
@@ -165,7 +241,10 @@ class ProjectFileHistorySubTab(QWidget):
         project_path = self.project_context.get_project()
         self._project_label.setText(str(project_path))
 
-        sessions = get_project_sessions(project_path)
+        fs, projects_dir = self._get_fs_and_projects_dir()
+        fh_base = self._get_fh_base()
+
+        sessions = get_project_sessions(project_path, projects_dir, fs)
         if not sessions:
             QTreeWidgetItem(self._tree, ["No sessions found for this project.", ""])
             return
@@ -173,7 +252,7 @@ class ProjectFileHistorySubTab(QWidget):
         # Collect all snapshot records across all sessions
         by_file: dict[str, list[dict]] = defaultdict(list)
         for s in sessions:
-            for rec in _parse_file_history(s["uuid"], s["path"], self._fh_base):
+            for rec in _parse_file_history(s["uuid"], s["path"], fh_base, fs):
                 by_file[rec["file_path"]].append(rec)
 
         if not by_file:
@@ -205,14 +284,29 @@ class ProjectFileHistorySubTab(QWidget):
         path = item.data(0, Qt.ItemDataRole.UserRole)
         if not path:
             return  # clicked a file-level header row
-        fp = Path(path)
-        if not fp.exists():
-            self._viewer.setPlainText("Snapshot file not found.")
-            return
-        try:
-            content = fp.read_text(encoding="utf-8", errors="replace")
-            self._viewer.setPlainText(
-                f"Backup: {fp.name}\nFull path: {fp}\n{'─'*60}\n\n{content}"
-            )
-        except Exception as e:
-            self._viewer.setPlainText(f"Error reading snapshot: {e}")
+
+        fs, _ = self._get_fs_and_projects_dir()
+        if fs is not None:
+            if not fs.exists(path):
+                self._viewer.setPlainText("Snapshot file not found.")
+                return
+            try:
+                content = fs.read_text(path)
+                fname = str(path).rsplit("/", 1)[-1]
+                self._viewer.setPlainText(
+                    f"Backup: {fname}\nFull path: {path}\n{'─'*60}\n\n{content}"
+                )
+            except Exception as e:
+                self._viewer.setPlainText(f"Error reading snapshot: {e}")
+        else:
+            fp = Path(path)
+            if not fp.exists():
+                self._viewer.setPlainText("Snapshot file not found.")
+                return
+            try:
+                content = fp.read_text(encoding="utf-8", errors="replace")
+                self._viewer.setPlainText(
+                    f"Backup: {fp.name}\nFull path: {fp}\n{'─'*60}\n\n{content}"
+                )
+            except Exception as e:
+                self._viewer.setPlainText(f"Error reading snapshot: {e}")
