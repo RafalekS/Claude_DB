@@ -144,7 +144,7 @@ class UserStatuslineSubTab(QWidget):
     def load_statusline(self):
         """Load statusline from user settings"""
         try:
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
             # Note: Settings.json uses 'statusLine' (camelCase), not 'statusline'
             statusline = settings.get("statusLine", settings.get("statusline", {}))
 
@@ -205,7 +205,7 @@ class UserStatuslineSubTab(QWidget):
                 return
 
             # Load settings
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
 
             # Update statusline (use camelCase 'statusLine' to match settings.json format)
             statusline_config = {}
@@ -217,10 +217,7 @@ class UserStatuslineSubTab(QWidget):
             settings["statusLine"] = statusline_config
 
             # Save settings
-            self.settings_manager.save_settings(
-                self.config_manager.settings_file,
-                settings
-            )
+            self.config_manager.save_settings(settings)
 
             self.update_preview()
             QMessageBox.information(self, "Success", "Statusline configuration saved successfully!")
@@ -239,7 +236,7 @@ class UserStatuslineSubTab(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 # Load settings
-                settings = self.settings_manager.get_user_settings()
+                settings = self.config_manager.get_settings()
 
                 # Remove statusline (check both camelCase and lowercase)
                 if "statusLine" in settings:
@@ -248,10 +245,7 @@ class UserStatuslineSubTab(QWidget):
                     del settings["statusline"]
 
                 # Save settings
-                self.settings_manager.save_settings(
-                    self.config_manager.settings_file,
-                    settings
-                )
+                self.config_manager.save_settings(settings)
 
                 self.command_input.clear()
                 self.template_input.clear()

@@ -356,6 +356,15 @@ class ClaudeDBApp(QMainWindow):
                 except Exception as exc:
                     logger.warning("project_config_tab.refresh_projects failed: %s", exc)
 
+        user_entry = self.all_tabs.get("userconfig")
+        if user_entry:
+            _, user_tab = user_entry
+            if hasattr(user_tab, "refresh_all"):
+                try:
+                    user_tab.refresh_all()
+                except Exception as exc:
+                    logger.warning("user_config_tab.refresh_all failed: %s", exc)
+
     # ── Last-server persistence ────────────────────────────────────────────────
 
     def _config_file_path(self) -> Path:

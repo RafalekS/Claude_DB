@@ -188,7 +188,7 @@ class UserHooksSubTab(QWidget):
     def load_hooks(self):
         """Load hooks from user settings"""
         try:
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
             self.hooks_config = settings.get("hooks", {})
 
             # Detect old name-based format (keys that aren't in HOOK_EVENTS)
@@ -260,12 +260,9 @@ class UserHooksSubTab(QWidget):
             config = json.loads(content)
             hooks = config.get("hooks", {})
 
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
             settings["hooks"] = hooks
-            self.settings_manager.save_settings(
-                self.config_manager.settings_file,
-                settings
-            )
+            self.config_manager.save_settings(settings)
 
             self.hooks_config = hooks
             self.update_events_list()

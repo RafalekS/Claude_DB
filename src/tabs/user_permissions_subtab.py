@@ -512,17 +512,14 @@ class UserPermissionsSubTab(QWidget):
 
     def refresh_permissions(self):
         """Refresh permissions (clears cache and reloads from disk)"""
-        # Clear cache for user settings
-        self.settings_manager.clear_cache(self.settings_manager.user_settings_path)
-
-        # Reload from disk
+        self.config_manager.clear_fs_cache()
         self.load_permissions()
 
     def load_permissions(self):
         """Load permissions from user settings"""
         try:
             self.perm_table.setRowCount(0)
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
             permissions = settings.get("permissions", {"allow": [], "deny": [], "ask": []})
 
             # Handle corrupted format (array instead of object)
@@ -550,7 +547,7 @@ class UserPermissionsSubTab(QWidget):
     def save_default_mode(self, mode: str):
         """Save defaultMode to settings.json"""
         try:
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
             permissions = settings.get("permissions", {})
             if isinstance(permissions, list):
                 permissions = {}
@@ -559,7 +556,7 @@ class UserPermissionsSubTab(QWidget):
             else:
                 permissions["defaultMode"] = mode
             settings["permissions"] = permissions
-            self.settings_manager.save_settings(self.settings_manager.user_settings_path, settings)
+            self.config_manager.save_settings(settings)
         except Exception as e:
             logger.error("Error saving defaultMode: %s", e)
 
@@ -617,7 +614,7 @@ class UserPermissionsSubTab(QWidget):
         level = dialog.get_permission_level()
 
         try:
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
             if "permissions" not in settings:
                 settings["permissions"] = {"allow": [], "deny": [], "ask": []}
 
@@ -626,7 +623,7 @@ class UserPermissionsSubTab(QWidget):
                 permissions[level] = []
 
             permissions[level].append(perm_string)
-            self.settings_manager.save_settings(self.config_manager.settings_file, settings)
+            self.config_manager.save_settings(settings)
             self.load_permissions()
             QMessageBox.information(self, "Success", "Permission added!")
 
@@ -652,7 +649,7 @@ class UserPermissionsSubTab(QWidget):
         new_level = dialog.get_permission_level()
 
         try:
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
             permissions = settings.get("permissions", {"allow": [], "deny": [], "ask": []})
 
             # Remove old
@@ -665,7 +662,7 @@ class UserPermissionsSubTab(QWidget):
             permissions[new_level].append(new_perm_string)
 
             settings["permissions"] = permissions
-            self.settings_manager.save_settings(self.config_manager.settings_file, settings)
+            self.config_manager.save_settings(settings)
             self.load_permissions()
             QMessageBox.information(self, "Success", "Permission updated!")
 
@@ -692,14 +689,14 @@ class UserPermissionsSubTab(QWidget):
             return
 
         try:
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
             permissions = settings.get("permissions", {"allow": [], "deny": [], "ask": []})
 
             if pattern in permissions.get(level, []):
                 permissions[level].remove(pattern)
 
             settings["permissions"] = permissions
-            self.settings_manager.save_settings(self.config_manager.settings_file, settings)
+            self.config_manager.save_settings(settings)
             self.load_permissions()
             QMessageBox.information(self, "Success", "Permission deleted!")
 

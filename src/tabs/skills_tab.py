@@ -844,7 +844,8 @@ class SkillsTab(QWidget):
     def get_scope_skills_dir(self):
         """Get skills directory for the current scope"""
         if self.scope == "user":
-            return self.config_manager.claude_dir / "skills"
+            d = self.config_manager.claude_dir / "skills"
+            return d if isinstance(d, Path) else None
         else:  # project
             if not self.project_context or not self.project_context.has_project():
                 return None

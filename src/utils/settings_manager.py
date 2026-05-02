@@ -167,6 +167,8 @@ class SettingsManager(QObject):
 
     def _get_cache_key(self, path: Path) -> str:
         """Derive a stable cache key from a settings file path."""
+        if not isinstance(path, Path):
+            return str(path)
         if path == self.user_settings_path:
             return "user"
         path_str = str(path.resolve())

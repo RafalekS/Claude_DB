@@ -58,15 +58,15 @@ class UserConfigTab(QWidget):
             f"color: {theme.ACCENT_PRIMARY};"
         )
 
-        info_label = QLabel("~/.claude/")
-        info_label.setStyleSheet(
+        self.info_label = QLabel(str(self.config_manager.claude_dir))
+        self.info_label.setStyleSheet(
             f"color: {theme.FG_SECONDARY}; "
             f"font-size: {theme.FONT_SIZE_SMALL}px; "
             f"font-style: italic;"
         )
 
         header_layout.addWidget(header)
-        header_layout.addWidget(info_label)
+        header_layout.addWidget(self.info_label)
         header_layout.addStretch()
 
         layout.addLayout(header_layout)
@@ -91,40 +91,40 @@ class UserConfigTab(QWidget):
         # Add sub-tabs with actual implementations
 
         # Settings sub-tab (Model, Theme, Environment Variables)
-        settings_tab = UserSettingsSubTab(self.config_manager, self.backup_manager, self.settings_manager)
-        self.sub_tabs.addTab(settings_tab, "🎛️ Settings")
+        self._settings_tab = UserSettingsSubTab(self.config_manager, self.backup_manager, self.settings_manager)
+        self.sub_tabs.addTab(self._settings_tab, "🎛️ Settings")
 
         # Env Vars sub-tab
         env_vars_tab = EnvVarsTab(self.config_manager, self.backup_manager)
         self.sub_tabs.addTab(env_vars_tab, "🔑 Env Vars")
 
         # Hooks sub-tab (User - uses settings.json)
-        hooks_tab = UserHooksSubTab(self.config_manager, self.backup_manager, self.settings_manager)
-        self.sub_tabs.addTab(hooks_tab, "🪝 Hooks")
+        self._hooks_tab = UserHooksSubTab(self.config_manager, self.backup_manager, self.settings_manager)
+        self.sub_tabs.addTab(self._hooks_tab, "🪝 Hooks")
 
         # Permissions sub-tab (User - uses settings.json)
-        permissions_tab = UserPermissionsSubTab(self.config_manager, self.backup_manager, self.settings_manager)
-        self.sub_tabs.addTab(permissions_tab, "🔒 Permissions")
+        self._permissions_tab = UserPermissionsSubTab(self.config_manager, self.backup_manager, self.settings_manager)
+        self.sub_tabs.addTab(self._permissions_tab, "🔒 Permissions")
 
         # Statusline sub-tab (User - uses settings.json)
-        statusline_tab = UserStatuslineSubTab(self.config_manager, self.backup_manager, self.settings_manager)
-        self.sub_tabs.addTab(statusline_tab, "📊 Statusline")
+        self._statusline_tab = UserStatuslineSubTab(self.config_manager, self.backup_manager, self.settings_manager)
+        self.sub_tabs.addTab(self._statusline_tab, "📊 Statusline")
 
         # Agents sub-tab (Phase 3 - AgentsTab with user scope)
-        agents_tab = AgentsTab(self.config_manager, self.backup_manager, "user", None)
-        self.sub_tabs.addTab(agents_tab, "🤖 Agents")
+        self._agents_tab = AgentsTab(self.config_manager, self.backup_manager, "user", None)
+        self.sub_tabs.addTab(self._agents_tab, "🤖 Agents")
 
         # Commands sub-tab (Phase 3 - CommandsTab with user scope)
-        commands_tab = CommandsTab(self.config_manager, self.backup_manager, "user", None)
-        self.sub_tabs.addTab(commands_tab, "⚡ Commands")
+        self._commands_tab = CommandsTab(self.config_manager, self.backup_manager, "user", None)
+        self.sub_tabs.addTab(self._commands_tab, "⚡ Commands")
 
         # MCP Servers sub-tab (Phase 3 - MCPTab with user scope)
         mcp_tab = MCPTab(self.config_manager, self.backup_manager, "user", None)
         self.sub_tabs.addTab(mcp_tab, "🔌 MCP Servers")
 
         # Skills sub-tab (Phase 3 - SkillsTab with user scope)
-        skills_tab = SkillsTab(self.config_manager, self.backup_manager, "user", None)
-        self.sub_tabs.addTab(skills_tab, "🎓 Skills")
+        self._skills_tab = SkillsTab(self.config_manager, self.backup_manager, "user", None)
+        self.sub_tabs.addTab(self._skills_tab, "🎓 Skills")
 
         # Rules sub-tab
         rules_tab = RulesTab(self.config_manager, self.backup_manager)
@@ -139,6 +139,18 @@ class UserConfigTab(QWidget):
         self.sub_tabs.addTab(local_md_tab, "📝 CLAUDE.local.md")
 
         layout.addWidget(self.sub_tabs, 1)
+
+    def refresh_all(self):
+        """Reload all subtabs from the current config_manager source (local or remote)."""
+        self._settings_tab.load_settings()
+        self._hooks_tab.load_hooks()
+        self._permissions_tab.load_permissions()
+        self._statusline_tab.load_statusline()
+        self._agents_tab.load_agents()
+        self._commands_tab.load_commands()
+        self._skills_tab.load_skills()
+        # Update header path label
+        self.info_label.setText(str(self.config_manager.claude_dir))
 
     def apply_theme(self):
         """Propagate theme change to all subtabs."""

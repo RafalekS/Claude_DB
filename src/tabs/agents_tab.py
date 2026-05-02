@@ -389,7 +389,8 @@ class AgentsTab(QWidget):
     def get_scope_agents_dir(self):
         """Get agents directory for the current scope"""
         if self.scope == "user":
-            return self.config_manager.agents_dir
+            d = self.config_manager.agents_dir
+            return d if isinstance(d, Path) else None
         else:  # project
             if not self.project_context.has_project():
                 return None

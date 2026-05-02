@@ -210,7 +210,8 @@ class CommandsTab(QWidget):
     def get_scope_commands_dir(self):
         """Get commands directory for the current scope"""
         if self.scope == "user":
-            return self.config_manager.commands_dir
+            d = self.config_manager.commands_dir
+            return d if isinstance(d, Path) else None
         else:  # project
             if not self.project_context.has_project():
                 return None

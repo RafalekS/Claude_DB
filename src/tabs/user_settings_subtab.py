@@ -391,7 +391,7 @@ class UserSettingsSubTab(QWidget):
     def load_settings(self):
         """Load settings from file"""
         try:
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
 
             # Load model
             model_id = settings.get("model", "claude-sonnet-4-6")
@@ -433,7 +433,7 @@ class UserSettingsSubTab(QWidget):
     def save_settings(self):
         """Save settings to file"""
         try:
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
 
             # Update model
             selected_text = self.model_combo.currentText()
@@ -477,7 +477,7 @@ class UserSettingsSubTab(QWidget):
                 del settings["disabledPlugins"]
 
             # Save
-            self.settings_manager.save_user_settings(settings)
+            self.config_manager.save_settings(settings)
 
             # Refresh preview
             self.update_preview(settings)
@@ -493,9 +493,10 @@ class UserSettingsSubTab(QWidget):
     def backup_and_save(self):
         """Create backup before saving"""
         try:
-            # Create backup
-            if self.config_manager.settings_file.exists():
-                self.backup_manager.create_file_backup(self.config_manager.settings_file)
+            # Create backup (only for local files)
+            sf = self.config_manager.settings_file
+            if isinstance(sf, Path) and sf.exists():
+                self.backup_manager.create_file_backup(sf)
 
             # Save settings
             self.save_settings()
@@ -506,13 +507,13 @@ class UserSettingsSubTab(QWidget):
     def set_notification_channel(self):
         """Set notification channel to terminal_bell"""
         try:
-            settings = self.settings_manager.get_user_settings()
+            settings = self.config_manager.get_settings()
 
             # Set the notification channel
             settings["preferredNotifChannel"] = "terminal_bell"
 
             # Save settings
-            self.settings_manager.save_user_settings(settings)
+            self.config_manager.save_settings(settings)
 
             # Reload to update UI
             self.load_settings()
