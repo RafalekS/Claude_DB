@@ -1,5 +1,9 @@
 """
-Configuration Manager - Handles reading and writing Claude Code configuration files
+Configuration Manager — reads and writes Claude Code configuration files.
+
+Accepts an optional FileSystem object (LocalFileSystem or RemoteFileSystem)
+so the same code works against a local ~/.claude/ or a remote one over SFTP.
+When no fs is provided, behaviour is identical to the original implementation.
 """
 
 import json
@@ -10,91 +14,100 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-class ConfigManager:
-    """Manages Claude Code configuration files"""
 
-    def __init__(self):
-        self.claude_dir = self.get_claude_dir()
-        self.settings_file = self.claude_dir / "settings.json"
-        self.mcp_user_file = self.claude_dir.parent / ".claude.json"  # User scope (~/.claude.json)
-        self.mcp_project_file = Path.cwd() / ".mcp.json"  # Project scope (<project>/.mcp.json)
-        self.claude_md = self.claude_dir / "CLAUDE.md"
-        self.claude_local_md = self.claude_dir / "CLAUDE.local.md"
-        self.agents_dir = self.claude_dir / "agents"
-        self.commands_dir = self.claude_dir / "commands"
-        self.hooks_dir = self.claude_dir / "hooks"
+class ConfigManager:
+    """Manages Claude Code configuration files (local or remote)."""
+
+    def __init__(self, fs=None, claude_dir=None):
+        """
+        Args:
+            fs:         FileSystem instance (LocalFileSystem or RemoteFileSystem).
+                        None → LocalFileSystem() is used automatically.
+            claude_dir: Path or RemotePath to the .claude directory.
+                        None → detected from the local home directory.
+        """
+        if fs is None:
+            from modules.remote.filesystem import LocalFileSystem
+            self._fs = LocalFileSystem()
+            self.claude_dir = self._get_local_claude_dir()
+        else:
+            self._fs = fs
+            if claude_dir is None:
+                raise ValueError("claude_dir is required when a remote fs is provided")
+            # Accept str, Path, or RemotePath
+            from modules.remote.remote_path import RemotePath
+            self.claude_dir = (
+                RemotePath(str(claude_dir))
+                if not hasattr(claude_dir, "__truediv__")
+                else claude_dir
+            )
+
+        self.settings_file      = self.claude_dir / "settings.json"
+        self.mcp_user_file      = self.claude_dir.parent / ".claude.json"
+        self.mcp_project_file   = Path.cwd() / ".mcp.json"   # always local
+        self.claude_md          = self.claude_dir / "CLAUDE.md"
+        self.claude_local_md    = self.claude_dir / "CLAUDE.local.md"
+        self.agents_dir         = self.claude_dir / "agents"
+        self.commands_dir       = self.claude_dir / "commands"
+        self.hooks_dir          = self.claude_dir / "hooks"
 
     @staticmethod
-    def get_claude_dir() -> Path:
-        """Get the Claude Code configuration directory"""
+    def _get_local_claude_dir() -> Path:
         home = Path.home()
         claude_dir = home / ".claude"
-
         if not claude_dir.exists():
             raise FileNotFoundError(
                 f"Claude Code configuration directory not found: {claude_dir}\n"
                 "Please ensure Claude Code is installed."
             )
-
         return claude_dir
 
-    def read_json_file(self, file_path: Path) -> Dict:
-        """Read and parse a JSON file"""
+    # ── Low-level I/O (all go through self._fs) ───────────────────────────────
+
+    def read_json_file(self, file_path) -> Dict:
         try:
-            if not file_path.exists():
+            if not self._fs.exists(file_path):
                 return {}
-
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+            content = self._fs.read_text(file_path)
+            return json.loads(content)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in {file_path}: {str(e)}")
+            raise ValueError(f"Invalid JSON in {file_path}: {e}") from e
         except Exception as e:
-            raise IOError(f"Error reading {file_path}: {str(e)}")
+            raise IOError(f"Error reading {file_path}: {e}") from e
 
-    def write_json_file(self, file_path: Path, data: Dict, indent: int = 2) -> None:
-        """Write data to a JSON file"""
+    def write_json_file(self, file_path, data: Dict, indent: int = 2) -> None:
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=indent, ensure_ascii=False)
+            content = json.dumps(data, indent=indent, ensure_ascii=False)
+            self._fs.write_text(file_path, content)
         except Exception as e:
-            raise IOError(f"Error writing {file_path}: {str(e)}")
+            raise IOError(f"Error writing {file_path}: {e}") from e
 
-    def read_text_file(self, file_path: Path) -> str:
-        """Read a text file"""
+    def read_text_file(self, file_path) -> str:
         try:
-            if not file_path.exists():
+            if not self._fs.exists(file_path):
                 return ""
-
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return f.read()
+            return self._fs.read_text(file_path)
         except Exception as e:
-            raise IOError(f"Error reading {file_path}: {str(e)}")
+            raise IOError(f"Error reading {file_path}: {e}") from e
 
-    def write_text_file(self, file_path: Path, content: str) -> None:
-        """Write content to a text file"""
+    def write_text_file(self, file_path, content: str) -> None:
         try:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
+            self._fs.mkdir(file_path.parent, parents=True, exist_ok=True)
+            self._fs.write_text(file_path, content)
         except Exception as e:
-            raise IOError(f"Error writing {file_path}: {str(e)}")
+            raise IOError(f"Error writing {file_path}: {e}") from e
 
-    # Settings
+    # ── Settings ───────────────────────────────────────────────────────────────
+
     def get_settings(self) -> Dict:
-        """Get Claude Code settings"""
         return self.read_json_file(self.settings_file)
 
     def save_settings(self, settings: Dict) -> None:
-        """Save Claude Code settings"""
         self.write_json_file(self.settings_file, settings)
 
-    # MCP Configuration
-    def get_mcp_config(self, scope: str = "user") -> Dict:
-        """Get MCP server configuration from specified scope
+    # ── MCP configuration ──────────────────────────────────────────────────────
 
-        Args:
-            scope: "user" (~/.claude.json) or "project" (<project>/.mcp.json)
-        """
+    def get_mcp_config(self, scope: str = "user") -> Dict:
         if scope == "user":
             return self.read_json_file(self.mcp_user_file)
         elif scope == "project":
@@ -103,12 +116,6 @@ class ConfigManager:
             raise ValueError(f"Invalid MCP scope: {scope!r} (expected 'user' or 'project')")
 
     def save_mcp_config(self, config: Dict, scope: str = "user") -> None:
-        """Save MCP server configuration to specified scope
-
-        Args:
-            config: Configuration dictionary
-            scope: "user" (~/.claude.json) or "project" (<project>/.mcp.json)
-        """
         if scope == "user":
             self.write_json_file(self.mcp_user_file, config)
         elif scope == "project":
@@ -117,7 +124,6 @@ class ConfigManager:
             raise ValueError(f"Invalid MCP scope: {scope!r} (expected 'user' or 'project')")
 
     def get_mcp_file_path(self, scope: str = "user") -> Path:
-        """Get the file path for specified MCP scope"""
         if scope == "user":
             return self.mcp_user_file
         elif scope == "project":
@@ -125,104 +131,91 @@ class ConfigManager:
         else:
             raise ValueError(f"Invalid MCP scope: {scope!r} (expected 'user' or 'project')")
 
-    # Agents
-    def list_agents(self) -> List[Path]:
-        """List all agent files"""
-        if not self.agents_dir.exists():
+    # ── Agents ─────────────────────────────────────────────────────────────────
+
+    def list_agents(self) -> list:
+        if not self._fs.exists(self.agents_dir):
             return []
-
         agents = []
-        for root, dirs, files in os.walk(self.agents_dir):
+        for root, dirs, files in self._fs.walk(self.agents_dir):
             for file in files:
-                if file.endswith('.md'):
-                    agents.append(Path(root) / file)
-        return sorted(agents)
+                if file.endswith(".md"):
+                    agents.append(self._fs.join_path(root, file))
+        return sorted(agents, key=str)
 
-    def get_agent_content(self, agent_path: Path) -> str:
-        """Get agent file content"""
+    def get_agent_content(self, agent_path) -> str:
         return self.read_text_file(agent_path)
 
-    def save_agent(self, agent_path: Path, content: str) -> None:
-        """Save agent file"""
+    def save_agent(self, agent_path, content: str) -> None:
         self.write_text_file(agent_path, content)
 
-    # Commands
-    def list_commands(self) -> List[Path]:
-        """List all command files"""
-        if not self.commands_dir.exists():
+    # ── Commands ───────────────────────────────────────────────────────────────
+
+    def list_commands(self) -> list:
+        if not self._fs.exists(self.commands_dir):
             return []
-
         commands = []
-        for root, dirs, files in os.walk(self.commands_dir):
+        for root, dirs, files in self._fs.walk(self.commands_dir):
             for file in files:
-                if file.endswith('.md'):
-                    commands.append(Path(root) / file)
-        return sorted(commands)
+                if file.endswith(".md"):
+                    commands.append(self._fs.join_path(root, file))
+        return sorted(commands, key=str)
 
-    def get_command_content(self, command_path: Path) -> str:
-        """Get command file content"""
+    def get_command_content(self, command_path) -> str:
         return self.read_text_file(command_path)
 
-    def save_command(self, command_path: Path, content: str) -> None:
-        """Save command file"""
+    def save_command(self, command_path, content: str) -> None:
         self.write_text_file(command_path, content)
 
-    # CLAUDE.md
+    # ── CLAUDE.md ──────────────────────────────────────────────────────────────
+
     def get_claude_md(self) -> str:
-        """Get CLAUDE.md content"""
         return self.read_text_file(self.claude_md)
 
     def save_claude_md(self, content: str) -> None:
-        """Save CLAUDE.md content"""
         self.write_text_file(self.claude_md, content)
 
     def get_claude_local_md(self) -> str:
-        """Get CLAUDE.local.md content (returns empty string if file doesn't exist)"""
-        if not self.claude_local_md.exists():
+        if not self._fs.exists(self.claude_local_md):
             return ""
         return self.read_text_file(self.claude_local_md)
 
     def save_claude_local_md(self, content: str) -> None:
-        """Save CLAUDE.local.md content"""
         self.write_text_file(self.claude_local_md, content)
 
-    # Search
-    def search_in_files(self, query: str, file_type: str = 'all') -> List[Dict]:
-        """Search for query in configuration files"""
+    # ── Search ─────────────────────────────────────────────────────────────────
+
+    def search_in_files(self, query: str, file_type: str = "all") -> List[Dict]:
         results = []
         query_lower = query.lower()
 
-        # Search in agents
-        if file_type in ['all', 'agents']:
+        if file_type in ("all", "agents"):
             for agent_path in self.list_agents():
                 content = self.get_agent_content(agent_path)
                 if query_lower in content.lower():
                     results.append({
-                        'type': 'agent',
-                        'path': agent_path,
-                        'name': agent_path.stem
+                        "type": "agent",
+                        "path": agent_path,
+                        "name": getattr(agent_path, "stem", str(agent_path)),
                     })
 
-        # Search in commands
-        if file_type in ['all', 'commands']:
+        if file_type in ("all", "commands"):
             for command_path in self.list_commands():
                 content = self.get_command_content(command_path)
                 if query_lower in content.lower():
                     results.append({
-                        'type': 'command',
-                        'path': command_path,
-                        'name': command_path.stem
+                        "type": "command",
+                        "path": command_path,
+                        "name": getattr(command_path, "stem", str(command_path)),
                     })
 
-        # Search in settings
-        if file_type in ['all', 'settings']:
+        if file_type in ("all", "settings"):
             settings = self.get_settings()
-            settings_str = json.dumps(settings, indent=2)
-            if query_lower in settings_str.lower():
+            if query_lower in json.dumps(settings, indent=2).lower():
                 results.append({
-                    'type': 'settings',
-                    'path': self.settings_file,
-                    'name': 'settings.json'
+                    "type": "settings",
+                    "path": self.settings_file,
+                    "name": "settings.json",
                 })
 
         return results
