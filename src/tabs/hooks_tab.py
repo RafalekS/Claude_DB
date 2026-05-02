@@ -3,7 +3,10 @@ Hooks Tab - Manage Claude Code hooks from all settings sources
 """
 
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTextEdit, QMessageBox, QSplitter, QTreeWidget, QTreeWidgetItem,
@@ -309,6 +312,15 @@ class HooksTab(QWidget):
         try:
             file_path = self.get_scope_file_path(scope)
 
+            if not isinstance(file_path, Path):
+                self.scope_widgets[scope]['config'] = {}
+                self.scope_widgets[scope]['editor'].setPlainText('{"hooks": {}}')
+                self.scope_widgets[scope]['path_label'].setText(f"File: {file_path}  (read-only for remote)")
+                self.update_events_list(scope)
+                return
+
+            self.scope_widgets[scope]['path_label'].setText(f"File: {file_path}")
+
             if file_path.exists():
                 with open(file_path, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
@@ -323,6 +335,7 @@ class HooksTab(QWidget):
             self.update_events_list(scope)
 
         except Exception as e:
+            logger.error("Failed to load hooks (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Load Error", f"Failed to load hooks:\n{str(e)}")
 
     def update_events_list(self, scope):
@@ -382,6 +395,10 @@ class HooksTab(QWidget):
 
             file_path = self.get_scope_file_path(scope)
 
+            if not isinstance(file_path, Path):
+                QMessageBox.warning(self, "Not Supported", "Saving hooks is not supported for remote connections.")
+                return
+
             if file_path.exists():
                 with open(file_path, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
@@ -404,16 +421,18 @@ class HooksTab(QWidget):
             QMessageBox.information(self, "Saved", f"Hooks saved to {self.get_scope_display_name(scope)} scope!")
 
         except Exception as e:
+            logger.error("Failed to save hooks (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
     def backup_and_save(self, scope):
         """Create backup before saving"""
         try:
             file_path = self.get_scope_file_path(scope)
-            if file_path.exists():
+            if isinstance(file_path, Path) and file_path.exists():
                 self.backup_manager.create_file_backup(file_path)
             self.save_hooks(scope)
         except Exception as e:
+            logger.error("Failed to backup and save hooks (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed:\n{str(e)}")
 
     def add_hook(self, scope):

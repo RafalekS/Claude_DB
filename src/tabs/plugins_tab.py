@@ -3,7 +3,10 @@ Plugins Tab - managing Claude Code plugins from both settings.json and ~/.claude
 """
 
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QLabel, QMessageBox, QListWidget,
@@ -22,9 +25,10 @@ class PluginsTab(QWidget):
         self.config_manager = config_manager
         self.backup_manager = backup_manager
 
-        # Plugin file locations
-        self.settings_file = self.config_manager.claude_dir / "settings.json"
-        self.plugins_dir = self.config_manager.claude_dir / "plugins"
+        # Plugin file locations (may be RemotePath if connected to remote server)
+        self.settings_file = self.config_manager.settings_file
+        _claude_dir = self.config_manager.claude_dir
+        self.plugins_dir = _claude_dir / "plugins"
         self.plugins_config_file = self.plugins_dir / "config.json"
         self.plugins_marketplaces_file = self.plugins_dir / "known_marketplaces.json"
 
@@ -283,7 +287,7 @@ class PluginsTab(QWidget):
         self.enabled_plugins_list.clear()
 
         try:
-            if self.settings_file.exists():
+            if isinstance(self.settings_file, Path) and self.settings_file.exists():
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
                     self.settings_data = json.load(f)
 
@@ -313,6 +317,7 @@ class PluginsTab(QWidget):
                 self.enabled_plugins_list.addItem(item)
 
         except Exception as e:
+            logger.error("Failed to load enabled plugins from settings.json: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load settings.json:\n{str(e)}")
 
     def load_installed_plugins(self):
@@ -320,7 +325,7 @@ class PluginsTab(QWidget):
         self.installed_plugins_list.clear()
 
         try:
-            if self.plugins_config_file.exists():
+            if isinstance(self.plugins_config_file, Path) and self.plugins_config_file.exists():
                 with open(self.plugins_config_file, 'r', encoding='utf-8') as f:
                     self.plugins_config_data = json.load(f)
 
@@ -344,6 +349,7 @@ class PluginsTab(QWidget):
                 self.installed_plugins_list.addItem(item)
 
         except Exception as e:
+            logger.error("Failed to load installed plugins from config.json: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load config.json:\n{str(e)}")
 
     def load_known_marketplaces(self):
@@ -351,7 +357,7 @@ class PluginsTab(QWidget):
         self.known_marketplaces_list.clear()
 
         try:
-            if self.plugins_marketplaces_file.exists():
+            if isinstance(self.plugins_marketplaces_file, Path) and self.plugins_marketplaces_file.exists():
                 with open(self.plugins_marketplaces_file, 'r', encoding='utf-8') as f:
                     self.plugins_marketplaces_data = json.load(f)
 
@@ -377,6 +383,7 @@ class PluginsTab(QWidget):
                 self.known_marketplaces_list.addItem(item)
 
         except Exception as e:
+            logger.error("Failed to load known_marketplaces.json: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load known_marketplaces.json:\n{str(e)}")
 
     def load_extra_marketplaces(self):
@@ -384,7 +391,7 @@ class PluginsTab(QWidget):
         self.extra_marketplaces_list.clear()
 
         try:
-            if self.settings_file.exists():
+            if isinstance(self.settings_file, Path) and self.settings_file.exists():
                 extra_marketplaces = self.settings_data.get('extraKnownMarketplaces', {})
 
                 if len(extra_marketplaces) == 0:
@@ -409,6 +416,7 @@ class PluginsTab(QWidget):
                 self.extra_marketplaces_list.addItem(item)
 
         except Exception as e:
+            logger.error("Failed to load extraKnownMarketplaces: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load extraKnownMarketplaces:\n{str(e)}")
 
     def add_enabled_plugin(self):
@@ -585,6 +593,10 @@ class PluginsTab(QWidget):
     def save_settings(self):
         """Save settings.json"""
         try:
+            if not isinstance(self.settings_file, Path):
+                QMessageBox.warning(self, "Not Supported", "Saving plugin settings is not supported for remote connections.")
+                return
+
             if self.settings_file.exists():
                 self.backup_manager.create_file_backup(self.settings_file)
 
@@ -593,11 +605,16 @@ class PluginsTab(QWidget):
 
             QMessageBox.information(self, "Saved", "Changes saved to settings.json")
         except Exception as e:
+            logger.error("Failed to save settings.json: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save settings.json:\n{str(e)}")
 
     def save_known_marketplaces(self):
         """Save known_marketplaces.json"""
         try:
+            if not isinstance(self.plugins_marketplaces_file, Path):
+                QMessageBox.warning(self, "Not Supported", "Saving marketplace config is not supported for remote connections.")
+                return
+
             if self.plugins_marketplaces_file.exists():
                 self.backup_manager.create_file_backup(self.plugins_marketplaces_file)
 
@@ -608,6 +625,7 @@ class PluginsTab(QWidget):
 
             QMessageBox.information(self, "Saved", "Changes saved to known_marketplaces.json")
         except Exception as e:
+            logger.error("Failed to save known_marketplaces.json: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save known_marketplaces.json:\n{str(e)}")
 
     def open_marketplace_browser(self):
@@ -685,6 +703,8 @@ class PluginsTab(QWidget):
                 )
 
         except subprocess.TimeoutExpired:
+            logger.error("Plugin installation timed out")
             QMessageBox.critical(self, "Timeout", "Plugin installation timed out after 60 seconds")
         except Exception as e:
+            logger.error("Failed to install plugin: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to install plugin:\n{str(e)}")

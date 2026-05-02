@@ -3,7 +3,10 @@ Statusline Tab - Manage Claude Code statusline configuration
 """
 
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTextEdit, QMessageBox, QTextBrowser, QLineEdit,
@@ -287,6 +290,11 @@ class StatuslineTab(QWidget):
                 command_input = self.project_command_input
                 padding_input = self.project_padding_input
 
+            if not isinstance(file_path, Path):
+                command_input.setText("")
+                padding_input.setText("0")
+                return
+
             if file_path.exists():
                 with open(file_path, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
@@ -300,6 +308,7 @@ class StatuslineTab(QWidget):
                 padding_input.setText("0")
 
         except Exception as e:
+            logger.error("Failed to load statusline (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Load Error", f"Failed to load statusline:\n{str(e)}")
 
     def save_statusline(self, scope):
@@ -313,6 +322,10 @@ class StatuslineTab(QWidget):
                 file_path = self.project_folder / ".claude" / "settings.json"
                 command_input = self.project_command_input
                 padding_input = self.project_padding_input
+
+            if not isinstance(file_path, Path):
+                QMessageBox.warning(self, "Not Supported", "Saving statusline is not supported for remote connections.")
+                return
 
             # Load existing settings
             if file_path.exists():
@@ -336,6 +349,7 @@ class StatuslineTab(QWidget):
             QMessageBox.information(self, "Saved", f"Statusline configuration saved to:\n{file_path}")
 
         except Exception as e:
+            logger.error("Failed to save statusline (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
     def backup_and_save(self, scope):
@@ -346,12 +360,13 @@ class StatuslineTab(QWidget):
             else:  # project
                 file_path = self.project_folder / ".claude" / "settings.json"
 
-            if file_path.exists():
+            if isinstance(file_path, Path) and file_path.exists():
                 self.backup_manager.create_file_backup(file_path)
 
             self.save_statusline(scope)
 
         except Exception as e:
+            logger.error("Failed to backup and save statusline (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed:\n{str(e)}")
 
     def enable_statusline(self, scope):
@@ -371,6 +386,7 @@ class StatuslineTab(QWidget):
             self.save_statusline(scope)
 
         except Exception as e:
+            logger.error("Failed to enable statusline (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed to enable:\n{str(e)}")
 
     def disable_statusline(self, scope):
@@ -389,6 +405,10 @@ class StatuslineTab(QWidget):
             command_input.setText("")
             padding_input.setText("0")
 
+            if not isinstance(file_path, Path):
+                QMessageBox.warning(self, "Not Supported", "Disabling statusline is not supported for remote connections.")
+                return
+
             # Remove from settings
             if file_path.exists():
                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -404,6 +424,7 @@ class StatuslineTab(QWidget):
             QMessageBox.information(self, "Disabled", "Statusline has been disabled.")
 
         except Exception as e:
+            logger.error("Failed to disable statusline (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed to disable:\n{str(e)}")
 
     def load_statusline_info(self, browser):

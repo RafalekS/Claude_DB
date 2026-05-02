@@ -3,7 +3,10 @@ Permissions Tab - Manage Claude Code permissions
 Supports User settings, Project (Local) settings, and Project settings
 """
 
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox, QListWidget, QSplitter, QLineEdit,
@@ -518,7 +521,7 @@ class PermissionsTab(QWidget):
     def get_scope_settings_file(self, scope):
         """Get settings file path for the given scope"""
         if scope == "user":
-            return self.config_manager.claude_dir / "settings.json"
+            return self.config_manager.settings_file
         elif scope == "project_local":
             return self.project_folder / ".claude" / "settings.local.json"
         else:  # project
@@ -552,6 +555,12 @@ class PermissionsTab(QWidget):
             perm_table.setRowCount(0)
             workspace_list.clear()
 
+            if not isinstance(settings_file, Path):
+                self.scope_widgets[scope]['path_label'].setText(f"File: {settings_file}  (read-only for remote)")
+                return
+
+            self.scope_widgets[scope]['path_label'].setText(f"File: {settings_file}")
+
             if not settings_file.exists():
                 return
 
@@ -574,6 +583,7 @@ class PermissionsTab(QWidget):
                 workspace_list.addItem(folder)
 
         except Exception as e:
+            logger.error("Failed to load permissions (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Load Error", f"Failed to load permissions:\n{str(e)}")
 
     def parse_permission_string(self, perm_string):
@@ -674,6 +684,10 @@ class PermissionsTab(QWidget):
         try:
             settings_file = self.get_scope_settings_file(scope)
 
+            if not isinstance(settings_file, Path):
+                QMessageBox.warning(self, "Not Supported", "Editing permissions is not supported for remote connections.")
+                return
+
             # Read current settings
             if settings_file.exists():
                 with open(settings_file, 'r', encoding='utf-8') as f:
@@ -721,6 +735,7 @@ class PermissionsTab(QWidget):
             QMessageBox.information(self, "Success", "Permission updated successfully!")
 
         except Exception as e:
+            logger.error("Failed to update permission (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed to update permission:\n{str(e)}")
 
     def delete_permission(self, scope):
@@ -746,6 +761,10 @@ class PermissionsTab(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 settings_file = self.get_scope_settings_file(scope)
+
+                if not isinstance(settings_file, Path):
+                    QMessageBox.warning(self, "Not Supported", "Deleting permissions is not supported for remote connections.")
+                    return
 
                 # Read current settings
                 if not settings_file.exists():
@@ -789,6 +808,7 @@ class PermissionsTab(QWidget):
                 QMessageBox.information(self, "Success", "Permission deleted successfully!")
 
             except Exception as e:
+                logger.error("Failed to delete permission (%s scope): %s", scope, e)
                 QMessageBox.critical(self, "Error", f"Failed to delete permission:\n{str(e)}")
 
     def add_workspace_folder(self, scope):

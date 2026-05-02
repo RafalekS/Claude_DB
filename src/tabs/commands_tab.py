@@ -2,7 +2,10 @@
 Commands Tab - Manage Claude Code commands
 """
 
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox, QListWidget, QSplitter, QLineEdit, QInputDialog,
@@ -231,10 +234,10 @@ class CommandsTab(QWidget):
 
     def load_commands(self):
         """Load all commands for the current scope"""
+        commands_dir = self.get_scope_commands_dir()
+        self.path_label.setText(f"Directory: {commands_dir or 'N/A'}")
         try:
             self.command_list.clear()
-
-            commands_dir = self.get_scope_commands_dir()
 
             if not commands_dir or not commands_dir.exists():
                 return
@@ -247,6 +250,7 @@ class CommandsTab(QWidget):
                 self.command_list.addItem(str(rel_path))
 
         except Exception as e:
+            logger.error("Failed to load commands: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load commands:\n{str(e)}")
 
     def filter_commands(self, text):

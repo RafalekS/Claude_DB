@@ -216,6 +216,9 @@ class ProjectPromptSubTab(QWidget):
             return
 
         project_path = self.project_context.get_project()
+        if not isinstance(project_path, Path):
+            QMessageBox.warning(self, "Not Supported", "Saving PROMPT.md is not supported for remote projects.")
+            return
         prompt_md_path = project_path / "help" / "PROMPT.md"
 
         # Create help folder if it doesn't exist
@@ -413,7 +416,7 @@ class ProjectConfigTab(QWidget):
         self.sub_tabs.addTab(rules_tab, "📋 Rules")
 
         # Worktrees sub-tab (project git worktrees)
-        worktrees_tab = WorktreesTab(self.config_manager, self.backup_manager)
+        worktrees_tab = WorktreesTab(self.config_manager, self.backup_manager, self.project_context)
         self.sub_tabs.addTab(worktrees_tab, "🌿 Worktrees")
 
         layout.addWidget(self.sub_tabs, 1)

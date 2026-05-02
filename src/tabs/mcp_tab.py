@@ -1045,7 +1045,10 @@ class MCPTab(QWidget):
         else:  # project
             if not self.project_context or not self.project_context.has_project():
                 return None
-            return self.project_context.get_project() / ".mcp.json"
+            project = self.project_context.get_project()
+            if not isinstance(project, Path):
+                return None
+            return project / ".mcp.json"
 
     def on_project_changed(self, project_path: Path):
         """Handle project context change"""
@@ -1165,6 +1168,9 @@ class MCPTab(QWidget):
 
     def load_mcp_config(self):
         """Load MCP configuration from current scope and auto-check health"""
+        # Update path label to reflect current (possibly remote) file
+        file_path_now = self.get_scope_file_path()
+        self.path_label.setText(f"File: {file_path_now}")
         try:
             if self.scope == "user":
                 # User scope: load from config manager
@@ -1185,7 +1191,7 @@ class MCPTab(QWidget):
 
                 # Source 1: Read from .mcp.json
                 file_path = self.get_scope_file_path()
-                if file_path and file_path.exists():
+                if file_path and isinstance(file_path, Path) and file_path.exists():
                     with open(file_path, 'r', encoding='utf-8') as f:
                         mcp_json_config = json.load(f)
                         if "mcpServers" in mcp_json_config:
@@ -1219,8 +1225,7 @@ class MCPTab(QWidget):
                                                     self.claude_json_servers = project_settings["mcpServers"]
                                                 break
                     except Exception as e:
-                        # If reading .claude.json fails, just use .mcp.json servers
-                        pass
+                        logger.warning("Could not read .claude.json for project MCP servers: %s", e)
 
                 # For project scope: start with .mcp.json in the editor
                 if self.scope == "project":
@@ -1259,6 +1264,7 @@ class MCPTab(QWidget):
             self.editor.setPlainText('{\n  "mcpServers": {\n  }\n}')
             self.update_server_list()
         except Exception as e:
+            logger.error("Failed to load MCP configuration: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load MCP configuration:\n{str(e)}")
 
     def add_server(self):

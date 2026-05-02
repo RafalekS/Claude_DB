@@ -3,7 +3,10 @@ Model Configuration Tab - Manage Claude model settings
 """
 
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox, QTextBrowser, QGroupBox, QComboBox,
@@ -331,7 +334,7 @@ claude -p "task" --model claude-haiku-4-5-20251001</pre>
         try:
             file_path = self.get_settings_file_path(scope)
 
-            if file_path and file_path.exists():
+            if file_path and isinstance(file_path, Path) and file_path.exists():
                 with open(file_path, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
             else:
@@ -352,6 +355,7 @@ claude -p "task" --model claude-haiku-4-5-20251001</pre>
             config_editor.setPlainText(json.dumps(display_config, indent=2))
 
         except Exception as e:
+            logger.error("Failed to load model config (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Load Error", f"Failed to load model config:\n{str(e)}")
 
     def save_model_config(self, scope, model_combo, config_editor):
@@ -362,6 +366,10 @@ claude -p "task" --model claude-haiku-4-5-20251001</pre>
             model_id = selected_text.split(" (")[0]  # Extract model ID
 
             file_path = self.get_settings_file_path(scope)
+
+            if not isinstance(file_path, Path):
+                QMessageBox.warning(self, "Not Supported", "Saving model config is not supported for remote connections.")
+                return
 
             if file_path and file_path.exists():
                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -389,6 +397,7 @@ claude -p "task" --model claude-haiku-4-5-20251001</pre>
             )
 
         except Exception as e:
+            logger.error("Failed to save model config (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
     def backup_and_save(self, scope, model_combo, config_editor):
@@ -396,10 +405,11 @@ claude -p "task" --model claude-haiku-4-5-20251001</pre>
         try:
             file_path = self.get_settings_file_path(scope)
 
-            if file_path and file_path.exists():
+            if isinstance(file_path, Path) and file_path.exists():
                 self.backup_manager.create_file_backup(file_path)
 
             self.save_model_config(scope, model_combo, config_editor)
 
         except Exception as e:
+            logger.error("Failed to backup and save model config (%s scope): %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed to backup:\n{str(e)}")

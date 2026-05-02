@@ -86,20 +86,35 @@ class NewWorktreeDialog(QDialog):
 class WorktreesTab(QWidget):
     """Tab for managing git worktrees used by Claude Code"""
 
-    def __init__(self, config_manager, backup_manager):
+    def __init__(self, config_manager, backup_manager, project_context=None):
         super().__init__()
         self.config_manager = config_manager
         self.backup_manager = backup_manager
+        self._project_context = project_context
         self.repo_root = self._find_repo_root()
         self.init_ui()
+        if project_context:
+            project_context.project_changed.connect(self._on_project_changed)
+        self.refresh()
+
+    def _on_project_changed(self, project_path) -> None:
+        self.repo_root = self._find_repo_root()
         self.refresh()
 
     def _find_repo_root(self) -> Path | None:
-        """Find the git repository root from cwd"""
+        """Find the git repository root from the selected project (or cwd as fallback)."""
+        start = None
+        if self._project_context and self._project_context.has_project():
+            p = self._project_context.get_project()
+            if isinstance(p, Path):
+                start = p
+            else:
+                return None  # remote project — git not supported
         try:
             result = subprocess.run(
                 ["git", "rev-parse", "--show-toplevel"],
-                capture_output=True, text=True, timeout=5
+                capture_output=True, text=True, timeout=5,
+                cwd=start
             )
             if result.returncode == 0:
                 return Path(result.stdout.strip())

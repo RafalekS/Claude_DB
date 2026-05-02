@@ -410,10 +410,10 @@ class AgentsTab(QWidget):
 
     def load_agents(self):
         """Load all agents for the current scope"""
+        agents_dir = self.get_scope_agents_dir()
+        self.path_label.setText(f"Directory: {agents_dir or 'N/A'}")
         try:
             self.agent_list.clear()
-
-            agents_dir = self.get_scope_agents_dir()
 
             if not agents_dir or not agents_dir.exists():
                 return
@@ -426,6 +426,7 @@ class AgentsTab(QWidget):
                 self.agent_list.addItem(str(rel_path))
 
         except Exception as e:
+            logger.error("Failed to load agents: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load agents:\n{str(e)}")
 
     def filter_agents(self, text):

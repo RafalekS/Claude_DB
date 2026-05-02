@@ -2,10 +2,13 @@
 Skills Tab - managing Claude Code skills (directory-based with SKILL.md files)
 """
 
+import logging
 import os
 import re
 import shutil
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox, QListWidget, QSplitter, QLineEdit, QInputDialog,
@@ -818,6 +821,7 @@ class SkillsTab(QWidget):
             skill_dir.mkdir(parents=True, exist_ok=True)
             (skill_dir / "SKILL.md").write_text(content, encoding="utf-8")
         except Exception as e:
+            logger.error("Failed to import skill: %s", e)
             QMessageBox.critical(self, "Import Failed", f"Could not write skill:\n{e}")
             return
 
@@ -859,6 +863,7 @@ class SkillsTab(QWidget):
         self.skills_list.clear()
 
         skills_dir = self.get_scope_skills_dir()
+        self.path_label.setText(f"Directory: {skills_dir or 'N/A'}")
 
         if skills_dir and skills_dir.exists():
             for skill_dir in skills_dir.iterdir():
@@ -911,6 +916,7 @@ class SkillsTab(QWidget):
             self.skill_name_label.setText(f"Editing: {skill_path.name}")
 
         except Exception as e:
+            logger.error("Failed to load SKILL.md: %s", e)
             QMessageBox.critical(
                 self,
                 "Load Error",
@@ -976,6 +982,7 @@ class SkillsTab(QWidget):
                     f.write(new_content)
                 self.load_skills()
         except Exception as e:
+            logger.error("Failed to edit skill: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to edit skill:\n{str(e)}")
 
     def create_new_skill(self):
@@ -1052,6 +1059,7 @@ Provide examples of using this skill.
             self.load_skills()
 
         except Exception as e:
+            logger.error("Failed to create skill: %s", e)
             QMessageBox.critical(self, "Creation Error", f"Failed to create skill:\n{str(e)}")
 
     def delete_skill(self):
@@ -1096,6 +1104,7 @@ Provide examples of using this skill.
                 self.load_skills()
 
             except Exception as e:
+                logger.error("Failed to delete skill: %s", e)
                 QMessageBox.critical(
                     self,
                     "Deletion Error",
@@ -1124,6 +1133,7 @@ Provide examples of using this skill.
             self.skill_name_label.setText(f"Editing: {current_skill.name} ✓ saved")
 
         except Exception as e:
+            logger.error("Failed to save skill: %s", e)
             QMessageBox.critical(
                 self,
                 "Save Error",
@@ -1156,6 +1166,7 @@ Provide examples of using this skill.
             self.skill_name_label.setText(f"Editing: {current_skill.name} ✓ backed up & saved")
 
         except Exception as e:
+            logger.error("Failed to backup and save skill: %s", e)
             QMessageBox.critical(
                 self,
                 "Save Error",
@@ -1182,6 +1193,7 @@ Provide examples of using this skill.
                     content = f.read()
                 self.editor.setPlainText(content)
             except Exception as e:
+                logger.error("Failed to revert skill: %s", e)
                 QMessageBox.critical(
                     self,
                     "Error",
@@ -1222,6 +1234,7 @@ Provide examples of using this skill.
                     f.write(skill_content)
                 added_count += 1
             except Exception as e:
+                logger.error("Failed to deploy skill %s: %s", skill_name, e)
                 QMessageBox.warning(self, "Deploy Error", f"Failed to deploy {skill_name}:\n{str(e)}")
 
         # Show summary
