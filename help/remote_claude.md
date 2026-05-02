@@ -3,22 +3,36 @@
 ## Goal
 
 Allow Claude_DB to connect to remote Linux servers over SSH, scan their `~/.claude/`
-directory structure, and present the same tabs and editing capabilities as for the
-local machine.
+directory structure, and work on them **in exactly the same way as the local system** —
+same tabs, same editing, same capabilities, no artificial restrictions.
 
 **Target systems**
 | Label | User@Host | Key |
 |-------|-----------|-----|
-| Pi 1 (local dev Pi) | `pi@192.168.0.97` | `C:\Users\r_sta\.ssh\P16_id_rsa` |
+| Pi 1 | `pi@192.168.0.97` | `C:\Users\r_sta\.ssh\P16_id_rsa` |
 | Pi 2 | `pi@192.168.0.169` | `C:\Users\r_sta\.ssh\P16_id_rsa` |
 | QNAP | `rls1203@192.168.0.166` | `C:\Users\r_sta\.ssh\P16_id_rsa` |
+
+---
+
+## Critical Constraint — One SSH Session Per Server
+
+**Exactly one `paramiko.SSHClient` instance is maintained per remote server.**
+All file operations (SFTP reads, writes, directory listings) share that single
+session. The session is opened when the user connects and kept alive with
+paramiko's built-in keepalive mechanism (`transport.set_keepalive(30)`).
+No new connections are opened per action, per tab, or per file operation.
+
+If the session drops unexpectedly, the remote indicator switches to an error
+state and the user must reconnect manually — no silent auto-reconnect that
+creates hidden extra sessions.
 
 ---
 
 ## Architecture Overview
 
 The current app hard-wires `Path` objects and local filesystem I/O throughout
-`ConfigManager`, `project_scanner`, and many tabs.  The cleanest approach that
+`ConfigManager`, `project_scanner`, and many tabs. The cleanest approach that
 avoids rewriting every tab is a **pluggable filesystem layer**:
 
 ```
@@ -31,19 +45,20 @@ avoids rewriting every tab is a **pluggable filesystem layer**:
            │   ConfigManager    │  ← same interface as today
            │  (refactored I/O)  │
            └─────────┬──────────┘
-                     │ delegates file ops to:
+                     │ delegates ALL file ops to:
           ┌──────────┴──────────┐
           │                     │
-  ┌───────▼──────┐    ┌─────────▼────────┐
-  │ LocalFS      │    │ RemoteFS (SFTP)   │
-  │ (thin Path   │    │ paramiko-based;   │
-  │  wrapper)    │    │ TTL cache         │
-  └──────────────┘    └──────────────────┘
+  ┌───────▼──────┐    ┌─────────▼──────────────────────┐
+  │ LocalFS      │    │ RemoteFS (SFTP)                 │
+  │ (thin Path   │    │ shares ONE SSHClient session    │
+  │  wrapper)    │    │ TTL cache for reads             │
+  └──────────────┘    └────────────────────────────────┘
 ```
 
-A new **ServerContext** object (parallel to `ProjectContext`) holds the active
-server. When the user switches servers, a signal fires and all tabs reload — the
-same pattern already used for project switching.
+A new **ServerContext** object (same pattern as `ProjectContext`) holds the
+active server. When the user switches servers, a signal fires and all tabs
+reload. When local is selected, `LocalFS` is used; when a remote server is
+selected, `RemoteFS` backed by that server's single SSH session is used.
 
 ---
 
@@ -53,49 +68,70 @@ same pattern already used for project switching.
 paramiko >= 3.4
 ```
 
-Add to `requirements.txt` / `help/requirements.txt`. Paramiko handles SSH
-connections, SFTP file transfers, and OpenSSH private key loading on Windows.
+Add to `help/requirements.txt`. Paramiko handles SSH connections, SFTP file
+transfers, and OpenSSH private key loading on Windows — no system SSH agent needed.
 
 ---
 
 ## New Modules
 
-### `modules/remote/` package
+### `src/modules/remote/` package
 
 #### `ssh_client.py`
-- Class `SSHClient` wrapping `paramiko.SSHClient`
-- Methods: `connect()`, `disconnect()`, `is_alive()`, `exec_command(cmd)`,
-  `get_sftp()` (returns cached `paramiko.SFTPClient`)
-- Reconnects automatically on stale connection
-- Loads OpenSSH private key from configured path
-- Raises `SSHConnectionError` (custom exception) on failure
+
+Class `ManagedSSHClient`:
+- Holds **one** `paramiko.SSHClient` and **one** `paramiko.SFTPClient`
+- `connect(host, port, user, key_path)` — opens the session, calls
+  `transport.set_keepalive(30)` immediately, opens the SFTP channel
+- `disconnect()` — closes SFTP then SSH cleanly
+- `is_connected() -> bool` — checks `transport.is_active()`
+- `sftp` property — returns the shared `SFTPClient` (raises if not connected)
+- `exec(cmd) -> tuple[str, str]` — runs a command on the existing session,
+  returns (stdout, stderr)
+- No reconnect-per-action; callers check `is_connected()` and handle errors
+- `SSHConnectionError` custom exception for all failures
 
 #### `remote_filesystem.py`
-- Class `RemoteFileSystem`
-- Mirrors the subset of `pathlib.Path` operations used by `ConfigManager`
-  and `project_scanner`: `exists()`, `is_dir()`, `is_file()`, `iterdir()`,
-  `read_text()`, `write_text()`, `read_bytes()`, `stat()`, `glob()`,
-  `mkdir(parents, exist_ok)`, `unlink()`
-- All reads cached with TTL (configurable, default 30 s)
-- Cache invalidated on any write to the same path
-- Thread-safe (reads happen on Qt main thread; keep it simple for now)
+
+Class `RemoteFileSystem`:
+- Takes a single `ManagedSSHClient` instance in its constructor
+- All operations go through `client.sftp` (the shared SFTP channel)
+- Implements the same subset of operations used by `ConfigManager` and
+  `project_scanner`:
+  - `exists(path)`, `is_dir(path)`, `is_file(path)`
+  - `iterdir(path) -> list[str]` (returns child paths as strings)
+  - `read_text(path) -> str`, `write_text(path, text)`
+  - `read_bytes(path) -> bytes`
+  - `stat(path)` (returns paramiko `SFTPAttributes`, exposes `.st_mtime`, `.st_size`)
+  - `glob(path, pattern) -> list[str]`
+  - `mkdir(path, parents=False, exist_ok=False)`
+  - `unlink(path)`
+- All reads cached in-memory with TTL (default 30 s, configurable per server)
+- Cache is invalidated for a path on any write to that path
+- Cache is fully cleared on disconnect or server switch
 
 #### `local_filesystem.py`
-- Class `LocalFileSystem` — thin wrapper over `pathlib.Path`
-- Same interface as `RemoteFileSystem` so code can use either interchangeably
+
+Class `LocalFileSystem` — thin wrapper over `pathlib.Path`.
+Identical interface to `RemoteFileSystem` so `ConfigManager` can use either
+without branching.
 
 #### `server_context.py`
-- Class `ServerContext(QObject)` with signal `server_changed(server_config: dict)`
-- `get_active()` → returns current server dict or `None` for local
-- `set_active(server_config)` → emits signal
-- `is_local()` → bool
+
+Class `ServerContext(QObject)`:
+- Signal `server_changed(server_cfg: dict | None)`
+- `get_active() -> dict | None` — `None` means local
+- `set_active(server_cfg)` — stores and emits signal
+- `is_local() -> bool`
+- `get_label() -> str` — `"Local"` or `"Pi 1 (pi@192.168.0.97)"`
 
 #### `server_registry.py`
-- Loads/saves server list from `config/config.json` under key `remote_servers`
-- Each entry: `{name, host, port, user, key_path, enabled}`
-- CRUD: `list_servers()`, `add_server()`, `update_server()`, `remove_server()`
 
-### `modules/remote/__init__.py`
+- Loads/saves server list from `config/config.json` under key `remote_servers`
+- Each server entry: `{id, name, host, port, user, key_path, claude_dir}`
+  - `claude_dir` defaults to `"$HOME/.claude"` (allows QNAP/Docker override)
+- CRUD: `list_servers()`, `add_server(cfg)`, `update_server(id, cfg)`,
+  `remove_server(id)`
 
 ---
 
@@ -103,117 +139,141 @@ connections, SFTP file transfers, and OpenSSH private key loading on Windows.
 
 ### `utils/config_manager.py`
 
-Refactor all `Path.read_text()`, `Path.write_text()`, `open()`, `Path.exists()`,
-`Path.iterdir()`, `Path.glob()` calls to go through a `FileSystem` object stored
-as `self._fs`.
+Refactor all direct `Path` file I/O calls to go through a `self._fs` object:
 
-Constructor gains an optional `fs=None` parameter:
-- `fs=None` → uses `LocalFileSystem()`
-- `fs=RemoteFileSystem(ssh_client, remote_home)` → remote mode
+```python
+# Before
+content = Path(self.settings_file).read_text(encoding="utf-8")
 
-`claude_dir` becomes a virtual path object provided by the filesystem layer
-(a plain `str` on remote, a `Path` on local) — or we keep it as a `str` and let
-the filesystem resolve it.
+# After
+content = self._fs.read_text(self.settings_file)
+```
 
-**Estimated changes:** ~80 lines touched, mostly mechanical substitutions.
-No tab changes needed if the interface stays identical.
+Constructor gains `fs=None`:
+- `fs=None` → `LocalFileSystem()`
+- `fs=RemoteFileSystem(client)` → remote mode
+
+`claude_dir` is kept as a plain string internally; `LocalFileSystem` resolves it
+to a `Path`, `RemoteFileSystem` uses it as a POSIX path string.
+
+**Scope:** ~80 lines touched, all mechanical. No tab API changes needed.
 
 ### `utils/project_scanner.py`
 
-`scan_projects()`, `find_project_encoded_dir()`, `get_project_sessions()` all
-use `Path.iterdir()`, `Path.glob()`, and `open()`.
-
-Add an optional `fs=None` parameter to each public function.  When `fs` is
-provided (remote), use it instead of direct `Path` calls.  `ConfigManager`
-passes its `_fs` when calling scanner functions.
+All public functions (`scan_projects`, `find_project_encoded_dir`,
+`get_project_sessions`) get an optional `fs=None` parameter. When provided,
+file operations go through it. `ConfigManager` passes `self._fs` through when
+calling scanner functions.
 
 ### `main.py`
 
-- Instantiate `ServerContext` and pass to tab constructors that need it
-- On `ServerContext.server_changed`: reconnect SSH, rebuild `RemoteFileSystem`,
-  rebuild `ConfigManager` with new fs, call `reload_all()` on each tab
-- Add `SSHClient` lifecycle management (connect on server select,
-  disconnect on server change or app close)
+- Instantiate `ServerContext`; pass to all tab constructors that need it
+- On `ServerContext.server_changed`:
+  1. Disconnect previous `ManagedSSHClient` if any
+  2. If remote: create new `ManagedSSHClient`, call `connect()`, create
+     `RemoteFileSystem(client)`
+  3. Rebuild `ConfigManager` with the new filesystem
+  4. Call `reload()` on every data tab
+- On app close: `disconnect()` the active client
 
 ---
 
 ## UI Changes
 
-### New tab: Remote Servers (in Settings or as top-level tab)
+### 1. Remote mode indicator banner (PERSISTENT, always visible)
 
-**Server list panel** (left):
-- `QListWidget` showing servers with status dot (green = connected,
-  grey = not connected, red = error)
-- Buttons: Add, Edit, Remove, Test Connection
-- "Local" entry always present at top and cannot be deleted
+A **full-width colored strip** rendered between the main tab bar and the tab
+content area. It is only visible when a remote server is active — completely
+absent in local mode.
 
-**Server editor panel** (right):
-- Fields: Display name, Host/IP, Port (default 22), Username, SSH key path
-  (file-picker button), Optional: remote claude dir override (default `~/.claude`)
-- "Test Connection" button — attempts SSH and reports success or error message
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  📡  REMOTE: Pi 1 — pi@192.168.0.97  ●  Connected    [Disconnect]  │  ← amber/orange bar
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-**Active server indicator** in the main window title bar or status bar:
-`Claude_DB — pi@192.168.0.97` or `Claude_DB — Local`
+States:
+- **Connected** — amber/orange background, green dot `●`, label shows server name
+- **Error / disconnected** — red background, red dot `●`, label shows error,
+  button changes to `[Reconnect]`
 
-### Server selector widget (persistent, top of window)
+This makes it impossible to confuse local and remote mode at a glance.
 
-A compact `QComboBox` or `QToolButton` menu in the toolbar area showing
-`📡 pi@192.168.0.97 ▾` (or `💻 Local`). Switching triggers `ServerContext.server_changed`.
+### 2. Server selector in toolbar
 
-### Tab behaviour on server switch
+A `QComboBox` in the main toolbar listing `💻 Local` and all configured
+servers. Selecting an entry triggers `ServerContext.server_changed`.
+The box shows `💻 Local` when on local, `📡 Pi 1` (name only) when remote.
 
-All tabs that currently show Claude data call `refresh()` / `reload()` when
-`ServerContext.server_changed` fires. Tabs that are purely informational
-(Documentation, About) ignore the signal.
+### 3. Remote Servers settings tab
 
-Remote editing confirmation: tabs that write files show a yellow info banner
-`"Editing on remote: pi@192.168.0.97"` above the editor to prevent accidental
-remote changes. Writes go via SFTP.
+A new tab under User Config (or a standalone top-level tab):
+
+**Left panel — server list:**
+- `QListWidget` with entries showing status dot (green/grey/red), name,
+  and `user@host`
+- Buttons: `Add`, `Edit`, `Remove`, `Connect`
+
+**Right panel — server editor:**
+- Display Name (e.g. `Pi 1`)
+- Host / IP
+- Port (default `22`)
+- Username
+- SSH Key Path (with file-picker `Browse…` button)
+- Remote Claude Dir (default `$HOME/.claude`, editable for QNAP/Docker)
+- SFTP Cache TTL in seconds (default `30`)
+- `Test Connection` button — connects, runs `echo ok`, shows success/error inline
+
+All fields saved to `config.json` under `remote_servers`.
+
+### 4. Tab behaviour on server switch
+
+Every data tab that already implements `refresh()` / `reload()` connects to
+`ServerContext.server_changed`. Tabs that are purely static (Documentation,
+About, CLI Reference) ignore the signal. No other tab changes are needed.
 
 ---
 
 ## Implementation Phases
 
-### Phase 1 — Foundation (no UI yet)
+### Phase 1 — Foundation (no UI, no breakage)
 
-1. Add `paramiko` to requirements
-2. Implement `local_filesystem.py` and `remote_filesystem.py`
-3. Implement `ssh_client.py` with connect / disconnect / exec / sftp
-4. Refactor `ConfigManager` to use `_fs` layer (keep all existing tests green)
-5. Refactor `project_scanner.py` to accept optional `fs` parameter
-6. Add `server_registry.py` (read/write from config.json)
-7. Add `server_context.py` (QObject with signal)
+1. Add `paramiko` to `help/requirements.txt`
+2. Create `src/modules/remote/` package with `__init__.py`
+3. Implement `local_filesystem.py` and `remote_filesystem.py`
+4. Implement `ssh_client.py` (`ManagedSSHClient` with keepalive)
+5. Implement `server_registry.py` and `server_context.py`
+6. Refactor `ConfigManager` to use `_fs` — verify local behaviour unchanged
+7. Refactor `project_scanner.py` to accept `fs=` — verify local behaviour unchanged
 
-### Phase 2 — Remote server management UI
+### Phase 2 — Server management UI + connection plumbing
 
-1. Build **Remote Servers** settings tab with list + editor
-2. Wire "Test Connection" button
-3. Add active-server indicator to main window toolbar
-4. Wire `ServerContext.server_changed` → rebuild ConfigManager + reload tabs
+1. Build Remote Servers tab (list + editor + Test Connection)
+2. Add server selector `QComboBox` to main toolbar
+3. Add remote mode indicator banner to main window (hidden when local)
+4. Wire `ServerContext.server_changed` → SSH connect/disconnect → ConfigManager
+   rebuild → tab reload
 
-### Phase 3 — Read-only remote browsing
+### Phase 3 — Full remote mode (reads and writes, same as local)
 
-1. Verify all read tabs (Conversations, Project Memories, File History,
-   Shell Snapshots, Projects list, Settings viewer) work correctly over SSH
-2. Add TTL cache controls (cache duration in Remote Servers settings)
-3. Add "remote" badge / banner to UI when a remote server is active
-4. Handle connection errors gracefully (show error in each tab, retry button)
+1. Verify all tabs work correctly over SSH: Conversations, Project Memories,
+   File History, Shell Snapshots, Projects, Settings, Hooks, Agents,
+   Commands, CLAUDE.md, Permissions, MCP config, etc.
+2. Fix any tab that bypasses `ConfigManager` and reads files directly
+3. Handle SSH errors gracefully — show error in the banner, tab shows
+   "Connection lost — reconnect using the toolbar" instead of crashing
+4. Test on Pi 1 first, then Pi 2 and QNAP
 
-### Phase 4 — Remote editing
+### Phase 4 — Polish
 
-1. Enable writes for: CLAUDE.md, settings.json, hooks, permissions, agents,
-   commands, MCP config
-2. Add "Editing on remote" warning banner on all editor tabs
-3. Confirm-before-save dialog for remote writes (optional, configurable)
-4. Test all write paths on Pi 1 first, then Pi 2 and QNAP
-
-### Phase 5 — Polish
-
-1. SSH keepalive (send keepalive packets every 30 s to prevent idle timeout)
-2. Connection status polling (background QTimer, updates status dot)
-3. Cached directory listing with manual Refresh button
-4. Performance: stream large JSONL files in chunks rather than full SFTP download
-5. Store last-used server in config so it reconnects on next app launch
+1. Connection status polling — `QTimer` every 15 s calls `is_connected()`,
+   updates banner dot without opening new connections
+2. Cache clear on manual Refresh — toolbar Refresh button flushes `RemoteFS`
+   TTL cache and triggers reload
+3. Performance: for large JSONL files, read via `exec("tail -c 2097152 <file")`
+   instead of full SFTP download
+4. Store last-used server in `config.json`; auto-select (but do not auto-connect)
+   on next app launch
 
 ---
 
@@ -221,13 +281,14 @@ remote changes. Writes go via SFTP.
 
 | Decision | Choice | Reason |
 |----------|--------|--------|
-| SSH library | `paramiko` | Pure Python, works on Windows without system OpenSSH, loads private keys directly, proven in production |
-| File abstraction | Filesystem wrapper class | Avoids rewriting every tab; only `ConfigManager` and `project_scanner` need changes |
-| Remote path type | `str` everywhere inside filesystem layer; expose same `Path`-like API | Remote paths are POSIX strings; wrapping avoids Windows/POSIX confusion |
-| Caching | In-memory dict with TTL | SFTP round-trips are ~5–20 ms each; caching avoids hammering the Pi |
-| Thread model | All SSH on Qt main thread for now | Simpler; SFTP reads on a Raspberry Pi over LAN are fast enough; revisit if UI freezes become a problem |
-| Write confirmation | Warning banner (not blocking dialog) | Less friction for quick edits; user can see they're on remote at a glance |
-| Windows key format | paramiko `RSAKey.from_private_key_file()` | Reads OpenSSH/PEM format keys on Windows without needing system SSH agent |
+| SSH library | `paramiko` | Pure Python, works on Windows without system OpenSSH, loads private keys directly |
+| Sessions | One `ManagedSSHClient` per server, shared everywhere | User requirement; avoids connection overhead; keepalive prevents idle drop |
+| File abstraction | Filesystem wrapper class | Only `ConfigManager` + `project_scanner` need changes; all tabs unchanged |
+| Remote path type | POSIX `str` inside `RemoteFS`; `LocalFS` uses `Path` internally | Avoids Windows/POSIX confusion on paths; unified string API for callers |
+| Caching | In-memory dict with TTL per path | SFTP round-trips ~5–20 ms; caching avoids hammering the Pi on every UI repaint |
+| Remote = local | No read-only mode; all tabs work exactly as on local system | No artificial split; the filesystem abstraction makes this natural |
+| Visual indication | Full-width persistent amber banner (hidden when local) | Impossible to miss; status and disconnect button in one place |
+| Windows key format | `paramiko.RSAKey.from_private_key_file(key_path)` | Reads OpenSSH/PEM keys without system SSH agent |
 
 ---
 
@@ -238,32 +299,30 @@ src/
 ├── modules/
 │   └── remote/
 │       ├── __init__.py
-│       ├── ssh_client.py
-│       ├── local_filesystem.py
-│       ├── remote_filesystem.py
-│       ├── server_context.py
-│       └── server_registry.py
+│       ├── ssh_client.py          ← ManagedSSHClient (one session + keepalive)
+│       ├── local_filesystem.py    ← LocalFileSystem (Path wrapper)
+│       ├── remote_filesystem.py   ← RemoteFileSystem (SFTP + TTL cache)
+│       ├── server_context.py      ← ServerContext QObject + signal
+│       └── server_registry.py     ← load/save server list
 ├── tabs/
-│   └── remote_servers_tab.py       ← new tab
+│   └── remote_servers_tab.py      ← new settings tab
 └── utils/
-    ├── config_manager.py           ← _fs layer added
-    └── project_scanner.py          ← fs= param added
+    ├── config_manager.py          ← _fs layer added (~80 lines changed)
+    └── project_scanner.py         ← fs= optional param added
 
 config/
-└── config.json                     ← remote_servers key added
+└── config.json                    ← remote_servers key added
 ```
 
 ---
 
 ## Risk / Open Questions
 
-- **QNAP SSH**: Container Station may run Claude inside a Docker container with
-  a different home directory. May need a configurable `remote_claude_dir` override
-  per server (already planned in server config).
-- **Large JSONL files**: Session files can be many MB. Full SFTP download for
-  every conversation load may be slow. Phase 5 will address streaming.
-- **Concurrent access**: If Claude is actively writing to a JSONL file while we
-  read it over SFTP, we may get a partial read. Low-risk for read-only browsing.
-- **Key passphrase**: `P16_id_rsa` appears to be passphrase-free (used in
-  automated contexts). If a future key has a passphrase, we'll need a
-  passphrase prompt dialog.
+- **QNAP / Docker**: Claude may run inside a Container Station container with a
+  non-standard home directory. The per-server `claude_dir` override field handles this.
+- **Large JSONL files**: Full SFTP download of a multi-MB session file is slow.
+  Phase 4 addresses this with `exec("tail -c N <file")`.
+- **Key passphrase**: `P16_id_rsa` is passphrase-free. If a future key has a
+  passphrase, a prompt dialog will be needed — out of scope for now.
+- **Concurrent writes**: If Claude is actively writing a JSONL while we read it
+  over SFTP, we may get a partial read. Acceptable risk for a monitoring tool.
