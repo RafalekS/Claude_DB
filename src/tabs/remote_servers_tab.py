@@ -113,6 +113,9 @@ class RemoteServersTab(QWidget):
 
         self._update_buttons()
 
+        # Keep status label in sync when server changes externally (e.g. top-bar Disconnect)
+        self._ctx.server_changed.connect(self._on_ctx_server_changed)
+
     # ── Table population ───────────────────────────────────────────────────────
 
     def _refresh_table(self) -> None:
@@ -235,10 +238,15 @@ class RemoteServersTab(QWidget):
         self._update_buttons()
         logger.error("SSH connect failed: %s", error)
 
+    def _on_ctx_server_changed(self, server_cfg) -> None:
+        """Handle server context changes triggered externally (e.g. top-bar Disconnect button)."""
+        if server_cfg is None:
+            self._status_lbl.setText("Disconnected — using local machine.")
+            self._status_lbl.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-style: italic;")
+        self._refresh_table()
+
     def _disconnect(self) -> None:
         self._conn.disconnect()
         self._ctx.set_active(None)
-        self._status_lbl.setText("Disconnected — using local machine.")
-        self._status_lbl.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-style: italic;")
-        self._refresh_table()
+        # _on_ctx_server_changed fires via server_changed signal — no need to repeat here
         logger.info("Disconnected from remote server, back to local mode")

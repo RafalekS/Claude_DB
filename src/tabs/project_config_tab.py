@@ -409,7 +409,7 @@ class ProjectConfigTab(QWidget):
         self.sub_tabs.addTab(shell_snapshots_tab, "🐚 Shell Snapshots")
 
         # Rules sub-tab (project-level rules)
-        rules_tab = RulesTab(self.config_manager, self.backup_manager)
+        rules_tab = RulesTab(self.config_manager, self.backup_manager, self.project_context)
         self.sub_tabs.addTab(rules_tab, "📋 Rules")
 
         # Worktrees sub-tab (project git worktrees)

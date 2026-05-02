@@ -222,7 +222,19 @@ class RuleEditorWidget(QWidget):
             self._dir_label.setText("(not configured)")
 
         self._file_list.clear()
-        if not rules_dir or not rules_dir.exists():
+        if not rules_dir:
+            item = QListWidgetItem("No rules directory configured for this scope")
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
+            self._file_list.addItem(item)
+            return
+
+        if not isinstance(rules_dir, Path):
+            item = QListWidgetItem("Rules editing not available for remote connections")
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
+            self._file_list.addItem(item)
+            return
+
+        if not rules_dir.exists():
             item = QListWidgetItem("No rules directory found")
             item.setFlags(Qt.ItemFlag.NoItemFlags)
             self._file_list.addItem(item)
@@ -321,6 +333,9 @@ class RuleEditorWidget(QWidget):
         if not self._current_path:
             QMessageBox.warning(self, "Nothing Selected", "Select a rule file first.")
             return
+        if not isinstance(self._current_path, Path):
+            QMessageBox.warning(self, "Not Supported", "Saving rules is not supported for remote connections.")
+            return
         content = self._editor.toPlainText()
         self._current_path.write_text(content, encoding="utf-8")
         QMessageBox.information(self, "Saved", f"Saved {self._current_path.name}")
@@ -329,6 +344,9 @@ class RuleEditorWidget(QWidget):
     def _delete_rule(self):
         if not self._current_path:
             QMessageBox.warning(self, "Nothing Selected", "Select a rule file to delete.")
+            return
+        if not isinstance(self._current_path, Path):
+            QMessageBox.warning(self, "Not Supported", "Deleting rules is not supported for remote connections.")
             return
         reply = QMessageBox.question(
             self, "Confirm Delete",
@@ -346,21 +364,26 @@ class RuleEditorWidget(QWidget):
 class RulesTab(QWidget):
     """Tab for managing Claude Code rules files."""
 
-    def __init__(self, config_manager, backup_manager):
+    def __init__(self, config_manager, backup_manager, project_context=None):
         super().__init__()
         self._config_manager = config_manager
         self._backup_manager = backup_manager
+        self._project_context = project_context
         self._init_ui()
 
     def _get_user_rules_dir(self) -> Path | None:
         base = getattr(self._config_manager, 'claude_dir', None)
-        if base:
-            return Path(base) / "rules"
-        return Path.home() / ".claude" / "rules"
+        if base is None or not isinstance(base, Path):
+            return None
+        return base / "rules"
 
     def _get_project_rules_dir(self) -> Path | None:
-        cwd = Path.cwd()
-        return cwd / ".claude" / "rules"
+        if not self._project_context or not self._project_context.has_project():
+            return None
+        project = self._project_context.get_project()
+        if not isinstance(project, Path):
+            return None
+        return project / ".claude" / "rules"
 
     def _init_ui(self):
         layout = QVBoxLayout(self)

@@ -69,10 +69,13 @@ class EnvVarsTab(QWidget):
         super().__init__()
         self.config_manager = config_manager
         self.backup_manager = backup_manager
-        self.settings_file = self.config_manager.claude_dir / "settings.json"
         self.settings_data = {}
         self._init_ui()
         self.load_env_vars()
+
+    @property
+    def settings_file(self):
+        return self.config_manager.settings_file
 
     # ── UI construction ───────────────────────────────────────────────────────
 
@@ -88,11 +91,11 @@ class EnvVarsTab(QWidget):
         )
         layout.addWidget(hdr)
 
-        info = QLabel(f"Stored in: {self.settings_file}")
-        info.setStyleSheet(
+        self._info_label = QLabel(f"Stored in: {self.settings_file}")
+        self._info_label.setStyleSheet(
             f"font-size: {theme.FONT_SIZE_SMALL}px; color: {theme.FG_SECONDARY}; font-style: italic;"
         )
-        layout.addWidget(info)
+        layout.addWidget(self._info_label)
 
         # Splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -215,37 +218,31 @@ class EnvVarsTab(QWidget):
 
     def load_env_vars(self):
         self._list.clear()
+        self._info_label.setText(f"Stored in: {self.settings_file}")
         try:
-            if self.settings_file.exists():
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
-                    self.settings_data = json.load(f)
-                env_vars = self.settings_data.get('env', {})
-                if not env_vars:
-                    item = QListWidgetItem("No environment variables configured")
-                    item.setFlags(Qt.ItemFlag.NoItemFlags)
-                    item.setForeground(QColor(theme.FG_DIM))
-                    self._list.addItem(item)
-                else:
-                    for key, value in sorted(env_vars.items()):
-                        display = self._mask(key, value)
-                        item = QListWidgetItem(f"{key} = {display}")
-                        item.setData(Qt.ItemDataRole.UserRole, {'key': key, 'value': value})
-                        item.setForeground(QColor(theme.SUCCESS_COLOR))
-                        self._list.addItem(item)
-            else:
-                item = QListWidgetItem("settings.json not found")
+            self.settings_data = self.config_manager.get_settings()
+            env_vars = self.settings_data.get('env', {})
+            if not env_vars:
+                item = QListWidgetItem("No environment variables configured")
                 item.setFlags(Qt.ItemFlag.NoItemFlags)
-                item.setForeground(QColor(theme.ERROR_COLOR))
+                item.setForeground(QColor(theme.FG_DIM))
                 self._list.addItem(item)
+            else:
+                for key, value in sorted(env_vars.items()):
+                    display = self._mask(key, value)
+                    item = QListWidgetItem(f"{key} = {display}")
+                    item.setData(Qt.ItemDataRole.UserRole, {'key': key, 'value': value})
+                    item.setForeground(QColor(theme.SUCCESS_COLOR))
+                    self._list.addItem(item)
         except Exception as e:
-            QMessageBox.critical(self, "Load Error", f"Failed to load settings.json:\n{e}")
+            QMessageBox.critical(self, "Load Error", f"Failed to load env vars:\n{e}")
 
     def _save(self):
         try:
-            if self.settings_file.exists():
-                self.backup_manager.create_file_backup(self.settings_file)
-            with open(self.settings_file, 'w', encoding='utf-8') as f:
-                json.dump(self.settings_data, f, indent=2)
+            sf = self.settings_file
+            if isinstance(sf, Path) and sf.exists():
+                self.backup_manager.create_file_backup(sf)
+            self.config_manager.save_settings(self.settings_data)
             self.load_env_vars()
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save settings.json:\n{e}")
