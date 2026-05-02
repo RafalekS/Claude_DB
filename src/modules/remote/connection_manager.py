@@ -31,11 +31,13 @@ class ConnectionManager:
         host = server_cfg["host"]
         port = int(server_cfg.get("port", 22))
         user = server_cfg["user"]
-        key_path = os.path.expanduser(os.path.expandvars(server_cfg["key_path"]))
+        raw_key = server_cfg.get("key_path", "")
+        key_path = os.path.expanduser(os.path.expandvars(raw_key)) if raw_key else ""
+        password = server_cfg.get("password", "")
         ttl = int(server_cfg.get("cache_ttl", 30))
 
         client = ManagedSSHClient()
-        client.connect(host, port, user, key_path)   # raises SSHConnectionError on failure
+        client.connect(host, port, user, key_path=key_path, password=password)
 
         self._client = client
         self._fs = RemoteFileSystem(client, ttl=ttl)

@@ -58,12 +58,24 @@ class ServerDialog(QDialog):
         # Key path  (line edit + Browse button)
         key_row = QHBoxLayout()
         self._key_path = QLineEdit(srv.get("key_path", ""))
-        self._key_path.setPlaceholderText("Path to private key file")
+        self._key_path.setPlaceholderText("Path to private key file (leave blank to use password)")
         browse_btn = QPushButton("Browse…")
         browse_btn.clicked.connect(self._browse_key)
         key_row.addWidget(self._key_path, 1)
         key_row.addWidget(browse_btn)
         form.addRow(_label("Private key:"), key_row)
+
+        # Password  (only used when key path is empty)
+        self._password = QLineEdit(srv.get("password", ""))
+        self._password.setPlaceholderText("SSH password (only if no key file)")
+        self._password.setEchoMode(QLineEdit.EchoMode.Password)
+        form.addRow(_label("Password:"), self._password)
+
+        # Auth hint
+        hint = QLabel("Use either a private key OR a password — key takes priority if both are set.")
+        hint.setStyleSheet(f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px;")
+        hint.setWordWrap(True)
+        form.addRow(QLabel(""), hint)
 
         # Claude dir
         self._claude_dir = QLineEdit(srv.get("claude_dir", "$HOME/.claude"))
@@ -101,19 +113,23 @@ class ServerDialog(QDialog):
         if not self._user.text().strip():
             self._user.setFocus()
             return
-        if not self._key_path.text().strip():
+        if not self._key_path.text().strip() and not self._password.text():
+            # Need at least one auth method
             self._key_path.setFocus()
             return
         self.accept()
 
     def get_server(self) -> dict:
         """Return the server dict from the form (no id — caller adds it)."""
+        key = self._key_path.text().strip()
+        pwd = self._password.text()
         return {
             "name":       self._name.text().strip() or self._host.text().strip(),
             "host":       self._host.text().strip(),
             "port":       self._port.value(),
             "user":       self._user.text().strip(),
-            "key_path":   self._key_path.text().strip(),
+            "key_path":   key,
+            "password":   pwd if not key else "",   # don't store password when key is set
             "claude_dir": self._claude_dir.text().strip() or "$HOME/.claude",
             "cache_ttl":  self._cache_ttl.value(),
         }

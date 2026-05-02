@@ -90,6 +90,14 @@ class ProjectClaudeMDSubTab(QWidget):
             return
 
         project_path = self.project_context.get_project()
+
+        if not isinstance(project_path, Path):
+            self.editor.setPlaceholderText("CLAUDE.md editing is not available for remote projects.")
+            self.editor.clear()
+            self.save_btn.setEnabled(False)
+            self.reload_btn.setEnabled(False)
+            return
+
         claude_md_path = project_path / "CLAUDE.md"
 
         if claude_md_path.exists():
@@ -175,6 +183,14 @@ class ProjectPromptSubTab(QWidget):
             return
 
         project_path = self.project_context.get_project()
+
+        if not isinstance(project_path, Path):
+            self.editor.setPlaceholderText("PROMPT.md editing is not available for remote projects.")
+            self.editor.clear()
+            self.save_btn.setEnabled(False)
+            self.reload_btn.setEnabled(False)
+            return
+
         prompt_md_path = project_path / "help" / "PROMPT.md"
 
         if prompt_md_path.exists():

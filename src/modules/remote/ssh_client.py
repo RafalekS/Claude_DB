@@ -27,15 +27,19 @@ class ManagedSSHClient:
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
-    def connect(self, host: str, port: int, user: str, key_path: str,
-                keepalive: int = 30) -> None:
+    def connect(self, host: str, port: int, user: str, key_path: str = "",
+                password: str = "", keepalive: int = 30) -> None:
         """Open SSH session.  Closes any previous session first.
+
+        Auth priority: key_path (if non-empty) → password (if non-empty).
+        At least one must be provided.
 
         Args:
             host:       IP address or hostname
             port:       SSH port (usually 22)
             user:       SSH username
-            key_path:   path to private key file (OpenSSH or PEM format)
+            key_path:   path to private key file (OpenSSH or PEM format); takes priority
+            password:   SSH password; used only when key_path is empty
             keepalive:  keepalive interval in seconds (default 30)
         """
         self.disconnect()
@@ -43,16 +47,25 @@ class ManagedSSHClient:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-        try:
-            ssh.connect(
-                hostname=host,
-                port=port,
-                username=user,
-                key_filename=key_path,
-                allow_agent=False,
-                look_for_keys=False,
-                timeout=15,
+        connect_kwargs: dict = dict(
+            hostname=host,
+            port=port,
+            username=user,
+            allow_agent=False,
+            look_for_keys=False,
+            timeout=15,
+        )
+        if key_path:
+            connect_kwargs["key_filename"] = key_path
+        elif password:
+            connect_kwargs["password"] = password
+        else:
+            raise SSHConnectionError(
+                f"No authentication provided for {user}@{host} — supply a key file or password"
             )
+
+        try:
+            ssh.connect(**connect_kwargs)
         except Exception as e:
             raise SSHConnectionError(
                 f"Cannot connect to {user}@{host}:{port} — {e}"
