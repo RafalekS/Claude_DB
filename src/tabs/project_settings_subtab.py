@@ -501,6 +501,8 @@ class ProjectSettingsSubTab(QWidget):
 
         try:
             project_path = self.project_context.get_project()
+            if not isinstance(project_path, Path):
+                return
 
             if scope == "shared":
                 settings_file = project_path / ".claude" / "settings.json"

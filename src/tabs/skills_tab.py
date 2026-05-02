@@ -798,7 +798,11 @@ class SkillsTab(QWidget):
             if not self.project_context or not self.project_context.has_project():
                 QMessageBox.warning(self, "No Project", "No project is open for project-scope import.")
                 return
-            target_dir = self.project_context.get_project() / ".claude" / "skills"
+            project = self.project_context.get_project()
+            if not isinstance(project, Path):
+                QMessageBox.warning(self, "Remote Project", "Skill import to remote projects is not supported.")
+                return
+            target_dir = project / ".claude" / "skills"
 
         skill_dir = target_dir / skill_name
         if skill_dir.exists():
@@ -844,7 +848,10 @@ class SkillsTab(QWidget):
         else:  # project
             if not self.project_context or not self.project_context.has_project():
                 return None
-            return self.project_context.get_project() / ".claude" / "skills"
+            project = self.project_context.get_project()
+            if not isinstance(project, Path):
+                return None
+            return project / ".claude" / "skills"
 
     def load_skills(self):
         """Load all skills from the scope's directory"""

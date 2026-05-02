@@ -146,6 +146,10 @@ class ProjectsTab(QWidget):
 
         project_path = self.current_project_path
 
+        if not isinstance(project_path, Path):
+            self.info_viewer.setText(f"Remote project: {project_path}\n\nProject info is not available for remote projects.")
+            return
+
         # Project Info
         info_text = f"Project: {project_path.name}\n"
         info_text += f"Path: {project_path}\n\n"
@@ -172,6 +176,9 @@ class ProjectsTab(QWidget):
 
     def load_file_into_viewer(self, file_path, viewer, not_found_msg):
         """Load file content into text viewer"""
+        if not isinstance(file_path, Path):
+            viewer.setText("Not available for remote projects.")
+            return
         if file_path.exists():
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:

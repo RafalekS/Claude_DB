@@ -187,7 +187,10 @@ class HooksSubtab(QWidget):
         else:  # project
             if not self.project_context.has_project():
                 return None
-            return self.project_context.get_project() / ".claude" / "hooks"
+            project = self.project_context.get_project()
+            if not isinstance(project, Path):
+                return None
+            return project / ".claude" / "hooks"
 
     def on_project_changed(self, project_path: Path):
         """Handle project context change"""
@@ -335,6 +338,8 @@ class HooksSubtab(QWidget):
                 name += '.json'
 
             hooks_dir = self.get_scope_hooks_dir()
+            if hooks_dir is None:
+                return
             hooks_dir.mkdir(parents=True, exist_ok=True)
             hook_path = hooks_dir / name
 

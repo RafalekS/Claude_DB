@@ -393,7 +393,10 @@ class AgentsTab(QWidget):
         else:  # project
             if not self.project_context.has_project():
                 return None
-            return self.project_context.get_project() / ".claude" / "agents"
+            project = self.project_context.get_project()
+            if not isinstance(project, Path):
+                return None
+            return project / ".claude" / "agents"
 
     def on_project_changed(self, project_path: Path):
         """Handle project context change"""
@@ -500,6 +503,8 @@ class AgentsTab(QWidget):
 
         # Build agent path
         agents_dir = self.get_scope_agents_dir()
+        if agents_dir is None:
+            return
 
         # Handle subfolder
         if agent_data['subfolder']:
@@ -708,6 +713,8 @@ Add detailed instructions for this agent here.
     def deploy_agents(self, agents):
         """Deploy selected agents to the current scope"""
         agents_dir = self.get_scope_agents_dir()
+        if agents_dir is None:
+            return
         agents_dir.mkdir(parents=True, exist_ok=True)
 
         added_count = 0

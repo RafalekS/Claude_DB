@@ -214,7 +214,10 @@ class CommandsTab(QWidget):
         else:  # project
             if not self.project_context.has_project():
                 return None
-            return self.project_context.get_project() / ".claude" / "commands"
+            project = self.project_context.get_project()
+            if not isinstance(project, Path):
+                return None
+            return project / ".claude" / "commands"
 
     def on_project_changed(self, project_path: Path):
         """Handle project context change"""
@@ -401,6 +404,8 @@ class CommandsTab(QWidget):
             name += '.md'
 
         commands_dir = self.get_scope_commands_dir()
+        if commands_dir is None:
+            return
         command_path = commands_dir / name
 
         if command_path.exists():
@@ -451,6 +456,8 @@ class CommandsTab(QWidget):
     def deploy_commands(self, commands):
         """Deploy selected commands to the current scope"""
         commands_dir = self.get_scope_commands_dir()
+        if commands_dir is None:
+            return
         commands_dir.mkdir(parents=True, exist_ok=True)
 
         added_count = 0

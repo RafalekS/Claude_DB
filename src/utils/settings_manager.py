@@ -76,6 +76,9 @@ class SettingsManager(QObject):
 
         Returns True on success, False otherwise.
         """
+        if not isinstance(path, Path):
+            logger.warning("save_settings: skipping non-local path %s", path)
+            return False
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -121,6 +124,8 @@ class SettingsManager(QObject):
 
     def _load_settings(self, path: Path) -> Dict[str, Any]:
         """Load settings from file with caching (cache key derived from path)."""
+        if not isinstance(path, Path):
+            return {}
         cache_key = self._get_cache_key(path)
 
         if cache_key in self._cache:

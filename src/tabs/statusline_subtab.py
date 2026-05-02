@@ -187,7 +187,10 @@ class StatuslineSubtab(QWidget):
         else:  # project
             if not self.project_context.has_project():
                 return None
-            return self.project_context.get_project() / ".claude" / "statusline"
+            project = self.project_context.get_project()
+            if not isinstance(project, Path):
+                return None
+            return project / ".claude" / "statusline"
 
     def on_project_changed(self, project_path: Path):
         """Handle project context change"""
@@ -335,6 +338,8 @@ class StatuslineSubtab(QWidget):
                 name += '.json'
 
             statusline_dir = self.get_scope_statusline_dir()
+            if statusline_dir is None:
+                return
             statusline_dir.mkdir(parents=True, exist_ok=True)
             statusline_path = statusline_dir / name
 
