@@ -13,6 +13,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from utils import theme
 
 class UserSettingsSubTab(QWidget):
@@ -429,6 +433,7 @@ class UserSettingsSubTab(QWidget):
             self.update_preview(settings)
 
         except Exception as e:
+            logger.error("Failed to load settings: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load settings:\n{str(e)}")
 
     def save_settings(self):
@@ -489,6 +494,7 @@ class UserSettingsSubTab(QWidget):
                 f"Settings saved successfully!\n\nModel: {model_id}\nTheme: {settings['theme']}"
             )
         except Exception as e:
+            logger.error("Failed to save settings: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save settings:\n{str(e)}")
 
     def backup_and_save(self):
@@ -503,6 +509,7 @@ class UserSettingsSubTab(QWidget):
             self.save_settings()
 
         except Exception as e:
+            logger.error("Failed to create backup: %s", e)
             QMessageBox.critical(self, "Backup Error", f"Failed to create backup:\n{str(e)}")
 
     def set_notification_channel(self):
@@ -526,6 +533,7 @@ class UserSettingsSubTab(QWidget):
                 "Claude Code will now use terminal bell for notifications."
             )
         except Exception as e:
+            logger.error("Failed to set notification channel: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to set notification channel:\n{str(e)}")
 
     def update_preview(self, settings: dict):

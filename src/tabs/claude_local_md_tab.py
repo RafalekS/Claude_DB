@@ -8,6 +8,8 @@ from PyQt6.QtWidgets import (
     QLabel, QMessageBox
 )
 from utils import theme
+import logging
+logger = logging.getLogger(__name__)
 
 class ClaudeLocalMDTab(QWidget):
     """Tab for editing CLAUDE.local.md — the gitignored local instructions override"""
@@ -110,6 +112,7 @@ class ClaudeLocalMDTab(QWidget):
             self.editor.setPlainText(content)
             self._update_stats()
         except Exception as e:
+            logger.error("Failed to load CLAUDE.local.md: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load CLAUDE.local.md:\n{e}")
 
     def save_content(self):
@@ -118,6 +121,7 @@ class ClaudeLocalMDTab(QWidget):
             self._update_stats()
             QMessageBox.information(self, "Saved", "CLAUDE.local.md saved.")
         except Exception as e:
+            logger.error("Failed to save CLAUDE.local.md: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
 
     def backup_and_save(self):
@@ -129,6 +133,7 @@ class ClaudeLocalMDTab(QWidget):
             self._update_stats()
             QMessageBox.information(self, "Saved", "Backup created and CLAUDE.local.md saved.")
         except Exception as e:
+            logger.error("Failed to backup and save CLAUDE.local.md: %s", e)
             QMessageBox.critical(self, "Error", f"Failed:\n{e}")
 
     def delete_file(self):
@@ -151,4 +156,5 @@ class ClaudeLocalMDTab(QWidget):
                 self._update_stats()
                 QMessageBox.information(self, "Deleted", "CLAUDE.local.md deleted.")
             except Exception as e:
+                logger.error("Failed to delete CLAUDE.local.md: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to delete:\n{e}")

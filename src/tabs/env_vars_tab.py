@@ -14,6 +14,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from utils import theme
+import logging
+logger = logging.getLogger(__name__)
 
 
 # ── Reference data ────────────────────────────────────────────────────────────
@@ -235,6 +237,7 @@ class EnvVarsTab(QWidget):
                     item.setForeground(QColor(theme.SUCCESS_COLOR))
                     self._list.addItem(item)
         except Exception as e:
+            logger.error("Failed to load env vars: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load env vars:\n{e}")
 
     def _save(self):
@@ -245,6 +248,7 @@ class EnvVarsTab(QWidget):
             self.config_manager.save_settings(self.settings_data)
             self.load_env_vars()
         except Exception as e:
+            logger.error("Failed to save settings.json: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save settings.json:\n{e}")
 
     # ── Actions ──────────────────────────────────────────────────────────────

@@ -444,6 +444,7 @@ class AgentsTab(QWidget):
                 self.agent_name_label.setText(f"Editing: {agent_name}")
                 self.agent_editor.setPlainText(content)
         except Exception as e:
+            logger.error("Failed to load agent: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load agent:\n{str(e)}")
 
     def save_agent(self):
@@ -457,6 +458,7 @@ class AgentsTab(QWidget):
                 f.write(content)
             QMessageBox.information(self, "Save Success", "Agent saved successfully!")
         except Exception as e:
+            logger.error("Failed to save agent: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save agent:\n{str(e)}")
 
     def backup_and_save_agent(self):
@@ -471,6 +473,7 @@ class AgentsTab(QWidget):
                 f.write(content)
             QMessageBox.information(self, "Backup & Save Success", "Backup created and agent saved!")
         except Exception as e:
+            logger.error("Failed to backup and save agent: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to backup and save:\n{str(e)}")
 
     def revert_agent(self):
@@ -487,6 +490,7 @@ class AgentsTab(QWidget):
                     content = f.read()
                 self.agent_editor.setPlainText(content)
             except Exception as e:
+                logger.error("Failed to revert agent: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to revert:\n{str(e)}")
 
     def create_new_agent(self):
@@ -568,6 +572,7 @@ Add detailed instructions for this agent here.
                 self.load_agent_content(items[0])
 
         except Exception as e:
+            logger.error("Failed to create agent: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to create agent:\n{str(e)}")
 
     def delete_agent(self):
@@ -588,6 +593,7 @@ Add detailed instructions for this agent here.
                 self.load_agents()
                 QMessageBox.information(self, "Delete Success", "Agent deleted successfully!")
             except Exception as e:
+                logger.error("Failed to delete agent: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to delete agent:\n{str(e)}")
 
     def edit_agent_metadata(self):
@@ -670,6 +676,7 @@ Add detailed instructions for this agent here.
             )
 
         except Exception as e:
+            logger.error("Failed to edit agent metadata: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to edit metadata:\n{str(e)}")
 
     def parse_frontmatter(self, content):
@@ -731,6 +738,7 @@ Add detailed instructions for this agent here.
                     f.write(agent_content)
                 added_count += 1
             except Exception as e:
+                logger.error("Failed to deploy agent '%s': %s", agent_name, e)
                 QMessageBox.critical(self, "Deploy Error", f"Failed to deploy '{agent_name}':\n{str(e)}")
 
         if added_count > 0 or skipped_count > 0:
@@ -1025,6 +1033,7 @@ description: {template_data['description']}"""
                 QMessageBox.information(self, "Success", f"Template '{full_name}' created!")
                 self.refresh_templates()
             except Exception as e:
+                logger.error("Failed to save new agent template: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to save template:\n{str(e)}")
 
     def edit_template(self):
@@ -1064,6 +1073,7 @@ description: {template_data['description']}"""
                 QMessageBox.information(self, "Success", f"Template '{agent_name}' updated!")
                 self.refresh_templates()
             except Exception as e:
+                logger.error("Failed to save edited agent template: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to save template:\n{str(e)}")
 
     def bulk_add_agents(self):
@@ -1104,6 +1114,7 @@ description: {template_data['description']}"""
                 try:
                     self.template_mgr.delete_template('agents', name)
                 except Exception as e:
+                    logger.error("Failed to delete agent template '%s': %s", name, e)
                     QMessageBox.critical(self, "Error", f"Failed to delete {name}:\n{str(e)}")
 
             QMessageBox.information(self, "Success", f"Deleted {len(selected)} template(s)!")
@@ -1235,6 +1246,7 @@ class BulkAgentAddDialog(QDialog):
             self.preview_text.setPlainText(preview)
 
         except Exception as e:
+            logger.error("Failed to parse bulk agent input: %s", e)
             QMessageBox.critical(self, "Parse Error", f"Failed to parse input:\n{str(e)}")
 
     def save_to_library(self):
@@ -1266,6 +1278,7 @@ class BulkAgentAddDialog(QDialog):
             self.accept()
 
         except Exception as e:
+            logger.error("Failed to save bulk agents to library: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save agents:\n{str(e)}")
 
 class NewAgentTemplateDialog(QDialog):

@@ -76,7 +76,6 @@ class ProjectPermissionsSubTab(QWidget):
 
         # Tabs for Shared and Local
         tabs = QTabWidget()
-        tabs
 
         # Shared tab
         shared_widget = self.create_permissions_panel("shared")
@@ -95,11 +94,14 @@ class ProjectPermissionsSubTab(QWidget):
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(6)
 
-        # File path
-        file_name = "settings.json" if scope == "shared" else "settings.local.json"
-        path_label = QLabel(f"File: .claude/{file_name}")
+        # File path label (stored as instance var so load_permissions can update it)
+        path_label = QLabel("(no project selected)")
         path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(path_label)
+        if scope == "shared":
+            self.shared_path_label = path_label
+        else:
+            self.local_path_label = path_label
 
         # defaultMode row
         mode_row = QHBoxLayout()
@@ -261,8 +263,15 @@ class ProjectPermissionsSubTab(QWidget):
         if not self.project_context or not self.project_context.has_project():
             return
 
+        project_path = self.project_context.get_project()
+        if scope == "shared":
+            full_path = project_path / ".claude" / "settings.json"
+            self.shared_path_label.setText(f"File: {full_path} (team-shared)")
+        else:
+            full_path = project_path / ".claude" / "settings.local.json"
+            self.local_path_label.setText(f"File: {full_path} (user-specific)")
+
         try:
-            project_path = self.project_context.get_project()
             table = self.tables[scope]
             table.setRowCount(0)
 
@@ -401,6 +410,7 @@ class ProjectPermissionsSubTab(QWidget):
             QMessageBox.information(self, "Success", f"{scope.capitalize()} permission added!")
 
         except Exception as e:
+            logger.error("Failed to add %s permission: %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed to add permission:\n{str(e)}")
 
     def edit_permission(self, scope: str):
@@ -453,6 +463,7 @@ class ProjectPermissionsSubTab(QWidget):
             QMessageBox.information(self, "Success", "Permission updated!")
 
         except Exception as e:
+            logger.error("Failed to edit %s permission: %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed to edit permission:\n{str(e)}")
 
     def delete_permission(self, scope: str):
@@ -500,4 +511,5 @@ class ProjectPermissionsSubTab(QWidget):
             QMessageBox.information(self, "Success", "Permission deleted!")
 
         except Exception as e:
+            logger.error("Failed to delete %s permission: %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed to delete permission:\n{str(e)}")

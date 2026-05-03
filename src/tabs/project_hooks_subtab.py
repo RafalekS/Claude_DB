@@ -4,6 +4,7 @@ Dedicated subtab for hooks in .claude/settings.json (Shared) and .claude/setting
 """
 
 import json
+import logging
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -14,6 +15,8 @@ from PyQt6.QtGui import QDesktopServices, QFont
 
 from utils import theme
 from tabs.hooks_shared import HOOK_EVENT_GROUPS, HOOK_EVENTS, HookReferenceDialog
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectHooksSubTab(QWidget):
@@ -96,14 +99,14 @@ class ProjectHooksSubTab(QWidget):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(5, 5, 5, 5)
 
-        # File path label
-        path_label = QLabel()
-        if scope == "shared":
-            path_label.setText(".claude/settings.json (team-shared)")
-        else:
-            path_label.setText(".claude/settings.local.json (user-specific)")
+        # File path label (stored as instance var so load_hooks can update it)
+        path_label = QLabel("(no project selected)")
         path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(path_label)
+        if scope == "shared":
+            self.shared_path_label = path_label
+        else:
+            self.local_path_label = path_label
 
         # Splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -239,13 +242,21 @@ class ProjectHooksSubTab(QWidget):
         if not self.project_context.has_project():
             return
 
+        project_path = self.project_context.get_project()
+        if scope == "shared":
+            full_path = project_path / ".claude" / "settings.json"
+            self.shared_path_label.setText(f"File: {full_path} (team-shared)")
+        else:
+            full_path = project_path / ".claude" / "settings.local.json"
+            self.local_path_label.setText(f"File: {full_path} (user-specific)")
+
         try:
             editor_data = self.editors[scope]
 
             if scope == "shared":
-                settings = self.settings_manager.get_project_shared_settings(self.project_context.get_project())
+                settings = self.settings_manager.get_project_shared_settings(project_path)
             else:
-                settings = self.settings_manager.get_project_local_settings(self.project_context.get_project())
+                settings = self.settings_manager.get_project_local_settings(project_path)
 
             hooks_config = settings.get("hooks", {})
             editor_data['hooks_config'] = hooks_config
@@ -269,6 +280,7 @@ class ProjectHooksSubTab(QWidget):
             self.update_events_list(scope)
 
         except Exception as e:
+            logger.error("Failed to load %s hooks: %s", scope, e)
             QMessageBox.critical(self, "Load Error", f"Failed to load {scope} hooks:\n{str(e)}")
 
     def update_events_list(self, scope: str):
@@ -310,6 +322,7 @@ class ProjectHooksSubTab(QWidget):
             QMessageBox.information(self, "Valid", "JSON is valid!")
             return True
         except json.JSONDecodeError as e:
+            logger.error("Invalid JSON in %s hooks editor: %s", scope, e)
             QMessageBox.critical(self, "Invalid JSON", f"Invalid JSON:\n{str(e)}")
             return False
 
@@ -343,6 +356,7 @@ class ProjectHooksSubTab(QWidget):
             QMessageBox.information(self, "Saved", f"Hooks saved to {scope} settings!")
 
         except Exception as e:
+            logger.error("Failed to save %s hooks: %s", scope, e)
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
     HOOK_TEMPLATES = {

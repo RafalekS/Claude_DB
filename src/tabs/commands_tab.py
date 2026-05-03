@@ -268,6 +268,7 @@ class CommandsTab(QWidget):
                 self.command_name_label.setText(f"Editing: {command_name}")
                 self.command_editor.setPlainText(content)
         except Exception as e:
+            logger.error("Failed to load command: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load command:\n{str(e)}")
 
     @staticmethod
@@ -347,6 +348,7 @@ class CommandsTab(QWidget):
                     f.write(new_content)
                 self.load_commands()
         except Exception as e:
+            logger.error("Failed to edit command: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to edit command:\n{str(e)}")
 
     def save_command(self):
@@ -360,6 +362,7 @@ class CommandsTab(QWidget):
                 f.write(content)
             self.command_name_label.setText(f"{self.current_command.name} ✓ saved")
         except Exception as e:
+            logger.error("Failed to save command: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save command:\n{str(e)}")
 
     def backup_and_save_command(self):
@@ -374,6 +377,7 @@ class CommandsTab(QWidget):
                 f.write(content)
             self.command_name_label.setText(f"{self.current_command.name} ✓ backed up & saved")
         except Exception as e:
+            logger.error("Failed to backup and save command: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to backup and save:\n{str(e)}")
 
     def revert_command(self):
@@ -390,6 +394,7 @@ class CommandsTab(QWidget):
                     content = f.read()
                 self.command_editor.setPlainText(content)
             except Exception as e:
+                logger.error("Failed to revert command: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to revert:\n{str(e)}")
 
     def create_new_command(self):
@@ -420,6 +425,7 @@ class CommandsTab(QWidget):
                 f.write(content)
             self.load_commands()
         except Exception as e:
+            logger.error("Failed to create command: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to create command:\n{str(e)}")
 
     def delete_command(self):
@@ -439,6 +445,7 @@ class CommandsTab(QWidget):
                 self.current_command = None
                 self.load_commands()
             except Exception as e:
+                logger.error("Failed to delete command: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to delete command:\n{str(e)}")
 
     def open_command_library(self):

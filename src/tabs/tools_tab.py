@@ -3,8 +3,10 @@ Tools Tab - External tool integration with config-based commands
 """
 
 import json
+import logging
 import os
 from pathlib import Path
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGroupBox, QPushButton,
     QMessageBox, QGridLayout, QInputDialog, QDialog, QLineEdit, QCheckBox,
@@ -142,6 +144,7 @@ class ToolsConfigDialog(QDialog):
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
+            logger.error("Failed to load config: %s", e)
             QMessageBox.critical(
                 self,
                 "Load Error",
@@ -675,6 +678,7 @@ class ToolsConfigDialog(QDialog):
                 QMessageBox.information(self, "Success", "Configuration imported!")
 
         except Exception as e:
+            logger.error("Failed to import config: %s", e)
             QMessageBox.critical(self, "Import Error", f"Failed to import:\n{str(e)}")
 
     def export_config(self):
@@ -704,6 +708,7 @@ class ToolsConfigDialog(QDialog):
             )
 
         except Exception as e:
+            logger.error("Failed to export config: %s", e)
             QMessageBox.critical(self, "Export Error", f"Failed to export:\n{str(e)}")
 
     def save_config(self):
@@ -732,6 +737,7 @@ class ToolsConfigDialog(QDialog):
                 self.accept()
 
         except Exception as e:
+            logger.error("Failed to save config: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
     def restart_application(self):
@@ -753,6 +759,7 @@ class ToolsConfigDialog(QDialog):
             QProcess.startDetached(python, [script])
 
         except Exception as e:
+            logger.error("Failed to restart application: %s", e)
             QMessageBox.critical(
                 self,
                 "Restart Error",

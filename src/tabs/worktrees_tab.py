@@ -283,8 +283,10 @@ class WorktreesTab(QWidget):
                 QMessageBox.information(self, "Created", f"Worktree created at:\n{data['path']}")
                 self.refresh()
             else:
+                logger.error("git worktree add failed: %s", result.stderr)
                 QMessageBox.critical(self, "Error", f"git worktree add failed:\n{result.stderr}")
         except Exception as e:
+            logger.error("Failed to create worktree: %s", e)
             QMessageBox.critical(self, "Error", str(e))
 
     def remove_worktree(self):
@@ -317,8 +319,10 @@ class WorktreesTab(QWidget):
             if result.returncode == 0:
                 self.refresh()
             else:
+                logger.error("git worktree remove failed: %s", result.stderr)
                 QMessageBox.critical(self, "Error", f"git worktree remove failed:\n{result.stderr}")
         except Exception as e:
+            logger.error("Failed to remove worktree: %s", e)
             QMessageBox.critical(self, "Error", str(e))
 
     def prune_worktrees(self):
@@ -332,6 +336,8 @@ class WorktreesTab(QWidget):
                 self.refresh()
                 QMessageBox.information(self, "Pruned", "Stale worktree entries removed.")
             else:
+                logger.error("git worktree prune failed: %s", result.stderr)
                 QMessageBox.critical(self, "Error", f"git worktree prune failed:\n{result.stderr}")
         except Exception as e:
+            logger.error("Failed to prune worktrees: %s", e)
             QMessageBox.critical(self, "Error", str(e))

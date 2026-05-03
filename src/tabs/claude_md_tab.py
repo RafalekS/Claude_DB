@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from utils import theme
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ClaudeMDTab(QWidget):
@@ -177,6 +179,7 @@ class ClaudeMDTab(QWidget):
             self.unsaved_label.setVisible(False)
             self._update_statistics()
         except Exception as e:
+            logger.error("Failed to load CLAUDE.md: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load CLAUDE.md:\n{str(e)}")
 
     def save_content(self):
@@ -189,6 +192,7 @@ class ClaudeMDTab(QWidget):
             self._update_statistics()
             QMessageBox.information(self, "Saved", "CLAUDE.md saved successfully!")
         except Exception as e:
+            logger.error("Failed to save CLAUDE.md: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save CLAUDE.md:\n{str(e)}")
 
     def backup_and_save(self):
@@ -204,4 +208,5 @@ class ClaudeMDTab(QWidget):
             self._update_statistics()
             QMessageBox.information(self, "Saved", "Backup created and CLAUDE.md saved!")
         except Exception as e:
+            logger.error("Failed to backup and save CLAUDE.md: %s", e)
             QMessageBox.critical(self, "Error", f"Failed:\n{str(e)}")

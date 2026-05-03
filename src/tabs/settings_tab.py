@@ -3,7 +3,9 @@ Settings Tab - Manage Claude Code settings.json
 """
 
 import json
+import logging
 from pathlib import Path
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox, QTabWidget, QLineEdit, QFileDialog,
@@ -352,6 +354,7 @@ class SettingsTab(QWidget):
             else:
                 editor.setPlainText("// File does not exist\n{}")
         except Exception as e:
+            logger.error("Failed to load settings: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load:\n{str(e)}")
 
     def validate_json(self, editor):
@@ -361,6 +364,7 @@ class SettingsTab(QWidget):
             QMessageBox.information(self, "Valid", "JSON is valid!")
             return True
         except json.JSONDecodeError as e:
+            logger.error("Invalid JSON in editor: %s", e)
             QMessageBox.critical(self, "Invalid JSON", f"Invalid JSON:\n{str(e)}")
             return False
 
@@ -467,6 +471,7 @@ class SettingsTab(QWidget):
                 load_env_vars()
                 QMessageBox.information(self, "Added", f"Environment variable '{key}' added successfully!")
             except Exception as e:
+                logger.error("Failed to add environment variable: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to add variable:\n{str(e)}")
 
         # Edit env var
@@ -496,6 +501,7 @@ class SettingsTab(QWidget):
                 load_env_vars()
                 QMessageBox.information(self, "Updated", f"Environment variable '{key}' updated!")
             except Exception as e:
+                logger.error("Failed to update environment variable: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to update variable:\n{str(e)}")
 
         # Remove env var
@@ -526,6 +532,7 @@ class SettingsTab(QWidget):
                 load_env_vars()
                 QMessageBox.information(self, "Removed", f"Environment variable '{key}' removed!")
             except Exception as e:
+                logger.error("Failed to remove environment variable: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to remove variable:\n{str(e)}")
 
         # Connect buttons
@@ -555,6 +562,7 @@ class SettingsTab(QWidget):
 
             QMessageBox.information(self, "Saved", f"Settings saved to:\n{file_path}")
         except Exception as e:
+            logger.error("Failed to save settings: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
     def backup_and_save(self, file_path, editor):
@@ -574,6 +582,7 @@ class SettingsTab(QWidget):
 
                 QMessageBox.information(self, "Saved", "Backup created and settings saved!")
         except Exception as e:
+            logger.error("Failed to backup and save settings: %s", e)
             QMessageBox.critical(self, "Error", f"Failed:\n{str(e)}")
 
     def set_notification_channel(self, file_path, editor):
@@ -605,4 +614,5 @@ class SettingsTab(QWidget):
             )
 
         except Exception as e:
+            logger.error("Failed to set notification channel: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to set notification channel:\n{str(e)}")

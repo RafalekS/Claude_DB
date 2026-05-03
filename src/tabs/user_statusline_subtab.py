@@ -12,6 +12,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QFont
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from utils import theme
 
 class UserStatuslineSubTab(QWidget):
@@ -169,6 +173,7 @@ class UserStatuslineSubTab(QWidget):
                 self.template_input.clear()
                 self.json_preview.setPlainText("# No statusline configured")
         except Exception as e:
+            logger.error("Failed to load statusline: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load statusline:\n{str(e)}")
 
     def update_preview(self):
@@ -223,6 +228,7 @@ class UserStatuslineSubTab(QWidget):
             self.update_preview()
             QMessageBox.information(self, "Success", "Statusline configuration saved successfully!")
         except Exception as e:
+            logger.error("Failed to save statusline: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save statusline:\n{str(e)}")
 
     def clear_statusline(self):
@@ -254,4 +260,5 @@ class UserStatuslineSubTab(QWidget):
 
                 QMessageBox.information(self, "Success", "Statusline configuration cleared successfully!")
             except Exception as e:
+                logger.error("Failed to clear statusline: %s", e)
                 QMessageBox.critical(self, "Clear Error", f"Failed to clear statusline:\n{str(e)}")

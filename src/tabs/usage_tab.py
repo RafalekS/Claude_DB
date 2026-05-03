@@ -5,7 +5,9 @@ Usage & Analytics Tab - Token usage statistics and monitoring
 import subprocess
 import re
 import json
+import logging
 from pathlib import Path
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
     QLabel, QMessageBox, QGroupBox, QCheckBox, QLineEdit, QComboBox,
@@ -243,6 +245,7 @@ class UsageTab(QWidget):
         except subprocess.TimeoutExpired:
             self.output_display.append("\n[Command timed out after 30 seconds]")
         except Exception as e:
+            logger.error("Failed to run ccusage: %s", e)
             QMessageBox.critical(
                 self,
                 "Error",
@@ -339,6 +342,7 @@ class UsageTab(QWidget):
                 )
 
         except Exception as e:
+            logger.error("Failed to refresh stats: %s", e)
             QMessageBox.critical(
                 self,
                 "Error",

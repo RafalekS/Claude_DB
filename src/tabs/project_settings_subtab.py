@@ -4,6 +4,7 @@ Includes Shared (.claude/settings.json) and Local (.claude/settings.local.json) 
 """
 
 import json
+import logging
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -15,6 +16,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
 from utils import theme
+
+logger = logging.getLogger(__name__)
 
 class ProjectSettingsSubTab(QWidget):
     """Settings interface for Model, Theme, and Environment Variables (project-level settings.json)"""
@@ -106,24 +109,22 @@ class ProjectSettingsSubTab(QWidget):
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(5)
 
-        # File path info
-        file_path_label = QLabel()
-        if scope == "shared":
-            file_path_label.setText(".claude/settings.json (team-shared, committed)")
-        else:
-            file_path_label.setText(".claude/settings.local.json (user-specific, gitignored)")
-
+        # File path info (stored as instance var so load_settings can update it)
+        file_path_label = QLabel("(no project selected)")
         file_path_label.setStyleSheet(
             f"color: {theme.FG_SECONDARY}; "
             f"font-size: {theme.FONT_SIZE_SMALL}px; "
             f"font-style: italic;"
         )
         layout.addWidget(file_path_label)
+        if scope == "shared":
+            self.shared_path_label = file_path_label
+        else:
+            self.local_path_label = file_path_label
 
         # Scroll area for sections
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll
 
         scroll_widget = QWidget()
         scroll_layout = QVBoxLayout(scroll_widget)
@@ -386,9 +387,15 @@ class ProjectSettingsSubTab(QWidget):
                 self.preview_texts[scope].clear()
             return
 
-        try:
-            project_path = self.project_context.get_project()
+        project_path = self.project_context.get_project()
+        if scope == "shared":
+            full_path = project_path / ".claude" / "settings.json"
+            self.shared_path_label.setText(f"File: {full_path} (team-shared, committed)")
+        else:
+            full_path = project_path / ".claude" / "settings.local.json"
+            self.local_path_label.setText(f"File: {full_path} (user-specific, gitignored)")
 
+        try:
             if scope == "shared":
                 settings = self.settings_manager.get_project_shared_settings(project_path)
             else:
@@ -424,6 +431,7 @@ class ProjectSettingsSubTab(QWidget):
             self.update_preview(settings, scope)
 
         except Exception as e:
+            logger.error("Failed to load %s settings: %s", scope, e)
             QMessageBox.critical(self, "Load Error", f"Failed to load {scope} settings:\n{str(e)}")
 
     def load_all_settings(self):
@@ -491,6 +499,7 @@ class ProjectSettingsSubTab(QWidget):
                 f"Theme: {settings.get('theme', 'N/A')}"
             )
         except Exception as e:
+            logger.error("Failed to save %s settings: %s", scope, e)
             QMessageBox.critical(self, "Save Error", f"Failed to save {scope} settings:\n{str(e)}")
 
     def backup_and_save(self, scope: str):
@@ -517,6 +526,7 @@ class ProjectSettingsSubTab(QWidget):
             self.save_settings(scope)
 
         except Exception as e:
+            logger.error("Failed to create backup for %s settings: %s", scope, e)
             QMessageBox.critical(self, "Backup Error", f"Failed to create backup:\n{str(e)}")
 
     def set_notification_channel(self, scope: str):
@@ -552,6 +562,7 @@ class ProjectSettingsSubTab(QWidget):
                 "Claude Code will now use terminal bell for notifications."
             )
         except Exception as e:
+            logger.error("Failed to set notification channel for %s settings: %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed to set notification channel:\n{str(e)}")
 
     def update_preview(self, settings: dict, scope: str):

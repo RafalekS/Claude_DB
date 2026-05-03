@@ -4,6 +4,7 @@ Dedicated subtab for statusline in .claude/settings.json (Shared) and .claude/se
 """
 
 import json
+import logging
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -13,6 +14,8 @@ from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QFont
 
 from utils import theme
+
+logger = logging.getLogger(__name__)
 
 class ProjectStatuslineSubTab(QWidget):
     """Dedicated subtab for project-level statusline configuration (Shared/Local)"""
@@ -61,7 +64,6 @@ class ProjectStatuslineSubTab(QWidget):
 
         # Nested tabs for Shared vs Local
         self.scope_tabs = QTabWidget()
-        self.scope_tabs
 
         # Shared tab
         self.shared_editor = self.create_statusline_editor("shared")
@@ -95,14 +97,14 @@ class ProjectStatuslineSubTab(QWidget):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(5, 5, 5, 5)
 
-        # File path label
-        path_label = QLabel()
-        if scope == "shared":
-            path_label.setText(".claude/settings.json (team-shared)")
-        else:
-            path_label.setText(".claude/settings.local.json (user-specific)")
+        # File path label (stored as instance var so load_statusline can update it)
+        path_label = QLabel("(no project selected)")
         path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(path_label)
+        if scope == "shared":
+            self.shared_path_label = path_label
+        else:
+            self.local_path_label = path_label
 
         # Configuration section
         config_group = QGroupBox("Statusline Configuration")
@@ -192,13 +194,21 @@ class ProjectStatuslineSubTab(QWidget):
         if not self.project_context.has_project():
             return
 
+        project_path = self.project_context.get_project()
+        if scope == "shared":
+            full_path = project_path / ".claude" / "settings.json"
+            self.shared_path_label.setText(f"File: {full_path} (team-shared)")
+        else:
+            full_path = project_path / ".claude" / "settings.local.json"
+            self.local_path_label.setText(f"File: {full_path} (user-specific)")
+
         try:
             editor_data = self.editors[scope]
 
             if scope == "shared":
-                settings = self.settings_manager.get_project_shared_settings(self.project_context.get_project())
+                settings = self.settings_manager.get_project_shared_settings(project_path)
             else:
-                settings = self.settings_manager.get_project_local_settings(self.project_context.get_project())
+                settings = self.settings_manager.get_project_local_settings(project_path)
 
             # Claude Code reads "statusLine" (camelCase); fall back to legacy lowercase for compat
             statusline = settings.get("statusLine", settings.get("statusline", {}))
@@ -213,6 +223,7 @@ class ProjectStatuslineSubTab(QWidget):
                 editor_data['json_preview'].setPlainText("# No statusline configured")
 
         except Exception as e:
+            logger.error("Failed to load %s statusline: %s", scope, e)
             QMessageBox.critical(self, "Load Error", f"Failed to load {scope} statusline:\n{str(e)}")
 
     def update_preview(self, scope: str):
@@ -275,6 +286,7 @@ class ProjectStatuslineSubTab(QWidget):
             self.update_preview(scope)
             QMessageBox.information(self, "Success", f"{scope.capitalize()} statusline saved successfully!")
         except Exception as e:
+            logger.error("Failed to save %s statusline: %s", scope, e)
             QMessageBox.critical(self, "Save Error", f"Failed to save statusline:\n{str(e)}")
 
     def clear_statusline(self, scope: str):
@@ -310,4 +322,5 @@ class ProjectStatuslineSubTab(QWidget):
 
                 QMessageBox.information(self, "Success", f"{scope.capitalize()} statusline cleared!")
             except Exception as e:
+                logger.error("Failed to clear %s statusline: %s", scope, e)
                 QMessageBox.critical(self, "Clear Error", f"Failed to clear statusline:\n{str(e)}")

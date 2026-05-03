@@ -22,6 +22,8 @@ from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from utils.project_scanner import scan_projects
 
 from utils import theme
+import logging
+logger = logging.getLogger(__name__)
 # Import subtabs (using OLD correct implementations)
 from tabs.project_settings_subtab import ProjectSettingsSubTab
 from tabs.project_hooks_subtab import ProjectHooksSubTab
@@ -130,6 +132,7 @@ class ProjectClaudeMDSubTab(QWidget):
                 f.write(self.editor.toPlainText())
             QMessageBox.information(self, "Success", "CLAUDE.md saved successfully!")
         except Exception as e:
+            logger.error("Failed to save project CLAUDE.md: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save CLAUDE.md:\n{str(e)}")
 
 class ProjectPromptSubTab(QWidget):
@@ -229,6 +232,7 @@ class ProjectPromptSubTab(QWidget):
                 f.write(self.editor.toPlainText())
             QMessageBox.information(self, "Success", "PROMPT.md saved successfully!")
         except Exception as e:
+            logger.error("Failed to save project PROMPT.md: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save PROMPT.md:\n{str(e)}")
 
 class ProjectConfigTab(QWidget):

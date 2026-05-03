@@ -12,6 +12,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QFont
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from utils import theme
 from tabs.hooks_shared import HOOK_EVENT_GROUPS, HOOK_EVENTS, HookReferenceDialog
 
@@ -212,6 +216,7 @@ class UserHooksSubTab(QWidget):
             self.update_events_list()
 
         except Exception as e:
+            logger.error("Failed to load hooks: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load hooks:\n{str(e)}")
 
     def update_events_list(self):
@@ -248,6 +253,7 @@ class UserHooksSubTab(QWidget):
             QMessageBox.information(self, "Valid", "JSON is valid!")
             return True
         except json.JSONDecodeError as e:
+            logger.error("Invalid JSON in hooks editor: %s", e)
             QMessageBox.critical(self, "Invalid JSON", f"Invalid JSON:\n{str(e)}")
             return False
 
@@ -270,6 +276,7 @@ class UserHooksSubTab(QWidget):
             QMessageBox.information(self, "Saved", "Hooks saved to user settings!")
 
         except Exception as e:
+            logger.error("Failed to save hooks: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
     # Templates for each handler type

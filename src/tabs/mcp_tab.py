@@ -1346,6 +1346,7 @@ class MCPTab(QWidget):
                     self.update_server_list()
                     QMessageBox.information(self, "Removed", f"Server '{server_name}' removed successfully{source_info}!")
             except Exception as e:
+                logger.error("Failed to remove MCP server: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to remove server:\n{str(e)}")
 
     def edit_server(self):
@@ -1439,6 +1440,7 @@ class MCPTab(QWidget):
             QMessageBox.information(self, "Valid", "JSON is valid!")
             return True
         except json.JSONDecodeError as e:
+            logger.error("Invalid JSON in MCP config editor: %s", e)
             QMessageBox.critical(self, "Invalid JSON", f"Invalid JSON:\n{str(e)}")
             return False
 
@@ -1465,6 +1467,7 @@ class MCPTab(QWidget):
 
             QMessageBox.information(self, "Saved", f"MCP configuration saved to {save_location}!")
         except Exception as e:
+            logger.error("Failed to save MCP config: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
     def save_mcp_config_internal(self, config):
@@ -1544,6 +1547,7 @@ class MCPTab(QWidget):
                 self.update_server_list()
                 QMessageBox.information(self, "Saved", "Backup created and MCP configuration saved!")
         except Exception as e:
+            logger.error("Failed to backup and save MCP config: %s", e)
             QMessageBox.critical(self, "Error", f"Failed:\n{str(e)}")
 
     def revert_mcp_config(self):
@@ -1621,6 +1625,7 @@ class MCPTab(QWidget):
             QMessageBox.information(self, "Deploy Complete", msg)
 
         except Exception as e:
+            logger.error("Failed to deploy MCP servers: %s", e)
             QMessageBox.critical(self, "Deploy Error", f"Failed to deploy MCP servers:\n{str(e)}")
 
     def reset_project_choices(self):
@@ -1689,6 +1694,7 @@ class MCPTab(QWidget):
                         json.dump(config, f, indent=2)
                     temp_validation = True
                 except json.JSONDecodeError as e:
+                    logger.error("Cannot validate MCP config: invalid JSON in editor: %s", e)
                     QMessageBox.critical(self, "Invalid JSON", f"Cannot validate: Invalid JSON in editor\n{str(e)}")
                     return
 
@@ -1720,6 +1726,7 @@ class MCPTab(QWidget):
             msg.exec()
 
         except Exception as e:
+            logger.error("Failed to validate MCP config: %s", e)
             QMessageBox.critical(self, "Validation Error", f"Failed to validate:\n{str(e)}")
 
     def autofix_mcp_config(self):
@@ -1742,6 +1749,7 @@ class MCPTab(QWidget):
                         json.dump(config, f, indent=2)
                     temp_fix = True
                 except json.JSONDecodeError as e:
+                    logger.error("Cannot auto-fix MCP config: invalid JSON in editor: %s", e)
                     QMessageBox.critical(self, "Invalid JSON", f"Cannot auto-fix: Invalid JSON in editor\n{str(e)}")
                     return
 
@@ -1789,4 +1797,5 @@ class MCPTab(QWidget):
                 )
 
         except Exception as e:
+            logger.error("Failed to auto-fix MCP config: %s", e)
             QMessageBox.critical(self, "Auto-Fix Error", f"Failed to auto-fix:\n{str(e)}")

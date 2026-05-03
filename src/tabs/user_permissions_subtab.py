@@ -629,6 +629,7 @@ class UserPermissionsSubTab(QWidget):
             QMessageBox.information(self, "Success", "Permission added!")
 
         except Exception as e:
+            logger.error("Failed to add permission: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to add permission:\n{str(e)}")
 
     def edit_permission(self):
@@ -668,6 +669,7 @@ class UserPermissionsSubTab(QWidget):
             QMessageBox.information(self, "Success", "Permission updated!")
 
         except Exception as e:
+            logger.error("Failed to edit permission: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to edit permission:\n{str(e)}")
 
     def delete_permission(self):
@@ -702,4 +704,5 @@ class UserPermissionsSubTab(QWidget):
             QMessageBox.information(self, "Success", "Permission deleted!")
 
         except Exception as e:
+            logger.error("Failed to delete permission: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to delete permission:\n{str(e)}")
