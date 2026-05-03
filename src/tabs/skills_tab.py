@@ -850,7 +850,7 @@ class SkillsTab(QWidget):
             if not self.project_context or not self.project_context.has_project():
                 return None
             project = self.project_context.get_project()
-            if not isinstance(project, Path):
+            if not project:
                 return None
             return project / ".claude" / "skills"
 
@@ -865,11 +865,11 @@ class SkillsTab(QWidget):
             if self.scope == "user":
                 skill_dirs = self.config_manager.list_skill_dirs()
             else:
-                skill_dirs = (
-                    [p for p in skills_dir.iterdir() if p.is_dir()]
-                    if skills_dir.exists()
-                    else []
-                )
+                if not self.config_manager.fs.exists(skills_dir):
+                    skill_dirs = []
+                else:
+                    skill_dirs = [p for p in self.config_manager.fs.iterdir(skills_dir)
+                                  if self.config_manager.fs.is_dir(p)]
 
             for skill_dir in skill_dirs:
                 skill_md = skill_dir / "SKILL.md"

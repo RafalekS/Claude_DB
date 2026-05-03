@@ -218,7 +218,7 @@ class CommandsTab(QWidget):
             if not self.project_context.has_project():
                 return None
             project = self.project_context.get_project()
-            if not isinstance(project, Path):
+            if not project:
                 return None
             return project / ".claude" / "commands"
 
@@ -239,9 +239,13 @@ class CommandsTab(QWidget):
             if self.scope == "user":
                 commands = self.config_manager.list_commands()
             else:
-                if not commands_dir.exists():
+                if not self.config_manager.fs.exists(commands_dir):
                     return
-                commands = list(commands_dir.glob("**/*.md"))
+                commands = []
+                for root, dirs, files in self.config_manager.fs.walk(commands_dir):
+                    for f in files:
+                        if f.endswith(".md"):
+                            commands.append(self.config_manager.fs.join_path(root, f))
 
             base_str = str(commands_dir).rstrip("/")
             for command_path in sorted(commands, key=str):

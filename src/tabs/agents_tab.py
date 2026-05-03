@@ -394,7 +394,7 @@ class AgentsTab(QWidget):
             if not self.project_context.has_project():
                 return None
             project = self.project_context.get_project()
-            if not isinstance(project, Path):
+            if not project:
                 return None
             return project / ".claude" / "agents"
 
@@ -415,9 +415,13 @@ class AgentsTab(QWidget):
             if self.scope == "user":
                 agents = self.config_manager.list_agents()
             else:
-                if not agents_dir.exists():
+                if not self.config_manager.fs.exists(agents_dir):
                     return
-                agents = list(agents_dir.glob("**/*.md"))
+                agents = []
+                for root, dirs, files in self.config_manager.fs.walk(agents_dir):
+                    for f in files:
+                        if f.endswith(".md"):
+                            agents.append(self.config_manager.fs.join_path(root, f))
 
             base_str = str(agents_dir).rstrip("/")
             for agent_path in sorted(agents, key=str):
@@ -588,7 +592,7 @@ Add detailed instructions for this agent here.
         )
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                self.current_agent.unlink()
+                self.config_manager.fs.unlink(self.current_agent)
                 self.agent_editor.clear()
                 self.agent_name_label.setText("No agent selected")
                 self.current_agent = None
@@ -605,9 +609,7 @@ Add detailed instructions for this agent here.
             return
 
         try:
-            # Read current content
-            with open(self.current_agent, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = self.config_manager.fs.read_text(self.current_agent)
 
             # Parse frontmatter
             frontmatter, body = self.parse_frontmatter(content)
