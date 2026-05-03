@@ -389,8 +389,7 @@ class AgentsTab(QWidget):
     def get_scope_agents_dir(self):
         """Get agents directory for the current scope"""
         if self.scope == "user":
-            d = self.config_manager.agents_dir
-            return d if isinstance(d, Path) else None
+            return self.config_manager.agents_dir
         else:  # project
             if not self.project_context.has_project():
                 return None
@@ -410,15 +409,21 @@ class AgentsTab(QWidget):
         try:
             self.agent_list.clear()
 
-            if not agents_dir or not agents_dir.exists():
+            if not agents_dir:
                 return
 
-            # List all .md files in agents directory and subdirectories (recursive)
-            agents = list(agents_dir.glob("**/*.md"))
-            for agent_path in sorted(agents):
-                # Show relative path from agents_dir
-                rel_path = agent_path.relative_to(agents_dir)
-                self.agent_list.addItem(str(rel_path))
+            if self.scope == "user":
+                agents = self.config_manager.list_agents()
+            else:
+                if not agents_dir.exists():
+                    return
+                agents = list(agents_dir.glob("**/*.md"))
+
+            base_str = str(agents_dir).rstrip("/")
+            for agent_path in sorted(agents, key=str):
+                path_str = str(agent_path)
+                rel = path_str[len(base_str)+1:] if path_str.startswith(base_str + "/") else agent_path.name
+                self.agent_list.addItem(rel)
 
         except Exception as e:
             logger.error("Failed to load agents: %s", e)
@@ -437,9 +442,8 @@ class AgentsTab(QWidget):
             agents_dir = self.get_scope_agents_dir()
             agent_path = agents_dir / agent_name
 
-            if agent_path.exists():
-                with open(agent_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+            if self.config_manager.fs.exists(agent_path):
+                content = self.config_manager.fs.read_text(agent_path)
                 self.current_agent = agent_path
                 self.agent_name_label.setText(f"Editing: {agent_name}")
                 self.agent_editor.setPlainText(content)
@@ -454,8 +458,7 @@ class AgentsTab(QWidget):
             return
         try:
             content = self.agent_editor.toPlainText()
-            with open(self.current_agent, 'w', encoding='utf-8') as f:
-                f.write(content)
+            self.config_manager.fs.write_text(self.current_agent, content)
             QMessageBox.information(self, "Save Success", "Agent saved successfully!")
         except Exception as e:
             logger.error("Failed to save agent: %s", e)
@@ -469,8 +472,7 @@ class AgentsTab(QWidget):
         try:
             self.backup_manager.create_file_backup(self.current_agent)
             content = self.agent_editor.toPlainText()
-            with open(self.current_agent, 'w', encoding='utf-8') as f:
-                f.write(content)
+            self.config_manager.fs.write_text(self.current_agent, content)
             QMessageBox.information(self, "Backup & Save Success", "Backup created and agent saved!")
         except Exception as e:
             logger.error("Failed to backup and save agent: %s", e)
@@ -486,8 +488,7 @@ class AgentsTab(QWidget):
         )
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                with open(self.current_agent, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                content = self.config_manager.fs.read_text(self.current_agent)
                 self.agent_editor.setPlainText(content)
             except Exception as e:
                 logger.error("Failed to revert agent: %s", e)
@@ -513,13 +514,13 @@ class AgentsTab(QWidget):
         else:
             agent_path = agents_dir / f"{agent_data['name']}.md"
 
-        if agent_path.exists():
+        if self.config_manager.fs.exists(agent_path):
             QMessageBox.warning(self, "Agent Exists", f"Agent '{agent_data['name']}' already exists.")
             return
 
         try:
             # Create parent directories if they don't exist
-            agent_path.parent.mkdir(parents=True, exist_ok=True)
+            self.config_manager.fs.mkdir(agent_path.parent, parents=True, exist_ok=True)
 
             # Build frontmatter
             frontmatter_lines = [
@@ -554,8 +555,7 @@ Describe when and how to use this agent.
 Add detailed instructions for this agent here.
 """
 
-            with open(agent_path, 'w', encoding='utf-8') as f:
-                f.write(content)
+            self.config_manager.fs.write_text(agent_path, content)
 
             self.load_agents()
             QMessageBox.information(
@@ -565,8 +565,10 @@ Add detailed instructions for this agent here.
             )
 
             # Auto-select the new agent
-            rel_path = agent_path.relative_to(agents_dir)
-            items = self.agent_list.findItems(str(rel_path), Qt.MatchFlag.MatchExactly)
+            base_str = str(agents_dir).rstrip("/")
+            path_str = str(agent_path)
+            rel_path = path_str[len(base_str)+1:] if path_str.startswith(base_str + "/") else agent_path.name
+            items = self.agent_list.findItems(rel_path, Qt.MatchFlag.MatchExactly)
             if items:
                 self.agent_list.setCurrentItem(items[0])
                 self.load_agent_content(items[0])
@@ -719,23 +721,22 @@ Add detailed instructions for this agent here.
         agents_dir = self.get_scope_agents_dir()
         if agents_dir is None:
             return
-        agents_dir.mkdir(parents=True, exist_ok=True)
+        self.config_manager.fs.mkdir(agents_dir, parents=True, exist_ok=True)
 
         added_count = 0
         skipped_count = 0
 
         for agent_name, agent_content in agents:
             agent_file = agents_dir / f"{agent_name}.md"
-            if agent_file.exists():
+            if self.config_manager.fs.exists(agent_file):
                 skipped_count += 1
                 continue
 
             try:
                 # Create parent directories if agent is in a subfolder
-                agent_file.parent.mkdir(parents=True, exist_ok=True)
+                self.config_manager.fs.mkdir(agent_file.parent, parents=True, exist_ok=True)
 
-                with open(agent_file, 'w', encoding='utf-8') as f:
-                    f.write(agent_content)
+                self.config_manager.fs.write_text(agent_file, agent_content)
                 added_count += 1
             except Exception as e:
                 logger.error("Failed to deploy agent '%s': %s", agent_name, e)

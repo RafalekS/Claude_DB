@@ -5,7 +5,6 @@ Skills Tab - managing Claude Code skills (directory-based with SKILL.md files)
 import logging
 import os
 import re
-import shutil
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -796,7 +795,8 @@ class SkillsTab(QWidget):
 
         # Resolve target directory
         if target_scope == "user":
-            target_dir = self.config_manager.claude_dir / "skills"
+            target_dir = self.config_manager.skills_dir
+            target_fs = self.config_manager.fs
         else:
             if not self.project_context or not self.project_context.has_project():
                 QMessageBox.warning(self, "No Project", "No project is open for project-scope import.")
@@ -806,9 +806,11 @@ class SkillsTab(QWidget):
                 QMessageBox.warning(self, "Remote Project", "Skill import to remote projects is not supported.")
                 return
             target_dir = project / ".claude" / "skills"
+            from modules.remote.filesystem import LocalFileSystem
+            target_fs = LocalFileSystem()
 
         skill_dir = target_dir / skill_name
-        if skill_dir.exists():
+        if target_fs.exists(skill_dir):
             reply = QMessageBox.question(
                 self, "Skill Exists",
                 f"A skill named '{skill_name}' already exists. Overwrite?",
@@ -818,8 +820,8 @@ class SkillsTab(QWidget):
                 return
 
         try:
-            skill_dir.mkdir(parents=True, exist_ok=True)
-            (skill_dir / "SKILL.md").write_text(content, encoding="utf-8")
+            target_fs.mkdir(skill_dir, parents=True, exist_ok=True)
+            target_fs.write_text(skill_dir / "SKILL.md", content)
         except Exception as e:
             logger.error("Failed to import skill: %s", e)
             QMessageBox.critical(self, "Import Failed", f"Could not write skill:\n{e}")
@@ -843,8 +845,7 @@ class SkillsTab(QWidget):
     def get_scope_skills_dir(self):
         """Get skills directory for the current scope"""
         if self.scope == "user":
-            d = self.config_manager.claude_dir / "skills"
-            return d if isinstance(d, Path) else None
+            return self.config_manager.skills_dir
         else:  # project
             if not self.project_context or not self.project_context.has_project():
                 return None
@@ -860,15 +861,23 @@ class SkillsTab(QWidget):
         skills_dir = self.get_scope_skills_dir()
         self.path_label.setText(f"Directory: {skills_dir or 'N/A'}")
 
-        if skills_dir and skills_dir.exists():
-            for skill_dir in skills_dir.iterdir():
-                if skill_dir.is_dir():
-                    skill_md = skill_dir / "SKILL.md"
-                    if skill_md.exists():
-                        item = QListWidgetItem(skill_dir.name)
-                        item.setData(Qt.ItemDataRole.UserRole, skill_dir)
-                        item.setForeground(QColor(theme.ACCENT_PRIMARY))
-                        self.skills_list.addItem(item)
+        if skills_dir:
+            if self.scope == "user":
+                skill_dirs = self.config_manager.list_skill_dirs()
+            else:
+                skill_dirs = (
+                    [p for p in skills_dir.iterdir() if p.is_dir()]
+                    if skills_dir.exists()
+                    else []
+                )
+
+            for skill_dir in skill_dirs:
+                skill_md = skill_dir / "SKILL.md"
+                if self.config_manager.fs.exists(skill_md):
+                    item = QListWidgetItem(skill_dir.name)
+                    item.setData(Qt.ItemDataRole.UserRole, skill_dir)
+                    item.setForeground(QColor(theme.ACCENT_PRIMARY))
+                    self.skills_list.addItem(item)
 
         # Show message if no skills found
         if self.skills_list.count() == 0:
@@ -894,29 +903,19 @@ class SkillsTab(QWidget):
 
         skill_md = skill_path / "SKILL.md"
 
-        if not skill_md.exists():
-            QMessageBox.warning(
-                self,
-                "File Not Found",
-                f"SKILL.md not found at:\n{skill_md}"
-            )
+        if not self.config_manager.fs.exists(skill_md):
+            QMessageBox.warning(self, "File Not Found", f"SKILL.md not found at:\n{skill_md}")
             return
 
         try:
-            with open(skill_md, 'r', encoding='utf-8') as f:
-                content = f.read()
-
+            content = self.config_manager.fs.read_text(skill_md)
             self.editor.setPlainText(content)
             self.current_skill = skill_path
             self.skill_name_label.setText(f"Editing: {skill_path.name}")
 
         except Exception as e:
             logger.error("Failed to load SKILL.md: %s", e)
-            QMessageBox.critical(
-                self,
-                "Load Error",
-                f"Failed to load SKILL.md:\n{str(e)}"
-            )
+            QMessageBox.critical(self, "Load Error", f"Failed to load SKILL.md:\n{str(e)}")
 
     def edit_skill(self):
         """Edit selected skill with dialog"""
@@ -930,13 +929,12 @@ class SkillsTab(QWidget):
         skill_dir = skills_dir / skill_name
         skill_md = skill_dir / "SKILL.md"
 
-        if not skill_md.exists():
+        if not self.config_manager.fs.exists(skill_md):
             QMessageBox.warning(self, "Error", "Skill file not found.")
             return
 
         try:
-            with open(skill_md, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = self.config_manager.fs.read_text(skill_md)
 
             dialog = EditSkillDialog(skill_name, content, self)
             if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -970,11 +968,9 @@ class SkillsTab(QWidget):
                     fm_lines.append(f"hooks:\n{new_data['hooks']}")
                 fm_lines.append("---")
                 new_frontmatter = "\n".join(fm_lines)
-                # Preserve existing body content
                 body = new_data.get('body', '')
                 new_content = f"{new_frontmatter}\n{body}"
-                with open(skill_md, 'w', encoding='utf-8') as f:
-                    f.write(new_content)
+                self.config_manager.fs.write_text(skill_md, new_content)
                 self.load_skills()
         except Exception as e:
             logger.error("Failed to edit skill: %s", e)
@@ -994,15 +990,13 @@ class SkillsTab(QWidget):
         skill_md = skill_dir / "SKILL.md"
 
         # Check if already exists
-        if skill_dir.exists():
+        if self.config_manager.fs.exists(skill_dir):
             QMessageBox.warning(self, "Skill Exists", f"A skill named '{skill_name}' already exists")
             return
 
         try:
-            # Create directory
-            skill_dir.mkdir(parents=True, exist_ok=True)
+            self.config_manager.fs.mkdir(skill_dir, parents=True, exist_ok=True)
 
-            # Build YAML frontmatter
             fm_lines = [
                 "---",
                 f"name: {skill_name}",
@@ -1046,11 +1040,7 @@ Describe how to use this skill.
 
 Provide examples of using this skill.
 """
-
-            with open(skill_md, 'w', encoding='utf-8') as f:
-                f.write(content)
-
-            # Reload skills list
+            self.config_manager.fs.write_text(skill_md, content)
             self.load_skills()
 
         except Exception as e:
@@ -1087,24 +1077,15 @@ Provide examples of using this skill.
 
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                # Delete directory and all contents
-                shutil.rmtree(skill_path)
-
-                # Clear editor
+                self.config_manager.fs.rmtree(skill_path)
                 self.editor.clear()
                 self.skill_name_label.setText("No skill selected")
                 self.current_skill = None
-
-                # Reload list
                 self.load_skills()
 
             except Exception as e:
                 logger.error("Failed to delete skill: %s", e)
-                QMessageBox.critical(
-                    self,
-                    "Deletion Error",
-                    f"Failed to delete skill:\n{str(e)}"
-                )
+                QMessageBox.critical(self, "Deletion Error", f"Failed to delete skill:\n{str(e)}")
 
     def save_skill(self):
         """Save current SKILL.md content"""
@@ -1120,20 +1101,13 @@ Provide examples of using this skill.
         skill_md = current_skill / "SKILL.md"
 
         try:
-            # Save content
             content = self.editor.toPlainText()
-            with open(skill_md, 'w', encoding='utf-8') as f:
-                f.write(content)
-
+            self.config_manager.fs.write_text(skill_md, content)
             self.skill_name_label.setText(f"Editing: {current_skill.name} ✓ saved")
 
         except Exception as e:
             logger.error("Failed to save skill: %s", e)
-            QMessageBox.critical(
-                self,
-                "Save Error",
-                f"Failed to save SKILL.md:\n{str(e)}"
-            )
+            QMessageBox.critical(self, "Save Error", f"Failed to save SKILL.md:\n{str(e)}")
 
     def backup_and_save_skill(self):
         """Create backup and save current SKILL.md"""
@@ -1149,24 +1123,16 @@ Provide examples of using this skill.
         skill_md = current_skill / "SKILL.md"
 
         try:
-            # Create backup if file exists
-            if skill_md.exists():
+            if self.config_manager.fs.exists(skill_md):
                 self.backup_manager.create_file_backup(skill_md)
 
-            # Save content
             content = self.editor.toPlainText()
-            with open(skill_md, 'w', encoding='utf-8') as f:
-                f.write(content)
-
+            self.config_manager.fs.write_text(skill_md, content)
             self.skill_name_label.setText(f"Editing: {current_skill.name} ✓ backed up & saved")
 
         except Exception as e:
             logger.error("Failed to backup and save skill: %s", e)
-            QMessageBox.critical(
-                self,
-                "Save Error",
-                f"Failed to save SKILL.md:\n{str(e)}"
-            )
+            QMessageBox.critical(self, "Save Error", f"Failed to save SKILL.md:\n{str(e)}")
 
     def revert_skill(self):
         """Revert to saved version"""
@@ -1184,16 +1150,11 @@ Provide examples of using this skill.
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 skill_md = current_skill / "SKILL.md"
-                with open(skill_md, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                content = self.config_manager.fs.read_text(skill_md)
                 self.editor.setPlainText(content)
             except Exception as e:
                 logger.error("Failed to revert skill: %s", e)
-                QMessageBox.critical(
-                    self,
-                    "Error",
-                    f"Failed to revert:\n{str(e)}"
-                )
+                QMessageBox.critical(self, "Error", f"Failed to revert:\n{str(e)}")
 
     def open_skill_library(self):
         """Open skill library to browse and manage templates"""
@@ -1210,7 +1171,7 @@ Provide examples of using this skill.
     def deploy_skills(self, skills):
         """Deploy selected skills to the current scope"""
         skills_dir = self.get_scope_skills_dir()
-        skills_dir.mkdir(parents=True, exist_ok=True)
+        self.config_manager.fs.mkdir(skills_dir, parents=True, exist_ok=True)
 
         added_count = 0
         skipped_count = 0
@@ -1219,14 +1180,13 @@ Provide examples of using this skill.
             skill_dir = skills_dir / skill_name
             skill_md = skill_dir / "SKILL.md"
 
-            if skill_md.exists():
+            if self.config_manager.fs.exists(skill_md):
                 skipped_count += 1
                 continue
 
             try:
-                skill_dir.mkdir(parents=True, exist_ok=True)
-                with open(skill_md, 'w', encoding='utf-8') as f:
-                    f.write(skill_content)
+                self.config_manager.fs.mkdir(skill_dir, parents=True, exist_ok=True)
+                self.config_manager.fs.write_text(skill_md, skill_content)
                 added_count += 1
             except Exception as e:
                 logger.error("Failed to deploy skill %s: %s", skill_name, e)

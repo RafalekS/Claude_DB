@@ -116,6 +116,10 @@ class LocalFileSystem:
     def unlink(self, path) -> None:
         Path(str(path)).unlink()
 
+    def rmtree(self, path) -> None:
+        import shutil
+        shutil.rmtree(str(path))
+
     # ── Path factory ───────────────────────────────────────────────────────────
 
     def join_path(self, root, name) -> Path:
@@ -302,6 +306,13 @@ class RemoteFileSystem:
     def unlink(self, path) -> None:
         p = self._s(path)
         self._sftp().remove(p)
+        self._cache.invalidate(p)
+
+    def rmtree(self, path) -> None:
+        p = self._s(path)
+        stdout, stderr = self._client.exec(f"rm -rf {shlex.quote(p)}")
+        if stderr.strip():
+            raise IOError(f"rm -rf {p}: {stderr.strip()}")
         self._cache.invalidate(p)
 
     # ── Path factory ───────────────────────────────────────────────────────────

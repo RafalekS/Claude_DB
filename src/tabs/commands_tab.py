@@ -213,8 +213,7 @@ class CommandsTab(QWidget):
     def get_scope_commands_dir(self):
         """Get commands directory for the current scope"""
         if self.scope == "user":
-            d = self.config_manager.commands_dir
-            return d if isinstance(d, Path) else None
+            return self.config_manager.commands_dir
         else:  # project
             if not self.project_context.has_project():
                 return None
@@ -234,15 +233,23 @@ class CommandsTab(QWidget):
         try:
             self.command_list.clear()
 
-            if not commands_dir or not commands_dir.exists():
+            if not commands_dir:
                 return
 
-            # List all .md files in commands directory and subdirectories (recursive)
-            commands = list(commands_dir.glob("**/*.md"))
-            for command_path in sorted(commands):
-                # Show relative path from commands_dir
-                rel_path = command_path.relative_to(commands_dir)
-                self.command_list.addItem(str(rel_path))
+            if self.scope == "user":
+                commands = self.config_manager.list_commands()
+            else:
+                if not commands_dir.exists():
+                    return
+                commands = list(commands_dir.glob("**/*.md"))
+
+            base_str = str(commands_dir).rstrip("/")
+            for command_path in sorted(commands, key=str):
+                path_str = str(command_path)
+                rel = (path_str[len(base_str) + 1:]
+                       if path_str.startswith(base_str + "/")
+                       else command_path.name)
+                self.command_list.addItem(rel)
 
         except Exception as e:
             logger.error("Failed to load commands: %s", e)
@@ -261,9 +268,8 @@ class CommandsTab(QWidget):
             commands_dir = self.get_scope_commands_dir()
             command_path = commands_dir / command_name
 
-            if command_path.exists():
-                with open(command_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+            if self.config_manager.fs.exists(command_path):
+                content = self.config_manager.fs.read_text(command_path)
                 self.current_command = command_path
                 self.command_name_label.setText(f"Editing: {command_name}")
                 self.command_editor.setPlainText(content)
@@ -332,20 +338,18 @@ class CommandsTab(QWidget):
         commands_dir = self.get_scope_commands_dir()
         command_path = commands_dir / command_name
 
-        if not command_path.exists():
+        if not self.config_manager.fs.exists(command_path):
             QMessageBox.warning(self, "Error", "Command file not found.")
             return
 
         try:
-            with open(command_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = self.config_manager.fs.read_text(command_path)
 
             dialog = EditCommandDialog(command_name, content, self)
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 new_data = dialog.get_command_data()
                 new_content = self._build_command_content(new_data)
-                with open(command_path, 'w', encoding='utf-8') as f:
-                    f.write(new_content)
+                self.config_manager.fs.write_text(command_path, new_content)
                 self.load_commands()
         except Exception as e:
             logger.error("Failed to edit command: %s", e)
@@ -358,8 +362,7 @@ class CommandsTab(QWidget):
             return
         try:
             content = self.command_editor.toPlainText()
-            with open(self.current_command, 'w', encoding='utf-8') as f:
-                f.write(content)
+            self.config_manager.fs.write_text(self.current_command, content)
             self.command_name_label.setText(f"{self.current_command.name} ✓ saved")
         except Exception as e:
             logger.error("Failed to save command: %s", e)
@@ -373,8 +376,7 @@ class CommandsTab(QWidget):
         try:
             self.backup_manager.create_file_backup(self.current_command)
             content = self.command_editor.toPlainText()
-            with open(self.current_command, 'w', encoding='utf-8') as f:
-                f.write(content)
+            self.config_manager.fs.write_text(self.current_command, content)
             self.command_name_label.setText(f"{self.current_command.name} ✓ backed up & saved")
         except Exception as e:
             logger.error("Failed to backup and save command: %s", e)
@@ -390,8 +392,7 @@ class CommandsTab(QWidget):
         )
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                with open(self.current_command, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                content = self.config_manager.fs.read_text(self.current_command)
                 self.command_editor.setPlainText(content)
             except Exception as e:
                 logger.error("Failed to revert command: %s", e)
@@ -413,17 +414,27 @@ class CommandsTab(QWidget):
             return
         command_path = commands_dir / name
 
-        if command_path.exists():
+        if self.config_manager.fs.exists(command_path):
             QMessageBox.warning(self, "Command Exists", f"Command '{name}' already exists.")
             return
 
         try:
-            command_path.parent.mkdir(parents=True, exist_ok=True)
-            command_data['display_name'] = command_data.get('display_name') or Path(name).stem
+            self.config_manager.fs.mkdir(command_path.parent, parents=True, exist_ok=True)
+            stem = name[:-3] if name.endswith(".md") else name
+            command_data['display_name'] = command_data.get('display_name') or stem
             content = self._build_command_content(command_data)
-            with open(command_path, 'w', encoding='utf-8') as f:
-                f.write(content)
+            self.config_manager.fs.write_text(command_path, content)
             self.load_commands()
+            # Auto-select the new command
+            base_str = str(commands_dir).rstrip("/")
+            path_str = str(command_path)
+            rel = (path_str[len(base_str) + 1:]
+                   if path_str.startswith(base_str + "/")
+                   else command_path.name)
+            items = self.command_list.findItems(rel, Qt.MatchFlag.MatchExactly)
+            if items:
+                self.command_list.setCurrentItem(items[0])
+                self.load_command_content(items[0])
         except Exception as e:
             logger.error("Failed to create command: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to create command:\n{str(e)}")
@@ -439,7 +450,7 @@ class CommandsTab(QWidget):
         )
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                self.current_command.unlink()
+                self.config_manager.fs.unlink(self.current_command)
                 self.command_editor.clear()
                 self.command_name_label.setText("No command selected")
                 self.current_command = None
@@ -465,20 +476,19 @@ class CommandsTab(QWidget):
         commands_dir = self.get_scope_commands_dir()
         if commands_dir is None:
             return
-        commands_dir.mkdir(parents=True, exist_ok=True)
+        self.config_manager.fs.mkdir(commands_dir, parents=True, exist_ok=True)
 
         added_count = 0
         skipped_count = 0
 
         for command_name, command_content in commands:
             command_file = commands_dir / f"{command_name}.md"
-            if command_file.exists():
+            if self.config_manager.fs.exists(command_file):
                 skipped_count += 1
                 continue
 
             try:
-                with open(command_file, 'w', encoding='utf-8') as f:
-                    f.write(command_content)
+                self.config_manager.fs.write_text(command_file, command_content)
                 added_count += 1
             except Exception as e:
                 QMessageBox.warning(self, "Deploy Error", f"Failed to deploy {command_name}:\n{str(e)}")

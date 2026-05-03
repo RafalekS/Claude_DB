@@ -49,6 +49,7 @@ class ConfigManager:
         self.claude_local_md    = self.claude_dir / "CLAUDE.local.md"
         self.agents_dir         = self.claude_dir / "agents"
         self.commands_dir       = self.claude_dir / "commands"
+        self.skills_dir         = self.claude_dir / "skills"
         self.hooks_dir          = self.claude_dir / "hooks"
 
     @staticmethod
@@ -166,6 +167,31 @@ class ConfigManager:
 
     def save_command(self, command_path, content: str) -> None:
         self.write_text_file(command_path, content)
+
+    # ── Skills ─────────────────────────────────────────────────────────────────
+
+    def list_skills(self) -> list:
+        if not self._fs.exists(self.skills_dir):
+            return []
+        skills = []
+        for root, dirs, files in self._fs.walk(self.skills_dir):
+            for file in files:
+                if file.endswith(".md"):
+                    skills.append(self._fs.join_path(root, file))
+        return sorted(skills, key=str)
+
+    def list_skill_dirs(self) -> list:
+        """Return immediate subdirectories of the skills directory."""
+        if not self._fs.exists(self.skills_dir):
+            return []
+        return [p for p in self._fs.iterdir(self.skills_dir)
+                if self._fs.is_dir(p)]
+
+    def get_skill_content(self, skill_path) -> str:
+        return self.read_text_file(skill_path)
+
+    def save_skill(self, skill_path, content: str) -> None:
+        self.write_text_file(skill_path, content)
 
     # ── CLAUDE.md ──────────────────────────────────────────────────────────────
 

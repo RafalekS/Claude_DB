@@ -88,3 +88,11 @@ class RemotePath:
 
     def resolve(self) -> "RemotePath":
         return self
+
+    def relative_to(self, other) -> "RemotePath":
+        base = str(other).rstrip("/")
+        if self._path.startswith(base + "/"):
+            return RemotePath(self._path[len(base) + 1:])
+        if self._path == base:
+            return RemotePath(".")
+        raise ValueError(f"{self!r} is not relative to {other!r}")
