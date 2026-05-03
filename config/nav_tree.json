@@ -1,0 +1,848 @@
+[
+  {
+    "id": "UserConfigTab",
+    "label": "\ud83d\udc64 User Config",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "UserConfigTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectConfigTab",
+    "label": "\ud83d\udcc1 Project Config",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "ProjectConfigTab",
+    "builder": null
+  },
+  {
+    "id": "PromptsTab",
+    "label": "\ud83d\udcac Prompts",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "PromptsTab",
+    "builder": null
+  },
+  {
+    "id": "PluginsTab",
+    "label": "\ud83e\udde9 Plugins",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "PluginsTab",
+    "builder": null
+  },
+  {
+    "id": "MemoryTab",
+    "label": "\ud83d\udcbe Memory",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "MemoryTab",
+    "builder": null
+  },
+  {
+    "id": "UsageTab",
+    "label": "\ud83d\udcc8 Usage & Analytics",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "UsageTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab",
+    "label": "\ud83d\udcda Documentation",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "ClaudeKitTab",
+    "label": "\ud83d\udee0\ufe0f ClaudeKit",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "ClaudeKitTab",
+    "builder": null
+  },
+  {
+    "id": "ToolsTab",
+    "label": "\ud83d\udd27 Tools",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "ToolsTab",
+    "builder": null
+  },
+  {
+    "id": "AboutTab",
+    "label": "\u2139\ufe0f About",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "AboutTab",
+    "builder": null
+  },
+  {
+    "id": "PreferencesTab",
+    "label": "\ud83c\udfa8 Preferences",
+    "type": "Tab",
+    "parent_id": null,
+    "parent_label": null,
+    "source_class": "PreferencesTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\u2328\ufe0f CLI Reference",
+    "label": "\u2328\ufe0f CLI Reference",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udd04 Workflows",
+    "label": "\ud83d\udd04 Workflows",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udcac Prompts & Memory",
+    "label": "\ud83d\udcac Prompts & Memory",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::/ Commands",
+    "label": "/ Commands",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udd27 Tools Ref",
+    "label": "\ud83d\udd27 Tools Ref",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\u2328\ufe0f Shortcuts",
+    "label": "\u2328\ufe0f Shortcuts",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83c\udf10 Remote",
+    "label": "\ud83c\udf10 Remote",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udd35 Chrome",
+    "label": "\ud83d\udd35 Chrome",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udda5\ufe0f Computer Use",
+    "label": "\ud83d\udda5\ufe0f Computer Use",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83e\udde9 Plugins Ref",
+    "label": "\ud83e\udde9 Plugins Ref",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83e\udd16 Model Info",
+    "label": "\ud83e\udd16 Model Info",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83e\udde0 Ultraplan",
+    "label": "\ud83e\udde0 Ultraplan",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udd12 Sandboxing",
+    "label": "\ud83d\udd12 Sandboxing",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udcd0 Context Window",
+    "label": "\ud83d\udcd0 Context Window",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83e\udd16 Headless",
+    "label": "\ud83e\udd16 Headless",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udce1 Telemetry",
+    "label": "\ud83d\udce1 Telemetry",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udda5\ufe0f IDE Integration",
+    "label": "\ud83d\udda5\ufe0f IDE Integration",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "DocumentationTab::\ud83d\udd01 GitHub Actions",
+    "label": "\ud83d\udd01 GitHub Actions",
+    "type": "SubTab",
+    "parent_id": "DocumentationTab",
+    "parent_label": "\ud83d\udcda Documentation",
+    "source_class": "DocumentationTab",
+    "builder": null
+  },
+  {
+    "id": "HooksTab::User (~/.claude/settings.json)",
+    "label": "User (~/.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "HooksTab",
+    "parent_label": "Hooks",
+    "source_class": "HooksTab",
+    "builder": "create_hooks_editor"
+  },
+  {
+    "id": "HooksTab::Project (./.claude/settings.json)",
+    "label": "Project (./.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "HooksTab",
+    "parent_label": "Hooks",
+    "source_class": "HooksTab",
+    "builder": "create_hooks_editor_with_folder"
+  },
+  {
+    "id": "HooksTab::Local (./.claude/settings.local.json)",
+    "label": "Local (./.claude/settings.local.json)",
+    "type": "SubTab",
+    "parent_id": "HooksTab",
+    "parent_label": "Hooks",
+    "source_class": "HooksTab",
+    "builder": "create_hooks_editor_with_folder"
+  },
+  {
+    "id": "MCPTab::Configure",
+    "label": "Configure",
+    "type": "SubTab",
+    "parent_id": "MCPTab",
+    "parent_label": "MCP",
+    "source_class": "MCPTab",
+    "builder": null
+  },
+  {
+    "id": "MCPTab::Discover",
+    "label": "Discover",
+    "type": "SubTab",
+    "parent_id": "MCPTab",
+    "parent_label": "MCP",
+    "source_class": "MCPTab",
+    "builder": "create_discover_tab"
+  },
+  {
+    "id": "MemoryTab::Overview",
+    "label": "Overview",
+    "type": "SubTab",
+    "parent_id": "MemoryTab",
+    "parent_label": "\ud83d\udcbe Memory",
+    "source_class": "MemoryTab",
+    "builder": "_build_overview"
+  },
+  {
+    "id": "MemoryTab::Conversations",
+    "label": "Conversations",
+    "type": "SubTab",
+    "parent_id": "MemoryTab",
+    "parent_label": "\ud83d\udcbe Memory",
+    "source_class": "MemoryTab",
+    "builder": "_build_conversations_tab"
+  },
+  {
+    "id": "MemoryTab::Project Memories",
+    "label": "Project Memories",
+    "type": "SubTab",
+    "parent_id": "MemoryTab",
+    "parent_label": "\ud83d\udcbe Memory",
+    "source_class": "MemoryTab",
+    "builder": "_build_project_memories_tab"
+  },
+  {
+    "id": "MemoryTab::File History",
+    "label": "File History",
+    "type": "SubTab",
+    "parent_id": "MemoryTab",
+    "parent_label": "\ud83d\udcbe Memory",
+    "source_class": "MemoryTab",
+    "builder": "_build_file_history_tab"
+  },
+  {
+    "id": "MemoryTab::Shell Snapshots",
+    "label": "Shell Snapshots",
+    "type": "SubTab",
+    "parent_id": "MemoryTab",
+    "parent_label": "\ud83d\udcbe Memory",
+    "source_class": "MemoryTab",
+    "builder": "_build_shell_snapshots_tab"
+  },
+  {
+    "id": "ModelConfigTab::User (~/.claude)",
+    "label": "User (~/.claude)",
+    "type": "SubTab",
+    "parent_id": "ModelConfigTab",
+    "parent_label": "Model Config",
+    "source_class": "ModelConfigTab",
+    "builder": "create_user_tab"
+  },
+  {
+    "id": "ModelConfigTab::Project",
+    "label": "Project",
+    "type": "SubTab",
+    "parent_id": "ModelConfigTab",
+    "parent_label": "Model Config",
+    "source_class": "ModelConfigTab",
+    "builder": "create_project_tab"
+  },
+  {
+    "id": "ModelConfigTab::Model Selector",
+    "label": "Model Selector",
+    "type": "SubTab",
+    "parent_id": "ModelConfigTab",
+    "parent_label": "Model Config",
+    "source_class": "ModelConfigTab",
+    "builder": "create_model_selector_tab"
+  },
+  {
+    "id": "ModelConfigTab::Model Information",
+    "label": "Model Information",
+    "type": "SubTab",
+    "parent_id": "ModelConfigTab",
+    "parent_label": "Model Config",
+    "source_class": "ModelConfigTab",
+    "builder": "create_model_info_tab"
+  },
+  {
+    "id": "ModelConfigTab::Shared (settings.json)",
+    "label": "Shared (settings.json)",
+    "type": "SubTab",
+    "parent_id": "ModelConfigTab",
+    "parent_label": "Model Config",
+    "source_class": "ModelConfigTab",
+    "builder": "create_model_selector_tab"
+  },
+  {
+    "id": "ModelConfigTab::Local (settings.local.json)",
+    "label": "Local (settings.local.json)",
+    "type": "SubTab",
+    "parent_id": "ModelConfigTab",
+    "parent_label": "Model Config",
+    "source_class": "ModelConfigTab",
+    "builder": "create_model_selector_tab"
+  },
+  {
+    "id": "PermissionsTab::User (~/.claude/settings.json)",
+    "label": "User (~/.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "PermissionsTab",
+    "parent_label": "Permissions",
+    "source_class": "PermissionsTab",
+    "builder": "create_permissions_editor"
+  },
+  {
+    "id": "PermissionsTab::Project (Local) (.claude/settings.local.json)",
+    "label": "Project (Local) (.claude/settings.local.json)",
+    "type": "SubTab",
+    "parent_id": "PermissionsTab",
+    "parent_label": "Permissions",
+    "source_class": "PermissionsTab",
+    "builder": "create_permissions_editor_with_folder"
+  },
+  {
+    "id": "PermissionsTab::Project (.claude/settings.json)",
+    "label": "Project (.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "PermissionsTab",
+    "parent_label": "Permissions",
+    "source_class": "PermissionsTab",
+    "builder": "create_permissions_editor_with_folder"
+  },
+  {
+    "id": "PreferencesTab::\ud83c\udfa8 Global Theme",
+    "label": "\ud83c\udfa8 Global Theme",
+    "type": "SubTab",
+    "parent_id": "PreferencesTab",
+    "parent_label": "\ud83c\udfa8 Preferences",
+    "source_class": "PreferencesTab",
+    "builder": "_build_theme_editor"
+  },
+  {
+    "id": "PreferencesTab::\ud83e\udde9 Widget Editor",
+    "label": "\ud83e\udde9 Widget Editor",
+    "type": "SubTab",
+    "parent_id": "PreferencesTab",
+    "parent_label": "\ud83c\udfa8 Preferences",
+    "source_class": "PreferencesTab",
+    "builder": "_build_widget_preview"
+  },
+  {
+    "id": "PreferencesTab::\ud83d\udd0d Elements",
+    "label": "\ud83d\udd0d Elements",
+    "type": "SubTab",
+    "parent_id": "PreferencesTab",
+    "parent_label": "\ud83c\udfa8 Preferences",
+    "source_class": "PreferencesTab",
+    "builder": "_build_elements_tab"
+  },
+  {
+    "id": "QWidget",
+    "label": "\ud83c\udfa8 Appearance",
+    "type": "SubTab",
+    "parent_id": "PreferencesTab",
+    "parent_label": "\ud83c\udfa8 Preferences",
+    "source_class": "QWidget",
+    "builder": null
+  },
+  {
+    "id": "ProjectClaudeMDSubTab",
+    "label": "\ud83d\udcdd CLAUDE.md",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "ProjectClaudeMDSubTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectSettingsSubTab",
+    "label": "\ud83c\udf9b\ufe0f Settings",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "ProjectSettingsSubTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectHooksSubTab",
+    "label": "\ud83e\ude9d Hooks",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "ProjectHooksSubTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectPermissionsSubTab",
+    "label": "\ud83d\udd12 Permissions",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "ProjectPermissionsSubTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectStatuslineSubTab",
+    "label": "\ud83d\udcca Statusline",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "ProjectStatuslineSubTab",
+    "builder": null
+  },
+  {
+    "id": "AgentsTab",
+    "label": "\ud83e\udd16 Agents",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "AgentsTab",
+    "builder": null
+  },
+  {
+    "id": "CommandsTab",
+    "label": "\u26a1 Commands",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "CommandsTab",
+    "builder": null
+  },
+  {
+    "id": "SkillsTab",
+    "label": "\ud83c\udf93 Skills",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "SkillsTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectPromptSubTab",
+    "label": "\ud83d\udcac Prompt",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "ProjectPromptSubTab",
+    "builder": null
+  },
+  {
+    "id": "MCPTab",
+    "label": "\ud83d\udd0c MCP Servers",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "MCPTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectsTab",
+    "label": "\ud83d\udcc2 Projects",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "ProjectsTab",
+    "builder": null
+  },
+  {
+    "id": "RulesTab",
+    "label": "\ud83d\udccb Rules",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "RulesTab",
+    "builder": null
+  },
+  {
+    "id": "WorktreesTab",
+    "label": "\ud83c\udf3f Worktrees",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "WorktreesTab",
+    "builder": null
+  },
+  {
+    "id": "AgentTeamsTab",
+    "label": "\ud83d\udc65 Agent Teams",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "AgentTeamsTab",
+    "builder": null
+  },
+  {
+    "id": "RemoteControlTab",
+    "label": "\ud83c\udf10 Remote Control",
+    "type": "SubTab",
+    "parent_id": "ProjectConfigTab",
+    "parent_label": "\ud83d\udcc1 Project Config",
+    "source_class": "RemoteControlTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectHooksSubTab::\ud83d\udce4 Shared (.claude/settings.json)",
+    "label": "\ud83d\udce4 Shared (.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "ProjectHooksSubTab",
+    "parent_label": "\ud83e\ude9d Hooks",
+    "source_class": "ProjectHooksSubTab",
+    "builder": "create_hooks_editor"
+  },
+  {
+    "id": "ProjectHooksSubTab::\ud83d\udd12 Local (.claude/settings.local.json)",
+    "label": "\ud83d\udd12 Local (.claude/settings.local.json)",
+    "type": "SubTab",
+    "parent_id": "ProjectHooksSubTab",
+    "parent_label": "\ud83e\ude9d Hooks",
+    "source_class": "ProjectHooksSubTab",
+    "builder": "create_hooks_editor"
+  },
+  {
+    "id": "ProjectPermissionsSubTab::\ud83d\udcc1 Shared (.claude/settings.json)",
+    "label": "\ud83d\udcc1 Shared (.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "ProjectPermissionsSubTab",
+    "parent_label": "\ud83d\udd12 Permissions",
+    "source_class": "ProjectPermissionsSubTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectPermissionsSubTab::\ud83d\udd12 Local (.claude/settings.local.json)",
+    "label": "\ud83d\udd12 Local (.claude/settings.local.json)",
+    "type": "SubTab",
+    "parent_id": "ProjectPermissionsSubTab",
+    "parent_label": "\ud83d\udd12 Permissions",
+    "source_class": "ProjectPermissionsSubTab",
+    "builder": null
+  },
+  {
+    "id": "ProjectSettingsSubTab::\ud83d\udce4 Shared (.claude/settings.json)",
+    "label": "\ud83d\udce4 Shared (.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "ProjectSettingsSubTab",
+    "parent_label": "\ud83c\udf9b\ufe0f Settings",
+    "source_class": "ProjectSettingsSubTab",
+    "builder": "create_settings_editor"
+  },
+  {
+    "id": "ProjectSettingsSubTab::\ud83d\udd12 Local (.claude/settings.local.json)",
+    "label": "\ud83d\udd12 Local (.claude/settings.local.json)",
+    "type": "SubTab",
+    "parent_id": "ProjectSettingsSubTab",
+    "parent_label": "\ud83c\udf9b\ufe0f Settings",
+    "source_class": "ProjectSettingsSubTab",
+    "builder": "create_settings_editor"
+  },
+  {
+    "id": "ProjectStatuslineSubTab::\ud83d\udce4 Shared (.claude/settings.json)",
+    "label": "\ud83d\udce4 Shared (.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "ProjectStatuslineSubTab",
+    "parent_label": "\ud83d\udcca Statusline",
+    "source_class": "ProjectStatuslineSubTab",
+    "builder": "create_statusline_editor"
+  },
+  {
+    "id": "ProjectStatuslineSubTab::\ud83d\udd12 Local (.claude/settings.local.json)",
+    "label": "\ud83d\udd12 Local (.claude/settings.local.json)",
+    "type": "SubTab",
+    "parent_id": "ProjectStatuslineSubTab",
+    "parent_label": "\ud83d\udcca Statusline",
+    "source_class": "ProjectStatuslineSubTab",
+    "builder": "create_statusline_editor"
+  },
+  {
+    "id": "RuleEditorWidget",
+    "label": "\ud83d\udc64 User (~/.claude/rules/)",
+    "type": "SubTab",
+    "parent_id": "RulesTab",
+    "parent_label": "\ud83d\udccb Rules",
+    "source_class": "RuleEditorWidget",
+    "builder": null
+  },
+  {
+    "id": "SettingsTab::User Settings",
+    "label": "User Settings",
+    "type": "SubTab",
+    "parent_id": "SettingsTab",
+    "parent_label": "Settings",
+    "source_class": "SettingsTab",
+    "builder": "create_settings_editor"
+  },
+  {
+    "id": "SettingsTab::Project Settings",
+    "label": "Project Settings",
+    "type": "SubTab",
+    "parent_id": "SettingsTab",
+    "parent_label": "Settings",
+    "source_class": "SettingsTab",
+    "builder": "create_project_settings_editor"
+  },
+  {
+    "id": "SettingsTab::Shared (settings.json)",
+    "label": "Shared (settings.json)",
+    "type": "SubTab",
+    "parent_id": "SettingsTab",
+    "parent_label": "Settings",
+    "source_class": "SettingsTab",
+    "builder": "create_project_settings_editor_widget"
+  },
+  {
+    "id": "SettingsTab::Local (settings.local.json)",
+    "label": "Local (settings.local.json)",
+    "type": "SubTab",
+    "parent_id": "SettingsTab",
+    "parent_label": "Settings",
+    "source_class": "SettingsTab",
+    "builder": "create_project_settings_editor_widget"
+  },
+  {
+    "id": "SkillsTab::Skills",
+    "label": "Skills",
+    "type": "SubTab",
+    "parent_id": "SkillsTab",
+    "parent_label": "\ud83c\udf93 Skills",
+    "source_class": "SkillsTab",
+    "builder": "create_skills_editor"
+  },
+  {
+    "id": "SkillsTab::Discover",
+    "label": "Discover",
+    "type": "SubTab",
+    "parent_id": "SkillsTab",
+    "parent_label": "\ud83c\udf93 Skills",
+    "source_class": "SkillsTab",
+    "builder": "create_discover_tab"
+  },
+  {
+    "id": "SkillsTab::Source Repos",
+    "label": "Source Repos",
+    "type": "SubTab",
+    "parent_id": "SkillsTab",
+    "parent_label": "\ud83c\udf93 Skills",
+    "source_class": "SkillsTab",
+    "builder": "_create_source_repos_tab"
+  },
+  {
+    "id": "SkillsTab::GitHub Search",
+    "label": "GitHub Search",
+    "type": "SubTab",
+    "parent_id": "SkillsTab",
+    "parent_label": "\ud83c\udf93 Skills",
+    "source_class": "SkillsTab",
+    "builder": "_create_gh_search_tab"
+  },
+  {
+    "id": "SkillsTab::URL Import",
+    "label": "URL Import",
+    "type": "SubTab",
+    "parent_id": "SkillsTab",
+    "parent_label": "\ud83c\udf93 Skills",
+    "source_class": "SkillsTab",
+    "builder": "_create_url_import_tab"
+  },
+  {
+    "id": "StatuslineTab::User (~/.claude/settings.json)",
+    "label": "User (~/.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "StatuslineTab",
+    "parent_label": "Statusline",
+    "source_class": "StatuslineTab",
+    "builder": "create_statusline_editor"
+  },
+  {
+    "id": "StatuslineTab::Project (./.claude/settings.json)",
+    "label": "Project (./.claude/settings.json)",
+    "type": "SubTab",
+    "parent_id": "StatuslineTab",
+    "parent_label": "Statusline",
+    "source_class": "StatuslineTab",
+    "builder": "create_project_statusline_editor"
+  },
+  {
+    "id": "UserSettingsSubTab",
+    "label": "\ud83c\udf9b\ufe0f Settings",
+    "type": "SubTab",
+    "parent_id": "UserConfigTab",
+    "parent_label": "\ud83d\udc64 User Config",
+    "source_class": "UserSettingsSubTab",
+    "builder": null
+  },
+  {
+    "id": "EnvVarsTab",
+    "label": "\ud83d\udd11 Env Vars",
+    "type": "SubTab",
+    "parent_id": "UserConfigTab",
+    "parent_label": "\ud83d\udc64 User Config",
+    "source_class": "EnvVarsTab",
+    "builder": null
+  },
+  {
+    "id": "UserHooksSubTab",
+    "label": "\ud83e\ude9d Hooks",
+    "type": "SubTab",
+    "parent_id": "UserConfigTab",
+    "parent_label": "\ud83d\udc64 User Config",
+    "source_class": "UserHooksSubTab",
+    "builder": null
+  },
+  {
+    "id": "UserPermissionsSubTab",
+    "label": "\ud83d\udd12 Permissions",
+    "type": "SubTab",
+    "parent_id": "UserConfigTab",
+    "parent_label": "\ud83d\udc64 User Config",
+    "source_class": "UserPermissionsSubTab",
+    "builder": null
+  },
+  {
+    "id": "UserStatuslineSubTab",
+    "label": "\ud83d\udcca Statusline",
+    "type": "SubTab",
+    "parent_id": "UserConfigTab",
+    "parent_label": "\ud83d\udc64 User Config",
+    "source_class": "UserStatuslineSubTab",
+    "builder": null
+  },
+  {
+    "id": "ClaudeMDTab",
+    "label": "\ud83d\udcdd CLAUDE.md",
+    "type": "SubTab",
+    "parent_id": "UserConfigTab",
+    "parent_label": "\ud83d\udc64 User Config",
+    "source_class": "ClaudeMDTab",
+    "builder": null
+  },
+  {
+    "id": "ClaudeLocalMDTab",
+    "label": "\ud83d\udcdd CLAUDE.local.md",
+    "type": "SubTab",
+    "parent_id": "UserConfigTab",
+    "parent_label": "\ud83d\udc64 User Config",
+    "source_class": "ClaudeLocalMDTab",
+    "builder": null
+  }
+]
