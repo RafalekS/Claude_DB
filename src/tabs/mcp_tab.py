@@ -1046,7 +1046,7 @@ class MCPTab(QWidget):
             if not self.project_context or not self.project_context.has_project():
                 return None
             project = self.project_context.get_project()
-            if not isinstance(project, Path):
+            if not project:
                 return None
             return project / ".mcp.json"
 
@@ -1191,11 +1191,13 @@ class MCPTab(QWidget):
 
                 # Source 1: Read from .mcp.json
                 file_path = self.get_scope_file_path()
-                if file_path and isinstance(file_path, Path) and file_path.exists():
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        mcp_json_config = json.load(f)
+                if file_path and self.config_manager.fs.exists(file_path):
+                    try:
+                        mcp_json_config = json.loads(self.config_manager.fs.read_text(file_path))
                         if "mcpServers" in mcp_json_config:
                             self.mcp_json_servers = mcp_json_config["mcpServers"]
+                    except Exception as e:
+                        logger.error("Failed to read project .mcp.json: %s", e)
 
                 # Source 2: Read project-specific settings from ~/.claude.json (only for project scope)
                 if self.scope == "project":
@@ -1536,7 +1538,7 @@ class MCPTab(QWidget):
         """Create backup before saving"""
         try:
             file_path = self.get_scope_file_path()
-            if file_path.exists():
+            if file_path and self.config_manager.fs.exists(file_path):
                 self.backup_manager.create_file_backup(file_path)
             if self.validate_json():
                 editor = self.editor

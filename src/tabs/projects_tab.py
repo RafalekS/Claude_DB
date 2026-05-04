@@ -146,24 +146,22 @@ class ProjectsTab(QWidget):
 
         project_path = self.current_project_path
 
-        if not isinstance(project_path, Path):
-            self.info_viewer.setText(f"Remote project: {project_path}\n\nProject info is not available for remote projects.")
-            return
-
         # Project Info
         info_text = f"Project: {project_path.name}\n"
         info_text += f"Path: {project_path}\n\n"
 
-        # Check for .claude folder
         claude_folder = project_path / ".claude"
-        if claude_folder.exists():
+        if self.config_manager.fs.exists(claude_folder):
             info_text += "✅ Claude-initialized project (.claude/ folder exists)\n\n"
             info_text += "Files in .claude/:\n"
-            for file in claude_folder.iterdir():
-                if file.is_file():
-                    size_kb = file.stat().st_size / 1024
-                    info_text += f"  • {file.name} ({size_kb:.1f} KB)\n"
-                elif file.is_dir():
+            for file in self.config_manager.fs.iterdir(claude_folder):
+                if self.config_manager.fs.is_file(file):
+                    try:
+                        size_kb = self.config_manager.fs.stat(file).st_size / 1024
+                        info_text += f"  • {file.name} ({size_kb:.1f} KB)\n"
+                    except Exception:
+                        info_text += f"  • {file.name}\n"
+                elif self.config_manager.fs.is_dir(file):
                     info_text += f"  📁 {file.name}/\n"
         else:
             info_text += "❌ Not a Claude-initialized project\n"
@@ -176,14 +174,13 @@ class ProjectsTab(QWidget):
 
     def load_file_into_viewer(self, file_path, viewer, not_found_msg):
         """Load file content into text viewer"""
-        if not isinstance(file_path, Path):
-            viewer.setText("Not available for remote projects.")
+        if not file_path:
+            viewer.setText(not_found_msg)
             return
-        if file_path.exists():
+        if self.config_manager.fs.exists(file_path):
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    viewer.setText(content)
+                content = self.config_manager.fs.read_text(file_path)
+                viewer.setText(content)
             except Exception as e:
                 viewer.setText(f"Error reading file:\n{str(e)}")
         else:

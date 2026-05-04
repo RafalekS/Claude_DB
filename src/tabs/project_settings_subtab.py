@@ -510,7 +510,7 @@ class ProjectSettingsSubTab(QWidget):
 
         try:
             project_path = self.project_context.get_project()
-            if not isinstance(project_path, Path):
+            if not project_path:
                 return
 
             if scope == "shared":
@@ -519,7 +519,7 @@ class ProjectSettingsSubTab(QWidget):
                 settings_file = project_path / ".claude" / "settings.local.json"
 
             # Create backup if file exists
-            if settings_file.exists():
+            if self.config_manager.fs.exists(settings_file):
                 self.backup_manager.create_file_backup(settings_file)
 
             # Save settings

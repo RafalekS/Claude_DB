@@ -44,8 +44,9 @@ from tabs.project_shell_snapshots_subtab import ProjectShellSnapshotsSubTab
 class ProjectClaudeMDSubTab(QWidget):
     """Simple CLAUDE.md viewer/editor for project context"""
 
-    def __init__(self, project_context):
+    def __init__(self, config_manager, project_context):
         super().__init__()
+        self.config_manager = config_manager
         self.project_context = project_context
         self.init_ui()
         self.project_context.project_changed.connect(self.load_content)
@@ -92,20 +93,14 @@ class ProjectClaudeMDSubTab(QWidget):
             return
 
         project_path = self.project_context.get_project()
-
-        if not isinstance(project_path, Path):
-            self.editor.setPlaceholderText("CLAUDE.md editing is not available for remote projects.")
-            self.editor.clear()
-            self.save_btn.setEnabled(False)
-            self.reload_btn.setEnabled(False)
+        if not project_path:
             return
 
         claude_md_path = project_path / "CLAUDE.md"
 
-        if claude_md_path.exists():
+        if self.config_manager.fs.exists(claude_md_path):
             try:
-                with open(claude_md_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                content = self.config_manager.fs.read_text(claude_md_path)
                 self.editor.setText(content)
                 self.file_label.setText(f"CLAUDE.md - {project_path.name}")
                 self.save_btn.setEnabled(True)
@@ -116,8 +111,8 @@ class ProjectClaudeMDSubTab(QWidget):
                 self.reload_btn.setEnabled(False)
         else:
             self.editor.setText(f"No CLAUDE.md found in project folder:\n{project_path}")
-            self.save_btn.setEnabled(False)
-            self.reload_btn.setEnabled(False)
+            self.save_btn.setEnabled(True)
+            self.reload_btn.setEnabled(True)
 
     def save_content(self):
         """Save CLAUDE.md to project folder"""
@@ -128,8 +123,7 @@ class ProjectClaudeMDSubTab(QWidget):
         claude_md_path = project_path / "CLAUDE.md"
 
         try:
-            with open(claude_md_path, 'w', encoding='utf-8') as f:
-                f.write(self.editor.toPlainText())
+            self.config_manager.fs.write_text(claude_md_path, self.editor.toPlainText())
             QMessageBox.information(self, "Success", "CLAUDE.md saved successfully!")
         except Exception as e:
             logger.error("Failed to save project CLAUDE.md: %s", e)
@@ -138,8 +132,9 @@ class ProjectClaudeMDSubTab(QWidget):
 class ProjectPromptSubTab(QWidget):
     """Simple PROMPT.md viewer/editor for project context"""
 
-    def __init__(self, project_context):
+    def __init__(self, config_manager, project_context):
         super().__init__()
+        self.config_manager = config_manager
         self.project_context = project_context
         self.init_ui()
         self.project_context.project_changed.connect(self.load_content)
@@ -186,20 +181,14 @@ class ProjectPromptSubTab(QWidget):
             return
 
         project_path = self.project_context.get_project()
-
-        if not isinstance(project_path, Path):
-            self.editor.setPlaceholderText("PROMPT.md editing is not available for remote projects.")
-            self.editor.clear()
-            self.save_btn.setEnabled(False)
-            self.reload_btn.setEnabled(False)
+        if not project_path:
             return
 
         prompt_md_path = project_path / "help" / "PROMPT.md"
 
-        if prompt_md_path.exists():
+        if self.config_manager.fs.exists(prompt_md_path):
             try:
-                with open(prompt_md_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                content = self.config_manager.fs.read_text(prompt_md_path)
                 self.editor.setText(content)
                 self.file_label.setText(f"PROMPT.md - {project_path.name}")
                 self.save_btn.setEnabled(True)
@@ -210,8 +199,8 @@ class ProjectPromptSubTab(QWidget):
                 self.reload_btn.setEnabled(False)
         else:
             self.editor.setText(f"No PROMPT.md found in help/ folder:\n{project_path / 'help'}")
-            self.save_btn.setEnabled(False)
-            self.reload_btn.setEnabled(False)
+            self.save_btn.setEnabled(True)
+            self.reload_btn.setEnabled(True)
 
     def save_content(self):
         """Save PROMPT.md to project help/ folder"""
@@ -219,17 +208,13 @@ class ProjectPromptSubTab(QWidget):
             return
 
         project_path = self.project_context.get_project()
-        if not isinstance(project_path, Path):
-            QMessageBox.warning(self, "Not Supported", "Saving PROMPT.md is not supported for remote projects.")
+        if not project_path:
             return
         prompt_md_path = project_path / "help" / "PROMPT.md"
 
-        # Create help folder if it doesn't exist
-        prompt_md_path.parent.mkdir(parents=True, exist_ok=True)
-
         try:
-            with open(prompt_md_path, 'w', encoding='utf-8') as f:
-                f.write(self.editor.toPlainText())
+            self.config_manager.fs.mkdir(prompt_md_path.parent, parents=True, exist_ok=True)
+            self.config_manager.fs.write_text(prompt_md_path, self.editor.toPlainText())
             QMessageBox.information(self, "Success", "PROMPT.md saved successfully!")
         except Exception as e:
             logger.error("Failed to save project PROMPT.md: %s", e)
@@ -356,7 +341,7 @@ class ProjectConfigTab(QWidget):
         # Add sub-tabs with actual implementations
 
         # CLAUDE.md sub-tab (FIRST - moved from Projects sub-sub-tab)
-        claude_md_tab = ProjectClaudeMDSubTab(self.project_context)
+        claude_md_tab = ProjectClaudeMDSubTab(self.config_manager, self.project_context)
         self.sub_tabs.addTab(claude_md_tab, "📝 CLAUDE.md")
 
         # Settings sub-tab (Model, Theme, Environment Variables - Shared/Local)
@@ -388,7 +373,7 @@ class ProjectConfigTab(QWidget):
         self.sub_tabs.addTab(skills_tab, "🎓 Skills")
 
         # Prompt sub-tab (AFTER Skills - moved from Projects sub-sub-tab)
-        prompt_tab = ProjectPromptSubTab(self.project_context)
+        prompt_tab = ProjectPromptSubTab(self.config_manager, self.project_context)
         self.sub_tabs.addTab(prompt_tab, "💬 Prompt")
 
         # MCP Servers sub-tab (Phase 3 - MCPTab with project scope)

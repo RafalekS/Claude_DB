@@ -102,11 +102,12 @@ class NewRuleDialog(QDialog):
 class RuleEditorWidget(QWidget):
     """Editor panel for a single scope (user or project)."""
 
-    def __init__(self, scope: str, rules_dir_fn, parent=None):
+    def __init__(self, scope: str, rules_dir_fn, config_manager, parent=None):
         super().__init__(parent)
         self._scope = scope
         self._get_rules_dir = rules_dir_fn
-        self._current_path: Path | None = None
+        self._config_manager = config_manager
+        self._current_path = None
         self._init_ui()
 
     def _init_ui(self):
@@ -228,28 +229,34 @@ class RuleEditorWidget(QWidget):
             self._file_list.addItem(item)
             return
 
-        if not isinstance(rules_dir, Path):
-            item = QListWidgetItem("Rules editing not available for remote connections")
-            item.setFlags(Qt.ItemFlag.NoItemFlags)
-            self._file_list.addItem(item)
-            return
-
-        if not rules_dir.exists():
+        if not self._config_manager.fs.exists(rules_dir):
             item = QListWidgetItem("No rules directory found")
             item.setFlags(Qt.ItemFlag.NoItemFlags)
             self._file_list.addItem(item)
             return
 
-        md_files = sorted(rules_dir.glob("**/*.md"))
+        md_files = []
+        for root, dirs, files in self._config_manager.fs.walk(rules_dir):
+            for f in files:
+                if f.endswith(".md"):
+                    md_files.append(self._config_manager.fs.join_path(root, f))
+        md_files.sort(key=str)
+
         if not md_files:
             item = QListWidgetItem("No rule files yet — click ➕ New")
             item.setFlags(Qt.ItemFlag.NoItemFlags)
             self._file_list.addItem(item)
             return
 
+        base_str = str(rules_dir).rstrip("/")
         for f in md_files:
-            rel = f.relative_to(rules_dir)
-            fm = _parse_frontmatter(f.read_text(encoding="utf-8", errors="replace"))
+            path_str = str(f)
+            rel = path_str[len(base_str) + 1:] if path_str.startswith(base_str + "/") else f.name
+            try:
+                content = self._config_manager.fs.read_text(f)
+                fm = _parse_frontmatter(content)
+            except Exception:
+                fm = {}
             desc = fm.get("description", "")
             paths = fm.get("paths", "")
             scope_icon = "📍" if paths else "📄"
@@ -263,11 +270,11 @@ class RuleEditorWidget(QWidget):
     # ── Private ─────────────────────────────────────────────────────────────
 
     def _on_file_selected(self, item: QListWidgetItem):
-        path: Path = item.data(Qt.ItemDataRole.UserRole)
+        path = item.data(Qt.ItemDataRole.UserRole)
         if not path:
             return
         self._current_path = path
-        content = path.read_text(encoding="utf-8", errors="replace")
+        content = self._config_manager.fs.read_text(path)
         self._editor.setPlainText(content)
         self._file_label.setText(str(path))
 
@@ -299,11 +306,10 @@ class RuleEditorWidget(QWidget):
             return
 
         rule_path = rules_dir / f"{data['name']}.md"
-        if rule_path.exists():
+        if self._config_manager.fs.exists(rule_path):
             QMessageBox.warning(self, "Exists", f"{rule_path.name} already exists.")
             return
 
-        # Build frontmatter
         fm_lines = ["---"]
         if data["description"]:
             fm_lines.append(f'description: "{data["description"]}"')
@@ -317,14 +323,14 @@ class RuleEditorWidget(QWidget):
         fm_lines.append("")
         fm_lines.append("<!-- Write your rule here -->")
 
-        rules_dir.mkdir(parents=True, exist_ok=True)
-        rule_path.write_text("\n".join(fm_lines), encoding="utf-8")
+        self._config_manager.fs.mkdir(rules_dir, parents=True, exist_ok=True)
+        self._config_manager.fs.write_text(rule_path, "\n".join(fm_lines))
         self.refresh()
 
-        # Select newly created file
+        rule_str = str(rule_path)
         for i in range(self._file_list.count()):
             item = self._file_list.item(i)
-            if item and item.data(Qt.ItemDataRole.UserRole) == rule_path:
+            if item and str(item.data(Qt.ItemDataRole.UserRole)) == rule_str:
                 self._file_list.setCurrentItem(item)
                 self._on_file_selected(item)
                 break
@@ -333,11 +339,8 @@ class RuleEditorWidget(QWidget):
         if not self._current_path:
             QMessageBox.warning(self, "Nothing Selected", "Select a rule file first.")
             return
-        if not isinstance(self._current_path, Path):
-            QMessageBox.warning(self, "Not Supported", "Saving rules is not supported for remote connections.")
-            return
         content = self._editor.toPlainText()
-        self._current_path.write_text(content, encoding="utf-8")
+        self._config_manager.fs.write_text(self._current_path, content)
         QMessageBox.information(self, "Saved", f"Saved {self._current_path.name}")
         self.refresh()
 
@@ -345,16 +348,13 @@ class RuleEditorWidget(QWidget):
         if not self._current_path:
             QMessageBox.warning(self, "Nothing Selected", "Select a rule file to delete.")
             return
-        if not isinstance(self._current_path, Path):
-            QMessageBox.warning(self, "Not Supported", "Deleting rules is not supported for remote connections.")
-            return
         reply = QMessageBox.question(
             self, "Confirm Delete",
             f"Delete {self._current_path.name}?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:
-            self._current_path.unlink()
+            self._config_manager.fs.unlink(self._current_path)
             self._current_path = None
             self._editor.clear()
             self._fm_label.hide()
@@ -371,17 +371,17 @@ class RulesTab(QWidget):
         self._project_context = project_context
         self._init_ui()
 
-    def _get_user_rules_dir(self) -> Path | None:
+    def _get_user_rules_dir(self):
         base = getattr(self._config_manager, 'claude_dir', None)
-        if base is None or not isinstance(base, Path):
+        if base is None:
             return None
         return base / "rules"
 
-    def _get_project_rules_dir(self) -> Path | None:
+    def _get_project_rules_dir(self):
         if not self._project_context or not self._project_context.has_project():
             return None
         project = self._project_context.get_project()
-        if not isinstance(project, Path):
+        if not project:
             return None
         return project / ".claude" / "rules"
 
@@ -407,12 +407,11 @@ class RulesTab(QWidget):
 
         # Scope tabs
         scope_tabs = QTabWidget()
-        scope_tabs
 
-        self._user_editor = RuleEditorWidget("user", self._get_user_rules_dir)
+        self._user_editor = RuleEditorWidget("user", self._get_user_rules_dir, self._config_manager)
         scope_tabs.addTab(self._user_editor, "👤 User (~/.claude/rules/)")
 
-        self._project_editor = RuleEditorWidget("project", self._get_project_rules_dir)
+        self._project_editor = RuleEditorWidget("project", self._get_project_rules_dir, self._config_manager)
         scope_tabs.addTab(self._project_editor, "📁 Project (.claude/rules/)")
 
         scope_tabs.currentChanged.connect(self._on_scope_changed)
