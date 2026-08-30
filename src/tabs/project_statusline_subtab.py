@@ -8,7 +8,8 @@ import logging
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTextEdit, QMessageBox, QTabWidget, QLineEdit, QFormLayout, QGroupBox
+    QTextEdit, QMessageBox, QTabWidget, QLineEdit, QFormLayout, QGroupBox,
+    QSpinBox,
 )
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QFont
@@ -51,10 +52,10 @@ class ProjectStatuslineSubTab(QWidget):
             f"color: {theme.ACCENT_PRIMARY};"
         )
 
-        docs_btn = QPushButton("📖 Statusline Docs")
-        docs_btn.setToolTip("Open official statusline documentation")
+        docs_btn = QPushButton("📖 Status Line Docs")
+        docs_btn.setToolTip("Open official status line documentation")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://code.claude.com/en/docs/claude-code/settings#statusline")
+            QUrl("https://code.claude.com/docs/en/statusline")
         ))
 
         header_layout.addWidget(header)
@@ -77,9 +78,11 @@ class ProjectStatuslineSubTab(QWidget):
 
         # Info footer
         footer = QLabel(
-            "💡 <b>Shared:</b> Team-shared statusline (committed to git) • "
-            "<b>Local:</b> User-specific override (gitignored) • "
-            "<b>Variables:</b> {{project_name}}, {{git_branch}}, {{model}}, {{tokens}}"
+            "💡 <b>Shared:</b> committed to git • <b>Local:</b> your machine only • "
+            "The <code>command</code> runs in a shell and receives a JSON blob on stdin "
+            "(model.display_name, workspace.current_dir, cost.total_cost_usd, "
+            "context_window.used_percentage, version, …). Parse it yourself — there are no "
+            "<code>{{variables}}</code>."
         )
         footer.setWordWrap(True)
         footer.setStyleSheet(
@@ -116,12 +119,13 @@ class ProjectStatuslineSubTab(QWidget):
         form_layout.setSpacing(8)
 
         command_input = QLineEdit()
-        command_input.setPlaceholderText("e.g., git branch --show-current 2>/dev/null || echo 'main'")
-        form_layout.addRow("Command:", command_input)
+        command_input.setPlaceholderText("script path (e.g. .claude/statusline.sh) or an inline shell command")
+        form_layout.addRow("command:", command_input)
 
-        template_input = QLineEdit()
-        template_input.setPlaceholderText("e.g., {{project_name}} [{{git_branch}}]")
-        form_layout.addRow("Template:", template_input)
+        padding_input = QSpinBox()
+        padding_input.setRange(0, 40)
+        padding_input.setToolTip("Extra left indentation in characters (default 0)")
+        form_layout.addRow("padding:", padding_input)
 
         config_layout.addLayout(form_layout)
 
@@ -174,11 +178,20 @@ class ProjectStatuslineSubTab(QWidget):
             self.editors = {}
         self.editors[scope] = {
             'command_input': command_input,
-            'template_input': template_input,
+            'padding_input': padding_input,
             'json_preview': json_preview
         }
+        command_input.textChanged.connect(lambda _t, s=scope: self.update_preview(s))
+        padding_input.valueChanged.connect(lambda _v, s=scope: self.update_preview(s))
 
         return widget
+
+    @staticmethod
+    def _build_config(command: str, padding: int) -> dict:
+        cfg = {"type": "command", "command": command}
+        if padding:
+            cfg["padding"] = padding
+        return cfg
 
     def on_project_changed(self, project_path: Path):
         """Handle project change"""
@@ -213,14 +226,18 @@ class ProjectStatuslineSubTab(QWidget):
             # Claude Code reads "statusLine" (camelCase); fall back to legacy lowercase for compat
             statusline = settings.get("statusLine", settings.get("statusline", {}))
 
-            if isinstance(statusline, dict):
+            if isinstance(statusline, str):
+                editor_data['command_input'].setText(statusline)
+                editor_data['padding_input'].setValue(0)
+                self.update_preview(scope)
+            elif isinstance(statusline, dict):
                 editor_data['command_input'].setText(statusline.get("command", ""))
-                editor_data['template_input'].setText(statusline.get("template", ""))
+                editor_data['padding_input'].setValue(int(statusline.get("padding", 0) or 0))
                 self.update_preview(scope)
             else:
                 editor_data['command_input'].clear()
-                editor_data['template_input'].clear()
-                editor_data['json_preview'].setPlainText("# No statusline configured")
+                editor_data['padding_input'].setValue(0)
+                editor_data['json_preview'].setPlainText("// no status line configured")
 
         except Exception as e:
             logger.error("Failed to load %s statusline: %s", scope, e)
@@ -228,24 +245,13 @@ class ProjectStatuslineSubTab(QWidget):
 
     def update_preview(self, scope: str):
         """Update JSON preview"""
-        try:
-            editor_data = self.editors[scope]
-            command = editor_data['command_input'].text().strip()
-            template = editor_data['template_input'].text().strip()
-
-            if command or template:
-                config = {}
-                if command:
-                    config["command"] = command
-                if template:
-                    config["template"] = template
-
-                formatted = json.dumps(config, indent=2)
-                editor_data['json_preview'].setPlainText(formatted)
-            else:
-                editor_data['json_preview'].setPlainText("# No configuration")
-        except Exception as e:
-            editor_data['json_preview'].setPlainText(f"# Error: {str(e)}")
+        editor_data = self.editors[scope]
+        command = editor_data['command_input'].text().strip()
+        if not command:
+            editor_data['json_preview'].setPlainText("// no status line configured")
+            return
+        cfg = self._build_config(command, editor_data['padding_input'].value())
+        editor_data['json_preview'].setPlainText(json.dumps({"statusLine": cfg}, indent=2))
 
     def save_statusline(self, scope: str):
         """Save statusline configuration"""
@@ -256,13 +262,9 @@ class ProjectStatuslineSubTab(QWidget):
         try:
             editor_data = self.editors[scope]
             command = editor_data['command_input'].text().strip()
-            template = editor_data['template_input'].text().strip()
 
-            if not command and not template:
-                QMessageBox.warning(
-                    self, "Empty Configuration",
-                    "Please enter at least a command or template."
-                )
+            if not command:
+                QMessageBox.warning(self, "Empty", "Enter a command before saving.")
                 return
 
             if scope == "shared":
@@ -272,15 +274,8 @@ class ProjectStatuslineSubTab(QWidget):
                 settings = self.settings_manager.get_project_local_settings(self.project_context.get_project())
                 settings_file = self.project_context.get_project() / ".claude" / "settings.local.json"
 
-            statusline_config = {}
-            if command:
-                statusline_config["command"] = command
-            if template:
-                statusline_config["template"] = template
-
-            settings["statusLine"] = statusline_config
-            # Remove legacy lowercase key if present
-            settings.pop("statusline", None)
+            settings["statusLine"] = self._build_config(command, editor_data['padding_input'].value())
+            settings.pop("statusline", None)  # drop a wrong-case key if present
             self.settings_manager.save_settings(settings_file, settings)
 
             self.update_preview(scope)
@@ -317,8 +312,8 @@ class ProjectStatuslineSubTab(QWidget):
 
                 editor_data = self.editors[scope]
                 editor_data['command_input'].clear()
-                editor_data['template_input'].clear()
-                editor_data['json_preview'].setPlainText("# Statusline cleared")
+                editor_data['padding_input'].setValue(0)
+                editor_data['json_preview'].setPlainText("// status line removed")
 
                 QMessageBox.information(self, "Success", f"{scope.capitalize()} statusline cleared!")
             except Exception as e:

@@ -1,25 +1,54 @@
 """
-User Statusline Sub-Tab - Manage user-level statusline configuration
-Dedicated subtab for statusline in ~/.claude/settings.json
+User Statusline Sub-Tab - manage the user-level statusLine in ~/.claude/settings.json.
+
+Claude Code's status line runs a shell command that reads a JSON blob on stdin
+and prints the line to stdout. The setting is:
+
+    "statusLine": { "type": "command", "command": "<script or inline>", "padding": 0 }
+
+There is no template / {{variable}} mechanism — the script does the formatting.
 """
 
 import json
-from pathlib import Path
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTextEdit, QMessageBox, QGroupBox, QLineEdit, QFormLayout
-)
-from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QDesktopServices, QFont
-
 import logging
 
-logger = logging.getLogger(__name__)
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QTextEdit, QMessageBox, QGroupBox, QLineEdit, QFormLayout, QSpinBox,
+    QComboBox,
+)
+from PyQt6.QtCore import QUrl
+from PyQt6.QtGui import QDesktopServices
 
 from utils import theme
 
+logger = logging.getLogger(__name__)
+
+# Ready-to-paste inline commands (need `jq` on PATH).
+_EXAMPLES = {
+    "Model + context %":
+        "jq -r '\"[\\(.model.display_name)] \\(.context_window.used_percentage // 0 | floor)% ctx\"'",
+    "Dir + git branch + cost":
+        "jq -r '\"📁 \\(.workspace.current_dir | split(\"/\") | last)"
+        "  \\(.workspace.git_worktree // \"\")  $\\(.cost.total_cost_usd // 0 | . * 100 | round / 100)\"'",
+    "Model + dir + version":
+        "jq -r '\"\\(.model.display_name) — \\(.workspace.current_dir) (v\\(.version))\"'",
+}
+
+_STDIN_FIELDS = (
+    "model.id · model.display_name · cwd · workspace.current_dir · workspace.project_dir · "
+    "workspace.added_dirs · workspace.git_worktree · workspace.repo.{host,owner,name} · "
+    "cost.total_cost_usd · cost.total_duration_ms · cost.total_lines_added/removed · "
+    "context_window.context_window_size · context_window.used_percentage · "
+    "context_window.remaining_percentage · exceeds_200k_tokens · session_id · "
+    "transcript_path · version · output_style.name"
+)
+
+
 class UserStatuslineSubTab(QWidget):
-    """Dedicated subtab for user-level statusline configuration"""
+    """Editor for the user-level statusLine setting."""
+
+    SCOPE_DESC = "~/.claude/settings.json"
 
     def __init__(self, config_manager, backup_manager, settings_manager):
         super().__init__()
@@ -29,236 +58,173 @@ class UserStatuslineSubTab(QWidget):
         self.init_ui()
         self.load_statusline()
 
+    # ── UI ───────────────────────────────────────────────────────────────────
+
     def init_ui(self):
-        """Initialize the UI"""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(5)
 
-        # Header
         header_layout = QHBoxLayout()
-
-        header = QLabel("User Statusline Configuration")
+        header = QLabel("User Status Line")
         header.setStyleSheet(
-            f"font-size: {theme.FONT_SIZE_LARGE}px; "
-            f"font-weight: bold; "
-            f"color: {theme.ACCENT_PRIMARY};"
+            f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};"
         )
-
-        docs_btn = QPushButton("📖 Statusline Docs")
-        docs_btn.setToolTip("Open official statusline documentation")
+        docs_btn = QPushButton("📖 Status Line Docs")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://code.claude.com/en/docs/claude-code/settings#statusline")
+            QUrl("https://code.claude.com/docs/en/statusline")
         ))
-
         header_layout.addWidget(header)
         header_layout.addStretch()
         header_layout.addWidget(docs_btn)
         layout.addLayout(header_layout)
 
-        # File path info
         self._path_label = QLabel(f"File: {self.config_manager.settings_file}")
         self._path_label.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(self._path_label)
 
-        # Configuration section
-        config_group = QGroupBox("Statusline Configuration")
+        config_group = QGroupBox('statusLine  ("type": "command")')
+        config_layout = QVBoxLayout(config_group)
 
-        config_layout = QVBoxLayout()
-
-        # Command input
-        command_layout = QFormLayout()
-        command_layout.setSpacing(8)
+        form = QFormLayout()
+        form.setSpacing(8)
 
         self.command_input = QLineEdit()
-        self.command_input.setPlaceholderText("e.g., git branch --show-current 2>/dev/null || echo 'main'")
-        command_layout.addRow("Command:", self.command_input)
+        self.command_input.setPlaceholderText(
+            "script path (e.g. ~/.claude/statusline.sh) or an inline shell command"
+        )
+        form.addRow("command:", self.command_input)
 
-        self.template_input = QLineEdit()
-        self.template_input.setPlaceholderText("e.g., {{project_name}} [{{git_branch}}]")
-        command_layout.addRow("Template:", self.template_input)
+        self.padding_input = QSpinBox()
+        self.padding_input.setRange(0, 40)
+        self.padding_input.setToolTip("Extra left indentation in characters (default 0)")
+        form.addRow("padding:", self.padding_input)
 
-        config_layout.addLayout(command_layout)
+        ex_row = QHBoxLayout()
+        self.example_combo = QComboBox()
+        self.example_combo.addItem("— insert an example inline command —")
+        for name in _EXAMPLES:
+            self.example_combo.addItem(name)
+        insert_btn = QPushButton("Insert")
+        insert_btn.clicked.connect(self._insert_example)
+        ex_row.addWidget(self.example_combo, 1)
+        ex_row.addWidget(insert_btn)
+        form.addRow("examples:", ex_row)
 
-        # JSON preview
-        preview_label = QLabel("JSON Configuration:")
-        preview_label.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY}; margin-top: 10px;")
+        config_layout.addLayout(form)
+
+        preview_label = QLabel("settings.json fragment:")
+        preview_label.setStyleSheet(f"font-weight: bold; color: {theme.FG_PRIMARY}; margin-top: 8px;")
         config_layout.addWidget(preview_label)
 
         self.json_preview = QTextEdit()
         self.json_preview.setReadOnly(True)
-        self.json_preview.setMaximumHeight(150)
-        self.json_preview.setStyleSheet(f"""
-            QTextEdit {{
-                font-family: {theme.FONT_FAMILY_MONO};
-                border-radius: 3px;
-                padding: 5px;
-            }}
-        """)
+        self.json_preview.setMaximumHeight(130)
+        self.json_preview.setStyleSheet(
+            f"QTextEdit {{ font-family: {theme.FONT_FAMILY_MONO}; border-radius: 3px; padding: 5px; }}"
+        )
         config_layout.addWidget(self.json_preview)
 
-        # Update preview button
-        preview_btn = QPushButton("🔄 Update Preview")
-        preview_btn.clicked.connect(self.update_preview)
-        config_layout.addWidget(preview_btn)
+        self.command_input.textChanged.connect(self.update_preview)
+        self.padding_input.valueChanged.connect(self.update_preview)
 
-        config_group.setLayout(config_layout)
         layout.addWidget(config_group)
 
-        # Action buttons
         btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(5)
-
-        load_btn = QPushButton("📂 Load Current")
-        load_btn.setToolTip("Load current statusline from settings")
+        load_btn = QPushButton("📂 Reload")
         load_btn.clicked.connect(self.load_statusline)
-
         save_btn = QPushButton("💾 Save")
-        save_btn.setToolTip("Save statusline configuration")
         save_btn.clicked.connect(self.save_statusline)
-
-        clear_btn = QPushButton("🗑️ Clear")
-        clear_btn.setToolTip("Clear statusline configuration")
+        clear_btn = QPushButton("🗑️ Remove")
         clear_btn.clicked.connect(self.clear_statusline)
-
         btn_layout.addWidget(load_btn)
         btn_layout.addStretch()
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(clear_btn)
-
         layout.addLayout(btn_layout)
 
-        # Info footer
         footer = QLabel(
-            "💡 <b>Template Variables:</b> {{project_name}}, {{git_branch}}, {{model}}, {{tokens}}, {{time}} • "
-            "<b>Command:</b> Shell command to execute for dynamic values"
+            "💡 The command runs in a shell and gets a JSON blob on <b>stdin</b>; its stdout is the "
+            "status line (first line only, unless it prints multiple lines). No <code>{{variables}}</code> — "
+            "parse the JSON yourself (e.g. with <code>jq</code>).<br>"
+            f"<b>stdin fields:</b> <code style='font-size:{theme.FONT_SIZE_SMALL}px'>{_STDIN_FIELDS}</code>"
         )
         footer.setWordWrap(True)
         footer.setStyleSheet(
-            f"color: {theme.FG_SECONDARY}; "
-            f"font-size: {theme.FONT_SIZE_SMALL}px; "
-            f"padding: 8px; "
-            f"background-color: {theme.BG_MEDIUM}; "
-            f"border-radius: 3px;"
+            f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; padding: 8px; "
+            f"background-color: {theme.BG_MEDIUM}; border-radius: 3px;"
         )
         layout.addWidget(footer)
-
         layout.addStretch()
 
+    # ── behaviour ────────────────────────────────────────────────────────────
+
+    def _insert_example(self):
+        name = self.example_combo.currentText()
+        if name in _EXAMPLES:
+            self.command_input.setText(_EXAMPLES[name])
+
+    def _build_config(self) -> dict:
+        cfg = {"type": "command", "command": self.command_input.text().strip()}
+        if self.padding_input.value():
+            cfg["padding"] = self.padding_input.value()
+        return cfg
+
+    def update_preview(self):
+        if not self.command_input.text().strip():
+            self.json_preview.setPlainText("// no status line configured")
+            return
+        self.json_preview.setPlainText(json.dumps({"statusLine": self._build_config()}, indent=2))
+
     def load_statusline(self):
-        """Load statusline from user settings"""
         self._path_label.setText(f"File: {self.config_manager.settings_file}")
         try:
             settings = self.config_manager.get_settings()
-            # Note: Settings.json uses 'statusLine' (camelCase), not 'statusline'
-            statusline = settings.get("statusLine", settings.get("statusline", {}))
-
-            # Handle different formats
-            if isinstance(statusline, str):
-                # If it's a string, it's just the command
-                self.command_input.setText(statusline)
-                self.template_input.clear()
-                self.update_preview()
-            elif isinstance(statusline, dict):
-                # If it's a dict, extract command and template
-                # Can have 'command' directly or nested under 'type'
-                command = statusline.get("command", "")
-                template = statusline.get("template", "")
-                self.command_input.setText(command)
-                self.template_input.setText(template)
-                self.update_preview()
+            sl = settings.get("statusLine", settings.get("statusline", {}))
+            if isinstance(sl, str):
+                self.command_input.setText(sl)
+                self.padding_input.setValue(0)
+            elif isinstance(sl, dict):
+                self.command_input.setText(sl.get("command", ""))
+                self.padding_input.setValue(int(sl.get("padding", 0) or 0))
             else:
-                # Empty or unexpected format
                 self.command_input.clear()
-                self.template_input.clear()
-                self.json_preview.setPlainText("# No statusline configured")
+                self.padding_input.setValue(0)
+            self.update_preview()
         except Exception as e:
-            logger.error("Failed to load statusline: %s", e)
-            QMessageBox.critical(self, "Load Error", f"Failed to load statusline:\n{str(e)}")
-
-    def update_preview(self):
-        """Update JSON preview"""
-        try:
-            command = self.command_input.text().strip()
-            template = self.template_input.text().strip()
-
-            if command or template:
-                config = {}
-                if command:
-                    config["command"] = command
-                if template:
-                    config["template"] = template
-
-                formatted = json.dumps(config, indent=2)
-                self.json_preview.setPlainText(formatted)
-            else:
-                self.json_preview.setPlainText("# No configuration")
-        except Exception as e:
-            self.json_preview.setPlainText(f"# Error: {str(e)}")
+            logger.error("Failed to load statusLine: %s", e)
+            QMessageBox.critical(self, "Load Error", f"Failed to load statusLine:\n{e}")
 
     def save_statusline(self):
-        """Save statusline configuration"""
+        if not self.command_input.text().strip():
+            QMessageBox.warning(self, "Empty", "Enter a command before saving.")
+            return
         try:
-            command = self.command_input.text().strip()
-            template = self.template_input.text().strip()
-
-            if not command and not template:
-                QMessageBox.warning(
-                    self,
-                    "Empty Configuration",
-                    "Please enter at least a command or template before saving."
-                )
-                return
-
-            # Load settings
             settings = self.config_manager.get_settings()
-
-            # Update statusline (use camelCase 'statusLine' to match settings.json format)
-            statusline_config = {}
-            if command:
-                statusline_config["command"] = command
-            if template:
-                statusline_config["template"] = template
-
-            settings["statusLine"] = statusline_config
-
-            # Save settings
+            settings.pop("statusline", None)  # drop a wrong-case key if present
+            settings["statusLine"] = self._build_config()
             self.config_manager.save_settings(settings)
-
             self.update_preview()
-            QMessageBox.information(self, "Success", "Statusline configuration saved successfully!")
+            QMessageBox.information(self, "Saved", "Status line saved.")
         except Exception as e:
-            logger.error("Failed to save statusline: %s", e)
-            QMessageBox.critical(self, "Save Error", f"Failed to save statusline:\n{str(e)}")
+            logger.error("Failed to save statusLine: %s", e)
+            QMessageBox.critical(self, "Save Error", f"Failed to save statusLine:\n{e}")
 
     def clear_statusline(self):
-        """Clear statusline configuration"""
-        reply = QMessageBox.question(
-            self,
-            "Confirm Clear",
-            "Are you sure you want to clear the statusline configuration?",
+        if QMessageBox.question(
+            self, "Confirm", "Remove the statusLine setting?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-
-        if reply == QMessageBox.StandardButton.Yes:
-            try:
-                # Load settings
-                settings = self.config_manager.get_settings()
-
-                # Remove statusline (check both camelCase and lowercase)
-                if "statusLine" in settings:
-                    del settings["statusLine"]
-                if "statusline" in settings:
-                    del settings["statusline"]
-
-                # Save settings
-                self.config_manager.save_settings(settings)
-
-                self.command_input.clear()
-                self.template_input.clear()
-                self.json_preview.setPlainText("# Statusline cleared")
-
-                QMessageBox.information(self, "Success", "Statusline configuration cleared successfully!")
-            except Exception as e:
-                logger.error("Failed to clear statusline: %s", e)
-                QMessageBox.critical(self, "Clear Error", f"Failed to clear statusline:\n{str(e)}")
+        ) != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            settings = self.config_manager.get_settings()
+            settings.pop("statusLine", None)
+            settings.pop("statusline", None)
+            self.config_manager.save_settings(settings)
+            self.command_input.clear()
+            self.padding_input.setValue(0)
+            self.update_preview()
+            QMessageBox.information(self, "Removed", "Status line removed.")
+        except Exception as e:
+            logger.error("Failed to clear statusLine: %s", e)
+            QMessageBox.critical(self, "Clear Error", f"Failed to clear statusLine:\n{e}")

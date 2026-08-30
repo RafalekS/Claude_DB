@@ -185,7 +185,7 @@ class UsageTab(QWidget):
             "• ccusage: Command-line tool for viewing historical usage reports (daily/weekly/monthly/session/blocks)\n"
             "• ccmonitor: Real-time token usage monitoring with different views (realtime/daily/monthly/session)\n"
             "• API: Fetch usage data via Anthropic Usage Cost API\n\n"
-            "Documentation: https://code.claude.com/en/docs/claude-code/monitoring-usage"
+            "Documentation: https://code.claude.com/docs/en/monitoring-usage"
         )
         info_text.setWordWrap(True)
         info_text.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px; padding: 5px;")

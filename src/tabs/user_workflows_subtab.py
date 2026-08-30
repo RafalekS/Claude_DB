@@ -37,7 +37,7 @@ class UserWorkflowsSubTab(QWidget):
         docs_btn = QPushButton("📖 Workflows Docs")
         docs_btn.setToolTip("Open official common workflows documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://code.claude.com/en/docs/claude-code/common-workflows")
+            QUrl("https://code.claude.com/docs/en/common-workflows")
         ))
 
         header_layout.addWidget(header)
