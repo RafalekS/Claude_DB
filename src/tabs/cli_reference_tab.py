@@ -34,7 +34,7 @@ class CLIReferenceTab(QWidget):
         docs_btn = QPushButton("📖 Open Full Docs")
         docs_btn.setToolTip("Open official CLI reference documentation in browser")
         docs_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://code.claude.com/en/docs/claude-code/cli-reference")
+            QUrl("https://code.claude.com/docs/en/cli-reference")
         ))
 
         header_layout.addWidget(header)
@@ -95,34 +95,38 @@ class CLIReferenceTab(QWidget):
 
             <p><code>claude -c</code> (or <code>--continue</code>) — Continue most recent conversation</p>
 
-            <p><code>claude -r &lt;session-id&gt; "query"</code> (or <code>--resume</code>) — Resume specific session by ID</p>
-            <pre>claude -r "abc123" "Finish this PR"</pre>
+            <p><code>claude -r &lt;session&gt; "query"</code> (or <code>--resume</code>) — Resume a session by ID or name</p>
+            <pre>claude -r "auth-refactor" "Finish this PR"</pre>
 
-            <h3>Config & Diagnostics</h3>
-            <p><code>claude config get &lt;key&gt;</code> — Get a config value</p>
-            <pre>claude config get model</pre>
-            <p><code>claude config set &lt;key&gt; &lt;value&gt;</code> — Set a config value</p>
-            <pre>claude config set theme dark</pre>
-            <p><code>claude config list</code> — List all config values</p>
-            <p><code>claude doctor</code> — Diagnose environment and configuration issues</p>
+            <h3>Config &amp; Diagnostics</h3>
+            <p>The <code>claude config</code> subcommand has been removed. Change settings by editing the
+               settings JSON files, from the in-session <code>/config</code> menu (<code>/config key=value</code>),
+               or for one session with the <code>--settings</code> flag.</p>
+            <p><code>claude doctor</code> — Print installation and settings diagnostics (rejected/invalid entries)</p>
             <p><code>claude update</code> — Update to latest version</p>
-            <p><code>claude bug</code> — File a bug report</p>
+            <p><code>claude install [version]</code> — Install or reinstall the native binary</p>
             <p><code>claude mcp</code> — Configure Model Context Protocol servers</p>
+            <p><code>claude plugin</code> — Manage plugins and marketplaces</p>
+            <p><code>claude auth login|logout|status</code> — Manage Anthropic account sign-in</p>
+            <p><code>claude setup-token</code> — Generate a long-lived OAuth token for CI/scripts</p>
 
             <hr>
 
             <h2>Flags</h2>
 
             <h3>Model &amp; Behavior</h3>
-            <p><code>--model &lt;alias|id&gt;</code> — Set model. Aliases: <code>sonnet</code>, <code>opus</code>, <code>haiku</code></p>
+            <p><code>--model &lt;alias|id&gt;</code> — Set model. Aliases: <code>sonnet</code>, <code>opus</code>, <code>haiku</code>, <code>fable</code>. Full IDs: <code>claude-sonnet-5</code>, <code>claude-opus-5</code>, …</p>
             <pre>claude --model opus "complex task"</pre>
+
+            <p><code>--effort &lt;level&gt;</code> — Reasoning depth: <code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code>, <code>max</code>, <code>ultracode</code></p>
+            <p><code>--fallback-model &lt;list&gt;</code> — Backup model(s) when the primary is overloaded</p>
 
             <p><code>--max-turns &lt;n&gt;</code> — Limit agentic turns in non-interactive mode</p>
             <pre>claude -p "task" --max-turns 5</pre>
 
+            <p><code>--max-budget-usd &lt;amount&gt;</code> — Cap API spend for a <code>-p</code> run</p>
             <p><code>--verbose</code> — Enable detailed turn-by-turn output</p>
-            <p><code>--debug</code> — Enable debug logging</p>
-            <p><code>--no-markdown</code> — Disable markdown rendering in terminal output</p>
+            <p><code>--debug[=categories]</code> — Enable debug logging (e.g. <code>--debug=mcp,startup</code>)</p>
 
             <h3>System Prompt</h3>
             <p><code>--system-prompt "text"</code> — Set the system prompt directly (replaces default)</p>
@@ -145,8 +149,12 @@ class CLIReferenceTab(QWidget):
             <p><code>--disallowedTools &lt;list&gt;</code> — Block tools (comma-separated)</p>
             <pre>claude --disallowedTools WebFetch,WebSearch</pre>
 
-            <p><code>--permission-mode &lt;mode&gt;</code> — Start in a permission mode</p>
-            <pre>claude --permission-mode auto</pre>
+            <p><code>--permission-mode &lt;mode&gt;</code> — Start in a permission mode:
+               <code>default</code>, <code>acceptEdits</code>, <code>plan</code>, <code>auto</code>,
+               <code>dontAsk</code>, <code>bypassPermissions</code>, <code>manual</code></p>
+            <pre>claude --permission-mode plan</pre>
+            <p><code>--settings &lt;file|json&gt;</code> — Apply settings for one session (above user/project/local, below managed)</p>
+            <p><code>--setting-sources &lt;list&gt;</code> — Restrict which setting sources load: <code>user,project,local</code></p>
 
             <p><code>--permission-prompt-tool &lt;tool&gt;</code> — MCP tool to handle permission prompts in headless mode</p>
             <pre>claude -p "task" --permission-prompt-tool mcp__my_server__ask_permission</pre>
@@ -163,24 +171,36 @@ class CLIReferenceTab(QWidget):
             <p><code>--ide</code> — Launch in IDE integration mode</p>
 
             <h3>Subagents</h3>
-            <p><code>--agents &lt;json&gt;</code> — Define custom subagents dynamically</p>
-            <pre>claude --agents '[{{"description":"Code reviewer","prompt":"Review for bugs","model":"haiku"}}]'</pre>
-            <p>Agent object keys: <code>description</code> (required), <code>prompt</code> (required), <code>tools</code> (optional), <code>model</code> (optional)</p>
+            <p><code>--agents &lt;json&gt;</code> — Define custom subagents dynamically. The value is a JSON
+               <em>object keyed by agent name</em> (no longer an array).</p>
+            <pre>claude --agents '{{"code-reviewer":{{"description":"Reviews code","prompt":"Review for bugs","tools":["Read","Grep"],"model":"sonnet"}}}}'</pre>
+            <p>Per-agent keys: <code>description</code> (required), <code>prompt</code> (required), plus optional
+               <code>tools</code>, <code>disallowedTools</code>, <code>model</code>, <code>permissionMode</code>,
+               <code>mcpServers</code>, <code>hooks</code>, <code>maxTurns</code>, <code>skills</code>,
+               <code>memory</code>, <code>effort</code>, <code>background</code>, <code>isolation</code>.</p>
+            <p><code>--agent &lt;name&gt;</code> — Run the current session as a named agent</p>
+            <p><code>--append-subagent-system-prompt "text"</code> — Append text to every subagent's system prompt</p>
 
             <hr>
 
             <h2>Slash Commands (in REPL)</h2>
             <p>Type these in the interactive REPL:</p>
             <p><code>/help</code> — Show help</p>
-            <p><code>/clear</code> — Clear conversation history</p>
-            <p><code>/compact</code> — Compact context window</p>
-            <p><code>/status</code> — Show session status</p>
+            <p><code>/clear</code> — Start a new conversation with empty context</p>
+            <p><code>/compact</code> — Free up context by summarizing the conversation</p>
+            <p><code>/context</code> — Visualize current context usage as a colored grid</p>
+            <p><code>/rewind</code> — Roll code and/or conversation back to a checkpoint</p>
+            <p><code>/status</code> — Show session status and loaded setting sources</p>
+            <p><code>/config</code> — Open settings, or <code>/config key=value</code> to set one</p>
+            <p><code>/usage</code> — Show plan usage and rate-limit status (<code>/cost</code> is an alias)</p>
+            <p><code>/model</code> — Switch the model mid-session</p>
+            <p><code>/effort</code> — Change the reasoning effort level</p>
+            <p><code>/bug</code> — Report a bug / share the conversation</p>
+            <p><code>/feedback</code> — Send product feedback about Claude Code</p>
             <p><code>/exit</code> (or <code>/quit</code>) — Exit the REPL</p>
-            <p><code>/cost</code> — Show token usage and cost for this session</p>
-            <p><code>/model &lt;alias&gt;</code> — Switch model mid-session</p>
-            <p><code>/allowed-tools</code> — List allowed tools</p>
-            <p><code>/bug</code> — File a bug report</p>
             <p><code>! &lt;command&gt;</code> — Run a shell command in the current session</p>
+            <p>Bundled skills: <code>/code-review</code>, <code>/debug</code>, <code>/loop</code>, <code>/batch</code>,
+               <code>/deep-research</code>, <code>/doctor</code>, <code>/verify</code>, <code>/claude-api</code>, …</p>
 
             <hr>
 
@@ -203,7 +223,7 @@ class CLIReferenceTab(QWidget):
 
             <p style="margin-top: 20px; padding: 10px; background-color: {theme.BG_MEDIUM}; border-left: 3px solid {theme.ACCENT_SECONDARY};">
                 <strong>💡 Tip:</strong> For the complete up-to-date reference, see the
-                <a href="https://code.claude.com/en/docs/claude-code/cli-reference" style="color: {theme.ACCENT_SECONDARY};">official CLI reference</a>.
+                <a href="https://code.claude.com/docs/en/cli-reference" style="color: {theme.ACCENT_SECONDARY};">official CLI reference</a>.
             </p>
         </body>
         </html>

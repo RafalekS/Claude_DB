@@ -21,35 +21,55 @@
       "Claude Code Plugins"
     ],
     [
-      "https://docs.claude.com/en/docs/claude-code/cli-reference",
+      "https://code.claude.com/docs/en/cli-reference",
       "CLI Reference"
     ],
     [
-      "https://docs.claude.com/en/docs/claude-code/settings",
+      "https://code.claude.com/docs/en/settings",
       "Settings Documentation"
     ],
     [
-      "https://docs.claude.com/en/docs/claude-code/memory",
+      "https://code.claude.com/docs/en/settings-reference",
+      "Settings Reference (all keys)"
+    ],
+    [
+      "https://code.claude.com/docs/en/memory",
       "Memory System"
     ],
     [
-      "https://docs.claude.com/en/docs/claude-code/checkpointing",
+      "https://code.claude.com/docs/en/checkpointing",
       "Checkpointing"
     ],
     [
-      "https://docs.claude.com/en/docs/claude-code/slash-commands",
-      "Slash Commands"
+      "https://code.claude.com/docs/en/commands",
+      "Built-in Commands"
     ],
     [
-      "https://docs.claude.com/en/docs/claude-code/interactive-mode",
+      "https://code.claude.com/docs/en/slash-commands",
+      "Custom Slash Commands"
+    ],
+    [
+      "https://code.claude.com/docs/en/interactive-mode",
       "Interactive Mode"
     ],
     [
-      "https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview",
-      "Agent Skills Overview"
+      "https://code.claude.com/docs/en/skills",
+      "Skills"
     ],
     [
-      "https://docs.claude.com/en/api/agent-sdk/skills",
+      "https://code.claude.com/docs/en/sub-agents",
+      "Subagents"
+    ],
+    [
+      "https://code.claude.com/docs/en/hooks",
+      "Hooks Reference"
+    ],
+    [
+      "https://code.claude.com/docs/en/mcp",
+      "MCP"
+    ],
+    [
+      "https://code.claude.com/docs/en/agent-sdk/skills",
       "Agent SDK Skills"
     ]
   ],
