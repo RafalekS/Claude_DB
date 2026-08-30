@@ -311,37 +311,47 @@ def _prompts_html():
 
 def _commands_html():
     rows = [
-        ["/help", "Built-in", "Show all commands and shortcuts"],
-        ["/clear", "Built-in", "Clear conversation history and start new session"],
-        ["/compact [instructions]", "Built-in", "Compact conversation to free context"],
-        ["/config", "Built-in", "Open settings interface (model, theme, editor mode, etc.)"],
-        ["/cost", "Built-in", "Show token usage and cost for current session"],
-        ["/doctors", "Built-in", "Check Claude Code installation health"],
-        ["/init", "Built-in", "Generate CLAUDE.md from codebase analysis"],
-        ["/memory", "Built-in", "Browse and edit memory files; toggle auto memory"],
-        ["/permissions", "Built-in", "Manage allow/deny rules; view recently denied"],
-        ["/hooks", "Built-in", "Browse configured hooks (read-only)"],
-        ["/agents", "Built-in", "Browse subagents; create new ones"],
-        ["/theme", "Built-in", "Change color theme"],
-        ["/model", "Built-in", "Switch Claude model"],
-        ["/effort", "Built-in", "Set effort level: low | medium | high | max (Opus 4.6 only)"],
-        ["/plan", "Built-in", "Prefix — run a single prompt in plan mode"],
-        ["/btw &lt;question&gt;", "Built-in", "Side question (ephemeral, no history)"],
-        ["/resume [id]", "Built-in", "Open session picker or resume by name/ID"],
-        ["/rename [name]", "Built-in", "Name or rename the current session"],
-        ["/branch", "Built-in", "Fork the conversation from this point"],
-        ["/rewind", "Built-in", "Restore code / conversation to a previous state"],
-        ["/feedback", "Built-in", "Submit feedback to Anthropic"],
-        ["/upgrade", "Built-in", "Upgrade plan (Pro/Max only)"],
-        ["/terminal-setup", "Built-in", "Install Shift+Enter binding for multiline"],
-        ["/debug", "Built-in", "Toggle debug mode"],
-        ["/verbose", "Built-in", "Toggle verbose output"],
-        ["/powerup", "Built-in", "Interactive lessons with animated demos"],
-        ["/simplify", "Skill", "Simplify and clean up code"],
-        ["/batch", "Skill", "Process multiple items in parallel"],
-        ["/debug (skill)", "Skill", "Systematic debugging playbook"],
-        ["/loop [interval]", "Skill", "Autonomous loop with optional polling interval"],
-        ["/claude-api", "Skill", "Use Claude API in code"],
+        ["/help", "Built-in", "Show help and available commands"],
+        ["/clear [name]", "Built-in", "Start a new conversation with empty context"],
+        ["/compact [instructions]", "Built-in", "Summarise the conversation to free context"],
+        ["/context [all]", "Built-in", "Visualise context usage; shows which memory files loaded"],
+        ["/rewind", "Built-in", "Roll code and/or conversation back to a checkpoint"],
+        ["/config [key=value]", "Built-in", "Open Settings, or set a value directly"],
+        ["/status", "Built-in", "Session status and loaded setting sources"],
+        ["/usage", "Built-in", "Plan usage / rate-limit status (/cost is an alias)"],
+        ["/model [model]", "Built-in", "Switch model"],
+        ["/effort [level|auto|status]", "Built-in", "low | medium | high | xhigh | max | ultracode"],
+        ["/fast [on|off]", "Built-in", "Toggle fast mode"],
+        ["/memory", "Built-in", "Edit CLAUDE.md files; manage auto memory"],
+        ["/init", "Built-in", "Generate a starting CLAUDE.md from the codebase"],
+        ["/permissions", "Built-in", "Manage allow/ask/deny rules (alias /allowed-tools)"],
+        ["/hooks", "Built-in", "View hook configurations"],
+        ["/agents", "Built-in", "Manage subagents"],
+        ["/mcp", "Built-in", "Manage MCP servers and OAuth"],
+        ["/plugin [subcommand]", "Built-in", "Manage plugins and marketplaces"],
+        ["/theme", "Built-in", "Change colour theme"],
+        ["/statusline", "Built-in", "Configure the status line"],
+        ["/output-style", "Built-in", "Switch output style"],
+        ["/plan [description]", "Built-in", "Enter plan mode"],
+        ["/cd <path>", "Built-in", "Move the session to another working directory"],
+        ["/add-dir <path>", "Built-in", "Grant file access to another directory"],
+        ["/resume [id|name]", "Built-in", "Session picker, or resume by id/name"],
+        ["/branch [name]", "Built-in", "Create a conversation branch"],
+        ["/export [file]", "Built-in", "Export the conversation as plain text"],
+        ["/bug [report]", "Built-in", "Report a bug / share the conversation"],
+        ["/feedback [report]", "Built-in", "Send product feedback about Claude Code"],
+        ["/login  ·  /logout", "Built-in", "Sign in / out of your Anthropic account"],
+        ["/terminal-setup", "Built-in", "Install the Shift+Enter multiline binding"],
+        ["/vim", "Built-in", "Toggle vim editing mode"],
+        ["/code-review [level]", "Skill", "Review a diff/PR for bugs and cleanup (--fix / --comment)"],
+        ["/security-review", "Skill", "Check the diff for security vulnerabilities"],
+        ["/debug [description]", "Skill", "Enable debug logging and troubleshoot"],
+        ["/doctor", "Skill", "Setup checkup — diagnose and fix issues"],
+        ["/simplify", "Skill", "Reuse / simplification / efficiency cleanups"],
+        ["/batch <instruction>", "Skill", "Orchestrate large-scale parallel changes"],
+        ["/deep-research <question>", "Skill", "Fan out web searches, synthesise a cited report"],
+        ["/loop [interval] [prompt]", "Skill", "Run a prompt repeatedly on a schedule"],
+        ["/claude-api [migrate|...]", "Skill", "Claude API / Anthropic SDK reference material"],
     ]
     return _wrap(
         _h(1, "Commands Reference"),
@@ -894,19 +904,33 @@ def _github_actions_html():
 def _memory_system_html():
     return _wrap(
         _h(1, "Memory System"),
-        _h(2, "Memory Hierarchy (Highest → Lowest)"),
+        _h(2, "CLAUDE.md load order (later files are read last)"),
         _p("<ol style='line-height:1.8;margin:0;padding-left:1.4em;'>"
-           "<li><b>Enterprise Policy:</b> " + _code("/etc/claude/CLAUDE.md") + "</li>"
-           "<li><b>User Memory:</b> " + _code("~/.claude/CLAUDE.md") + " — applies to all projects</li>"
-           "<li><b>Project Memory:</b> " + _code("./CLAUDE.md") + " — in git, shared with team</li>"
-           "<li><b>Local Project:</b> " + _code("./CLAUDE.local.md") + " — personal, gitignored</li>"
-           "</ol>"),
-        _p("<b>Quick add:</b> prefix prompt with " + _code("#") + " to save instantly to memory.&nbsp;&nbsp;"
-           "<b>Edit:</b> " + _code("/memory") + " opens CLAUDE.md in editor."),
+           "<li><b>Managed policy:</b> <code>/etc/claude-code/CLAUDE.md</code> (Linux/WSL), "
+           "<code>/Library/Application Support/ClaudeCode/CLAUDE.md</code> (macOS), "
+           "<code>C:\\Program Files\\ClaudeCode\\CLAUDE.md</code> (Windows), or the "
+           "<code>claudeMd</code> managed setting</li>"
+           "<li><b>User:</b> <code>~/.claude/CLAUDE.md</code> — all projects</li>"
+           "<li><b>Project:</b> <code>./CLAUDE.md</code> or <code>./.claude/CLAUDE.md</code> — committed</li>"
+           "<li><b>Local:</b> <code>./CLAUDE.local.md</code> — add it to .gitignore yourself</li>"
+           "</ol>"
+           "Ancestor-directory CLAUDE.md files load at launch (root → cwd); subdirectory ones load "
+           "when Claude reads files there. " + _code("claudeMdExcludes") + " skips files by glob."),
+        _p("<b>Imports:</b> <code>@path/to/file</code> anywhere in a CLAUDE.md is expanded at launch "
+           "(relative to the file, max 4 hops; ignored inside code blocks / backticks). "
+           "<b>Rules:</b> <code>.claude/rules/*.md</code> (recursive) load like <code>.claude/CLAUDE.md</code>; "
+           "add <code>paths:</code> frontmatter to load a rule only for matching files. "
+           "<code>~/.claude/rules/</code> is the user-level equivalent."),
+        _p("<b>Quick add:</b> prefix a prompt with " + _code("#") + " to save to auto memory.&nbsp;&nbsp;"
+           "<b>Browse/edit:</b> " + _code("/memory") + " lists every CLAUDE.md / CLAUDE.local.md / memory file. "
+           + _code("/context") + " shows which actually loaded."),
         _h(2, "Auto Memory"),
-        _p("When " + _code("autoMemoryEnabled: true") + " in settings, Claude Code automatically "
-           "extracts key information to " + _code("autoMemoryDirectory") +
-           " (default: " + _code("~/.claude/memory/") + ")."),
+        _p("On by default (" + _code("autoMemoryEnabled") + "; " + _code("CLAUDE_CODE_DISABLE_AUTO_MEMORY=1") +
+           " to force off). Claude writes its own notes to "
+           + _code("~/.claude/projects/&lt;project&gt;/memory/") + " — a " + _code("MEMORY.md") +
+           " index (first 200 lines / 25KB loaded each session) plus one topic file per memory, each with "
+           "a <code>type</code> of user / feedback / project / reference. Override the location with "
+           + _code("autoMemoryDirectory") + " (absolute or ~/ path)."),
         _h(2, "Context Compaction"),
         _p("<ul style='line-height:1.8;margin:0;padding-left:1.4em;'>"
            "<li>" + _code("/compact") + " — compact history to free context window</li>"

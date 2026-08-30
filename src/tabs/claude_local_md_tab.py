@@ -72,10 +72,13 @@ class ClaudeLocalMDTab(QWidget):
 
         # Info footer
         tip_label = QLabel(
-            "💡 <b>CLAUDE.local.md</b> is loaded after CLAUDE.md and overrides or extends it. "
-            "It is <b>gitignored by default</b> — use it for personal instructions, local paths, "
-            "machine-specific config, or anything you don't want in the shared repository. "
-            "Claude Code loads both files; local settings take precedence where they conflict."
+            "💡 <b>CLAUDE.local.md</b> lives at the project root and loads right after "
+            "<code>./CLAUDE.md</code> at that level, so it extends or overrides it. Use it for "
+            "personal instructions, local paths and machine-specific config. "
+            "<b>Add it to <code>.gitignore</code> yourself</b> — Claude Code does not do this "
+            "automatically (only <code>.claude/settings.local.json</code> is auto-excluded). "
+            "Across git worktrees a gitignored CLAUDE.local.md exists only in the worktree you "
+            "created it in — to share personal notes, import <code>@~/.claude/&lt;file&gt;.md</code> instead."
         )
         tip_label.setWordWrap(True)
         tip_label.setStyleSheet(

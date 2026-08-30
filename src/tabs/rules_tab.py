@@ -316,7 +316,8 @@ class RuleEditorWidget(QWidget):
         if data["paths"]:
             fm_lines.append("paths:")
             for p in data["paths"]:
-                fm_lines.append(f"  - {p}")
+                # Quote — a bare leading '*' etc. is not valid YAML.
+                fm_lines.append(f'  - "{p}"')
         fm_lines.append("---")
         fm_lines.append("")
         fm_lines.append(f"# {data['name'].replace('-', ' ').title()}")
