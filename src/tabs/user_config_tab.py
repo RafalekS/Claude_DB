@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 from utils import theme
 # Import subtabs (using OLD correct implementations)
 from tabs.user_settings_subtab import UserSettingsSubTab
+from tabs.raw_settings_subtab import RawSettingsSubTab, user_scope
 from tabs.user_hooks_subtab import UserHooksSubTab
 from tabs.user_permissions_subtab import UserPermissionsSubTab
 from tabs.user_statusline_subtab import UserStatuslineSubTab
@@ -94,6 +95,10 @@ class UserConfigTab(QWidget):
         self._settings_tab = UserSettingsSubTab(self.config_manager, self.backup_manager, self.settings_manager)
         self.sub_tabs.addTab(self._settings_tab, "🎛️ Settings")
 
+        # Raw settings.json editor — every key, not just the curated fields
+        self._raw_settings_tab = RawSettingsSubTab(user_scope(self.config_manager), self.backup_manager)
+        self.sub_tabs.addTab(self._raw_settings_tab, "⚙️ settings.json")
+
         # Env Vars sub-tab
         self._env_vars_tab = EnvVarsTab(self.config_manager, self.backup_manager)
         self.sub_tabs.addTab(self._env_vars_tab, "🔑 Env Vars")
@@ -143,6 +148,7 @@ class UserConfigTab(QWidget):
     def refresh_all(self):
         """Reload all subtabs from the current config_manager source (local or remote)."""
         self._settings_tab.load_settings()
+        self._raw_settings_tab.load_settings()
         self._env_vars_tab.load_env_vars()
         self._hooks_tab.load_hooks()
         self._permissions_tab.load_permissions()
