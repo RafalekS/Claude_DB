@@ -29,7 +29,9 @@ class PluginsTab(QWidget):
         self.settings_file = self.config_manager.settings_file
         _claude_dir = self.config_manager.claude_dir
         self.plugins_dir = _claude_dir / "plugins"
-        self.plugins_config_file = self.plugins_dir / "config.json"
+        # Claude Code records installed plugins in installed_plugins.json
+        # ({"version": 2, "plugins": {"name@marketplace": [ {scope, version, ...} ]}}).
+        self.plugins_config_file = self.plugins_dir / "installed_plugins.json"
         self.plugins_marketplaces_file = self.plugins_dir / "known_marketplaces.json"
 
         self.init_ui()
@@ -137,7 +139,7 @@ class PluginsTab(QWidget):
         left_layout.addWidget(enabled_plugins_group)
 
         # Installed Plugins
-        installed_plugins_group = QGroupBox("Installed Plugins (~/.claude/plugins/config.json)")
+        installed_plugins_group = QGroupBox("Installed Plugins (~/.claude/plugins/installed_plugins.json)")
         installed_plugins_layout = QVBoxLayout(installed_plugins_group)
         self.installed_plugins_list = QListWidget()
         installed_plugins_layout.addWidget(self.installed_plugins_list)
@@ -183,24 +185,26 @@ class PluginsTab(QWidget):
         plugin_ref_layout.setSpacing(4)
         plugin_ref = QTextBrowser()
         plugin_ref.setOpenExternalLinks(False)
+        _sz = theme.FONT_SIZE_SMALL
         plugin_ref.setHtml(
-            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
-            "<b>LSP Servers</b> — expose a Language Server Protocol server:<br>"
-            f"<code style='font-size:{theme.FONT_SIZE_SMALL}px'>"
-            "&nbsp;&nbsp;\"lsp\": {{\"command\": \"node\", \"args\": [\"server.js\"], \"languages\": [\"python\"]}}"
-            "</code><br>"
-            "<b>Monitors</b> — background watchers fired on file/event changes:<br>"
-            f"<code style='font-size:{theme.FONT_SIZE_SMALL}px'>"
-            "&nbsp;&nbsp;\"monitors\": [{{\"event\": \"FileChanged\", \"pattern\": \"*.py\", \"command\": \"lint.sh\"}}]"
-            "</code><br>"
-            "<b>userConfig</b> — user-configurable settings schema (shown in UI):<br>"
-            f"<code style='font-size:{theme.FONT_SIZE_SMALL}px'>"
-            "&nbsp;&nbsp;\"userConfig\": {{\"apiKey\": {{\"type\": \"string\", \"description\": \"API key\"}}}}"
-            "</code><br>"
-            "<b>channels</b> — communication channels: "
-            "<code>\"channels\": [\"http\", \"stdio\"]</code><br>"
-            "<b>Vars:</b> <code>${{CLAUDE_PLUGIN_ROOT}}</code> install dir &nbsp; "
-            "<code>${{CLAUDE_PLUGIN_DATA}}</code> data dir"
+            f"<span style='font-size:{_sz}px; color:{theme.FG_SECONDARY};'>"
+            "Directories at the plugin root (not inside <code>.claude-plugin/</code>): "
+            "<code>skills/</code> <code>commands/</code> <code>agents/</code> "
+            "<code>hooks/hooks.json</code> <code>.mcp.json</code> <code>.lsp.json</code> "
+            "<code>monitors/monitors.json</code> <code>bin/</code><br>"
+            "<b>.lsp.json</b> — keyed by language id: "
+            "<code>{&quot;go&quot;: {&quot;command&quot;: &quot;gopls&quot;, "
+            "&quot;extensionToLanguage&quot;: {&quot;.go&quot;: &quot;go&quot;}}}</code><br>"
+            "<b>monitors/monitors.json</b> — array of watchers: "
+            "<code>[{&quot;name&quot;: &quot;error-log&quot;, "
+            "&quot;command&quot;: &quot;tail -F ./logs/error.log&quot;}]</code><br>"
+            "<b>userConfig</b> — settings schema: "
+            "<code>{&quot;apiKey&quot;: {&quot;type&quot;: &quot;string&quot;, "
+            "&quot;title&quot;: &quot;API key&quot;, &quot;sensitive&quot;: true}}</code><br>"
+            "<b>channels</b> — array of "
+            "<code>{&quot;server&quot;: &quot;&lt;mcpServers key&gt;&quot;, &quot;userConfig&quot;: {…}}</code><br>"
+            "<b>Vars:</b> <code>${CLAUDE_PLUGIN_ROOT}</code> install dir &nbsp; "
+            "<code>${CLAUDE_PLUGIN_DATA}</code> persistent data dir"
             "</span>"
         )
         plugin_ref_layout.addWidget(plugin_ref)
@@ -321,7 +325,7 @@ class PluginsTab(QWidget):
             QMessageBox.critical(self, "Load Error", f"Failed to load settings.json:\n{str(e)}")
 
     def load_installed_plugins(self):
-        """Load installed plugins from ~/.claude/plugins/config.json"""
+        """Load installed plugins from ~/.claude/plugins/installed_plugins.json"""
         self.installed_plugins_list.clear()
 
         try:
@@ -329,27 +333,37 @@ class PluginsTab(QWidget):
                 with open(self.plugins_config_file, 'r', encoding='utf-8') as f:
                     self.plugins_config_data = json.load(f)
 
-                repositories = self.plugins_config_data.get('repositories', {})
+                # Newer format: {"version": 2, "plugins": {"name@mkt": [ {scope, version, ...} ]}}
+                # Older format: {"repositories": {...}}
+                plugins = self.plugins_config_data.get('plugins') \
+                    or self.plugins_config_data.get('repositories', {})
 
-                if len(repositories) == 0:
-                    item = QListWidgetItem("No plugins installed (repositories is empty)")
+                if not plugins:
+                    item = QListWidgetItem("No plugins installed")
                     item.setFlags(Qt.ItemFlag.NoItemFlags)
                     item.setForeground(QColor(theme.FG_DIM))
                     self.installed_plugins_list.addItem(item)
                 else:
-                    for plugin_name, plugin_config in repositories.items():
-                        item = QListWidgetItem(f"📦 {plugin_name}")
+                    for plugin_name, plugin_config in plugins.items():
+                        detail = ""
+                        entries = plugin_config if isinstance(plugin_config, list) else [plugin_config]
+                        if entries and isinstance(entries[0], dict):
+                            e0 = entries[0]
+                            ver = e0.get('version', '')
+                            scopes = ", ".join(sorted({e.get('scope', '') for e in entries if isinstance(e, dict)}))
+                            detail = f"  ({ver}{' · ' + scopes if scopes else ''})"
+                        item = QListWidgetItem(f"📦 {plugin_name}{detail}")
                         item.setData(Qt.ItemDataRole.UserRole, {'name': plugin_name, 'config': plugin_config})
                         item.setForeground(QColor(theme.SUCCESS_COLOR))
                         self.installed_plugins_list.addItem(item)
             else:
-                item = QListWidgetItem(f"config.json not found")
+                item = QListWidgetItem("installed_plugins.json not found")
                 item.setFlags(Qt.ItemFlag.NoItemFlags)
                 item.setForeground(QColor(theme.ERROR_COLOR))
                 self.installed_plugins_list.addItem(item)
 
         except Exception as e:
-            logger.error("Failed to load installed plugins from config.json: %s", e)
+            logger.error("Failed to load installed plugins: %s", e)
             QMessageBox.critical(self, "Load Error", f"Failed to load config.json:\n{str(e)}")
 
     def load_known_marketplaces(self):

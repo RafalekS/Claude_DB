@@ -588,24 +588,32 @@ def _plugins_ref_html():
            + _code("~/.claude/plugins/data/&lt;id&gt;/") + " — survives updates and uninstall (until last scope removed)."),
         _h(2, "plugin.json Schema (key fields)"),
         _pre('{\n  "name": "my-plugin",          // required, kebab-case\n'
-             '  "version": "1.0.0",\n'
+             '  "version": "1.0.0",         // optional; users update only when bumped\n'
              '  "description": "...",\n'
-             '  "skills": "./skills/",\n'
+             '  "author": { "name": "...", "email": "...", "url": "..." },\n'
+             '  "homepage": "...", "repository": "...", "license": "MIT",\n'
+             '  "skills": "./skills/",      // adds to the default skills/\n'
+             '  "commands": "./commands/",  // these fields REPLACE the defaults\n'
              '  "agents": "./agents/",\n'
-             '  "hooks": "./hooks/hooks.json",\n'
+             '  "hooks": "./hooks/hooks.json",     // path | array | inline object\n'
              '  "mcpServers": "./.mcp.json",\n'
              '  "lspServers": "./.lsp.json",\n'
-             '  "monitors": "./monitors.json",\n'
              '  "userConfig": {\n'
-             '    "api_token": { "description": "API token", "sensitive": true }\n'
+             '    "api_token": { "type": "string", "title": "API token",\n'
+             '                   "description": "...", "sensitive": true }\n'
              '  }\n}'),
+        _p("Note: <code>.claude-plugin/</code> holds only <code>plugin.json</code>; "
+           "<code>commands/</code>, <code>agents/</code>, <code>skills/</code>, <code>hooks/</code> "
+           "sit at the plugin root, not inside <code>.claude-plugin/</code>."),
         _h(2, "How Plugins Work"),
-        _p("• Settings: " + _code("enabledPlugins") + " array in settings.json<br>"
-           "• Plugins are installed to the plugin cache at "
-           + _code("~/.claude/plugins/cache") + "<br>"
-           "• " + _code("/plugin") + " command in Claude Code terminal: browse, install, list, errors tab<br>"
-           "• " + _code("claude --debug") + " shows plugin loading and registration details<br>"
-           "• Use " + _code("claude plugin validate") + " to check manifest + hook syntax"),
+        _p("• Settings: " + _code("enabledPlugins") + " is an <b>object</b> in settings.json — "
+           + _code('{"name@marketplace": true}') + "<br>"
+           "• " + _code("extraKnownMarketplaces") + " is an object keyed by name: "
+           + _code('{"<name>": {"source": {"source": "github", "repo": "org/repo"}}}') + "<br>"
+           "• Plugins install to " + _code("~/.claude/plugins/cache/") + "; per-plugin state in "
+           + _code("~/.claude/plugins/config.json") + "<br>"
+           "• " + _code("/plugin") + " (browse/install/errors) · " + _code("claude --debug") +
+           " (load details) · " + _code("claude plugin validate <path>") + " (--strict)"),
         _h(2, "LSP Plugins (Code Intelligence)"),
         _table(["Plugin", "Language", "Install"],
                [["pyright-lsp", "Python", "pip install pyright or npm install -g pyright"],
