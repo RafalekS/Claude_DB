@@ -23,7 +23,9 @@ CLAUDE_PROJECTS_DIR = Path.home() / ".claude" / "projects"
 def _read_cwd_from_jsonl(project_dir: Path) -> Path | None:
     """
     Open the newest JSONL in project_dir and return the `cwd` from the first
-    `attachment` entry that has one.  Reads at most 40 lines.
+    entry that has one.  Reads at most 120 lines (a current session writes a
+    block of metadata entries — last-prompt, mode, permission-mode,
+    bridge-session, ai-title — before the first message that carries `cwd`).
     """
     jsonl_files = sorted(
         project_dir.glob("*.jsonl"),
@@ -34,7 +36,7 @@ def _read_cwd_from_jsonl(project_dir: Path) -> Path | None:
         try:
             with open(jf, encoding="utf-8", errors="replace") as fh:
                 for i, raw in enumerate(fh):
-                    if i >= 40:
+                    if i >= 120:  # new sessions write more metadata before the first message
                         break
                     raw = raw.strip()
                     if not raw:
@@ -138,7 +140,7 @@ def _read_cwd_from_jsonl_fs(project_dir, fs) -> str | None:
 
     for jf in jsonl_files:
         try:
-            lines_text = fs.head_lines(jf, 40)
+            lines_text = fs.head_lines(jf, 120)
         except Exception:
             continue
         for raw in lines_text.splitlines():

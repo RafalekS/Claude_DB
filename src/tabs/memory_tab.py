@@ -109,9 +109,20 @@ def _parse_conversation(path, fs=None) -> list[dict]:
 # ─── Path helpers ─────────────────────────────────────────────────────────────
 
 def _decode_project_path(folder_name: str) -> str:
-    """Decode Claude Code's folder-name encoding back to a readable path."""
-    raw = folder_name.lstrip("-")
-    path = "/" + raw.replace("-", "/")
+    """Decode Claude Code's folder-name encoding back to a readable path.
+
+    Uses project_scanner's robust decoder (which probes the filesystem and the
+    session JSONL cwd) and falls back to the naive '-' → '/' swap.
+    """
+    try:
+        from utils.project_scanner import decode_project_directory_name
+        decoded = decode_project_directory_name(folder_name)
+        if decoded is not None:
+            path = str(decoded)
+        else:
+            path = "/" + folder_name.lstrip("-").replace("-", "/")
+    except Exception:
+        path = "/" + folder_name.lstrip("-").replace("-", "/")
     home = os.path.expanduser("~")
     if path.startswith(home):
         path = "~" + path[len(home):]
