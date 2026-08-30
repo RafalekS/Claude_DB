@@ -370,29 +370,30 @@ class UserSettingsSubTab(QWidget):
             )
 
     def create_preview_section(self) -> QGroupBox:
-        """Create JSON preview section"""
-        group = QGroupBox("JSON Preview")
+        """Full settings.json editor — every key, not just the fields above.
 
-        layout = QVBoxLayout()
+        Embeds RawSettingsSubTab so there's still only ONE Settings sub-tab:
+        the shortcuts above plus complete raw access to the same file here.
+        """
+        from tabs.raw_settings_subtab import RawSettingsSubTab, user_scope
 
-        info = QLabel("Real-time preview of settings.json")
+        group = QGroupBox("Full settings.json — every key")
+        layout = QVBoxLayout(group)
+        info = QLabel(
+            "The fields above are shortcuts. This editor is the whole file — "
+            "keys like cleanupPeriodDays, spinnerTipsEnabled, fallbackModel, sandbox.*, "
+            "etc. Double-click a key on the right to insert it."
+        )
+        info.setWordWrap(True)
         info.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info)
 
-        self.preview_text = QTextEdit()
-        self.preview_text.setReadOnly(True)
-        self.preview_text.setMaximumHeight(200)
-        self.preview_text.setStyleSheet(f"""
-            QTextEdit {{
-                font-family: {theme.FONT_FAMILY_MONO};
-                border-radius: 3px;
-                padding: 5px;
-                font-size: {theme.FONT_SIZE_SMALL}px;
-            }}
-        """)
-        layout.addWidget(self.preview_text)
-
-        group.setLayout(layout)
+        self._raw_editor = RawSettingsSubTab(
+            user_scope(self.config_manager), self.backup_manager,
+            on_saved=self.load_settings, compact=True,
+        )
+        self._raw_editor.setMinimumHeight(280)
+        layout.addWidget(self._raw_editor)
         return group
 
     def load_settings(self):
@@ -539,10 +540,7 @@ class UserSettingsSubTab(QWidget):
             logger.error("Failed to set notification channel: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to set notification channel:\n{str(e)}")
 
-    def update_preview(self, settings: dict):
-        """Update JSON preview"""
-        try:
-            formatted = json.dumps(settings, indent=2)
-            self.preview_text.setPlainText(formatted)
-        except Exception as e:
-            self.preview_text.setPlainText(f"Error formatting JSON: {e}")
+    def update_preview(self, settings: dict = None):
+        """Re-sync the embedded full-file editor from disk."""
+        if hasattr(self, "_raw_editor"):
+            self._raw_editor.reload()

@@ -32,7 +32,8 @@ class ProjectSettingsSubTab(QWidget):
         # Storage for UI widgets by scope
         self.model_combos = {}
         self.theme_combos = {}
-        self.preview_texts = {}
+        self.preview_texts = {}          # legacy — kept for apply_theme() compat
+        self._raw_editors = {}           # scope -> embedded RawSettingsSubTab
         self.excludes_edits = {}
         self.plugins_lists = {}
 
@@ -352,33 +353,32 @@ class ProjectSettingsSubTab(QWidget):
             lst.takeItem(row)
 
     def create_preview_section(self, scope: str) -> QGroupBox:
-        """Create JSON preview section"""
-        group = QGroupBox("JSON Preview")
+        """Full settings.json editor for this scope — every key, embedded so the
+        Settings sub-tab stays a single tab (shortcuts above + raw access here)."""
+        from tabs.raw_settings_subtab import RawSettingsSubTab, project_scopes
 
-        layout = QVBoxLayout()
+        which = 0 if scope == "shared" else 1
+        one_scope = [project_scopes(self.settings_manager, self.project_context)[which]]
 
-        info = QLabel(f"Real-time preview of {scope} settings.json")
+        fname = "settings.json" if scope == "shared" else "settings.local.json"
+        group = QGroupBox(f"Full {fname} — every key")
+        layout = QVBoxLayout(group)
+        info = QLabel(
+            "The fields above are shortcuts. This editor is the whole file "
+            "(cleanupPeriodDays, spinnerTipsEnabled, sandbox.*, …). "
+            "Double-click a key on the right to insert it."
+        )
+        info.setWordWrap(True)
         info.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         layout.addWidget(info)
 
-        preview_text = QTextEdit()
-        preview_text.setReadOnly(True)
-        preview_text.setMaximumHeight(200)
-        preview_text.setStyleSheet(f"""
-            QTextEdit {{
-                font-family: {theme.FONT_FAMILY_MONO};
-                border-radius: 3px;
-                padding: 5px;
-                font-size: {theme.FONT_SIZE_SMALL}px;
-            }}
-        """)
-        layout.addWidget(preview_text)
-
-        group.setLayout(layout)
-
-        # Store reference
-        self.preview_texts[scope] = preview_text
-
+        editor = RawSettingsSubTab(
+            one_scope, self.backup_manager,
+            on_saved=lambda s=scope: self.load_settings(s), compact=True,
+        )
+        editor.setMinimumHeight(260)
+        layout.addWidget(editor)
+        self._raw_editors[scope] = editor
         return group
 
     def load_settings(self, scope: str):
@@ -567,22 +567,14 @@ class ProjectSettingsSubTab(QWidget):
             logger.error("Failed to set notification channel for %s settings: %s", scope, e)
             QMessageBox.critical(self, "Error", f"Failed to set notification channel:\n{str(e)}")
 
-    def update_preview(self, settings: dict, scope: str):
-        """Update JSON preview for a specific scope"""
-        if scope not in self.preview_texts:
-            return
-
-        try:
-            formatted = json.dumps(settings, indent=2)
-            self.preview_texts[scope].setPlainText(formatted)
-        except Exception as e:
-            self.preview_texts[scope].setPlainText(f"Error formatting JSON: {e}")
+    def update_preview(self, settings: dict = None, scope: str = None):
+        """Re-sync the embedded full-file editor(s) from disk."""
+        editors = ([self._raw_editors[scope]] if scope in self._raw_editors
+                   else list(self._raw_editors.values()))
+        for ed in editors:
+            ed.reload()
 
     def on_project_changed(self, new_project: Path):
         """Handle project context changes (reload settings)"""
-        if new_project:
-            self.load_all_settings()
-        else:
-            # Clear all previews
-            for preview in self.preview_texts.values():
-                preview.clear()
+        self.load_all_settings()
+        self.update_preview()

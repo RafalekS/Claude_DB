@@ -26,7 +26,6 @@ import logging
 logger = logging.getLogger(__name__)
 # Import subtabs (using OLD correct implementations)
 from tabs.project_settings_subtab import ProjectSettingsSubTab
-from tabs.raw_settings_subtab import RawSettingsSubTab, project_scopes
 from tabs.project_hooks_subtab import ProjectHooksSubTab
 from tabs.project_permissions_subtab import ProjectPermissionsSubTab
 from tabs.project_statusline_subtab import ProjectStatuslineSubTab
@@ -348,13 +347,6 @@ class ProjectConfigTab(QWidget):
         # Settings sub-tab (Model, Theme, Environment Variables - Shared/Local)
         settings_tab = ProjectSettingsSubTab(self.config_manager, self.backup_manager, self.settings_manager, self.project_context)
         self.sub_tabs.addTab(settings_tab, "🎛️ Settings")
-
-        # Raw settings.json editor — every key, not just the curated fields
-        self._raw_settings_tab = RawSettingsSubTab(
-            project_scopes(self.settings_manager, self.project_context), self.backup_manager
-        )
-        self.sub_tabs.addTab(self._raw_settings_tab, "⚙️ settings.json")
-        self.project_context.project_changed.connect(lambda *_: self._raw_settings_tab.reload())
 
         # Hooks sub-tab (Project - uses settings.json)
         hooks_tab = ProjectHooksSubTab(self.config_manager, self.backup_manager, self.settings_manager, self.project_context)

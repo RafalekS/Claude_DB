@@ -92,10 +92,18 @@ class RawSettingsSubTab(QWidget):
         }
     """
 
-    def __init__(self, scopes: list[dict], backup_manager=None, parent=None):
+    def __init__(self, scopes: list[dict], backup_manager=None, parent=None,
+                 on_saved=None, compact=False):
+        """
+        on_saved: optional callback() run after a successful save from this
+                  editor — lets a host tab reload its own guided fields.
+        compact:  hide the big header row (for embedding inside another tab).
+        """
         super().__init__(parent)
         self._scopes = scopes
         self._backup_manager = backup_manager
+        self._on_saved = on_saved
+        self._compact = compact
         self._init_ui()
         self.reload()
 
@@ -108,17 +116,19 @@ class RawSettingsSubTab(QWidget):
 
         top = QHBoxLayout()
         top.setSpacing(6)
-        header = QLabel("settings.json — all keys")
-        header.setStyleSheet(
-            f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};"
-        )
-        top.addWidget(header)
+        if not self._compact:
+            header = QLabel("settings.json — all keys")
+            header.setStyleSheet(
+                f"font-size: {theme.FONT_SIZE_LARGE}px; font-weight: bold; color: {theme.ACCENT_PRIMARY};"
+            )
+            top.addWidget(header)
 
         self._scope_combo = QComboBox()
         for s in self._scopes:
             self._scope_combo.addItem(s["label"])
         self._scope_combo.currentIndexChanged.connect(self.reload)
         if len(self._scopes) > 1:
+            top.addWidget(QLabel("Scope:"))
             top.addWidget(self._scope_combo)
 
         top.addStretch()
@@ -284,6 +294,11 @@ class RawSettingsSubTab(QWidget):
             return
         self._status.setText(f"Saved to {path}")
         QMessageBox.information(self, "Saved", f"Settings saved to:\n{path}")
+        if callable(self._on_saved):
+            try:
+                self._on_saved()
+            except Exception as e:
+                logger.warning("on_saved callback failed: %s", e)
 
     # ── key reference ────────────────────────────────────────────────────────
 
