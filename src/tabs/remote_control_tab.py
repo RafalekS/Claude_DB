@@ -96,7 +96,7 @@ class RemoteControlTab(QWidget):
             "<code>-p</code>/<code>--print</code> — non-interactive &nbsp;|&nbsp; "
             "<code>--output-format json</code> — machine-readable &nbsp;|&nbsp; "
             "<code>--permission-prompt-tool mcp__server__tool</code> — delegate permissions &nbsp;|&nbsp; "
-            "<code>--no-markdown</code> — plain text for piping"
+            "<code>--output-format text</code> — plain text (default for -p)"
             "</span>"
         )
         layout.addWidget(tip)
@@ -116,7 +116,7 @@ class RemoteControlTab(QWidget):
             "<code>-p</code>/<code>--print</code> — non-interactive &nbsp;|&nbsp; "
             "<code>--output-format json</code> — machine-readable &nbsp;|&nbsp; "
             "<code>--permission-prompt-tool mcp__server__tool</code> — delegate permissions &nbsp;|&nbsp; "
-            "<code>--no-markdown</code> — plain text for piping"
+            "<code>--output-format text</code> — plain text (default for -p)"
             "</span>"
         )
 
@@ -130,7 +130,7 @@ class RemoteControlTab(QWidget):
         return f"""<html><body style="background:{bg}; color:{fg}; font-size:{sm}px;">
 <h3 style="color:{acc};">Non-Interactive (Print) Mode</h3>
 <pre style="background:{code_bg}; padding:8px; border-radius:4px;"># Single prompt, print response, exit
-claude -p "Explain this function" --no-markdown
+claude -p "Explain this function" --output-format text
 
 # Pipe input
 cat main.py | claude -p "Review this code"
@@ -160,7 +160,7 @@ claude -p "task" \\
   run: |
     claude -p "Review PR changes for security issues" \\
       --output-format json \\
-      --no-markdown \\
+      --output-format text \\
       > review.json</pre>
 
 <h3 style="color:{acc};">Custom System Prompt</h3>
@@ -178,7 +178,7 @@ claude -c
 claude -r &lt;session-id&gt;
 
 # Resume with different model
-claude -r &lt;session-id&gt; --model claude-opus-4-6</pre>
+claude -r &lt;session&gt; --model opus</pre>
 </body></html>"""
 
     def _sdk_html(self) -> str:
@@ -233,7 +233,7 @@ asyncio.run(main())</pre>
     <td style="padding:3px 8px;">Working directory for the session</td></tr>
 <tr style="background:{code_bg};"><td style="padding:3px 8px;"><code>model</code></td>
     <td style="padding:3px 8px;">str</td>
-    <td style="padding:3px 8px;">Model ID (e.g. <code>claude-opus-4-6</code>)</td></tr>
+    <td style="padding:3px 8px;">Model alias or ID (e.g. <code>opus</code>, <code>claude-opus-5</code>)</td></tr>
 </table>
 
 <h3 style="color:{acc}; margin-top:12px;">RemoteTrigger Tool</h3>

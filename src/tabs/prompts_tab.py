@@ -57,7 +57,7 @@ class PromptsTab(QWidget):
         # Link to Anthropic Prompt Library
         library_btn = QPushButton("📚 Prompt Library")
         library_btn.setToolTip("Open Anthropic Prompt Library for inspiration")
-        library_btn.clicked.connect(lambda: self.open_url("https://code.claude.com/en/resources/prompt-library/library"))
+        library_btn.clicked.connect(lambda: self.open_url("https://code.claude.com/docs/en/prompt-library"))
 
         # Import from GitHub button
         import_btn = QPushButton("📥 Import from GitHub")

@@ -129,17 +129,15 @@ class UserSettingsSubTab(QWidget):
 
         self.model_combo = QComboBox()
         self.model_combo.addItems([
-            # Claude 4.x (latest)
-            "claude-sonnet-4-6 (Sonnet 4.6 — Best coding model)",
-            "claude-opus-4-6 (Opus 4.6 — Deepest reasoning)",
-            "claude-haiku-4-5-20251001 (Haiku 4.5 — Fastest, cost-efficient)",
-            # Claude 4.5
-            "claude-sonnet-4-5-20250929 (Sonnet 4.5)",
-            "claude-opus-4-5 (Opus 4.5 — Extended thinking)",
-            # Claude 3.5
-            "claude-sonnet-3-5-v2@20241022 (Sonnet 3.5 v2)",
-            "claude-3-5-sonnet-20241022 (Sonnet 3.5)",
-            "claude-3-5-haiku-20241022 (Haiku 3.5)",
+            "sonnet (Sonnet 5 — balanced default for coding)",
+            "opus (Opus 5 — deepest reasoning)",
+            "fable (Fable 5 — most capable; long-horizon agentic)",
+            "haiku (Haiku 4.5 — fastest / cheapest)",
+            "opusplan (Opus in Plan mode, Sonnet in execution)",
+            "claude-sonnet-5 (pinned Sonnet 5)",
+            "claude-opus-5 (pinned Opus 5)",
+            "claude-fable-5 (pinned Fable 5)",
+            "claude-haiku-4-5-20251001 (pinned Haiku 4.5)",
         ])
 
         model_label = QLabel("Default Model:")
@@ -169,7 +167,10 @@ class UserSettingsSubTab(QWidget):
         self.theme_combo.addItems([
             "dark",
             "light",
-            "daltonized"
+            "dark-daltonized",
+            "light-daltonized",
+            "dark-ansi",
+            "light-ansi",
         ])
 
         theme_label = QLabel("Theme:")
@@ -264,7 +265,7 @@ class UserSettingsSubTab(QWidget):
         effort_lbl = QLabel("Effort Level:")
         effort_lbl.setStyleSheet(lbl_style)
         self.effort_combo = QComboBox()
-        self.effort_combo.addItems(["(default)", "low", "normal", "high", "max"])
+        self.effort_combo.addItems(["(default)", "low", "medium", "high", "xhigh", "max", "ultracode"])
         self.effort_combo.setToolTip(
             "Default token budget / thinking effort for new sessions.\n"
             "Settings key: effortLevel"
@@ -340,10 +341,11 @@ class UserSettingsSubTab(QWidget):
             "<code>text</code> — plain text (default)<br>"
             "<code>json</code> — single JSON object with result and metadata<br>"
             "<code>stream-json</code> — newline-delimited JSON events streamed as they arrive<br><br>"
-            "<b>--no-markdown</b> — strip all markdown formatting from text output (useful for piping)<br>"
-            "<b>--verbose</b> — include thinking blocks and extended reasoning in output<br>"
-            "JSON output includes: <code>result</code>, <code>cost_usd</code>, "
-            "<code>duration_ms</code>, <code>num_turns</code>, <code>usage</code> fields"
+            "<b>--json-schema '&lt;schema&gt;'</b> — constrain the JSON output to a schema<br>"
+            "<b>--verbose</b> — detailed turn-by-turn output<br>"
+            "<b>--include-partial-messages</b> — stream partial events (with stream-json)<br>"
+            "JSON output includes <code>result</code>, <code>total_cost_usd</code>, "
+            "<code>duration_ms</code>, <code>num_turns</code>, <code>usage</code>"
             "</span>"
         )
         layout.addWidget(ref)
@@ -359,10 +361,11 @@ class UserSettingsSubTab(QWidget):
                 "<code>text</code> — plain text (default)<br>"
                 "<code>json</code> — single JSON object with result and metadata<br>"
                 "<code>stream-json</code> — newline-delimited JSON events streamed as they arrive<br><br>"
-                "<b>--no-markdown</b> — strip all markdown formatting from text output (useful for piping)<br>"
-                "<b>--verbose</b> — include thinking blocks and extended reasoning in output<br>"
-                "JSON output includes: <code>result</code>, <code>cost_usd</code>, "
-                "<code>duration_ms</code>, <code>num_turns</code>, <code>usage</code> fields"
+                "<b>--json-schema '&lt;schema&gt;'</b> — constrain the JSON output to a schema<br>"
+                "<b>--verbose</b> — detailed turn-by-turn output<br>"
+                "<b>--include-partial-messages</b> — stream partial events (with stream-json)<br>"
+                "JSON output includes <code>result</code>, <code>total_cost_usd</code>, "
+                "<code>duration_ms</code>, <code>num_turns</code>, <code>usage</code>"
                 "</span>"
             )
 
@@ -399,9 +402,9 @@ class UserSettingsSubTab(QWidget):
             settings = self.config_manager.get_settings()
 
             # Load model
-            model_id = settings.get("model", "claude-sonnet-4-6")
+            model_id = settings.get("model", "sonnet")
             for i in range(self.model_combo.count()):
-                if model_id in self.model_combo.itemText(i):
+                if self.model_combo.itemText(i).split(" (")[0] == model_id:
                     self.model_combo.setCurrentIndex(i)
                     break
 
