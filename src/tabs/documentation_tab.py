@@ -405,8 +405,8 @@ def _tools_ref_html():
            "(Claude Code warns at startup). Use <code>Bash(prefix *)</code>, "
            "<code>Edit(path)</code>, and <code>Read(path)</code> instead."),
         _h(2, "Parallel Tool Execution"),
-        _p("Claude can run up to 10 read-only tools and subagents in parallel. "
-           "Set " + _code("CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY") + " to change the limit."),
+        _p("Claude runs independent read-only tools and subagents in parallel — issue them in a "
+           "single response. Writes and dependent calls are serialised."),
     )
 
 
