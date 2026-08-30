@@ -17,6 +17,7 @@ import json
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont
 from utils import theme
+from utils.frontmatter import merge_frontmatter
 from utils.template_manager import get_template_manager
 from utils.ui_state_manager import UIStateManager
 
@@ -28,16 +29,16 @@ try:
     with open(_config_file, encoding='utf-8') as f:
         _app_config = json.load(f)
     AVAILABLE_TOOLS = _app_config.get("claude_tools", {}).get("available_tools", [
-        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
-        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
-        "AskUserQuestion", "Skill", "SlashCommand"
+        "Read", "Write", "Edit", "Grep", "Glob", "Bash", "BashOutput",
+        "KillShell", "WebFetch", "WebSearch", "Task", "TodoWrite",
+        "NotebookEdit", "AskUserQuestion", "Skill", "SlashCommand"
     ])
 except (OSError, json.JSONDecodeError) as _cfg_err:
     logger.warning("Could not load claude_tools from config: %s", _cfg_err)
     AVAILABLE_TOOLS = [
-        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
-        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
-        "AskUserQuestion", "Skill", "SlashCommand"
+        "Read", "Write", "Edit", "Grep", "Glob", "Bash", "BashOutput",
+        "KillShell", "WebFetch", "WebSearch", "Task", "TodoWrite",
+        "NotebookEdit", "AskUserQuestion", "Skill", "SlashCommand"
     ]
 
 class NewAgentDialog(QDialog):
@@ -80,7 +81,7 @@ class NewAgentDialog(QDialog):
 
         # Model dropdown (inherit = use parent/default model)
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["inherit", "sonnet", "opus", "haiku"])
+        self.model_combo.addItems(["inherit", "sonnet", "opus", "haiku", "fable"])
         self.model_combo.setStyleSheet(get_combo_box_style())
         form.addRow("Model:", self.model_combo)
 
@@ -627,8 +628,8 @@ Add detailed instructions for this agent here.
             if color_index >= 0:
                 dialog.color_combo.setCurrentIndex(color_index)
 
-            # Set model combo
-            model = frontmatter.get('model', 'sonnet')
+            # Set model combo (Claude Code defaults an omitted model to 'inherit')
+            model = frontmatter.get('model', 'inherit')
             model_index = dialog.model_combo.findText(model)
             if model_index >= 0:
                 dialog.model_combo.setCurrentIndex(model_index)
@@ -650,25 +651,16 @@ Add detailed instructions for this agent here.
 
             agent_data = dialog.get_agent_data()
 
-            # Rebuild frontmatter
-            frontmatter_lines = [
-                "---",
-                f"name: {agent_data['name']}"
-            ]
-
-            frontmatter_lines.append(f"description: {agent_data['description']}")
-
-            frontmatter_lines.append(f"color: {agent_data['color']}")
-            frontmatter_lines.append(f"model: {agent_data['model']}")
-
-            if agent_data['tools']:
-                frontmatter_lines.append(f"tools: {agent_data['tools']}")
-
-            frontmatter_lines.append("---")
-            new_frontmatter = "\n".join(frontmatter_lines)
-
-            # Combine with existing body
-            new_content = f"{new_frontmatter}\n\n{body}"
+            # Merge only the fields the dialog owns; every other frontmatter key
+            # (permissionMode, maxTurns, skills, mcpServers, hooks, …) is kept.
+            updates = {
+                "name": agent_data["name"],
+                "description": agent_data["description"],
+                "color": agent_data["color"],
+                "model": agent_data["model"],
+                "tools": agent_data["tools"] or None,
+            }
+            new_content = merge_frontmatter(content, updates)
 
             # Update editor
             self.agent_editor.setPlainText(new_content)
@@ -1320,7 +1312,7 @@ class NewAgentTemplateDialog(QDialog):
 
         # Model dropdown (inherit = use parent/default model)
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["inherit", "sonnet", "opus", "haiku"])
+        self.model_combo.addItems(["inherit", "sonnet", "opus", "haiku", "fable"])
         self.model_combo.setStyleSheet(get_combo_box_style())
         form.addRow("Model:", self.model_combo)
 
@@ -1451,7 +1443,7 @@ class EditAgentTemplateDialog(QDialog):
 
         # Model field
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["inherit", "sonnet", "opus", "haiku"])
+        self.model_combo.addItems(["inherit", "sonnet", "opus", "haiku", "fable"])
         self.model_combo.setCurrentText(parsed_model)
         self.model_combo.setStyleSheet(get_combo_box_style())
         form.addRow("Model:", self.model_combo)

@@ -167,13 +167,13 @@ via its own frontmatter <code style="background:{code_bg}; padding:1px 4px;">per
   <th style="text-align:left; padding:4px 8px;">Effect</th>
 </tr>
 <tr><td style="padding:3px 8px;"><code>model</code></td>
-    <td style="padding:3px 8px;"><code>inherit</code>, <code>sonnet</code>, <code>opus</code>, <code>haiku</code></td>
-    <td style="padding:3px 8px;">Model for this worker (inherit = same as orchestrator)</td></tr>
+    <td style="padding:3px 8px;"><code>inherit</code>, <code>sonnet</code>, <code>opus</code>, <code>haiku</code>, <code>fable</code>, or a full model ID</td>
+    <td style="padding:3px 8px;">Model for this worker (inherit = same as orchestrator; default)</td></tr>
 <tr style="background:{code_bg};"><td style="padding:3px 8px;"><code>isolation</code></td>
     <td style="padding:3px 8px;"><code>worktree</code></td>
     <td style="padding:3px 8px;">Run agent in a fresh git worktree; auto-cleaned if no changes</td></tr>
 <tr><td style="padding:3px 8px;"><code>permissionMode</code></td>
-    <td style="padding:3px 8px;"><code>default</code>, <code>acceptEdits</code>, <code>auto</code>, <code>plan</code></td>
+    <td style="padding:3px 8px;"><code>default</code>, <code>acceptEdits</code>, <code>auto</code>, <code>dontAsk</code>, <code>bypassPermissions</code>, <code>plan</code>, <code>manual</code></td>
     <td style="padding:3px 8px;">Permission behaviour for this agent's actions</td></tr>
 <tr style="background:{code_bg};"><td style="padding:3px 8px;"><code>maxTurns</code></td>
     <td style="padding:3px 8px;">integer</td>
@@ -188,14 +188,14 @@ via its own frontmatter <code style="background:{code_bg}; padding:1px 4px;">per
     <td style="padding:3px 8px;">list of skill names</td>
     <td style="padding:3px 8px;">Skills loaded for this worker</td></tr>
 <tr style="background:{code_bg};"><td style="padding:3px 8px;"><code>memory</code></td>
-    <td style="padding:3px 8px;"><code>true</code> / <code>false</code></td>
-    <td style="padding:3px 8px;">Whether the worker has access to memory files</td></tr>
+    <td style="padding:3px 8px;"><code>user</code>, <code>project</code>, or <code>local</code></td>
+    <td style="padding:3px 8px;">Give the worker a persistent memory file at that scope</td></tr>
 <tr><td style="padding:3px 8px;"><code>background</code></td>
     <td style="padding:3px 8px;"><code>true</code> / <code>false</code></td>
-    <td style="padding:3px 8px;">Run this agent in the background by default</td></tr>
+    <td style="padding:3px 8px;">Keep this agent in the background when spawned</td></tr>
 <tr style="background:{code_bg};"><td style="padding:3px 8px;"><code>effort</code></td>
-    <td style="padding:3px 8px;"><code>low</code>, <code>normal</code>, <code>high</code></td>
-    <td style="padding:3px 8px;">Thinking effort / token budget for this worker</td></tr>
+    <td style="padding:3px 8px;"><code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code>, <code>max</code></td>
+    <td style="padding:3px 8px;">Reasoning effort for this worker (levels depend on model)</td></tr>
 <tr><td style="padding:3px 8px;"><code>hooks</code></td>
     <td style="padding:3px 8px;">hook config object</td>
     <td style="padding:3px 8px;">Per-agent hooks (overrides session hooks for this worker)</td></tr>
@@ -212,6 +212,7 @@ maxTurns: 20
 disallowedTools:
   - Bash
 effort: high
+memory: project
 ---
 You are a security specialist...</pre>
 </body></html>"""

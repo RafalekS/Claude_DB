@@ -24,15 +24,15 @@ try:
     with open(_config_file, encoding='utf-8') as f:
         _app_config = json.load(f)
     AVAILABLE_TOOLS = _app_config.get("claude_tools", {}).get("available_tools", [
-        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
-        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
-        "AskUserQuestion", "Skill", "SlashCommand"
+        "Read", "Write", "Edit", "Grep", "Glob", "Bash", "BashOutput",
+        "KillShell", "WebFetch", "WebSearch", "Task", "TodoWrite",
+        "NotebookEdit", "AskUserQuestion", "Skill", "SlashCommand"
     ])
 except Exception:
     AVAILABLE_TOOLS = [
-        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
-        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
-        "AskUserQuestion", "Skill", "SlashCommand"
+        "Read", "Write", "Edit", "Grep", "Glob", "Bash", "BashOutput",
+        "KillShell", "WebFetch", "WebSearch", "Task", "TodoWrite",
+        "NotebookEdit", "AskUserQuestion", "Skill", "SlashCommand"
     ]
 
 class SkillLibraryDialog(BaseLibraryDialog):

@@ -20,6 +20,7 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
 import json
 from utils import theme
+from utils.frontmatter import merge_frontmatter
 from utils.template_manager import get_template_manager
 from dialogs.skill_library_dialog import SkillLibraryDialog
 
@@ -29,22 +30,22 @@ try:
     with open(_config_file, encoding='utf-8') as f:
         _app_config = json.load(f)
     AVAILABLE_TOOLS = _app_config.get("claude_tools", {}).get("available_tools", [
-        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
-        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
-        "AskUserQuestion", "Skill", "SlashCommand"
+        "Read", "Write", "Edit", "Grep", "Glob", "Bash", "BashOutput",
+        "KillShell", "WebFetch", "WebSearch", "Task", "TodoWrite",
+        "NotebookEdit", "AskUserQuestion", "Skill", "SlashCommand"
     ])
 except (OSError, json.JSONDecodeError) as _cfg_err:
     import logging as _logging
     _logging.getLogger(__name__).warning("Could not load claude_tools from config: %s", _cfg_err)
     AVAILABLE_TOOLS = [
-        "Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash",
-        "WebFetch", "WebSearch", "Task", "TodoWrite", "NotebookEdit",
-        "AskUserQuestion", "Skill", "SlashCommand"
+        "Read", "Write", "Edit", "Grep", "Glob", "Bash", "BashOutput",
+        "KillShell", "WebFetch", "WebSearch", "Task", "TodoWrite",
+        "NotebookEdit", "AskUserQuestion", "Skill", "SlashCommand"
     ]
 
 # ── Skill frontmatter validation ────────────────────────────────────────────
 
-_NAME_RE = re.compile(r'^[a-z0-9][a-z0-9-]*[a-z0-9]$')
+_NAME_RE = re.compile(r'^[a-z0-9]([a-z0-9-]*[a-z0-9])?$')
 _TRIGGER_WORDS = ("use when", "when user", "when you", "helps with", "useful for")
 
 def _validate_skill_content(content: str) -> tuple[list[str], list[str]]:
@@ -80,24 +81,29 @@ def _validate_skill_content(content: str) -> tuple[list[str], list[str]]:
             fm[key.strip()] = val.strip().strip('"').strip("'")
 
     # name
+    # name is optional for a local skill (defaults to the directory name), but
+    # if present it must be a valid command name.
     name = fm.get("name", "")
-    if not name:
-        errors.append("'name' is required in frontmatter")
-    else:
-        if len(name) < 1 or len(name) > 64:
-            errors.append(f"'name' must be 1-64 chars (got {len(name)})")
+    if name:
+        if len(name) > 64:
+            warnings.append(f"'name' is long ({len(name)} chars)")
+        if ":" in name:
+            errors.append("'name' must not contain ':' (reserved for plugin namespacing)")
         elif not _NAME_RE.match(name) or "--" in name:
             errors.append("'name' must match [a-z0-9-], no leading/trailing '-', no '--'")
         if "anthropic" in name.lower() or "claude" in name.lower():
-            errors.append("'name' must not contain 'anthropic' or 'claude'")
+            warnings.append("'name' containing 'anthropic'/'claude' is rejected by claude.ai skill uploads")
 
     # description
     desc = fm.get("description", "")
     if not desc:
         errors.append("'description' is required in frontmatter")
     else:
-        if len(desc) > 1024:
-            errors.append(f"'description' too long ({len(desc)} chars, max 1024)")
+        # description + when_to_use is truncated at 1536 chars in the skill
+        # listing; over that is a warning (lost context), not a hard error.
+        combined = len(desc) + len(fm.get("when_to_use", ""))
+        if combined > 1536:
+            warnings.append(f"'description' (+ when_to_use) is {combined} chars; truncated at 1536 in the skill listing")
         if len(desc) < 50:
             warnings.append(f"'description' is short ({len(desc)} chars; aim for 50+)")
         if not any(kw in desc.lower() for kw in _TRIGGER_WORDS):
@@ -939,37 +945,25 @@ class SkillsTab(QWidget):
             dialog = EditSkillDialog(skill_name, content, self)
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 new_data = dialog.get_skill_data()
-                fm_lines = [
-                    "---",
-                    f"name: {skill_name}",
-                    f"description: {new_data['description']}",
-                ]
-                if new_data.get('allowed_tools'):
-                    fm_lines.append(f"allowed-tools: {new_data['allowed_tools']}")
-                if new_data.get('argument_hint'):
-                    fm_lines.append(f"argument-hint: {new_data['argument_hint']}")
-                if new_data.get('model'):
-                    fm_lines.append(f"model: {new_data['model']}")
-                if new_data.get('effort'):
-                    fm_lines.append(f"effort: {new_data['effort']}")
-                if new_data.get('paths'):
-                    fm_lines.append(f"paths: {new_data['paths']}")
-                if new_data.get('context'):
-                    fm_lines.append(f"context: {new_data['context']}")
-                if new_data.get('user_invocable'):
-                    fm_lines.append(f"user-invocable: {new_data['user_invocable']}")
-                if new_data.get('disable_model_invocation'):
-                    fm_lines.append("disable-model-invocation: true")
-                if new_data.get('agent'):
-                    fm_lines.append("agent: true")
-                if new_data.get('shell'):
-                    fm_lines.append("shell: true")
-                if new_data.get('hooks'):
-                    fm_lines.append(f"hooks:\n{new_data['hooks']}")
-                fm_lines.append("---")
-                new_frontmatter = "\n".join(fm_lines)
-                body = new_data.get('body', '')
-                new_content = f"{new_frontmatter}\n{body}"
+                # Merge the dialog's fields into the existing frontmatter so keys
+                # the dialog has no field for (when_to_use, disallowed-tools,
+                # arguments, metadata, license, background, …) are preserved.
+                updates = {
+                    "name": skill_name,
+                    "description": new_data['description'],
+                    "allowed-tools": new_data.get('allowed_tools') or None,
+                    "argument-hint": new_data.get('argument_hint') or None,
+                    "model": new_data.get('model') or None,
+                    "effort": new_data.get('effort') or None,
+                    "paths": new_data.get('paths') or None,
+                    "context": new_data.get('context') or None,
+                    "agent": new_data.get('agent') or None,
+                    "shell": new_data.get('shell') or None,
+                    "user-invocable": new_data.get('user_invocable') or None,
+                    "disable-model-invocation": "true" if new_data.get('disable_model_invocation') else None,
+                    "hooks": new_data.get('hooks') or None,
+                }
+                new_content = merge_frontmatter(content, updates, body=new_data.get('body', ''))
                 self.config_manager.fs.write_text(skill_md, new_content)
                 self.load_skills()
         except Exception as e:
@@ -1015,13 +1009,13 @@ class SkillsTab(QWidget):
             if skill_data.get('context'):
                 fm_lines.append(f"context: {skill_data['context']}")
             if skill_data.get('user_invocable'):
-                fm_lines.append("user-invocable: true")
+                fm_lines.append(f"user-invocable: {skill_data['user_invocable']}")
             if skill_data.get('disable_model_invocation'):
                 fm_lines.append("disable-model-invocation: true")
             if skill_data.get('agent'):
-                fm_lines.append("agent: true")
+                fm_lines.append(f"agent: {skill_data['agent']}")
             if skill_data.get('shell'):
-                fm_lines.append("shell: true")
+                fm_lines.append(f"shell: {skill_data['shell']}")
             if skill_data.get('hooks'):
                 fm_lines.append(f"hooks:\n{skill_data['hooks']}")
             fm_lines.append("---")
@@ -1222,7 +1216,7 @@ class NewSkillDialog(QDialog):
         self.description_edit.setPlaceholderText("Use when you need to... / Helps with...")
         self.description_edit.setMinimumHeight(70)
         self.description_edit.setMaximumHeight(100)
-        self.description_edit.setToolTip("Max 1536 chars (hard limit). Aim for 50+ chars with trigger words.")
+        self.description_edit.setToolTip("Description + when_to_use truncates at 1536 chars in the listing. Aim for 50+ chars with trigger words.")
         form.addRow("Description*:", self.description_edit)
 
         self.argument_hint_edit = QLineEdit()
@@ -1233,11 +1227,11 @@ class NewSkillDialog(QDialog):
         form.addRow("Argument Hint:", self.argument_hint_edit)
 
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["(default)", "claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"])
+        self.model_combo.addItems(["(inherit)", "sonnet", "opus", "haiku", "fable"])
         form.addRow("Model:", self.model_combo)
 
         self.effort_combo = QComboBox()
-        self.effort_combo.addItems(["(default)", "low", "normal", "high"])
+        self.effort_combo.addItems(["(default)", "low", "medium", "high", "xhigh", "max"])
         self.effort_combo.setToolTip("Thinking effort / token budget for this skill")
         form.addRow("Effort:", self.effort_combo)
 
@@ -1246,13 +1240,23 @@ class NewSkillDialog(QDialog):
         self.paths_edit.setToolTip("Auto-activate skill for matching file paths only")
         form.addRow("Paths:", self.paths_edit)
 
-        self.context_edit = QLineEdit()
-        self.context_edit.setPlaceholderText("fork  or path/to/context.md (optional)")
-        self.context_edit.setToolTip(
-            "'fork' = run skill in a forked context (isolates side effects)\n"
-            "Or provide a path to a context file for additional background"
+        self.context_combo = QComboBox()
+        self.context_combo.addItems(["(none)", "fork"])
+        self.context_combo.setToolTip(
+            "'fork' runs the skill in its own forked subagent context.\n"
+            "It is the only accepted value for the 'context' key."
         )
-        form.addRow("Context:", self.context_edit)
+        form.addRow("Context:", self.context_combo)
+
+        self.agent_edit = QLineEdit()
+        self.agent_edit.setPlaceholderText("subagent type (only used with context: fork)")
+        self.agent_edit.setToolTip("Which subagent type the forked context should use. Requires context: fork.")
+        form.addRow("Agent (fork):", self.agent_edit)
+
+        self.shell_combo = QComboBox()
+        self.shell_combo.addItems(["(default — bash)", "bash", "powershell"])
+        self.shell_combo.setToolTip("Shell for inline !`command` blocks in this skill.")
+        form.addRow("Shell:", self.shell_combo)
 
         self.user_invocable_combo = QComboBox()
         self.user_invocable_combo.addItems(["(default — visible in / menu)", "true — visible in / menu", "false — hidden from / menu"])
@@ -1269,13 +1273,10 @@ class NewSkillDialog(QDialog):
         flags_layout = QHBoxLayout()
         flags_layout.setSpacing(16)
         self.disable_model_cb = QCheckBox("disable-model-invocation")
-        self.disable_model_cb.setToolTip("Disable model calls within this skill")
-        self.agent_cb = QCheckBox("agent")
-        self.agent_cb.setToolTip("Run this skill as an agent subagent")
-        self.shell_cb = QCheckBox("shell")
-        self.shell_cb.setToolTip("Allow shell command execution in this skill")
-        for cb in (self.disable_model_cb, self.agent_cb, self.shell_cb):
-            flags_layout.addWidget(cb)
+        self.disable_model_cb.setToolTip(
+            "Prevent Claude from auto-invoking this skill; only you can run it with /name."
+        )
+        flags_layout.addWidget(self.disable_model_cb)
         flags_layout.addStretch()
         layout.addLayout(flags_layout)
 
@@ -1352,15 +1353,15 @@ class NewSkillDialog(QDialog):
             'name': self.name_edit.text().strip(),
             'description': self.description_edit.toPlainText().strip(),
             'argument_hint': self.argument_hint_edit.text().strip(),
-            'model': "" if model_val == "(default)" else model_val,
+            'model': "" if model_val in ("(default)", "(inherit)") else model_val,
             'effort': "" if effort_val == "(default)" else effort_val,
             'paths': self.paths_edit.text().strip(),
-            'context': self.context_edit.text().strip(),
+            'context': "" if self.context_combo.currentText() == "(none)" else self.context_combo.currentText(),
             'allowed_tools': ", ".join(selected_tools),
             'user_invocable': user_invocable,
             'disable_model_invocation': self.disable_model_cb.isChecked(),
-            'agent': self.agent_cb.isChecked(),
-            'shell': self.shell_cb.isChecked(),
+            'agent': self.agent_edit.text().strip(),
+            'shell': "" if self.shell_combo.currentText().startswith("(default") else self.shell_combo.currentText(),
             'hooks': self.hooks_edit.toPlainText().strip(),
         }
 
@@ -1411,7 +1412,7 @@ class EditSkillDialog(QDialog):
         self.description_edit.setPlainText(parsed_desc)
         self.description_edit.setMinimumHeight(70)
         self.description_edit.setMaximumHeight(100)
-        self.description_edit.setToolTip("Max 1536 chars (hard limit). Aim for 50+ chars with trigger words.")
+        self.description_edit.setToolTip("Description + when_to_use truncates at 1536 chars in the listing. Aim for 50+ chars with trigger words.")
         form.addRow("Description*:", self.description_edit)
 
         self.argument_hint_edit = QLineEdit()
@@ -1423,13 +1424,13 @@ class EditSkillDialog(QDialog):
         form.addRow("Argument Hint:", self.argument_hint_edit)
 
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["(default)", "claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"])
-        idx = self.model_combo.findText(parsed_model if parsed_model else "(default)")
+        self.model_combo.addItems(["(inherit)", "sonnet", "opus", "haiku", "fable"])
+        idx = self.model_combo.findText(parsed_model if parsed_model else "(inherit)")
         self.model_combo.setCurrentIndex(idx if idx >= 0 else 0)
         form.addRow("Model:", self.model_combo)
 
         self.effort_combo = QComboBox()
-        self.effort_combo.addItems(["(default)", "low", "normal", "high"])
+        self.effort_combo.addItems(["(default)", "low", "medium", "high", "xhigh", "max"])
         self.effort_combo.setToolTip("Thinking effort / token budget")
         eidx = self.effort_combo.findText(parsed_effort if parsed_effort else "(default)")
         self.effort_combo.setCurrentIndex(eidx if eidx >= 0 else 0)
@@ -1441,14 +1442,27 @@ class EditSkillDialog(QDialog):
         self.paths_edit.setToolTip("Auto-activate skill for matching file paths only")
         form.addRow("Paths:", self.paths_edit)
 
-        self.context_edit = QLineEdit()
-        self.context_edit.setText(parsed_context)
-        self.context_edit.setPlaceholderText("fork  or path/to/context.md (optional)")
-        self.context_edit.setToolTip(
-            "'fork' = run skill in a forked context (isolates side effects)\n"
-            "Or provide a path to a context file for additional background"
+        self.context_combo = QComboBox()
+        self.context_combo.addItems(["(none)", "fork"])
+        self.context_combo.setCurrentIndex(1 if parsed_context.strip() == "fork" else 0)
+        self.context_combo.setToolTip(
+            "'fork' runs the skill in its own forked subagent context.\n"
+            "It is the only accepted value for the 'context' key."
         )
-        form.addRow("Context:", self.context_edit)
+        form.addRow("Context:", self.context_combo)
+
+        self.agent_edit = QLineEdit()
+        self.agent_edit.setText(_get(r'agent:\s*(.+)'))
+        self.agent_edit.setPlaceholderText("subagent type (only used with context: fork)")
+        self.agent_edit.setToolTip("Which subagent type the forked context should use. Requires context: fork.")
+        form.addRow("Agent (fork):", self.agent_edit)
+
+        self.shell_combo = QComboBox()
+        self.shell_combo.addItems(["(default — bash)", "bash", "powershell"])
+        _sh = _get(r'shell:\s*(.+)').strip().lower()
+        self.shell_combo.setCurrentIndex({"bash": 1, "powershell": 2}.get(_sh, 0))
+        self.shell_combo.setToolTip("Shell for inline !`command` blocks in this skill.")
+        form.addRow("Shell:", self.shell_combo)
 
         self.user_invocable_combo = QComboBox()
         self.user_invocable_combo.addItems(["(default — visible in / menu)", "true — visible in / menu", "false — hidden from / menu"])
@@ -1471,16 +1485,11 @@ class EditSkillDialog(QDialog):
         flags_layout = QHBoxLayout()
         flags_layout.setSpacing(16)
         self.disable_model_cb = QCheckBox("disable-model-invocation")
-        self.disable_model_cb.setToolTip("Disable model calls within this skill")
+        self.disable_model_cb.setToolTip(
+            "Prevent Claude from auto-invoking this skill; only you can run it with /name."
+        )
         self.disable_model_cb.setChecked(_getbool("disable-model-invocation"))
-        self.agent_cb = QCheckBox("agent")
-        self.agent_cb.setToolTip("Run as an agent subagent")
-        self.agent_cb.setChecked(_getbool("agent"))
-        self.shell_cb = QCheckBox("shell")
-        self.shell_cb.setToolTip("Allow shell command execution")
-        self.shell_cb.setChecked(_getbool("shell"))
-        for cb in (self.disable_model_cb, self.agent_cb, self.shell_cb):
-            flags_layout.addWidget(cb)
+        flags_layout.addWidget(self.disable_model_cb)
         flags_layout.addStretch()
         layout.addLayout(flags_layout)
 
@@ -1552,15 +1561,15 @@ class EditSkillDialog(QDialog):
         return {
             'description': self.description_edit.toPlainText().strip(),
             'argument_hint': self.argument_hint_edit.text().strip(),
-            'model': "" if model_val == "(default)" else model_val,
+            'model': "" if model_val in ("(default)", "(inherit)") else model_val,
             'effort': "" if effort_val == "(default)" else effort_val,
             'paths': self.paths_edit.text().strip(),
-            'context': self.context_edit.text().strip(),
+            'context': "" if self.context_combo.currentText() == "(none)" else self.context_combo.currentText(),
             'allowed_tools': ", ".join(selected_tools),
             'user_invocable': user_invocable,
             'disable_model_invocation': self.disable_model_cb.isChecked(),
-            'agent': self.agent_cb.isChecked(),
-            'shell': self.shell_cb.isChecked(),
+            'agent': self.agent_edit.text().strip(),
+            'shell': "" if self.shell_combo.currentText().startswith("(default") else self.shell_combo.currentText(),
             'hooks': self.hooks_edit.toPlainText().strip(),
             'body': self._body,
         }
