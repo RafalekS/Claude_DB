@@ -300,32 +300,36 @@ class SettingsEditor(QWidget):
         self._tree.currentItemChanged.connect(self._on_select)
         self._split.addWidget(self._tree)
 
-        # Detail pane: rebuilt on every selection so its height follows the
-        # control (a checkbox row is short, a JSON box is tall).
+        # Detail pane: header + description + one value control + Unset.
+        # Rebuilt on every selection (see _mount_control).
         detail = QWidget()
-        dl = QVBoxLayout(detail)
-        dl.setContentsMargins(m, s, s, s)
-        dl.setSpacing(s)
+        self._detail_l = QVBoxLayout(detail)
+        self._detail_l.setContentsMargins(m, s, m, s)
+        self._detail_l.setSpacing(s)
         self._key_lbl = QLabel("Select a setting on the left")
         self._key_lbl.setStyleSheet(theme.get_label_style("large", "accent"))
-        dl.addWidget(self._key_lbl)
+        self._detail_l.addWidget(self._key_lbl)
         self._desc_lbl = QLabel("")
         self._desc_lbl.setWordWrap(True)
         self._desc_lbl.setStyleSheet(theme.get_label_style("small", "secondary"))
-        dl.addWidget(self._desc_lbl)
-        self._form = QFormLayout()
-        self._form.setContentsMargins(0, s, 0, 0)
-        self._form.setFieldGrowthPolicy(
-            QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
-        dl.addLayout(self._form)
+        self._detail_l.addWidget(self._desc_lbl)
+        self._value_lbl = QLabel("")
+        self._value_lbl.setStyleSheet(theme.get_label_style("small", "secondary"))
+        self._detail_l.addWidget(self._value_lbl)
+
+        self._slot = QWidget()
+        self._slot_l = QVBoxLayout(self._slot)
+        self._slot_l.setContentsMargins(0, 0, 0, 0)
+        self._slot_l.setSpacing(s)
+        self._detail_l.addWidget(self._slot, 1)   # takes all spare vertical space
+
         self._unset_btn = QPushButton("Unset (use default)")
         self._unset_btn.clicked.connect(self._unset_current)
         self._unset_btn.setEnabled(False)
         row = QHBoxLayout()
         row.addWidget(self._unset_btn)
         row.addStretch(1)
-        dl.addLayout(row)
-        dl.addStretch(1)
+        self._detail_l.addLayout(row)
         self._split.addWidget(detail)
         self._split.setStretchFactor(0, 0)
         self._split.setStretchFactor(1, 1)
@@ -342,7 +346,7 @@ class SettingsEditor(QWidget):
         add_btn.clicked.connect(self._add_custom_key)
         reload_btn = QPushButton("Reload")
         reload_btn.clicked.connect(self.reload)
-        bkp_btn = QPushButton("Backup & Save")
+        bkp_btn = QPushButton("Save (backup first)")
         bkp_btn.clicked.connect(lambda: self._save(backup=True))
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(lambda: self._save(backup=False))
@@ -442,42 +446,66 @@ class SettingsEditor(QWidget):
 
     # -- detail pane -----------------------------------------------------
 
-    def _clear_form(self):
-        while self._form.rowCount():
-            self._form.removeRow(0)
+    # types that should fill the pane vs. sit at their natural size top-left
+    _EXPAND_TYPES = ("list", "json")
+    _WIDE_TYPES = ("str", "path", "list", "json")   # stretch horizontally
+
+    def _clear_slot(self):
+        while self._slot_l.count():
+            item = self._slot_l.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.deleteLater()
         self._value_widget = None
 
     def _on_select(self, cur: QTreeWidgetItem, _prev=None):
-        self._clear_form()
+        self._clear_slot()
         key = cur.data(0, Qt.ItemDataRole.UserRole) if cur is not None else None
         if not key:
             self._current_key = None
             self._key_lbl.setText("Select a setting on the left")
             self._desc_lbl.clear()
+            self._value_lbl.clear()
             self._unset_btn.setEnabled(False)
             return
         self._current_key = key
-        spec = _SCHEMA_BY_KEY.get(key) or {
-            "key": key, "type": "json",
-            "desc": "Not a recognised Claude Code key — edited as JSON."}
+        spec = _SCHEMA_BY_KEY.get(key) or self._infer_spec(key)
         self._key_lbl.setText(key)
         self._desc_lbl.setText(spec.get("desc", ""))
+        self._value_lbl.setText("Value" + (" (one per line):" if spec["type"] == "list"
+                                           else " (JSON):" if spec["type"] == "json" else ":"))
 
         field, value_widget = self._make_control(spec)
         self._value_widget = value_widget
-        self._form.addRow("Value:" if spec["type"] not in ("bool", "list", "json") else "", field)
+        expand = spec["type"] in self._EXPAND_TYPES
+        self._slot_l.addWidget(field, 1 if expand else 0)
+        if not expand:
+            self._slot_l.addStretch(1)
         self._populate_control(spec, value_widget)
         self._unset_btn.setEnabled(_get(self._working, key) is not _MISSING)
 
-    def _text_rows_height(self, w: QPlainTextEdit, rows: int) -> int:
-        fm = w.fontMetrics()
-        return fm.lineSpacing() * rows + fm.height() + 2 * w.frameWidth()
+    def _infer_spec(self, key: str) -> dict:
+        """Build a spec for a key that isn't in the schema, from its value type."""
+        v = _get(self._working, key)
+        base = {"key": key,
+                "desc": "Not in the built-in list — type inferred from its current value."}
+        if isinstance(v, bool):
+            return {**base, "type": "bool"}
+        if isinstance(v, int):
+            return {**base, "type": "int", "min": -2_147_483_648}
+        if isinstance(v, str):
+            return {**base, "type": "str"}
+        if isinstance(v, list) and all(isinstance(x, str) for x in v):
+            return {**base, "type": "list"}
+        return {**base, "type": "json"}
 
     def _make_control(self, spec: dict):
-        """Return (widget_for_form, value_widget). Nothing is width- or
-        style-hardcoded; sizing comes from the widget's own sizeHint and the
-        app stylesheet."""
+        """Return (widget_to_mount, value_widget). No hardcoded px/styles —
+        size comes from size policies + the app stylesheet + the theme font."""
+        from PyQt6.QtWidgets import QSizePolicy
         t, key = spec["type"], spec["key"]
+        Exp, Fix, Pref = (QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed,
+                          QSizePolicy.Policy.Preferred)
 
         if t == "bool":
             w = QCheckBox(spec.get("label") or spec["key"])
@@ -489,6 +517,7 @@ class SettingsEditor(QWidget):
             w.setRange(int(spec.get("min", 0)), int(spec.get("max", 2_147_483_647)))
             if spec.get("suffix"):
                 w.setSuffix(spec["suffix"])
+            w.setSizePolicy(Fix, Fix)
             w.valueChanged.connect(lambda v, k=key: self._apply_value(k, int(v)))
             return w, w
 
@@ -498,6 +527,7 @@ class SettingsEditor(QWidget):
             w.addItem("")
             w.addItems([str(o) for o in spec.get("options", [])])
             w.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+            w.setSizePolicy(Pref, Fix)
             w.currentIndexChanged.connect(lambda _i, k=key, c=w: self._apply_choice(k, c))
             if w.isEditable():
                 w.lineEdit().editingFinished.connect(
@@ -515,23 +545,19 @@ class SettingsEditor(QWidget):
             btn.clicked.connect(lambda _c, le=le, spec=spec: self._browse(le, spec))
             h.addWidget(le, 1)
             h.addWidget(btn)
+            wrap.setSizePolicy(Exp, Fix)
             return wrap, le
 
-        if t == "list":
+        if t in ("list", "json"):
             w = QPlainTextEdit()
-            w.setPlaceholderText("one value per line")
-            w.setFixedHeight(self._text_rows_height(w, 5))
-            w.textChanged.connect(lambda k=key, e=w: self._apply_list(k, e))
-            return w, w
-
-        if t == "json":
-            w = QPlainTextEdit()
-            w.setPlaceholderText("JSON value")
-            w.setFixedHeight(self._text_rows_height(w, 8))
-            w.textChanged.connect(lambda k=key, e=w: self._apply_json(k, e))
+            w.setPlaceholderText("one value per line" if t == "list" else "JSON value")
+            w.setSizePolicy(Exp, Exp)          # fill the pane
+            handler = self._apply_list if t == "list" else self._apply_json
+            w.textChanged.connect(lambda k=key, e=w: handler(k, e))
             return w, w
 
         w = QLineEdit()
+        w.setSizePolicy(Exp, Fix)
         w.textChanged.connect(lambda x, k=key: self._apply_str(k, x))
         return w, w
 
