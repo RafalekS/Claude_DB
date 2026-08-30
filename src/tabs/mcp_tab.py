@@ -143,11 +143,11 @@ class AddServerDialog(QDialog):
         # Server Type (http vs command/stdio)
         type_layout = QHBoxLayout()
         self.type_combo = QComboBox()
-        self.type_combo.addItems(["Command (stdio)", "HTTP", "SSE"])
+        self.type_combo.addItems(["Command (stdio)", "HTTP", "SSE (deprecated)"])
         self.type_combo.currentTextChanged.connect(self.on_type_changed)
         type_layout.addWidget(self.type_combo)
 
-        type_info = QLabel("💡 Command = local process, HTTP/SSE = remote server")
+        type_info = QLabel("💡 Command = local process; HTTP = remote (preferred); SSE is deprecated")
         type_info.setStyleSheet(f"color: {theme.FG_SECONDARY}; font-size: {theme.FONT_SIZE_SMALL}px;")
         type_layout.addWidget(type_info)
         type_layout.addStretch()
@@ -228,14 +228,13 @@ class AddServerDialog(QDialog):
         self.template_combo.blockSignals(True)
 
         # Determine server type
-        if "type" in config:
-            server_type = config["type"]
-            if server_type == "http":
-                self.type_combo.setCurrentText("HTTP")
-            elif server_type == "sse":
-                self.type_combo.setCurrentText("SSE")
+        server_type = config.get("type")
+        if server_type in ("http", "streamable-http", "ws"):
+            self.type_combo.setCurrentText("HTTP")
+        elif server_type == "sse":
+            self.type_combo.setCurrentText("SSE (deprecated)")
         else:
-            # No type = command/stdio
+            # "stdio" or no type = command/stdio
             self.type_combo.setCurrentText("Command (stdio)")
 
         # Load command
@@ -399,7 +398,10 @@ class AddServerDialog(QDialog):
         server_type = self.type_combo.currentText()
 
         if "Command" in server_type:
-            # Command/stdio type - no "type" field in config
+            # Claude Code now requires an explicit "type" on every server entry;
+            # a bare command with no type is still read as stdio, but writing it
+            # keeps the file valid against the published schema.
+            config["type"] = "stdio"
             config["command"] = self.command_input.text().strip()
 
             # Parse args (one per line)
@@ -611,23 +613,29 @@ class MCPTab(QWidget):
             f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
             f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
         )
-        info_label.setHtml(
-            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
-            "💡 <b>MCP Quick Commands:</b> "
-            "<code>claude mcp list</code> • "
-            "<code>claude mcp add &lt;name&gt; &lt;cmd&gt;</code> • "
-            "<code>claude mcp remove &lt;name&gt;</code> • "
-            "<code>claude mcp add-from-claude-desktop</code>"
-            "<br><b>Recommended:</b> "
-            "<code>npx @modelcontextprotocol/server-filesystem</code> • "
-            "<code>npx @modelcontextprotocol/server-github</code> (GITHUB_TOKEN) • "
-            "<code>npx @modelcontextprotocol/server-memory</code>"
-            "<br><b>Scopes:</b> user (~/.claude.json) • project (.mcp.json in git) • "
-            "local (gitignored) | use <code>-s user/project</code> flag"
-            "</span>"
-        )
+        info_label.setHtml(self._info_html())
         layout.addWidget(info_label)
         self._info_label = info_label
+
+    def _info_html(self) -> str:
+        return (
+            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+            "💡 <b>MCP CLI:</b> "
+            "<code>claude mcp list</code> • "
+            "<code>claude mcp add --transport http &lt;name&gt; &lt;url&gt;</code> • "
+            "<code>claude mcp add --transport stdio &lt;name&gt; -- &lt;cmd&gt; &lt;args&gt;</code> • "
+            "<code>claude mcp add-json &lt;name&gt; '&lt;json&gt;'</code> • "
+            "<code>claude mcp remove &lt;name&gt;</code> • "
+            "<code>claude mcp login &lt;name&gt;</code> (OAuth)"
+            "<br><b>Every entry needs a <code>type</code>:</b> "
+            "<code>stdio</code> (command/args/env) • <code>http</code> (url/headers) • "
+            "<code>sse</code> is deprecated"
+            "<br><b>Scopes</b> (<code>--scope</code>/<code>-s</code>): "
+            "<code>local</code> (default; your ~/.claude.json, this project only) • "
+            "<code>project</code> (<code>.mcp.json</code>, committed) • "
+            "<code>user</code> (your ~/.claude.json, all projects)"
+            "</span>"
+        )
 
     def apply_theme(self):
         """Refresh HTML widgets with current theme colors."""
@@ -635,21 +643,7 @@ class MCPTab(QWidget):
             f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "
             f"padding: 4px; border-radius: 3px; font-size: {theme.FONT_SIZE_SMALL}px;"
         )
-        self._info_label.setHtml(
-            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
-            "💡 <b>MCP Quick Commands:</b> "
-            "<code>claude mcp list</code> • "
-            "<code>claude mcp add &lt;name&gt; &lt;cmd&gt;</code> • "
-            "<code>claude mcp remove &lt;name&gt;</code> • "
-            "<code>claude mcp add-from-claude-desktop</code>"
-            "<br><b>Recommended:</b> "
-            "<code>npx @modelcontextprotocol/server-filesystem</code> • "
-            "<code>npx @modelcontextprotocol/server-github</code> (GITHUB_TOKEN) • "
-            "<code>npx @modelcontextprotocol/server-memory</code>"
-            "<br><b>Scopes:</b> user (~/.claude.json) • project (.mcp.json in git) • "
-            "local (gitignored) | use <code>-s user/project</code> flag"
-            "</span>"
-        )
+        self._info_label.setHtml(self._info_html())
         if hasattr(self, '_oauth_info'):
             self._oauth_info.setStyleSheet(
                 f"color: {theme.FG_SECONDARY}; background: {theme.BG_MEDIUM}; "

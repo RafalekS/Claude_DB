@@ -1,4 +1,5 @@
 {
+  "type": "stdio",
   "command": "python",
   "args": [
     "c:\\utils\\AI\\MCP Servers\\mcp-sap-gui-advanced\\python\\direct_sap_server.py"

@@ -17,6 +17,11 @@ class MCPValidator:
         'pnpm', 'yarn', 'python', 'python3', 'pip', 'pipx'
     }
 
+    # Accepted values for a server's "type"/transport.
+    STDIO_TYPES = {'stdio'}
+    REMOTE_TYPES = {'http', 'streamable-http', 'sse', 'ws'}
+    VALID_TYPES = STDIO_TYPES | REMOTE_TYPES
+
     def __init__(self):
         self.is_windows = platform.system() == 'Windows'
         self.errors = []
@@ -62,10 +67,35 @@ class MCPValidator:
         return is_valid, self.errors, self.warnings
 
     def _validate_server(self, name: str, config: Dict[str, Any]):
-        """Validate individual server configuration"""
-        # Check required fields
-        if 'command' not in config:
-            self.errors.append(f"Server '{name}': Missing 'command' field")
+        """Validate individual server configuration (stdio or remote)."""
+        if not isinstance(config, dict):
+            self.errors.append(f"Server '{name}': entry must be an object")
+            return
+
+        server_type = config.get('type')
+        has_command = 'command' in config
+        has_url = 'url' in config
+
+        if server_type is not None and server_type not in self.VALID_TYPES:
+            self.errors.append(
+                f"Server '{name}': invalid type {server_type!r} "
+                f"(expected one of: {', '.join(sorted(self.VALID_TYPES))})"
+            )
+
+        # Remote server: needs a url.
+        if server_type in self.REMOTE_TYPES or (has_url and not has_command):
+            if not has_url:
+                self.errors.append(f"Server '{name}': remote server needs a 'url' field")
+            if has_url and server_type is None:
+                self.errors.append(
+                    f"Server '{name}': has a 'url' but no 'type'; add \"type\": \"http\" "
+                    f"(or \"sse\"). A url without a type is read as a stdio server and skipped."
+                )
+            return
+
+        # Stdio server: needs a command.
+        if not has_command:
+            self.errors.append(f"Server '{name}': missing 'command' (stdio) or 'url' (remote)")
             return
 
         command = config['command']
@@ -217,6 +247,7 @@ class MCPValidator:
             'uvx': {
                 "mcpServers": {
                     "example-server": {
+                        "type": "stdio",
                         "command": "cmd",
                         "args": [
                             "/c",
@@ -232,6 +263,7 @@ class MCPValidator:
             'bunx': {
                 "mcpServers": {
                     "example-server": {
+                        "type": "stdio",
                         "command": "cmd",
                         "args": [
                             "/c",
@@ -239,6 +271,17 @@ class MCPValidator:
                             "-y",
                             "@example/mcp-server"
                         ]
+                    }
+                }
+            },
+            'http': {
+                "mcpServers": {
+                    "example-remote": {
+                        "type": "http",
+                        "url": "https://mcp.example.com/mcp",
+                        "headers": {
+                            "Authorization": "Bearer ${EXAMPLE_TOKEN}"
+                        }
                     }
                 }
             },
@@ -255,6 +298,7 @@ class MCPValidator:
                         "type": "stdio"
                     },
                     "uvx-server": {
+                        "type": "stdio",
                         "command": "cmd",
                         "args": [
                             "/c",
@@ -266,6 +310,7 @@ class MCPValidator:
                         }
                     },
                     "bunx-server": {
+                        "type": "stdio",
                         "command": "cmd",
                         "args": [
                             "/c",

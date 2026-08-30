@@ -56,8 +56,9 @@ class AddHTTPServerDialog(QDialog):
         self.http_radio.setChecked(True)
         self.http_radio.clicked.connect(lambda: self.set_type("http"))
 
-        self.sse_radio = QPushButton("SSE")
+        self.sse_radio = QPushButton("SSE (deprecated)")
         self.sse_radio.setCheckable(True)
+        self.sse_radio.setToolTip("SSE transport is deprecated — prefer HTTP")
         self.sse_radio.clicked.connect(lambda: self.set_type("sse"))
 
         type_layout.addWidget(self.http_radio)

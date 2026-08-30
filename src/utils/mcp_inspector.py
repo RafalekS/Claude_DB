@@ -50,9 +50,19 @@ class MCPInspector:
         command = server_config.get('command')
         args = server_config.get('args', [])
         env = server_config.get('env', {})
+        server_type = server_config.get('type')
+
+        if server_type in ('http', 'streamable-http', 'sse', 'ws') or (
+            server_config.get('url') and not command
+        ):
+            raise ValueError(
+                "This inspector connects to stdio (local command) MCP servers only. "
+                f"Server '{server_name}' is a remote {server_type or 'url'} server — "
+                "use '/mcp' inside Claude Code to inspect it."
+            )
 
         if not command:
-            raise ValueError("Server configuration must include 'command'")
+            raise ValueError("Server configuration must include 'command' (stdio) or 'url' (remote)")
 
         # Prepare environment variables (merge with current environment)
         server_env = os.environ.copy()

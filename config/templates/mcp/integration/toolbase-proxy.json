@@ -1,4 +1,5 @@
 {
+  "type": "stdio",
   "args": [
     "-p=proxy",
     "-f=C:\\Users\\USERNAME\\.toolbase\\config.json",
