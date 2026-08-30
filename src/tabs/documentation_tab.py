@@ -242,9 +242,10 @@ def _workflows_html():
         _p("In plan mode Claude reads files, runs shell commands, and writes a plan "
            "but does not edit source. Press Ctrl+G to open the plan in your editor."),
         _h(2, "Use Extended Thinking"),
-        _p("Extended thinking is on by default. Toggle with " + _code("Alt+T") +
-           " or include 'ultrathink' anywhere in your prompt to maximize thinking "
-           "depth for that turn."),
+        _p("Thinking is adaptive — Claude decides when and how much. Force it on with the "
+           + _code("alwaysThinkingEnabled") + " setting, raise the ceiling with "
+           + _code("/effort xhigh|max") + ", or include the word <b>ultrathink</b> anywhere in a "
+           "prompt to maximise thinking for that one turn."),
         _h(2, "Work with Git Worktrees"),
         _pre("# Create isolated worktree\nclaude --worktree feature-auth\n\n"
              "# Auto-generate name\nclaude --worktree"),
@@ -617,37 +618,49 @@ def _model_info_html():
     return _wrap(
         _h(1, "Model Information"),
         _h(2, "Available Models"),
-        _table(["Model ID", "Alias", "Description"],
-               [["claude-opus-4-5", "claude-opus-4-5", "Most capable — complex reasoning, architecture decisions"],
-                ["claude-sonnet-4-5", "claude-sonnet-4-5", "Best coding model — main development tasks"],
-                ["claude-haiku-4-5-20251001", "claude-haiku-4-5", "Fast &amp; cost-efficient — worker agents, pair programming"]]),
+        _table(["Alias", "Model ID", "Description"],
+               [["sonnet", "claude-sonnet-5", "Balanced default for coding"],
+                ["opus", "claude-opus-5", "Deepest reasoning — architecture, hard problems"],
+                ["fable", "claude-fable-5", "Most capable — long-horizon agentic work"],
+                ["haiku", "claude-haiku-4-5-20251001", "Fast &amp; cheap — worker / subagents"],
+                ["opusplan", "—", "Opus in Plan mode, Sonnet in execution"]]),
         _h(2, "Selecting a Model"),
-        _pre("claude --model claude-sonnet-4-5\n"
-             "claude --model claude-opus-4-5\n"
-             "export ANTHROPIC_MODEL=claude-sonnet-4-5"),
-        _p("The default model is set via " + _code("model") + " in " + _code("~/.claude/settings.json") + "."),
-        _h(2, "Effort Levels (Extended Thinking)"),
-        _table(["Level", "Budget Tokens", "Use Case"],
-               [["low", "~1,024", "Quick tasks, simple questions"],
-                ["medium", "~10,000", "Most coding tasks (default)"],
-                ["high", "~31,999", "Complex reasoning, architecture"],
-                ["ultrathink", "Max", "Deepest reasoning — /ultrathink command"]]),
+        _pre("claude --model opus                 # one session\n"
+             "/model sonnet                       # in session, saves as default\n"
+             "/model                              # open the picker\n"
+             "export ANTHROPIC_MODEL=sonnet       # session override\n"
+             "export ANTHROPIC_DEFAULT_MODEL=opus # default for new sessions only\n"
+             '# settings.json:  { "model": "sonnet" }'),
+        _p("Add " + _code("[1m]") + " for the 1M context window where it isn't default, e.g. "
+           + _code("/model opus[1m]") + ". " + _code("fallbackModel") + " sets overload backups; "
+           + _code("availableModels") + " + " + _code("enforceAvailableModels") + " restrict choices."),
+        _h(2, "Effort Levels"),
+        _table(["Level", "Use Case"],
+               [["low", "Fast, latency-sensitive tasks; subagents"],
+                ["medium", "Cost-sensitive work"],
+                ["high", "Balanced intelligence / cost"],
+                ["xhigh", "Deep reasoning — Claude Code's default"],
+                ["max", "Correctness over cost (session-only)"],
+                ["ultracode", "xhigh + dynamic workflows (session-only)"]]),
+        _p("Change with " + _code("/effort &lt;level&gt;") + ", " + _code("claude --effort &lt;level&gt;") +
+           ", the " + _code("effortLevel") + " setting, or " + _code("CLAUDE_CODE_EFFORT_LEVEL") + ". "
+           "The fixed 'budget tokens' model is gone — effort replaces it."),
         _h(2, "Controlling Thinking"),
-        _pre("export ANTHROPIC_THINKING_BUDGET=10000\nexport MAX_THINKING_TOKENS=10000"),
-        _p("Toggle via " + _code("Option+T") + " (macOS) / " + _code("Alt+T") + " (Win/Linux).<br>"
-           "View thinking output with " + _code("Ctrl+O") + " (verbose mode).<br>"
-           "Config key: " + _code("alwaysThinkingEnabled") + " in settings.json."),
+        _p("Thinking is adaptive on current models — Claude decides when and how much. "
+           "Setting key: " + _code("alwaysThinkingEnabled") + ". Show summaries with "
+           + _code("showThinkingSummaries") + ". The word <b>ultrathink</b> anywhere in a prompt "
+           "maximises thinking for that turn."),
         _h(2, "Context Window"),
-        _table(["Model", "Context Window", "Output Tokens"],
-               [["claude-opus-4-5", "200K tokens", "32K tokens"],
-                ["claude-sonnet-4-5", "200K tokens", "64K tokens"],
-                ["claude-haiku-4-5", "200K tokens", "8K tokens"]]),
-        _p("Claude Code tracks context usage and warns when approaching limits.<br>"
-           "Use " + _code("/compact") + " to summarize and compress the conversation context.<br>"
-           "Use " + _code("/clear") + " to start a fresh context window."),
+        _table(["Model", "Context Window"],
+               [["Sonnet 5 / Opus 5 / Fable 5", "1M tokens (native)"],
+                ["Haiku 4.5", "200K tokens"]]),
+        _p("Claude Code tracks context usage and auto-compacts (" + _code("autoCompactEnabled") +
+           ", " + _code("autoCompactWindow") + "). Use " + _code("/compact") + " to summarise, "
+           + _code("/context") + " to see the map, " + _code("/clear") + " to start fresh."),
         _h(2, "Fast Mode"),
-        _p("Toggle fast output mode with " + _code("/fast") + ". Uses the same model — does NOT switch models. "
-           "Fast mode reduces latency at the cost of slightly reduced reasoning depth."),
+        _p("Toggle with " + _code("/fast") + " (also " + _code("fastMode") + " setting). Runs the same "
+           "Opus model with faster output — it does <b>not</b> downgrade to a smaller model. "
+           "Research preview; availability depends on your plan/model."),
         _h(2, "Cost & Token Tracking"),
         _p("Claude Code tracks token usage per session. Use the Usage &amp; Analytics tab to view "
            "historical usage, costs, and per-project breakdowns.<br>"
@@ -657,26 +670,29 @@ def _model_info_html():
 
 def _ultraplan_html():
     return _wrap(
-        _h(1, "Ultraplan"),
-        _h(2, "What is Ultraplan?"),
-        _p("Ultraplan is a command that activates extended thinking with maximum token budget "
-           "for the deepest possible planning and reasoning on complex tasks."),
-        _h(2, "Usage"),
-        _pre("/ultraplan\n/ultrathink"),
-        _p(_code("/ultraplan") + " and " + _code("/ultrathink") + " both trigger max-depth thinking. "
-           "The model will spend more tokens reasoning before producing a response."),
-        _h(2, "When to Use"),
-        _p("• Complex architectural decisions requiring deep analysis<br>"
-           "• Multi-step refactors that span many files<br>"
-           "• Designing systems with many interacting components<br>"
-           "• Problems where initial plans have repeatedly failed"),
-        _h(2, "Configuration"),
-        _table(["Setting", "Value", "Effect"],
-               [["effortLevel", "high", "Allocates ~31,999 thinking tokens"],
-                ["effortLevel", "ultrathink", "Maximum available thinking budget"],
-                ["alwaysThinkingEnabled", "true", "Extended thinking on by default"],
-                ["MAX_THINKING_TOKENS", "env var", "Hard cap on thinking token budget"]]),
-        _p("Toggle thinking on/off: " + _code("Alt+T") + " (Win/Linux) / " + _code("Option+T") + " (macOS)."),
+        _h(1, "Deep Planning &amp; Thinking"),
+        _p("There is no built-in <code>/ultraplan</code> or <code>/ultrathink</code> command. "
+           "Deep planning in Claude Code comes from three real mechanisms:"),
+        _h(2, "1. Plan mode"),
+        _p("Claude explores with reads and read-only shell, then writes a plan without touching "
+           "source. Enter it with <b>Shift+Tab</b> (cycle to Plan) or "
+           + _code("claude --permission-mode plan") + ". Press <b>Ctrl+G</b> to open the plan in your editor."),
+        _h(2, "2. The 'ultrathink' keyword"),
+        _p("Include the word <b>ultrathink</b> anywhere in a prompt to maximise thinking depth for "
+           "that one turn. Thinking is adaptive otherwise — Claude decides when and how much."),
+        _h(2, "3. Effort level"),
+        _table(["Level", "Effect"],
+               [["high", "Balanced intelligence / cost"],
+                ["xhigh", "Deep reasoning — Claude Code's default"],
+                ["max", "Correctness over cost (current session only)"],
+                ["ultracode", "xhigh + dynamic workflows (current session only)"]]),
+        _p("Set with " + _code("/effort max") + ", " + _code("claude --effort xhigh") + ", or the "
+           + _code("effortLevel") + " setting."),
+        _h(2, "Related settings"),
+        _table(["Setting", "Effect"],
+               [["alwaysThinkingEnabled", "Force extended thinking on"],
+                ["showThinkingSummaries", "Show readable summaries of the reasoning"],
+                ["effortLevel", "Persistent default effort level"]]),
     )
 
 
@@ -719,10 +735,13 @@ def _context_window_html():
         _p("The context window is the total number of tokens Claude can see at once — "
            "including the conversation history, file contents, tool outputs, and system prompts."),
         _h(2, "Token Limits"),
-        _table(["Model", "Context Window", "Max Output"],
-               [["claude-opus-4-5", "200,000 tokens", "32,768 tokens"],
-                ["claude-sonnet-4-5", "200,000 tokens", "64,000 tokens"],
-                ["claude-haiku-4-5", "200,000 tokens", "8,192 tokens"]]),
+        _table(["Model", "Context Window"],
+               [["claude-sonnet-5", "1,000,000 tokens (native)"],
+                ["claude-opus-5", "1,000,000 tokens (native)"],
+                ["claude-fable-5", "1,000,000 tokens (native)"],
+                ["claude-haiku-4-5", "200,000 tokens"]]),
+        _p("Force the 1M window where it isn't default with the " + _code("[1m]") +
+           " suffix, e.g. " + _code("/model sonnet[1m]") + "."),
         _h(2, "Compaction"),
         _pre("/compact\n/compact Focus on the authentication changes\n/clear    # start fresh"),
         _p(_code("/compact") + " summarises the current conversation into a shorter form, "
@@ -947,11 +966,11 @@ class DocumentationTab(QWidget):
             (_computer_use_html,     "https://code.claude.com/docs/en/computer-use",     "🖥️ Computer Use"),
             (_plugins_ref_html,      "https://code.claude.com/docs/en/plugins-reference","🧩 Plugins Ref"),
             (_model_info_html,       "https://code.claude.com/docs/en/model-config",     "🤖 Model Info"),
-            (_ultraplan_html,        "https://code.claude.com/docs/en/ultraplan",        "🧠 Ultraplan"),
+            (_ultraplan_html,        "https://code.claude.com/docs/en/model-config",     "🧠 Ultraplan"),
             (_sandboxing_html,       "https://code.claude.com/docs/en/sandboxing",       "🔒 Sandboxing"),
             (_context_window_html,   "https://code.claude.com/docs/en/context-window",   "📐 Context Window"),
             (_headless_html,         "https://code.claude.com/docs/en/headless",         "🤖 Headless"),
-            (_telemetry_html,        "https://code.claude.com/docs/en/telemetry",        "📡 Telemetry"),
+            (_telemetry_html,        "https://code.claude.com/docs/en/monitoring-usage", "📡 Telemetry"),
             (_ide_integration_html,  "https://code.claude.com/docs/en/vs-code",          "🖥️ IDE Integration"),
             (_github_actions_html,   "https://code.claude.com/docs/en/github-actions",   "🔁 GitHub Actions"),
             (_memory_system_html,    "https://code.claude.com/docs/en/memory",            "🧠 Memory"),

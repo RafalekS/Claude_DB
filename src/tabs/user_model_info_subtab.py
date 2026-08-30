@@ -35,86 +35,72 @@ class UserModelInfoSubTab(QWidget):
         html = f"""
         <html>
         <body style="color: {theme.FG_PRIMARY};">
-            <h2 style="color: {theme.ACCENT_PRIMARY};">Claude Model Comparison</h2>
-            <p style="color: {theme.FG_SECONDARY};">Current family: Claude 4.6 &amp; 4.5 — as of Claude Code model ID reference.</p>
+            <h2 style="color: {theme.ACCENT_PRIMARY};">Claude Models in Claude Code</h2>
+            <p style="color: {theme.FG_SECONDARY};">Current family: Claude 5 (Sonnet / Opus / Fable) plus Haiku 4.5.
+            Verify live details with <code>/model</code> or the model-config docs linked below.</p>
 
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Claude Sonnet 4.6 — Best Coding Model</h3>
-            <p><b>API ID:</b> <code>claude-sonnet-4-6</code></p>
-            <ul>
-                <li><b>Context Window:</b> 200K tokens</li>
-                <li><b>Max Output:</b> 64K tokens</li>
-                <li><b>Best For:</b> Main development work, orchestrating multi-agent workflows, complex coding tasks</li>
-                <li><b>Use In Claude Code:</b> Default model — highest capability/cost balance for coding</li>
-            </ul>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Claude Opus 4.6 — Deepest Reasoning</h3>
-            <p><b>API ID:</b> <code>claude-opus-4-6</code></p>
-            <ul>
-                <li><b>Context Window:</b> 200K tokens</li>
-                <li><b>Max Output:</b> 32K tokens</li>
-                <li><b>Best For:</b> Complex architectural decisions, maximum reasoning, research and analysis</li>
-                <li><b>Use In Claude Code:</b> <code>claude --model claude-opus-4-6</code> for the hardest tasks</li>
-            </ul>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Claude Haiku 4.5 — Fastest &amp; Cheapest</h3>
-            <p><b>API ID:</b> <code>claude-haiku-4-5-20251001</code></p>
-            <ul>
-                <li><b>Context Window:</b> 200K tokens</li>
-                <li><b>Max Output:</b> 64K tokens</li>
-                <li><b>Best For:</b> Lightweight agents with frequent invocation, pair programming, worker agents</li>
-                <li><b>Cost:</b> ~3× cheaper than Sonnet — ideal for high-volume agentic loops</li>
-            </ul>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Model Selection Guide</h3>
-            <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%; background: {theme.BG_MEDIUM};">
-                <tr style="background: {theme.BG_LIGHT};">
-                    <th>Use Case</th>
-                    <th>Recommended Model</th>
-                    <th>Reason</th>
-                </tr>
-                <tr>
-                    <td>Main Claude Code session</td>
-                    <td><b>Sonnet 4.6</b></td>
-                    <td>Best coding, default</td>
-                </tr>
-                <tr>
-                    <td>Complex architecture / research</td>
-                    <td><b>Opus 4.6</b></td>
-                    <td>Deepest reasoning</td>
-                </tr>
-                <tr>
-                    <td>Worker agents in multi-agent</td>
-                    <td><b>Haiku 4.5</b></td>
-                    <td>90% capability, 3× cheaper</td>
-                </tr>
-                <tr>
-                    <td>Fast iteration / prototyping</td>
-                    <td><b>Haiku 4.5</b></td>
-                    <td>Lowest latency, lowest cost</td>
-                </tr>
-                <tr>
-                    <td>Orchestrator in multi-agent</td>
-                    <td><b>Sonnet 4.6</b></td>
-                    <td>Coordinates workers reliably</td>
-                </tr>
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Aliases</h3>
+            <table border="1" cellpadding="6" style="border-collapse: collapse; width: 100%; background: {theme.BG_MEDIUM};">
+                <tr style="background: {theme.BG_LIGHT};"><th>Alias</th><th>Model ID</th><th>Notes</th></tr>
+                <tr><td><code>sonnet</code></td><td><code>claude-sonnet-5</code></td><td>Balanced default for coding</td></tr>
+                <tr><td><code>opus</code></td><td><code>claude-opus-5</code></td><td>Deepest reasoning</td></tr>
+                <tr><td><code>fable</code></td><td><code>claude-fable-5</code></td><td>Most capable; long-horizon agentic work</td></tr>
+                <tr><td><code>haiku</code></td><td><code>claude-haiku-4-5-20251001</code></td><td>Fastest / cheapest; worker agents</td></tr>
+                <tr><td><code>opusplan</code></td><td>—</td><td>Opus in Plan mode, Sonnet in execution</td></tr>
             </table>
 
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Command Line Override</h3>
-            <p>Override the model for a session or single prompt:</p>
-            <pre style="background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;">claude --model claude-opus-4-6
-claude -p "task" --model claude-haiku-4-5-20251001</pre>
-
-            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Set Default Model in Settings</h3>
-            <pre style="background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;"># ~/.claude/settings.json
-{{
-  "model": "claude-sonnet-4-6"
-}}</pre>
-
-            <p style="margin-top: 16px;"><b>Links:</b></p>
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Context windows</h3>
             <ul>
-                <li><a href="https://code.claude.com/docs/en/about-claude/models/overview">Model Overview</a></li>
-                <li><a href="https://code.claude.com/docs/en/about-claude/models/choosing-a-model">Choosing a Model</a></li>
+                <li><b>Sonnet 5 / Opus 5 / Fable 5:</b> 1M-token context (native).</li>
+                <li><b>Haiku 4.5:</b> 200K-token context.</li>
+                <li>Add <code>[1m]</code> to force the 1M window where it isn't on by default, e.g.
+                    <code>/model opus[1m]</code> or <code>claude --model claude-opus-5[1m]</code>.</li>
             </ul>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Effort levels</h3>
+            <p><code>low</code> · <code>medium</code> · <code>high</code> · <code>xhigh</code> · <code>max</code>
+            (plus <code>ultracode</code>). Claude Code defaults to <code>xhigh</code>. Change with
+            <code>/effort &lt;level&gt;</code>, <code>claude --effort &lt;level&gt;</code>, or the
+            <code>effortLevel</code> setting. <code>max</code> and <code>ultracode</code> apply to the current session only.</p>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Choosing a model</h3>
+            <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%; background: {theme.BG_MEDIUM};">
+                <tr style="background: {theme.BG_LIGHT};"><th>Use Case</th><th>Model</th></tr>
+                <tr><td>Main Claude Code session</td><td><b>Sonnet 5</b></td></tr>
+                <tr><td>Hardest architecture / reasoning</td><td><b>Opus 5</b></td></tr>
+                <tr><td>Long autonomous agentic runs</td><td><b>Fable 5</b></td></tr>
+                <tr><td>Worker / subagents, high-volume loops</td><td><b>Haiku 4.5</b></td></tr>
+            </table>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Setting the model</h3>
+            <pre style="background: {theme.BG_MEDIUM}; padding: 8px; border-radius: 3px;"># one session
+claude --model opus
+claude -p "task" --model claude-haiku-4-5-20251001
+
+# in session (saves as your default)
+/model sonnet
+/model                       # open the picker
+
+# settings file (~/.claude/settings.json)
+{{ "model": "sonnet" }}
+
+# env vars
+export ANTHROPIC_MODEL=sonnet            # overrides the setting for the session
+export ANTHROPIC_DEFAULT_MODEL=opus      # default for new sessions only</pre>
+
+            <h3 style="color: {theme.ACCENT_PRIMARY}; margin-top: 16px;">Related settings</h3>
+            <ul>
+                <li><code>fallbackModel</code> — chain of backups when the primary is overloaded
+                    (<code>claude --fallback-model sonnet,haiku</code>)</li>
+                <li><code>availableModels</code> + <code>enforceAvailableModels</code> — restrict which models
+                    <code>/model</code> / <code>--model</code> may pick (managed)</li>
+                <li><code>modelPicker</code> — customise the <code>/model</code> picker rows (user/managed, v2.1.242+)</li>
+                <li><code>fastMode</code> — Fast mode (research preview; Opus tier; toggle with <code>/fast</code>)</li>
+            </ul>
+
+            <p style="margin-top: 16px;"><b>Docs:</b>
+            <a href="https://code.claude.com/docs/en/model-config">Model configuration</a> ·
+            <a href="https://code.claude.com/docs/en/settings-reference">Settings reference</a></p>
         </body>
         </html>
         """
