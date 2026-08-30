@@ -1,0 +1,13 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "-y",
+    "@anaisbetts/mcp-installer"
+  ],
+  "env": {
+    "N8N_API_KEY": "your-n8n-api-key-here",
+    "N8N_API_URL": "http://192.168.0.166:5678/api/v1"
+  }
+}

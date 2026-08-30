@@ -1,0 +1,13 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "plex-mcp"
+  ],
+  "env": {
+    "PLEX_URL": "http://192.168.0.166:32400",
+    "PLEX_TOKEN": "local-b1311365-eec7-4353-90fb-dc3bfbf3f4b0",
+    "MCP_HTTP_DEBUG": "true"
+  }
+}

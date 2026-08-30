@@ -13,3 +13,5 @@ Try 'claudesync upgrade --help' for help.
 Error: No such option: --check Did you mean --help?
 
 2026-02-04 17:20:38,908 - ERROR - Command execution error: [WinError 2] The system cannot find the file specified
+2026-07-07 18:01:12,495 - ERROR - Command execution error: [WinError 2] The system cannot find the file specified
+2026-07-07 18:01:44,433 - ERROR - Command execution error: [WinError 2] The system cannot find the file specified

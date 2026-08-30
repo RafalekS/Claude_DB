@@ -1,0 +1,10 @@
+{
+  "type": "stdio",
+  "command": "uv",
+  "args": [
+    "run",
+    "run_server.py"
+  ],
+  "cwd": "C:\\path\\to\\mcp-server-imdb",
+  "_note": "Python-based IMDb MCP server. Clone from https://github.com/mrbourne777/mcp-server-imdb and run 'uv pip install -e .' first"
+}

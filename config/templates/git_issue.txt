@@ -1,0 +1,537 @@
+===== BASIC ENV =====
+Date: 2026-02-25T18:25:43,216367712+00:00
+User: pi
+Host: rasp5-nvme
+
+PWD: /home/pi/claude/Claude_DB
+
+===== SHELL / GIT / TERM =====
+BASH_VERSION:
+5.2.37(1)-release
+
+git --version:
+git version 2.47.3
+
+TERM:
+xterm-256color
+
+===== READLINE SETTINGS =====
+bind -v | grep -i 'bracketed\|color\|complete\|menu'
+set colored-completion-prefix off
+set colored-stats off
+set enable-bracketed-paste on
+set menu-complete-display-prefix off
+set skip-completed-text off
+
+Full bind -v (may be long):
+set bind-tty-special-chars on
+set blink-matching-paren off
+set byte-oriented off
+set colored-completion-prefix off
+set colored-stats off
+set completion-ignore-case off
+set completion-map-case off
+set convert-meta off
+set disable-completion off
+set echo-control-characters on
+set enable-active-region on
+set enable-bracketed-paste on
+set enable-keypad off
+set enable-meta-key on
+set expand-tilde off
+set history-preserve-point off
+set horizontal-scroll-mode off
+set input-meta on
+set mark-directories on
+set mark-modified-lines off
+set mark-symlinked-directories off
+set match-hidden-files on
+set menu-complete-display-prefix off
+set meta-flag on
+set output-meta on
+set page-completions on
+set prefer-visible-bell on
+set print-completions-horizontally off
+set revert-all-at-newline off
+set show-all-if-ambiguous off
+set show-all-if-unmodified off
+set show-mode-in-prompt off
+set skip-completed-text off
+set visible-stats off
+set bell-style audible
+set comment-begin #
+set completion-display-width -1
+set completion-prefix-display-length 0
+set completion-query-items 100
+set editing-mode emacs
+set emacs-mode-string @
+set history-size 0
+set keymap emacs
+set keyseq-timeout 500
+set vi-cmd-mode-string (cmd)
+set vi-ins-mode-string (ins)
+
+===== COMPLETION STATE =====
+type git:
+git is hashed (/usr/bin/git)
+
+alias git:
+/home/pi/collect_git_issue_info.sh: line 39: alias: git: not found
+no git alias
+
+type _git:
+/home/pi/collect_git_issue_info.sh: line 42: type: _git: not found
+no _git function
+
+complete -p git:
+/home/pi/collect_git_issue_info.sh: line 45: complete: git: no completion specification
+no git completion
+
+complete -p (all completions):
+
+===== INPUTRC =====
+User inputrc (~/.inputrc):
+  (no ~/.inputrc)
+
+System inputrc (/etc/inputrc):
+  # /etc/inputrc - global inputrc for libreadline
+  # See readline(3readline) and `info rluserman' for more information.
+  
+  # Be 8 bit clean.
+  set input-meta on
+  set output-meta on
+  
+  # To allow the use of 8bit-characters like the german umlauts, uncomment
+  # the line below. However this makes the meta key not work as a meta key,
+  # which is annoying to those which don't need to type in 8-bit characters.
+  
+  # set convert-meta off
+  
+  # try to enable the application keypad when it is called.  Some systems
+  # need this to enable the arrow keys.
+  # set enable-keypad on
+  
+  # see /usr/share/doc/bash/inputrc.arrows for other codes of arrow keys
+  
+  # do not bell on tab-completion
+  # set bell-style none
+  # set bell-style visible
+  
+  # make autocompletion case insensitive and display suggestions
+  # set completion-ignore-case On
+  # set show-all-if-ambiguous On
+  
+  # some defaults / modifications for the emacs mode
+  $if mode=emacs
+  
+  # allow the use of the Home/End keys
+  "\e[1~": beginning-of-line
+  "\e[4~": end-of-line
+  
+  # allow the use of the Delete/Insert keys
+  "\e[3~": delete-char
+  "\e[2~": quoted-insert
+  
+  # mappings for "page up" and "page down" to step to the beginning/end
+  # of the history
+  # "\e[5~": beginning-of-history
+  # "\e[6~": end-of-history
+  
+  # alternate mappings for "page up" and "page down" to search the history
+  # "\e[5~": history-search-backward
+  # "\e[6~": history-search-forward
+  
+  # mappings for Ctrl-left-arrow and Ctrl-right-arrow for word moving
+  "\e[1;5C": forward-word
+  "\e[1;5D": backward-word
+  "\e[5C": forward-word
+  "\e[5D": backward-word
+  "\e\e[C": forward-word
+  "\e\e[D": backward-word
+  
+  $if term=rxvt
+  "\e[7~": beginning-of-line
+  "\e[8~": end-of-line
+  "\eOc": forward-word
+  "\eOd": backward-word
+  $endif
+  
+  # for non RH/Debian xterm, can't hurt for RH/Debian xterm
+  # "\eOH": beginning-of-line
+  # "\eOF": end-of-line
+  
+  # for freebsd console
+  # "\e[H": beginning-of-line
+  # "\e[F": end-of-line
+  
+  $endif
+  
+  # mappings for up and down arrows search history
+  # "\e[B": history-search-forward
+  # "\e[A": history-search-backward
+
+===== BASH STARTUP FILES =====
+---- /home/pi/.bashrc ----
+  # ~/.bashrc: executed by bash(1) for non-login shells.
+  # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+  # for examples
+  
+  # If not running interactively, don't do anything
+  case $- in
+      *i*) ;;
+        *) return;;
+  esac
+  
+  # don't put duplicate lines or lines starting with space in the history.
+  # See bash(1) for more options
+  HISTCONTROL=ignoreboth
+  
+  # append to the history file, don't overwrite it
+  shopt -s histappend
+  
+  # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+  HISTSIZE=1000
+  HISTFILESIZE=2000
+  
+  # check the window size after each command and, if necessary,
+  # update the values of LINES and COLUMNS.
+  shopt -s checkwinsize
+  
+  # If set, the pattern "**" used in a pathname expansion context will
+  # match all files and zero or more directories and subdirectories.
+  #shopt -s globstar
+  
+  # make less more friendly for non-text input files, see lesspipe(1)
+  #[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+  
+  # set variable identifying the chroot you work in (used in the prompt below)
+  if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+      debian_chroot=$(cat /etc/debian_chroot)
+  fi
+  
+  # set a fancy prompt (non-color, unless we know we "want" color)
+  case "$TERM" in
+      xterm-color|*-256color) color_prompt=yes;;
+  esac
+  
+  # uncomment for a colored prompt, if the terminal has the capability; turned
+  # off by default to not distract the user: the focus in a terminal window
+  # should be on the output of commands, not on the prompt
+  force_color_prompt=yes
+  
+  if [ -n "$force_color_prompt" ]; then
+      if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+  	# We have color support; assume it's compliant with Ecma-48
+  	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+  	# a case would tend to support setf rather than setaf.)
+  	color_prompt=yes
+      else
+  	color_prompt=
+      fi
+  fi
+  
+  if [ "$color_prompt" = yes ]; then
+      PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] '
+  else
+      PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+  fi
+  unset color_prompt force_color_prompt
+  
+  # If this is an xterm set the title to user@host:dir
+  case "$TERM" in
+  xterm*|rxvt*)
+      PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+      ;;
+  *)
+      ;;
+  esac
+  
+  # enable color support of ls and also add handy aliases
+  if [ -x /usr/bin/dircolors ]; then
+      test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+      alias ls='ls --color=auto'
+      #alias dir='dir --color=auto'
+      #alias vdir='vdir --color=auto'
+  
+      alias grep='grep --color=auto'
+      alias fgrep='fgrep --color=auto'
+      alias egrep='egrep --color=auto'
+  fi
+  
+  # colored GCC warnings and errors
+  #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+  
+  # some more ls aliases
+  #alias ll='ls -l'
+  #alias la='ls -A'
+  #alias l='ls -CF'
+  
+  # Alias definitions.
+  # You may want to put all your additions into a separate file like
+  # ~/.bash_aliases, instead of adding them here directly.
+  # See /usr/share/doc/bash-doc/examples in the bash-doc package.
+  
+  if [ -f ~/.bash_aliases ]; then
+      . ~/.bash_aliases
+  fi
+  
+  # enable programmable completion features (you don't need to enable
+  # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+  # sources /etc/bash.bashrc).
+  if ! shopt -oq posix; then
+    if [ -f /usr/share/bash-completion/bash_completion ]; then
+      . /usr/share/bash-completion/bash_completion
+    elif [ -f /etc/bash_completion ]; then
+      . /etc/bash_completion
+    fi
+  fi
+  
+  COWS=(/usr/share/cowsay/cows/*)
+  RAND_COW=$(($RANDOM % $( ls /usr/share/cowsay/cows/*.cow | wc -l )))
+  cowsay -f ${COWS[$RAND_COW]} "ALL YOUR BASE ARE BELONG TO US"
+  
+  # Pi Command Center
+  alias picc='/opt/pi_command_center/picc.sh'
+  
+  source /home/pi/.config/shell/aliases.conf
+  
+  source /home/pi/.config/shell/functions.conf
+  
+  # fzf integration (Debian/Raspbian)
+  # [ -f /usr/share/doc/fzf/examples/completion.bash ] && \
+    # . /usr/share/doc/fzf/examples/completion.bash
+  
+   [ -f /usr/share/doc/fzf/examples/key-bindings.bash ] && \
+    . /usr/share/doc/fzf/examples/key-bindings.bash
+  
+  export PATH="$HOME/.local/bin:$PATH"
+  export NNN_EDITOR=nano
+  export EDITOR=nano
+  export VISUAL=nano
+  
+  alias cdi='. /usr/local/bin/cdi.sh'
+  
+  . "$HOME/.cargo/env"
+  export COLORTERM=truecolor
+  
+  # bun
+  export BUN_INSTALL="$HOME/.bun"
+  export PATH="$BUN_INSTALL/bin:$PATH"
+  PROMPT_COMMAND='printf "\n"'
+  
+  # Source aliases file
+  [ -f /home/pi/shell/aliases.conf ] && source /home/pi/shell/aliases.conf
+  
+  # Pi Command Center
+
+---- /home/pi/.bash_profile ----
+  (missing)
+
+---- /home/pi/.profile ----
+  # ~/.profile: executed by the command interpreter for login shells.
+  # This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
+  # exists.
+  # see /usr/share/doc/bash/examples/startup-files for examples.
+  # the files are located in the bash-doc package.
+  
+  # the default umask is set in /etc/profile; for setting the umask
+  # for ssh logins, install and configure the libpam-umask package.
+  #umask 022
+  
+  
+  
+  
+  #################### Control Blocks ####################
+  
+  # if running bash
+  if [ -n "$BASH_VERSION" ]; then
+      # include .bashrc if it exists
+      if [ -f "$HOME/.bashrc" ]; then
+  	. "$HOME/.bashrc"
+      fi
+  fi
+  
+  # set PATH so it includes user's private bin if it exists
+  if [ -d "$HOME/bin" ] ; then
+      PATH="$HOME/bin:$PATH"
+  fi
+  
+  # set PATH so it includes user's private bin if it exists
+  if [ -d "$HOME/.local/bin" ] ; then
+      PATH="$HOME/.local/bin:$PATH"
+  fi
+  
+  
+  #################### Sources ####################
+  
+  
+  
+  . "$HOME/.cargo/env"
+
+---- /etc/bash.bashrc ----
+  # System-wide .bashrc file for interactive bash(1) shells.
+  
+  # To enable the settings / commands in this file for login shells as well,
+  # this file has to be sourced in /etc/profile.
+  
+  # If not running interactively, don't do anything
+  [ -z "${PS1-}" ] && return
+  
+  # check the window size after each command and, if necessary,
+  # update the values of LINES and COLUMNS.
+  shopt -s checkwinsize
+  
+  # set variable identifying the chroot you work in (used in the prompt below)
+  if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+      debian_chroot=$(< /etc/debian_chroot)
+  fi
+  
+  # set a fancy prompt (non-color, overwrite the one in /etc/profile)
+  # but only if not SUDOing and have SUDO_PS1 set; then assume smart user.
+  if ! [ -n "${SUDO_USER-}" -a -n "${SUDO_PS1-}" ]; then
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+  fi
+  
+  # Commented out, don't overwrite xterm -T "title" -n "icontitle" by default.
+  # If this is an xterm set the title to user@host:dir
+  #case "$TERM" in
+  #xterm*|rxvt*)
+  #    PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"'
+  #    ;;
+  #*)
+  #    ;;
+  #esac
+  
+  # enable bash completion in interactive shells
+  #if ! shopt -oq posix; then
+  #  if [ -f /usr/share/bash-completion/bash_completion ]; then
+  #    . /usr/share/bash-completion/bash_completion
+  #  elif [ -f /etc/bash_completion ]; then
+  #    . /etc/bash_completion
+  #  fi
+  #fi
+  
+  # if the command-not-found package is installed, use it
+  if [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-not-found ]; then
+  	function command_not_found_handle {
+  	        # check because c-n-f could've been removed in the meantime
+                  if [ -x /usr/lib/command-not-found ]; then
+  		   /usr/lib/command-not-found -- "$1"
+                     return $?
+                  elif [ -x /usr/share/command-not-found/command-not-found ]; then
+  		   /usr/share/command-not-found/command-not-found -- "$1"
+                     return $?
+  		else
+  		   printf "%s: command not found\n" "$1" >&2
+  		   return 127
+  		fi
+  	}
+  fi
+
+---- /etc/profile ----
+  # /etc/profile: system-wide .profile file for the Bourne shell (sh(1))
+  # and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
+  
+  if [ "$(id -u)" -eq 0 ]; then
+    PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  else
+    PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games"
+  fi
+  export PATH
+  
+  if [ "${PS1-}" ]; then
+    if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ]; then
+      # The file bash.bashrc already sets the default PS1.
+      # PS1='\h:\w\$ '
+      if [ -f /etc/bash.bashrc ]; then
+        . /etc/bash.bashrc
+      fi
+    else
+      if [ "$(id -u)" -eq 0 ]; then
+        PS1='# '
+      else
+        PS1='$ '
+      fi
+    fi
+  fi
+  
+  if [ -d /etc/profile.d ]; then
+    for i in $(run-parts --list --regex '^[a-zA-Z0-9_][a-zA-Z0-9._-]*\.sh$' /etc/profile.d); do
+      if [ -r $i ]; then
+        . $i
+      fi
+    done
+    unset i
+  fi
+
+===== TMUX / TTY CONTEXT =====
+TMUX env:
+no TMUX variables
+
+tty:
+/dev/pts/8
+
+ps for current user (bash/process context):
+    PID    PPID TT       STAT CMD
+   1150       1 ?        Ss   /usr/lib/systemd/systemd --user
+   1152    1150 ?        S    (sd-pam)
+   1324    1150 ?        Ss   /usr/bin/dbus-daemon --session --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+   1326    1150 ?        Ssl  /usr/bin/pipewire
+   1328    1150 ?        Ssl  /usr/bin/pipewire -c filter-chain.conf
+   1330    1150 ?        Ssl  /usr/bin/rpi-connectd -socket /run/user/1000/rpi-connect-wayvnc.sock
+   1331    1150 ?        Ssl  /usr/bin/wireplumber
+   1333    1150 ?        Ssl  /usr/bin/pipewire-pulse
+   1338    1150 ?        Ss   /usr/bin/mpris-proxy
+   1341    1137 ?        Ssl  /usr/bin/labwc -m
+   1412    1341 ?        Ss   /usr/bin/ssh-agent /usr/bin/labwc-pi
+   1532       1 ?        S    /bin/sh /usr/bin/lwrespawn /usr/bin/pcmanfm-pi
+   1533       1 ?        S    /bin/sh /usr/bin/lwrespawn /usr/bin/wf-panel-pi
+   1534       1 ?        S    /usr/bin/kanshi
+   1553       1 ?        Sl   /usr/libexec/polkit-mate-authentication-agent-1
+   1557       1 ?        S    systemd-inhibit --what=handle-power-key gtk-nop
+   1573    1532 ?        S    /bin/sh /usr/bin/pcmanfm-pi
+   1574    1573 ?        Sl   pcmanfm --desktop
+   1581    1557 ?        Sl   gtk-nop
+   1593    1533 ?        Sl   /usr/bin/wf-panel-pi
+   1613    1150 ?        Ssl  /usr/libexec/gvfsd
+   1625    1150 ?        Sl   /usr/libexec/gvfsd-fuse /run/user/1000/gvfs -f
+   1647    1150 ?        Ssl  /usr/libexec/xdg-desktop-portal
+   1652    1150 ?        Ssl  /usr/libexec/xdg-permission-store
+   1653    1150 ?        Ssl  /usr/libexec/gvfs-udisks2-volume-monitor
+   1660    1150 ?        Ssl  /usr/libexec/xdg-document-portal
+   1674    1150 ?        Ssl  /usr/libexec/xdg-desktop-portal-gtk
+   1675    1150 ?        Ssl  /usr/libexec/gvfs-mtp-volume-monitor
+   1685    1150 ?        Ssl  /usr/libexec/gvfs-goa-volume-monitor
+   1690    1150 ?        Ssl  /usr/libexec/gvfs-afc-volume-monitor
+   1699    1150 ?        Ssl  /usr/libexec/gvfs-gphoto2-volume-monitor
+   1708    1150 ?        Ssl  /usr/libexec/xdg-desktop-portal-wlr
+   1709    1613 ?        Sl   /usr/libexec/gvfsd-trash --spawner :1.20 /org/gtk/gvfs/exec_spaw/0
+   1748    1150 ?        Ssl  /usr/libexec/gvfsd-metadata
+   1900    1136 tty1     Ss+  -bash
+   1928    1150 ?        Ssl  /usr/bin/wayvnc --config /etc/rpi-connect/wayvnc.config --render-cursor --unix-socket --socket=/run/user/1000/rpi-connect-wayvnc-ctl.sock /run/user/1000/rpi-connect-wayvnc.sock
+ 386481 3597184 pts/1    Sl+  claude
+ 419153  419146 ?        S    sshd-session: pi@notty
+ 515272  515265 ?        S    sshd-session: pi@pts/5
+ 515273  515272 pts/5    Ss   -bash
+ 515736  817162 pts/6    Ss+  -bash
+ 516210  515273 pts/5    S+   tmux attach -t alias
+ 521755  521748 ?        S    sshd-session: pi@pts/8
+ 521756  521755 pts/8    Ss   -bash
+ 566415  521756 pts/8    S+   bash /home/pi/collect_git_issue_info.sh
+ 566429  566415 pts/8    R+   ps -o pid,ppid,tty,stat,cmd -u pi
+ 817162       1 ?        Ss   tmux new-session -d -s autoclaude -c /home/pi/claude/autoclaude
+ 817450  817162 pts/2    Ss   -bash
+ 958576       1 ?        Sl   /usr/bin/x-terminal-emulator
+ 958588  958576 pts/4    Ss+  bash
+1279937  817162 pts/7    Ss   -bash
+1281706 1279937 pts/7    Sl+  /home/pi/.local/bin/claude --resume
+1867219  817162 pts/0    Ss   -bash
+1868574 1867219 pts/0    Sl+  claude
+2326549       1 ?        Ssl  /usr/bin/python3 /home/pi/.claude_automation/autoclaude_monitor.py --all
+3032121  817450 pts/2    Sl+  claude
+3597184  817162 pts/1    Ss   -bash
+4106334 4106327 ?        S    sshd-session: pi@pts/3
+4106335 4106334 pts/3    Ss+  tmux attach-session -t profile_manager
+4175238 4175217 ?        S    sshd-session: pi@notty
+4175239 4175238 ?        Ss   /usr/lib/openssh/sftp-server
+

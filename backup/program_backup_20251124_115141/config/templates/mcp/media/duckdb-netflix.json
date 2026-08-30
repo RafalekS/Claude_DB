@@ -1,0 +1,7 @@
+{
+  "command": "python",
+  "args": [
+    "C:\\path\\to\\mcp-duckdb\\src\\mcp_netflix_duckdb_server.py"
+  ],
+  "_note": "Python Netflix DuckDB server. Clone from https://github.com/sophialyssy-sys/genai-misc, run 'pip install mcp>=1.0.0 duckdb>=0.9.0 polars>=0.20.0'. Place netflix_data.csv in ../data/"
+}

@@ -1,0 +1,16 @@
+{
+  "command": "uv",
+  "args": [
+    "run",
+    "mcp-teams-server"
+  ],
+  "env": {
+    "TEAMS_APP_ID": "YOUR_APP_ID",
+    "TEAMS_APP_PASSWORD": "YOUR_APP_PASSWORD",
+    "TEAMS_APP_TYPE": "SingleTenant",
+    "TEAMS_APP_TENANT_ID": "YOUR_TENANT_ID",
+    "TEAM_ID": "YOUR_TEAM_ID",
+    "TEAMS_CHANNEL_ID": "YOUR_CHANNEL_ID"
+  },
+  "_note": "Python MS Teams server. Clone from https://github.com/inditextech/mcp-teams-server, run 'uv venv && uv sync --frozen --all-extras --dev'. Requires Python 3.10+"
+}

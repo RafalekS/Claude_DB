@@ -1,0 +1,9 @@
+{
+  "command": "uvx",
+  "args": [
+    "mcp-server-everything-search"
+  ],
+  "env": {
+    "EVERYTHING_SDK_PATH": "C:\\utils\\Everything\\SDK\\Dll\\Everything64.dll"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "uvx",
+    "mcp-server-fetch"
+  ],
+  "env": {
+    "USER_AGENT": "MCP Fetch Server"
+  }
+}

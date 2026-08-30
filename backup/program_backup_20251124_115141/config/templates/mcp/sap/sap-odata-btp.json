@@ -1,0 +1,10 @@
+{
+  "command": "node",
+  "args": [
+    "C:\\path\\to\\btp-sap-odata-to-mcp-server\\dist\\index.js"
+  ],
+  "env": {
+    "DISABLE_READ_ENTITY_TOOL": "false"
+  },
+  "_note": "Node.js SAP BTP OData server. Clone from https://github.com/lemaiwo/btp-sap-odata-to-mcp-server, run 'npm ci && npm run build'. Requires Node 18+"
+}

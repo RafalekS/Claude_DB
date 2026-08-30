@@ -1,0 +1,9 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "wweb-mcp"
+  ],
+  "_note": "Node.js WhatsApp Web MCP. Fork from https://github.com/fyimail/whatsapp-mcp2, run 'npm install -g .' or use npx"
+}

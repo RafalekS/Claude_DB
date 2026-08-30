@@ -1,0 +1,10 @@
+{
+  "command": "node",
+  "args": [
+    "C:\\path\\to\\mcp-sap-docs\\dist\\src\\server.js"
+  ],
+  "env": {
+    "MCP_PORT": "3122"
+  },
+  "_note": "Node.js SAP Docs server. Clone from https://github.com/marianfoo/mcp-sap-docs, run 'npm ci && ./setup.sh && npm run build'. Or use remote: https://mcp-sap-docs.marianzeis.de/mcp"
+}

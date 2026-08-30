@@ -1,0 +1,16 @@
+{
+  "timestamp": "20251124_115137",
+  "date": "2025-11-24T11:51:37.810800",
+  "source": "C:\\Users\\r_sta\\.claude",
+  "files_backed_up": [
+    "settings.json",
+    "CLAUDE.md",
+    "config.json"
+  ],
+  "dirs_backed_up": [
+    "agents",
+    "commands",
+    "config",
+    "prompt"
+  ]
+}

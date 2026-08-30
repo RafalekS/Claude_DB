@@ -1,0 +1,27 @@
+{
+  "cleanupPeriodDays": 270,
+  "env": {
+    "VERBOSE": "false",
+    "DISABLE_COST_WARNINGS": "0"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Write(*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "hooks": {},
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "document-skills@anthropic-agent-skills": false
+  },
+  "alwaysThinkingEnabled": false,
+  "preferredNotifChannel": "terminal_bell"
+}

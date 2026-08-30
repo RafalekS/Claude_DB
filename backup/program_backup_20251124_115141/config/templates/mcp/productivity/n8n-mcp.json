@@ -1,0 +1,13 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "-y",
+    "supergateway",
+    "--streamableHttp",
+    "http://192.168.0.166:5678/mcp-server/http",
+    "--header",
+    "authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzYzA3MGI2ZC0zYWVkLTRiZjQtODAxOS1kNWIyOTcwZGJlOTgiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjlkMDljZjkzLWE1ZDAtNDc5Ny05NzkzLWIwYWU4ZjgxNDNlMSIsImlhdCI6MTc2MzY3ODMyMn0.R9BzUpE5njb3QNBP4LN05FKT3vAQ0xfWg2JFE9AjbmM"
+  ]
+}

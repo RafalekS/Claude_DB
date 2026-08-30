@@ -1,0 +1,13 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "wweb-mcp",
+    "--mode",
+    "mcp",
+    "--transport",
+    "command"
+  ],
+  "_note": "Node.js WhatsApp Web via npx. Clone from https://github.com/pnizer/wweb-mcp or run directly. Supports auth-strategy local/none"
+}

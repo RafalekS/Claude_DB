@@ -1,0 +1,12 @@
+{
+  "command": "cmd",
+  "args": [
+    "/c",
+    "npx",
+    "-y",
+    "@modelcontextprotocol/server-filesystem",
+    "C:\\allowed\\path1",
+    "C:\\allowed\\path2"
+  ],
+  "type": "stdio"
+}

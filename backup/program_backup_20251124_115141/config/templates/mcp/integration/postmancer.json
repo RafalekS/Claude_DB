@@ -1,0 +1,11 @@
+{
+  "args": [
+    "-y",
+    "postmancer"
+  ],
+  "command": "npx",
+  "env": {
+    "LOG_LEVEL": "info"
+  },
+  "updated_at": "2025-10-05T04:02:09.324972300+00:00"
+}

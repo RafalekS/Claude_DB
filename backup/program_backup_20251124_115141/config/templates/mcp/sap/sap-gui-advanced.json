@@ -1,0 +1,9 @@
+{
+  "command": "python",
+  "args": [
+    "-m",
+    "sap_mcp_server.main"
+  ],
+  "cwd": "C:\\path\\to\\mcp-sap-gui-advanced\\python",
+  "_note": "Python/TypeScript SAP GUI Advanced. Clone from https://github.com/piyushsteelcase-design/mcp-sap-gui-advanced. Python: 'uv install', TS: 'npm install && npm run build'. Requires Python 3.10+ or Node 17+"
+}

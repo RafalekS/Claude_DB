@@ -1,0 +1,15 @@
+{
+  "command": "python",
+  "args": [
+    "-m",
+    "sap_gui_server.server"
+  ],
+  "cwd": "C:\\path\\to\\mcp-sap-gui",
+  "env": {
+    "SAP_SYSTEM": "YOUR_SAP_SYSTEM",
+    "SAP_CLIENT": "YOUR_SAP_CLIENT",
+    "SAP_USER": "YOUR_SAP_USER",
+    "SAP_PASSWORD": "YOUR_SAP_PASSWORD"
+  },
+  "_note": "Python SAP GUI server. Clone from https://github.com/mario-andreschak/mcp-sap-gui, run setup.bat or build.bat. Requires Python 3.8+"
+}

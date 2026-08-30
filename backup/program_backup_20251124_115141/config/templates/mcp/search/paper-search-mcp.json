@@ -1,0 +1,14 @@
+{
+  "args": [
+    "/c",
+    "npx",
+    "-y",
+    "@smithery/cli@latest",
+    "run",
+    "@openags/paper-search-mcp",
+    "--key",
+    "3f4cf123-c815-4e73-b741-f6a5156b9158"
+  ],
+  "command": "cmd",
+  "env": {}
+}

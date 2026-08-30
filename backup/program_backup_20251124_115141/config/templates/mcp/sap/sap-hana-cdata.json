@@ -1,0 +1,9 @@
+{
+  "command": "java",
+  "args": [
+    "-jar",
+    "C:\\path\\to\\CDataMCP-jar-with-dependencies.jar",
+    "C:\\path\\to\\sap-hana-xs-advanced.prp"
+  ],
+  "_note": "Java SAP HANA XS Advanced via CData. Clone from https://github.com/cdatasoftware/sap-hana-xs-advanced-mcp-server-by-cdata, run 'mvn clean install'. Requires CData JDBC Driver license"
+}

@@ -1,0 +1,14 @@
+{
+  "command": "python",
+  "args": [
+    "sap_server.py",
+    "--transport",
+    "http",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "8000"
+  ],
+  "cwd": "C:\\path\\to\\sap_mcp",
+  "_note": "Python SAP API server. Clone from https://github.com/richard-zhangxj/sap_mcp, run 'pip install -r requirements.txt'. Configure SAP details in config.json"
+}

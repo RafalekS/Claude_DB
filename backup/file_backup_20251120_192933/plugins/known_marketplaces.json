@@ -1,0 +1,58 @@
+{
+  "claude-code-plugins": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/claude-code"
+    },
+    "installLocation": "C:\\Users\\r_sta\\.claude\\plugins\\marketplaces\\claude-code-plugins",
+    "lastUpdated": "2025-11-17T14:20:26.459Z"
+  },
+  "claude-code-settings": {
+    "source": {
+      "source": "github",
+      "repo": "feiskyer/claude-code-settings"
+    },
+    "installLocation": "C:\\Users\\r_sta\\.claude\\plugins\\marketplaces\\claude-code-settings",
+    "lastUpdated": "2025-11-17T14:20:34.100Z"
+  },
+  "docker": {
+    "source": {
+      "source": "github",
+      "repo": "docker/claude-plugins"
+    },
+    "installLocation": "C:\\Users\\r_sta\\.claude\\plugins\\marketplaces\\docker",
+    "lastUpdated": "2025-11-17T14:21:02.972Z"
+  },
+  "claude-code-workflows": {
+    "source": {
+      "source": "github",
+      "repo": "wshobson/agents"
+    },
+    "installLocation": "C:\\Users\\r_sta\\.claude\\plugins\\marketplaces\\claude-code-workflows",
+    "lastUpdated": "2025-11-17T14:20:51.564Z"
+  },
+  "anthropic-agent-skills": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/skills"
+    },
+    "installLocation": "C:\\Users\\r_sta\\.claude\\plugins\\marketplaces\\anthropic-agent-skills",
+    "lastUpdated": "2025-11-17T14:20:18.332Z"
+  },
+  "claude-code-templates": {
+    "source": {
+      "source": "git",
+      "url": "https://github.com/davila7/claude-code-templates.git"
+    },
+    "installLocation": "C:\\Users\\r_sta\\.claude\\plugins\\marketplaces\\claude-code-templates",
+    "lastUpdated": "2025-11-17T14:20:43.652Z"
+  },
+  "n8n-mcp-skills": {
+    "source": {
+      "source": "github",
+      "repo": "czlonkowski/n8n-skills"
+    },
+    "installLocation": "C:\\Users\\r_sta\\.claude\\plugins\\marketplaces\\n8n-mcp-skills",
+    "lastUpdated": "2025-11-17T14:21:08.514Z"
+  }
+}

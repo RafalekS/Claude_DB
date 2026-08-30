@@ -1,0 +1,52 @@
+{
+  "cleanupPeriodDays": 270,
+  "env": {
+    "DISABLE_COST_WARNINGS": "0",
+    "VERBOSE": "false"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Write(*)",
+      "Ssh",
+      "Bash",
+      "WebFetch(domain:*)",
+      "Bash(chmod:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(ssh -i ~/.ssh/P16_id_rsa pi@192.168.0.169:*)",
+      "WebFetch(domain:forums.raspberrypi.com)",
+      "WebFetch(domain:forums.pimoroni.com)",
+      "WebFetch(domain:www.jeffgeerling.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ],
+    "deny": []
+  },
+  "hooks": {},
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "code-simplifier@claude-plugins-official": false,
+    "document-skills@anthropic-agent-skills": false,
+    "frontend-design@claude-code-plugins": false,
+    "powershell-editor-services@claude-code-lsps": false
+  },
+  "alwaysThinkingEnabled": true,
+  "autoUpdatesChannel": "latest",
+  "voiceEnabled": true,
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "preferredNotifChannel": "terminal_bell",
+  "showSystemInitialization": true,
+  "verbose": true,
+  "model": "claude-sonnet-4-5-20250929",
+  "theme": "light",
+  "autoMemoryEnabled": false,
+  "agentsAllowed": true
+}
