@@ -21,12 +21,13 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
     QComboBox, QCheckBox, QSpinBox, QPlainTextEdit, QTreeWidget, QTreeWidgetItem,
-    QMessageBox, QSplitter, QStackedWidget, QFileDialog, QSizePolicy,
+    QMessageBox, QSplitter, QFileDialog, QFormLayout, QInputDialog,
 )
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QColor
 
 from utils import theme
+from utils.ui_state_manager import UIStateManager
 
 logger = logging.getLogger(__name__)
 
@@ -254,95 +255,106 @@ class SettingsEditor(QWidget):
         self._backup = backup_manager
         self._working: dict = {}
         self._current_key: str | None = None
-        self._editors: dict[str, QWidget] = {}
+        self._value_widget: QWidget | None = None
+        self._suspend = False
         self._build()
         self.reload()
 
     # -- construction --------------------------------------------------------
 
     def _build(self):
+        m, s = theme.MARGIN_MD, theme.MARGIN_SM
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(4, 4, 4, 4)
-        outer.setSpacing(4)
+        outer.setContentsMargins(m, m, m, m)
+        outer.setSpacing(s)
 
         bar = QHBoxLayout()
-        bar.setSpacing(6)
+        bar.setSpacing(s)
         self._scope_combo = QComboBox()
-        for s in self._scopes:
-            self._scope_combo.addItem(s["label"])
+        for sc in self._scopes:
+            self._scope_combo.addItem(sc["label"])
         self._scope_combo.currentIndexChanged.connect(self.reload)
         if len(self._scopes) > 1:
             bar.addWidget(QLabel("Scope:"))
             bar.addWidget(self._scope_combo)
         self._path_lbl = QLabel("")
-        self._path_lbl.setStyleSheet(f"color:{theme.FG_SECONDARY};font-size:{theme.FONT_SIZE_SMALL}px;")
+        self._path_lbl.setStyleSheet(theme.get_label_style("small", "secondary"))
         bar.addWidget(self._path_lbl, 1)
-        docs = QPushButton("📖 Reference")
+        docs = QPushButton("Reference")
         docs.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(_DOCS)))
         bar.addWidget(docs)
         outer.addLayout(bar)
 
         self._filter = QLineEdit()
-        self._filter.setPlaceholderText("filter settings…")
+        self._filter.setPlaceholderText("Filter settings")
         self._filter.setClearButtonEnabled(True)
         self._filter.textChanged.connect(self._apply_filter)
         outer.addWidget(self._filter)
 
-        split = QSplitter(Qt.Orientation.Horizontal)
+        self._split = QSplitter(Qt.Orientation.Horizontal)
 
         self._tree = QTreeWidget()
         self._tree.setHeaderHidden(True)
         self._tree.setColumnCount(1)
+        self._tree.setUniformRowHeights(True)
         self._tree.currentItemChanged.connect(self._on_select)
-        split.addWidget(self._tree)
+        self._split.addWidget(self._tree)
 
-        right = QWidget()
-        rl = QVBoxLayout(right)
-        rl.setContentsMargins(8, 4, 4, 4)
-        rl.setSpacing(6)
-        self._key_lbl = QLabel("Select a setting")
-        self._key_lbl.setStyleSheet(
-            f"font-size:{theme.FONT_SIZE_LARGE}px;font-weight:bold;color:{theme.ACCENT_PRIMARY};")
-        rl.addWidget(self._key_lbl)
+        # Detail pane: rebuilt on every selection so its height follows the
+        # control (a checkbox row is short, a JSON box is tall).
+        detail = QWidget()
+        dl = QVBoxLayout(detail)
+        dl.setContentsMargins(m, s, s, s)
+        dl.setSpacing(s)
+        self._key_lbl = QLabel("Select a setting on the left")
+        self._key_lbl.setStyleSheet(theme.get_label_style("large", "accent"))
+        dl.addWidget(self._key_lbl)
         self._desc_lbl = QLabel("")
         self._desc_lbl.setWordWrap(True)
-        self._desc_lbl.setStyleSheet(f"color:{theme.FG_SECONDARY};font-size:{theme.FONT_SIZE_SMALL}px;")
-        rl.addWidget(self._desc_lbl)
-        self._stack = QStackedWidget()
-        self._stack.addWidget(QWidget())  # index 0 = blank
-        rl.addWidget(self._stack)
+        self._desc_lbl.setStyleSheet(theme.get_label_style("small", "secondary"))
+        dl.addWidget(self._desc_lbl)
+        self._form = QFormLayout()
+        self._form.setContentsMargins(0, s, 0, 0)
+        self._form.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+        dl.addLayout(self._form)
         self._unset_btn = QPushButton("Unset (use default)")
         self._unset_btn.clicked.connect(self._unset_current)
         self._unset_btn.setEnabled(False)
         row = QHBoxLayout()
         row.addWidget(self._unset_btn)
-        row.addStretch()
-        rl.addLayout(row)
-        rl.addStretch(1)
-        split.addWidget(right)
-        split.setSizes([300, 560])
-        outer.addWidget(split, 1)
+        row.addStretch(1)
+        dl.addLayout(row)
+        dl.addStretch(1)
+        self._split.addWidget(detail)
+        self._split.setStretchFactor(0, 0)
+        self._split.setStretchFactor(1, 1)
+        outer.addWidget(self._split, 1)
+
+        _uis = UIStateManager.instance()
+        _uis.restore_splitter_state("settings_editor.split", self._split)
+        _uis.connect_splitter("settings_editor.split", self._split)
 
         bottom = QHBoxLayout()
-        bottom.setSpacing(4)
-        add_btn = QPushButton("＋ Add other key…")
-        add_btn.setToolTip("Add a key that isn't in the list")
+        bottom.setSpacing(s)
+        add_btn = QPushButton("Add other key")
+        add_btn.setToolTip("Add a key that is not in the list")
         add_btn.clicked.connect(self._add_custom_key)
-        reload_btn = QPushButton("↻ Reload")
+        reload_btn = QPushButton("Reload")
         reload_btn.clicked.connect(self.reload)
-        bkp_btn = QPushButton("💾 Backup & Save")
+        bkp_btn = QPushButton("Backup & Save")
         bkp_btn.clicked.connect(lambda: self._save(backup=True))
-        save_btn = QPushButton("💾 Save")
+        save_btn = QPushButton("Save")
         save_btn.clicked.connect(lambda: self._save(backup=False))
         bottom.addWidget(add_btn)
         bottom.addWidget(reload_btn)
-        bottom.addStretch()
+        bottom.addStretch(1)
         bottom.addWidget(bkp_btn)
         bottom.addWidget(save_btn)
         outer.addLayout(bottom)
 
         self._status = QLabel("")
-        self._status.setStyleSheet(f"color:{theme.FG_SECONDARY};font-size:{theme.FONT_SIZE_SMALL}px;")
+        self._status.setStyleSheet(theme.get_label_style("small", "secondary"))
         outer.addWidget(self._status)
 
     # -- data --------------------------------------------------------------
@@ -360,6 +372,7 @@ class SettingsEditor(QWidget):
             if not ok:
                 self._working = {}
                 self._tree.clear()
+                self._clear_form()
                 self._status.setText(why)
                 return
         try:
@@ -369,19 +382,22 @@ class SettingsEditor(QWidget):
             self._working = {}
             self._status.setText(f"Load error: {e}")
         self._rebuild_tree()
-        self._status.setText(f"{sum(1 for _ in self._iter_set_keys())} key(s) set in this file.")
+        n = sum(1 for _ in self._iter_set_keys())
+        self._status.setText(f"{n} key(s) set in this file.")
 
     def _iter_set_keys(self):
         for s in SCHEMA:
             if _get(self._working, s["key"]) is not _MISSING:
                 yield s["key"]
+        for k in self._custom_keys():
+            yield k
 
     def _custom_keys(self) -> list[str]:
-        return sorted(k for k in self._working
-                      if k not in _SCHEMA_TOP_KEYS)
+        return sorted(k for k in self._working if k not in _SCHEMA_TOP_KEYS)
 
     def _rebuild_tree(self):
         self._tree.blockSignals(True)
+        keep = self._current_key
         self._tree.clear()
         cats: dict[str, QTreeWidgetItem] = {}
         for s in SCHEMA:
@@ -393,13 +409,7 @@ class SettingsEditor(QWidget):
                 self._tree.addTopLevelItem(parent)
                 parent.setExpanded(True)
                 cats[s["cat"]] = parent
-            is_set = _get(self._working, s["key"]) is not _MISSING
-            it = QTreeWidgetItem([f"{'●' if is_set else '○'} {s['key']}"])
-            it.setData(0, Qt.ItemDataRole.UserRole, s["key"])
-            if not is_set:
-                it.setForeground(0, QColor(theme.FG_SECONDARY))
-            parent.addChild(it)
-
+            self._add_leaf(parent, s["key"])
         extra = self._custom_keys()
         if extra:
             p = QTreeWidgetItem(["Other keys in this file"])
@@ -408,92 +418,124 @@ class SettingsEditor(QWidget):
             self._tree.addTopLevelItem(p)
             p.setExpanded(True)
             for k in extra:
-                it = QTreeWidgetItem([f"● {k}"])
-                it.setData(0, Qt.ItemDataRole.UserRole, k)
-                p.addChild(it)
+                self._add_leaf(p, k)
         self._tree.blockSignals(False)
         self._apply_filter(self._filter.text())
+        if keep:
+            self._select_key(keep)
 
-    # -- selection / editors ---------------------------------------------
+    def _add_leaf(self, parent: QTreeWidgetItem, key: str):
+        is_set = _get(self._working, key) is not _MISSING
+        it = QTreeWidgetItem([f"{'●' if is_set else '○'}  {key}"])
+        it.setData(0, Qt.ItemDataRole.UserRole, key)
+        if not is_set:
+            it.setForeground(0, QColor(theme.FG_SECONDARY))
+        parent.addChild(it)
+
+    def _select_key(self, key: str):
+        for i in range(self._tree.topLevelItemCount()):
+            top = self._tree.topLevelItem(i)
+            for j in range(top.childCount()):
+                if top.child(j).data(0, Qt.ItemDataRole.UserRole) == key:
+                    self._tree.setCurrentItem(top.child(j))
+                    return
+
+    # -- detail pane -----------------------------------------------------
+
+    def _clear_form(self):
+        while self._form.rowCount():
+            self._form.removeRow(0)
+        self._value_widget = None
 
     def _on_select(self, cur: QTreeWidgetItem, _prev=None):
-        if cur is None:
-            return
-        key = cur.data(0, Qt.ItemDataRole.UserRole)
+        self._clear_form()
+        key = cur.data(0, Qt.ItemDataRole.UserRole) if cur is not None else None
         if not key:
-            self._stack.setCurrentIndex(0)
-            self._key_lbl.setText("Select a setting")
-            self._desc_lbl.setText("")
+            self._current_key = None
+            self._key_lbl.setText("Select a setting on the left")
+            self._desc_lbl.clear()
             self._unset_btn.setEnabled(False)
             return
         self._current_key = key
-        spec = _SCHEMA_BY_KEY.get(key) or dict(key=key, type="json",
-                                               desc="Not a recognised Claude Code key — edited as JSON.")
+        spec = _SCHEMA_BY_KEY.get(key) or {
+            "key": key, "type": "json",
+            "desc": "Not a recognised Claude Code key — edited as JSON."}
         self._key_lbl.setText(key)
         self._desc_lbl.setText(spec.get("desc", ""))
-        w = self._editors.get(key)
-        if w is None:
-            w = self._make_editor(spec)
-            self._editors[key] = w
-            self._stack.addWidget(w)
-        self._populate_editor(spec, w)
-        self._stack.setCurrentWidget(w)
+
+        field, value_widget = self._make_control(spec)
+        self._value_widget = value_widget
+        self._form.addRow("Value:" if spec["type"] not in ("bool", "list", "json") else "", field)
+        self._populate_control(spec, value_widget)
         self._unset_btn.setEnabled(_get(self._working, key) is not _MISSING)
 
-    def _make_editor(self, spec: dict) -> QWidget:
-        t = spec["type"]
+    def _text_rows_height(self, w: QPlainTextEdit, rows: int) -> int:
+        fm = w.fontMetrics()
+        return fm.lineSpacing() * rows + fm.height() + 2 * w.frameWidth()
+
+    def _make_control(self, spec: dict):
+        """Return (widget_for_form, value_widget). Nothing is width- or
+        style-hardcoded; sizing comes from the widget's own sizeHint and the
+        app stylesheet."""
+        t, key = spec["type"], spec["key"]
+
         if t == "bool":
-            w = QCheckBox(spec.get("label") or "Enabled")
-            w.toggled.connect(lambda v, k=spec["key"]: self._apply_value(k, bool(v)))
-            return w
+            w = QCheckBox(spec.get("label") or spec["key"])
+            w.toggled.connect(lambda v, k=key: self._apply_value(k, bool(v)))
+            return w, w
+
         if t == "int":
             w = QSpinBox()
             w.setRange(int(spec.get("min", 0)), int(spec.get("max", 2_147_483_647)))
             if spec.get("suffix"):
                 w.setSuffix(spec["suffix"])
-            w.valueChanged.connect(lambda v, k=spec["key"]: self._apply_value(k, int(v)))
-            return w
+            w.valueChanged.connect(lambda v, k=key: self._apply_value(k, int(v)))
+            return w, w
+
         if t == "choice":
             w = QComboBox()
             w.setEditable(bool(spec.get("editable")))
-            w.addItem("")  # blank = unset
+            w.addItem("")
             w.addItems([str(o) for o in spec.get("options", [])])
-            handler = (lambda _i, k=spec["key"], c=w: self._apply_choice(k, c))
-            w.currentIndexChanged.connect(handler)
+            w.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+            w.currentIndexChanged.connect(lambda _i, k=key, c=w: self._apply_choice(k, c))
             if w.isEditable():
-                w.lineEdit().editingFinished.connect(lambda k=spec["key"], c=w: self._apply_choice(k, c))
-            return w
+                w.lineEdit().editingFinished.connect(
+                    lambda k=key, c=w: self._apply_choice(k, c))
+            return w, w
+
         if t == "path":
-            w = QWidget()
-            h = QHBoxLayout(w)
+            wrap = QWidget()
+            h = QHBoxLayout(wrap)
             h.setContentsMargins(0, 0, 0, 0)
+            h.setSpacing(theme.MARGIN_SM)
             le = QLineEdit()
-            le.textChanged.connect(lambda s, k=spec["key"]: self._apply_str(k, s))
-            btn = QPushButton("Browse…")
+            le.textChanged.connect(lambda x, k=key: self._apply_str(k, x))
+            btn = QPushButton("Browse")
             btn.clicked.connect(lambda _c, le=le, spec=spec: self._browse(le, spec))
             h.addWidget(le, 1)
             h.addWidget(btn)
-            w._line = le
-            return w
+            return wrap, le
+
         if t == "list":
             w = QPlainTextEdit()
             w.setPlaceholderText("one value per line")
-            w.setMaximumHeight(160)
-            w.textChanged.connect(lambda k=spec["key"], e=w: self._apply_list(k, e))
-            return w
+            w.setFixedHeight(self._text_rows_height(w, 5))
+            w.textChanged.connect(lambda k=key, e=w: self._apply_list(k, e))
+            return w, w
+
         if t == "json":
             w = QPlainTextEdit()
             w.setPlaceholderText("JSON value")
-            w.setStyleSheet(f"font-family:{theme.FONT_FAMILY_MONO};font-size:{theme.FONT_SIZE_SMALL}px;")
-            w.setMaximumHeight(220)
-            w.textChanged.connect(lambda k=spec["key"], e=w: self._apply_json(k, e))
-            return w
-        # str
-        w = QLineEdit()
-        w.textChanged.connect(lambda s, k=spec["key"]: self._apply_str(k, s))
-        return w
+            w.setFixedHeight(self._text_rows_height(w, 8))
+            w.textChanged.connect(lambda k=key, e=w: self._apply_json(k, e))
+            return w, w
 
-    def _populate_editor(self, spec: dict, w: QWidget):
+        w = QLineEdit()
+        w.textChanged.connect(lambda x, k=key: self._apply_str(k, x))
+        return w, w
+
+    def _populate_control(self, spec: dict, w: QWidget):
         val = _get(self._working, spec["key"])
         has = val is not _MISSING
         t = spec["type"]
@@ -502,47 +544,45 @@ class SettingsEditor(QWidget):
             if t == "bool":
                 w.setChecked(bool(val) if has else False)
             elif t == "int":
-                w.setValue(int(val) if has and isinstance(val, (int, float)) else int(spec.get("min", 0)))
+                lo = int(spec.get("min", 0))
+                w.setValue(int(val) if has and isinstance(val, (int, float)) else lo)
             elif t == "choice":
                 text = str(val) if has else ""
                 i = w.findText(text)
                 if i >= 0:
                     w.setCurrentIndex(i)
-                elif w.isEditable():
+                elif w.isEditable() and text:
                     w.setCurrentText(text)
                 else:
                     w.setCurrentIndex(0)
-            elif t == "path":
-                w._line.setText(str(val) if has else "")
             elif t == "list":
                 w.setPlainText("\n".join(val) if has and isinstance(val, list) else "")
             elif t == "json":
                 w.setPlainText(json.dumps(val, indent=2) if has else "")
-            else:
+            else:  # str / path
                 w.setText(str(val) if has else "")
         finally:
             self._suspend = False
 
     def _browse(self, le: QLineEdit, spec: dict):
+        import os
+        start = os.path.expanduser(le.text()) or os.path.expanduser("~")
         if spec.get("dir"):
-            d = QFileDialog.getExistingDirectory(self, "Select directory", le.text() or str(Path.home()))
+            d = QFileDialog.getExistingDirectory(self, "Select directory", start)
             if d:
                 le.setText(d)
         else:
-            f, _ = QFileDialog.getOpenFileName(self, "Select file", le.text() or str(Path.home()))
+            f, _ = QFileDialog.getOpenFileName(self, "Select file", start)
             if f:
                 le.setText(f)
 
-    # -- apply into _working ------------------------------------------------
-
-    _suspend = False
+    # -- apply into _working --------------------------------------------
 
     def _mark(self, key: str):
-        """Refresh the ● / ○ marker for one leaf without rebuilding the tree."""
         it = self._tree.currentItem()
         if it and it.data(0, Qt.ItemDataRole.UserRole) == key:
             is_set = _get(self._working, key) is not _MISSING
-            it.setText(0, f"{'●' if is_set else '○'} {key}")
+            it.setText(0, f"{'●' if is_set else '○'}  {key}")
             self._unset_btn.setEnabled(is_set)
 
     def _apply_value(self, key, value):
@@ -555,30 +595,21 @@ class SettingsEditor(QWidget):
         if self._suspend:
             return
         s = s.strip()
-        if s:
-            _set(self._working, key, s)
-        else:
-            _del(self._working, key)
+        _set(self._working, key, s) if s else _del(self._working, key)
         self._mark(key)
 
     def _apply_choice(self, key, combo: QComboBox):
         if self._suspend:
             return
         s = combo.currentText().strip()
-        if s:
-            _set(self._working, key, s)
-        else:
-            _del(self._working, key)
+        _set(self._working, key, s) if s else _del(self._working, key)
         self._mark(key)
 
     def _apply_list(self, key, edit: QPlainTextEdit):
         if self._suspend:
             return
         items = [ln.strip() for ln in edit.toPlainText().splitlines() if ln.strip()]
-        if items:
-            _set(self._working, key, items)
-        else:
-            _del(self._working, key)
+        _set(self._working, key, items) if items else _del(self._working, key)
         self._mark(key)
 
     def _apply_json(self, key, edit: QPlainTextEdit):
@@ -594,36 +625,27 @@ class SettingsEditor(QWidget):
             _set(self._working, key, json.loads(txt))
             self._status.setText("")
         except json.JSONDecodeError as e:
-            self._status.setText(f"⚠ {key}: invalid JSON — {e}")
+            self._status.setText(f"Invalid JSON for {key}: {e}")
         self._mark(key)
 
     def _unset_current(self):
-        if not self._current_key:
+        key = self._current_key
+        if not key:
             return
-        _del(self._working, self._current_key)
-        spec = _SCHEMA_BY_KEY.get(self._current_key) or dict(key=self._current_key, type="json")
-        w = self._editors.get(self._current_key)
-        if w is not None:
-            self._populate_editor(spec, w)
-        self._mark(self._current_key)
-        self._status.setText(f'"{self._current_key}" unset (will use the default).')
+        _del(self._working, key)
+        self._mark(key)
+        self._on_select(self._tree.currentItem())   # rebuild the detail control
+        self._status.setText(f'"{key}" unset (uses the default).')
 
     def _add_custom_key(self):
-        from PyQt6.QtWidgets import QInputDialog
         key, ok = QInputDialog.getText(self, "Add key", "Settings key (dot notation ok):")
         key = (key or "").strip()
         if not ok or not key:
             return
         if _get(self._working, key) is _MISSING:
             _set(self._working, key, "")
+        self._current_key = key
         self._rebuild_tree()
-        # select it
-        for i in range(self._tree.topLevelItemCount()):
-            top = self._tree.topLevelItem(i)
-            for j in range(top.childCount()):
-                if top.child(j).data(0, Qt.ItemDataRole.UserRole) == key:
-                    self._tree.setCurrentItem(top.child(j))
-                    return
 
     # -- filter -----------------------------------------------------------
 
@@ -651,9 +673,6 @@ class SettingsEditor(QWidget):
             if not ok:
                 QMessageBox.warning(self, "Not available", why)
                 return
-        # surface any invalid JSON block before writing
-        bad = [s["key"] for s in SCHEMA if s["type"] == "json"
-               and isinstance(_get(self._working, s["key"]), str)]
         path = scope["path"]()
         try:
             if backup and self._backup and isinstance(path, Path) and path.exists():
