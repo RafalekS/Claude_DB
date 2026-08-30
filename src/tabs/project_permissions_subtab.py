@@ -22,7 +22,7 @@ from PyQt6.QtGui import QDesktopServices, QColor
 from utils import theme
 
 # Import the same AddPermissionDialog from user_permissions_subtab
-from tabs.user_permissions_subtab import AddPermissionDialog
+from tabs.user_permissions_subtab import AddPermissionDialog, permission_modes_footer_html
 from utils.ui_state_manager import UIStateManager
 
 class ProjectPermissionsSubTab(QWidget):
@@ -110,15 +110,17 @@ class ProjectPermissionsSubTab(QWidget):
         default_mode_combo = QComboBox()
         default_mode_combo.setMaximumWidth(200)
         default_mode_combo.addItems([
-            "default", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
+            "default", "manual", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
         ])
         default_mode_combo.setToolTip(
-            "default — normal prompting (Shift+Tab to cycle modes)\n"
-            "acceptEdits — auto-approve file edits + common filesystem commands (git, npm, etc.)\n"
-            "plan — plan mode only, no execution\n"
-            "auto — background classifier; requires Team/Enterprise + Sonnet4.6/Opus4.6\n"
-            "dontAsk — skip all permission prompts, pre-approved tools only (CI use)\n"
-            "bypassPermissions — bypass all checks; containers/VMs only (managed: disableBypassPermissionsMode)"
+            "default / manual — prompt on first use of each tool (Shift+Tab cycles modes)\n"
+            "acceptEdits — auto-approve file edits + mkdir/touch/mv/cp in the working dir\n"
+            "plan — Claude explores with reads + read-only shell only, no source edits\n"
+            "auto — a classifier reviews actions instead of you (availability depends on plan; "
+            "disable with permissions.disableAutoMode)\n"
+            "dontAsk — auto-DENY anything not pre-approved via /permissions or permissions.allow\n"
+            "bypassPermissions — skip prompts (except protected paths); containers/VMs only "
+            "(managed: permissions.disableBypassPermissionsMode)"
         )
         default_mode_combo.currentTextChanged.connect(lambda m, s=scope: self.save_default_mode(s, m))
         mode_hint = QLabel("permissions.defaultMode in settings.json")
@@ -178,19 +180,7 @@ class ProjectPermissionsSubTab(QWidget):
             f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
             f"border-radius: {theme.BORDER_RADIUS}px;"
         )
-        footer.setHtml(
-            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
-            "<b>Modes:</b> "
-            "<b>default</b> — normal prompting &nbsp;| "
-            "<b>acceptEdits</b> — auto-approve edits + filesystem commands &nbsp;| "
-            "<b>auto</b> — ML classifier approves safe actions automatically (Team/Enterprise; disable with <code>disableAutoMode</code>) &nbsp;| "
-            "<b>dontAsk</b> — skip prompts, CI use &nbsp;| "
-            "<b>bypassPermissions</b> — containers/VMs only"
-            "<br>• <b>Shift+Tab</b> cycles modes &nbsp;&nbsp; "
-            "• Protected: <code>~/.ssh</code> <code>~/.aws</code> <code>/etc/passwd</code> &nbsp;&nbsp; "
-            "• Managed flags: <code>disableAutoMode</code>, <code>disableBypassPermissionsMode</code>"
-            "</span>"
-        )
+        footer.setHtml(permission_modes_footer_html())
         layout.addWidget(footer)
         self._perm_footers.append(footer)
 
@@ -201,19 +191,7 @@ class ProjectPermissionsSubTab(QWidget):
 
     def apply_theme(self):
         """Refresh footer HTML widgets with current theme colors."""
-        footer_html = (
-            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
-            "<b>Modes:</b> "
-            "<b>default</b> — normal prompting &nbsp;| "
-            "<b>acceptEdits</b> — auto-approve edits + filesystem commands &nbsp;| "
-            "<b>auto</b> — ML classifier approves safe actions automatically (Team/Enterprise; disable with <code>disableAutoMode</code>) &nbsp;| "
-            "<b>dontAsk</b> — skip prompts, CI use &nbsp;| "
-            "<b>bypassPermissions</b> — containers/VMs only"
-            "<br>• <b>Shift+Tab</b> cycles modes &nbsp;&nbsp; "
-            "• Protected: <code>~/.ssh</code> <code>~/.aws</code> <code>/etc/passwd</code> &nbsp;&nbsp; "
-            "• Managed flags: <code>disableAutoMode</code>, <code>disableBypassPermissionsMode</code>"
-            "</span>"
-        )
+        footer_html = permission_modes_footer_html()
         footer_style = (
             f"color: {theme.FG_SECONDARY}; "
             f"font-size: {theme.FONT_SIZE_SMALL}px; "

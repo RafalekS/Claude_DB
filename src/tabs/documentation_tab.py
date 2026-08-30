@@ -389,14 +389,20 @@ def _tools_ref_html():
         _h(2, "Tool Permission Syntax"),
         _p("Use these patterns in settings " + _code("permissions.allow") + " / " +
            _code("permissions.deny") + " arrays:"),
-        _pre("Bash               # all bash commands\n"
-             "Bash(git *)         # bash matching pattern\n"
-             "Bash(npm test)      # exact bash command\n"
-             "Read               # all reads\n"
-             "Read(/home/*)       # reads matching path\n"
-             "Skill(commit)       # exact skill\n"
-             "Skill(deploy *)     # skill prefix match\n"
-             "mcp__memory__.*    # all tools from MCP server"),
+        _pre("Bash                  # all bash commands (bare name = remove tool as deny)\n"
+             "Bash(npm run *)       # prefix match — put the * after the subcommand\n"
+             "Bash(npm test)        # exact command\n"
+             "Bash(ls:*)            # :* suffix == trailing ' *'\n"
+             "Read(./.env)          # read a path (relative to cwd)\n"
+             "Read(~/Documents/**)  # ~ = home;  //abs = filesystem root\n"
+             "Edit(src/**)          # file writes are checked against Edit(), not Write()\n"
+             "WebFetch(domain:github.com)\n"
+             "mcp__memory__*        # allow-glob: only after a literal mcp__<server>__ prefix\n"
+             "mcp__*                # deny/ask only: every MCP tool"),
+        _p("Note: <code>Bash(command:...)</code>, and path rules on <code>Write</code>, "
+           "<code>NotebookEdit</code>, or <code>Glob</code>, are accepted but never enforced "
+           "(Claude Code warns at startup). Use <code>Bash(prefix *)</code>, "
+           "<code>Edit(path)</code>, and <code>Read(path)</code> instead."),
         _h(2, "Parallel Tool Execution"),
         _p("Claude can run up to 10 read-only tools and subagents in parallel. "
            "Set " + _code("CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY") + " to change the limit."),
@@ -680,13 +686,19 @@ def _sandboxing_html():
         _h(2, "What is Sandboxing?"),
         _p("Sandboxing isolates Claude Code's bash command execution in a containerised environment, "
            "preventing unintended changes to the host system."),
-        _h(2, "macOS Sandbox"),
-        _pre("claude --sandbox"),
-        _p("On macOS, sandboxing uses the built-in " + _code("sandbox-exec") +
-           " mechanism to restrict file writes and network access."),
-        _h(2, "Docker Sandbox"),
-        _p("For Linux and cross-platform use, run Claude Code inside a Docker container:"),
-        _pre("docker run -it --rm -v $(pwd):/workspace anthropic/claude-code:latest"),
+        _h(2, "Bash sandboxing (settings)"),
+        _p("Sandboxing is configured through the " + _code("sandbox") + " key in a settings file, "
+           "not a CLI flag. Turn it on with " + _code('"sandbox": {"enabled": true}') + " and tune "
+           "it with " + _code("sandbox.filesystem.allowWrite/denyRead") + ", "
+           + _code("sandbox.network.allowedDomains") + ", " + _code("sandbox.excludedCommands") + ", etc. "
+           "See the settings reference for the full <code>sandbox.*</code> tree."),
+        _p("On macOS it uses the built-in " + _code("sandbox-exec") + " (Seatbelt); on Linux it uses "
+           "bubblewrap (" + _code("bwrap") + ")."),
+        _h(2, "Docker / container isolation"),
+        _p("For a hard boundary, run Claude Code inside a container and use "
+           + _code("--permission-mode bypassPermissions") + " (or " + _code("--dangerously-skip-permissions") +
+           ") only there. Install with " + _code("npm install -g @anthropic-ai/claude-code") +
+           " or the native installer."),
         _h(2, "Permission Modes with Sandboxing"),
         _table(["Mode", "Sandboxing Benefit"],
                [["bypassPermissions", "Requires container/VM — sandboxing provides the safety boundary"],
@@ -829,10 +841,12 @@ def _github_actions_html():
         _h(2, "Basic Workflow"),
         _pre('name: Claude Code Review\non:\n  pull_request:\n\njobs:\n  review:\n    runs-on: ubuntu-latest\n'
              '    steps:\n      - uses: actions/checkout@v4\n      - name: Install Claude Code\n'
-             '        run: npm install -g @anthropic/claude-code\n      - name: Run review\n'
+             '        run: npm install -g @anthropic-ai/claude-code\n      - name: Run review\n'
              '        env:\n          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}\n'
              '        run: |\n          claude -p "Review this PR for bugs and security issues" \\\n'
              '            --output-format json --allowedTools Read,Grep,Glob'),
+        _p("Anthropic also ships an official <code>anthropics/claude-code-action</code> GitHub "
+           "Action — prefer it over a hand-rolled npm install for CI."),
         _h(2, "Permission Modes in CI"),
         _table(["Mode", "Use Case"],
                [["--dangerously-skip-permissions", "Full automation in isolated containers (not recommended in shared runners)"],

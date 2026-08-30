@@ -22,6 +22,28 @@ from PyQt6.QtGui import QDesktopServices, QColor
 from utils import theme
 from utils.ui_state_manager import UIStateManager
 
+
+def permission_modes_footer_html() -> str:
+    """Shared 'Permission modes' reference footer (user + project subtabs)."""
+    return (
+        f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
+        "<b>Modes:</b> "
+        "<b>default</b> / <b>manual</b> — prompt on first use of each tool &nbsp;| "
+        "<b>acceptEdits</b> — auto-approve edits + mkdir/touch/mv/cp &nbsp;| "
+        "<b>plan</b> — reads + read-only shell only &nbsp;| "
+        "<b>auto</b> — a classifier reviews actions (availability depends on plan; "
+        "disable with <code>permissions.disableAutoMode</code>) &nbsp;| "
+        "<b>dontAsk</b> — auto-DENY anything not pre-approved &nbsp;| "
+        "<b>bypassPermissions</b> — skip prompts; containers/VMs only"
+        "<br>• <b>Shift+Tab</b> cycles modes during a session &nbsp;&nbsp; "
+        "• Protected paths (blocked even in bypass): <code>.git</code>, <code>.claude</code>, "
+        "<code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.gnupg</code> &nbsp;&nbsp; "
+        "• Managed flags: <code>permissions.disableAutoMode</code>, "
+        "<code>permissions.disableBypassPermissionsMode</code>"
+        "</span>"
+    )
+
+
 class AddPermissionDialog(QDialog):
     """Dialog for adding or editing a permission with improved UX"""
 
@@ -29,38 +51,38 @@ class AddPermissionDialog(QDialog):
     TOOLS = {
         "File Operations": {
             "Read": {
-                "format": "Read(pattern)",
-                "examples": ["**", "//c/Scripts/**", "//c/Users/USERNAME/**", "*.py"],
-                "placeholder": "//c/path/** or *.txt"
-            },
-            "Write": {
-                "format": "Write(pattern)",
-                "examples": ["**", "//c/Scripts/**", "//c/Users/USERNAME/**", "*.txt"],
-                "placeholder": "//c/path/** or *.txt"
+                "format": "Read(path)",
+                "examples": ["**", "//c/Scripts/**", "~/Documents/*.pdf", "./.env"],
+                "placeholder": "./path/** or ~/path or //c/path/**"
             },
             "Edit": {
-                "format": "Edit(pattern)",
-                "examples": ["**", "//c/Scripts/**", "//c/Users/USERNAME/**", "*.py"],
-                "placeholder": "//c/path/** or *.py"
+                "format": "Edit(path)",
+                "examples": ["**", "src/**", "//c/Scripts/**", "docs/**/*.md"],
+                "placeholder": "src/** or //c/path/**  (also covers Write/NotebookEdit)"
+            },
+            "Write": {
+                "format": "Edit(path)  ← use Edit, not Write",
+                "examples": ["src/**", "docs/**"],
+                "placeholder": "Claude Code ignores path rules on Write — write Edit(path) instead"
             },
             "NotebookEdit": {
-                "format": "NotebookEdit(pattern)",
-                "examples": ["**", "*.ipynb"],
-                "placeholder": "*.ipynb or //c/notebooks/**"
+                "format": "Edit(path)  ← use Edit, not NotebookEdit",
+                "examples": ["notebooks/**", "*.ipynb"],
+                "placeholder": "Claude Code ignores path rules on NotebookEdit — write Edit(path) instead"
             }
         },
         "Execution": {
             "Bash": {
-                "format": "Bash(command:pattern)",
-                "examples": ["*", "cat:*", "python:*", "git:*", "ls:*", "cd:*"],
-                "placeholder": "command:* or just *"
+                "format": "Bash(exact command)  or  Bash(prefix *)",
+                "examples": ["npm run build", "npm run *", "git log *", "git commit *", "ls *"],
+                "placeholder": "npm run *   (put the * after the subcommand)"
             }
         },
         "Search": {
             "Glob": {
-                "format": "Glob(pattern)",
-                "examples": ["*", "**/*.py", "*.txt"],
-                "placeholder": "**/*.py or *.txt"
+                "format": "Read(path)  ← use Read, not Glob",
+                "examples": ["src/**", "**/*.py"],
+                "placeholder": "Claude Code ignores path rules on Glob — write Read(path) instead"
             },
             "Grep": {
                 "format": "Grep(pattern)",
@@ -70,12 +92,12 @@ class AddPermissionDialog(QDialog):
         },
         "Web": {
             "WebFetch": {
-                "format": "WebFetch(domain:pattern)",
-                "examples": ["domain:*", "domain:github.com", "domain:*.anthropic.com", "domain:stackoverflow.com"],
-                "placeholder": "domain:example.com"
+                "format": "WebFetch(domain:host)",
+                "examples": ["domain:github.com", "domain:docs.claude.com", "domain:stackoverflow.com"],
+                "placeholder": "domain:example.com  (exact host)"
             },
             "WebSearch": {
-                "format": "WebSearch(pattern)",
+                "format": "WebSearch",
                 "examples": ["*"],
                 "placeholder": "* for all searches"
             }
@@ -401,15 +423,19 @@ class UserPermissionsSubTab(QWidget):
         self.default_mode_combo = QComboBox()
         self.default_mode_combo.setMaximumWidth(200)
         self.default_mode_combo.addItems([
-            "default", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
+            "default", "manual", "acceptEdits", "plan", "auto", "dontAsk", "bypassPermissions"
         ])
         self.default_mode_combo.setToolTip(
-            "default — normal prompting (Shift+Tab to cycle modes)\n"
-            "acceptEdits — auto-approve file edits + common filesystem commands (git, npm, etc.)\n"
-            "plan — plan mode only, no execution\n"
-            "auto — background classifier; requires Team/Enterprise + Sonnet4.6/Opus4.6\n"
-            "dontAsk — skip all permission prompts, pre-approved tools only (CI use)\n"
-            "bypassPermissions — bypass all checks; containers/VMs only (managed: disableBypassPermissionsMode)"
+            "default — prompt on first use of each tool (Shift+Tab cycles modes). "
+            "'manual' is an accepted alias and the label shown in the CLI.\n"
+            "acceptEdits — auto-approve file edits + common filesystem commands "
+            "(mkdir, touch, mv, cp) in the working dir / additionalDirectories\n"
+            "plan — Claude explores with reads + read-only shell only, no source edits\n"
+            "auto — a classifier reviews actions instead of you (availability depends on plan; "
+            "disable with permissions.disableAutoMode)\n"
+            "dontAsk — auto-DENY anything not pre-approved via /permissions or permissions.allow\n"
+            "bypassPermissions — skip prompts (except protected paths); containers/VMs only "
+            "(managed: permissions.disableBypassPermissionsMode)"
         )
         self.default_mode_combo.currentTextChanged.connect(self.save_default_mode)
         mode_hint = QLabel("Controls session-wide permission behaviour (settings.json: permissions.defaultMode)")
@@ -468,22 +494,13 @@ class UserPermissionsSubTab(QWidget):
             f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
             f"border-radius: {theme.BORDER_RADIUS}px;"
         )
-        footer.setHtml(
-            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
-            "<b>Modes:</b> "
-            "<b>default</b> — normal prompting &nbsp;| "
-            "<b>acceptEdits</b> — auto-approve edits + filesystem commands &nbsp;| "
-            "<b>auto</b> — background classifier uses ML to approve safe actions automatically (Team/Enterprise only; disable with <code>disableAutoMode</code>) &nbsp;| "
-            "<b>dontAsk</b> — skip prompts, CI use &nbsp;| "
-            "<b>bypassPermissions</b> — containers/VMs only"
-            "<br>• <b>Shift+Tab</b> cycles modes during a session &nbsp;&nbsp; "
-            "• Protected paths: <code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.gnupg</code>, "
-            "<code>/etc/passwd</code>, <code>/etc/shadow</code> &nbsp;&nbsp; "
-            "• Managed flags: <code>disableAutoMode</code>, <code>disableBypassPermissionsMode</code>"
-            "</span>"
-        )
+        footer.setHtml(self._footer_html())
         layout.addWidget(footer)
         self._perm_footer = footer
+
+    @staticmethod
+    def _footer_html() -> str:
+        return permission_modes_footer_html()
 
     def apply_theme(self):
         """Refresh footer HTML with current theme colors."""
@@ -495,20 +512,7 @@ class UserPermissionsSubTab(QWidget):
             f"border-left: 3px solid {theme.ACCENT_SECONDARY}; "
             f"border-radius: {theme.BORDER_RADIUS}px;"
         )
-        self._perm_footer.setHtml(
-            f"<span style='font-size:{theme.FONT_SIZE_SMALL}px; color:{theme.FG_SECONDARY};'>"
-            "<b>Modes:</b> "
-            "<b>default</b> — normal prompting &nbsp;| "
-            "<b>acceptEdits</b> — auto-approve edits + filesystem commands &nbsp;| "
-            "<b>auto</b> — background classifier uses ML to approve safe actions automatically (Team/Enterprise only; disable with <code>disableAutoMode</code>) &nbsp;| "
-            "<b>dontAsk</b> — skip prompts, CI use &nbsp;| "
-            "<b>bypassPermissions</b> — containers/VMs only"
-            "<br>• <b>Shift+Tab</b> cycles modes during a session &nbsp;&nbsp; "
-            "• Protected paths: <code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.gnupg</code>, "
-            "<code>/etc/passwd</code>, <code>/etc/shadow</code> &nbsp;&nbsp; "
-            "• Managed flags: <code>disableAutoMode</code>, <code>disableBypassPermissionsMode</code>"
-            "</span>"
-        )
+        self._perm_footer.setHtml(self._footer_html())
 
     def refresh_permissions(self):
         """Refresh permissions (clears cache and reloads from disk)"""
