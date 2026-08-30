@@ -14,7 +14,10 @@ from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QFont
 
 from utils import theme
-from tabs.hooks_shared import HOOK_EVENT_GROUPS, HOOK_EVENTS, HookReferenceDialog
+from tabs.hooks_shared import (
+    HOOK_EVENT_GROUPS, HOOK_EVENTS, HOOK_HANDLER_TYPES, HOOK_TEMPLATES,
+    HookReferenceDialog,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -261,7 +264,13 @@ class ProjectHooksSubTab(QWidget):
             hooks_config = settings.get("hooks", {})
             editor_data['hooks_config'] = hooks_config
 
-            old_format_hooks = [key for key in hooks_config if key not in HOOK_EVENTS]
+            # New format: every event maps to a list of {matcher, hooks} entries.
+            # Only flag a key whose value isn't a list AND isn't a known event, so
+            # a valid-but-newer event name doesn't trigger a false migration notice.
+            old_format_hooks = [
+                key for key, val in hooks_config.items()
+                if not isinstance(val, list) and key not in HOOK_EVENTS
+            ]
 
             if old_format_hooks:
                 warning = (
@@ -359,35 +368,6 @@ class ProjectHooksSubTab(QWidget):
             logger.error("Failed to save %s hooks: %s", scope, e)
             QMessageBox.critical(self, "Save Error", f"Failed to save:\n{str(e)}")
 
-    HOOK_TEMPLATES = {
-        "command": {
-            "type": "command",
-            "command": "echo 'Hook triggered'",
-            "timeout": 600,
-            "async": False,
-            "statusMessage": ""
-        },
-        "http": {
-            "type": "http",
-            "url": "https://example.com/webhook",
-            "headers": {"Content-Type": "application/json"},
-            "allowedEnvVars": [],
-            "timeout": 30
-        },
-        "prompt": {
-            "type": "prompt",
-            "model": "claude-haiku-4-5-20251001",
-            "prompt": "Should this action proceed? Reply with only yes or no.",
-            "timeout": 30
-        },
-        "agent": {
-            "type": "agent",
-            "agent": "code-reviewer",
-            "model": "claude-haiku-4-5-20251001",
-            "timeout": 60
-        }
-    }
-
     def add_hook(self, scope: str):
         """Add a new hook for selected event"""
         if not self.project_context.has_project():
@@ -404,14 +384,14 @@ class ProjectHooksSubTab(QWidget):
             self,
             "Hook Handler Type",
             f"Select handler type for '{event_name}':",
-            ["command", "http", "prompt", "agent"],
+            HOOK_HANDLER_TYPES,
             0,
             False
         )
         if not ok:
             return
 
-        handler = dict(self.HOOK_TEMPLATES[hook_type])
+        handler = dict(HOOK_TEMPLATES[hook_type])
         template_hook = {"matcher": "*", "hooks": [handler]}
 
         editor_data = self.editors[scope]
