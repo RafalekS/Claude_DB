@@ -375,8 +375,13 @@ class SettingsEditor(QWidget):
             ok, why = ready()
             if not ok:
                 self._working = {}
+                self._current_key = None
                 self._tree.clear()
-                self._clear_form()
+                self._clear_slot()
+                self._key_lbl.setText("Select a setting on the left")
+                self._desc_lbl.clear()
+                self._value_lbl.clear()
+                self._unset_btn.setEnabled(False)
                 self._status.setText(why)
                 return
         try:
