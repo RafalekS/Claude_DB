@@ -1064,6 +1064,36 @@ class PreferencesTab(QWidget):
         mcp_layout.addLayout(mcp_cache_row)
         layout.addWidget(mcp_group)
 
+        # ── Remote session cache ─────────────────────────────────────────
+        sc_group = QGroupBox("Remote Session Cache")
+        sc_layout = QVBoxLayout(sc_group)
+        sc_layout.setSpacing(6)
+        sc_hint = QLabel(
+            "In remote mode, Conversation-tab session files are cached on local disk "
+            "so repeated searches don't re-download them over SSH. 0 = disable."
+        )
+        sc_hint.setWordWrap(True)
+        sc_hint.setStyleSheet(f"color: {theme.FG_SECONDARY};")
+        sc_layout.addWidget(sc_hint)
+
+        sc_row = QHBoxLayout()
+        sc_label = QLabel("Keep cached for:")
+        sc_label.setStyleSheet(f"color: {theme.FG_SECONDARY};")
+        sc_row.addWidget(sc_label)
+        self._session_cache_spin = QSpinBox()
+        self._session_cache_spin.setRange(0, 1440)
+        self._session_cache_spin.setSuffix(" min")
+        sc_row.addWidget(self._session_cache_spin)
+        sc_clear_btn = QPushButton("Clear Session Cache")
+        sc_clear_btn.clicked.connect(self._clear_session_cache)
+        sc_row.addWidget(sc_clear_btn)
+        self._session_cache_stats = QLabel("")
+        self._session_cache_stats.setStyleSheet(f"color: {theme.FG_DIM};")
+        sc_row.addWidget(self._session_cache_stats)
+        sc_row.addStretch()
+        sc_layout.addLayout(sc_row)
+        layout.addWidget(sc_group)
+
         # Save button
         save_btn = QPushButton("Save Search Settings")
         save_btn.clicked.connect(self._save_search_settings)
@@ -1110,6 +1140,27 @@ class PreferencesTab(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to clear cache:\n{e}")
 
+    def _clear_session_cache(self):
+        try:
+            from utils import session_cache
+            n = session_cache.clear()
+            self._update_session_cache_stats()
+            QMessageBox.information(self, "Cache Cleared",
+                                    f"Cleared {n // 2} cached session file(s).")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to clear session cache:\n{e}")
+
+    def _update_session_cache_stats(self):
+        try:
+            from utils import session_cache
+            st = session_cache.stats()
+            mb = st["bytes"] / (1024 * 1024)
+            self._session_cache_stats.setText(
+                f"{st['files']} file(s), {mb:.1f} MB" if st["files"] else "empty"
+            )
+        except Exception:
+            self._session_cache_stats.setText("")
+
     def _save_search_settings(self):
         """Save GitHub + MCP search settings to config.json."""
         try:
@@ -1128,6 +1179,8 @@ class PreferencesTab(QWidget):
                 k for k, cb in self._mcp_source_checks.items() if cb.isChecked()
             ]
             config_data["mcp_search"]["cache_hours"] = self._mcp_cache_spin.value()
+
+            config_data["session_cache_minutes"] = self._session_cache_spin.value()
 
             _atomic_json_write(self.config_file, config_data)
 
@@ -1342,6 +1395,12 @@ class PreferencesTab(QWidget):
             for key, cb in self._mcp_source_checks.items():
                 cb.setChecked(key in enabled)
             self._mcp_cache_spin.setValue(mcp.get("cache_hours", 24))
+
+            from utils import session_cache
+            self._session_cache_spin.setValue(
+                int(config_data.get("session_cache_minutes", session_cache._DEFAULT_MINUTES))
+            )
+            self._update_session_cache_stats()
         except Exception as e:
             logger.warning("Failed to load search settings: %s", e)
 

@@ -27,23 +27,45 @@ from utils.ui_state_manager import UIStateManager
 
 # ─── JSONL helpers ────────────────────────────────────────────────────────────
 
-def _extract_text(content) -> str:
-    """Return human-readable text from a message content value."""
+def _extract_text(content, full: bool = False) -> str:
+    """Return human-readable text from a message content value.
+
+    full=False (default) — compact: tool calls/results collapsed to one line,
+                thinking blocks dropped. Used by the Files-tab conversation view.
+    full=True  — every tool input, tool result and thinking block expanded in
+                full, so an in-conversation search sees the same text the
+                session search matched against. Used by the Project
+                Conversations sub-tab.
+    """
     if isinstance(content, str):
         return content
     if isinstance(content, list):
         parts = []
         for block in content:
             if isinstance(block, dict):
-                if block.get("type") == "text":
+                bt = block.get("type")
+                if bt == "text":
                     parts.append(block.get("text", ""))
-                elif block.get("type") == "tool_use":
+                elif bt == "thinking":
+                    if full:
+                        parts.append("[thinking]\n" + block.get("thinking", ""))
+                elif bt == "tool_use":
                     name = block.get("name", "?")
                     inp = block.get("input", {})
-                    cmd = inp.get("command", inp.get("description", ""))
-                    parts.append(f"[tool: {name}{' — ' + cmd[:80] if cmd else ''}]")
-                elif block.get("type") == "tool_result":
-                    parts.append("[tool result]")
+                    if full:
+                        try:
+                            body = json.dumps(inp, indent=2, ensure_ascii=False)
+                        except (TypeError, ValueError):
+                            body = str(inp)
+                        parts.append(f"[tool: {name}]\n{body}")
+                    else:
+                        cmd = inp.get("command", inp.get("description", "")) if isinstance(inp, dict) else ""
+                        parts.append(f"[tool: {name}{' — ' + cmd[:80] if cmd else ''}]")
+                elif bt == "tool_result":
+                    if full:
+                        parts.append("[tool result]\n" + _extract_text(block.get("content", ""), full=True))
+                    else:
+                        parts.append("[tool result]")
             else:
                 parts.append(str(block))
         return "\n".join(p for p in parts if p)
@@ -63,15 +85,20 @@ def _is_noise(entry: dict) -> bool:
     return False
 
 
-def _parse_conversation(path, fs=None) -> list[dict]:
+def _parse_conversation(path, fs=None, text: str | None = None, full: bool = False) -> list[dict]:
     """Parse a JSONL file into a list of {role, text, time} dicts.
 
-    fs — when provided (remote mode), content is read via fs.read_text().
-         When None, the file is opened locally with open().
+    text — pre-fetched file content (e.g. from utils.session_cache); when given,
+           the file is not read again.
+    fs   — when provided and text is None, content is read via fs.read_text().
+           When both are None, the file is opened locally with open().
+    full — pass through to _extract_text(): expand tool I/O and thinking blocks.
     """
     messages = []
     try:
-        if fs is not None:
+        if text is not None:
+            lines = text.splitlines()
+        elif fs is not None:
             lines = fs.read_text(path).splitlines()
         else:
             with open(path, encoding="utf-8", errors="replace") as f:
@@ -91,7 +118,7 @@ def _parse_conversation(path, fs=None) -> list[dict]:
             if role not in ("user", "assistant"):
                 continue
             content = msg.get("content", "")
-            text = _extract_text(content).strip()
+            text = _extract_text(content, full=full).strip()
             if not text:
                 continue
             ts = entry.get("timestamp", "")

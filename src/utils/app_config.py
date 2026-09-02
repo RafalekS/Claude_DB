@@ -39,8 +39,8 @@ class ConfigError(RuntimeError):
     """config.json exists but could not be read/parsed."""
 
 
-def load(path: Path | str = CONFIG_PATH) -> dict:
-    path = Path(path)
+def load(path: Path | str | None = None) -> dict:
+    path = Path(path) if path is not None else CONFIG_PATH
     if not path.exists():
         return {}
     try:
@@ -59,8 +59,8 @@ def load(path: Path | str = CONFIG_PATH) -> dict:
     return data
 
 
-def atomic_write(data: dict, path: Path | str = CONFIG_PATH) -> None:
-    path = Path(path)
+def atomic_write(data: dict, path: Path | str | None = None) -> None:
+    path = Path(path) if path is not None else CONFIG_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.stem + ".", suffix=".tmp")
     try:
@@ -77,7 +77,7 @@ def atomic_write(data: dict, path: Path | str = CONFIG_PATH) -> None:
         raise
 
 
-def update(mutate: Callable[[dict], None], path: Path | str = CONFIG_PATH) -> dict:
+def update(mutate: Callable[[dict], None], path: Path | str | None = None) -> dict:
     """Read the whole file, apply *mutate* in place, write it back atomically.
 
     Raises ConfigError if the file exists but is corrupt — the caller should
