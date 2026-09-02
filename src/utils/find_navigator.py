@@ -4,9 +4,18 @@ Both conversation views (tabs/project_conversations_subtab.py and
 tabs/memory_tab.py) drop a huge transcript into a read-only QPlainTextEdit
 and need the same thing on top of it: highlight every match, Prev / Next,
 an "n / m" counter, and centre-on-match. This is that, once.
+
+Position note: matches are found with Python's ``re`` over ``toPlainText()``,
+so offsets are Python string indices. Qt's QTextCursor counts a character
+above U+FFFF as two positions (UTF-16), so every offset is shifted right by
+the number of such characters before it before being handed to the cursor —
+otherwise an emoji earlier in the transcript drags every highlight off its
+match.
 """
 
 from __future__ import annotations
+
+import bisect
 
 from PyQt6.QtGui import QColor, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import QTextEdit
@@ -21,9 +30,12 @@ class FindNavigator:
         self._label = label
         self._prev_btn = prev_btn
         self._next_btn = next_btn
-        self._spans: list[tuple[int, int]] = []
+        self._spans: list[tuple[int, int]] = []   # Qt (UTF-16) positions
         self._idx = -1
         self._term = ""
+        self._body_rev = None
+        self._body = ""
+        self._astral: list[int] = []
 
     # ── public API ──────────────────────────────────────────────────────────
     @property
@@ -37,8 +49,9 @@ class FindNavigator:
     def search(self, term: str, whole_word: bool, match_case: bool) -> None:
         self._term = term
         rx = build_regex(term, whole_word, match_case)
-        body = self._viewer.toPlainText()
-        self._spans = [(m.start(), m.end()) for m in rx.finditer(body)] if rx else []
+        body, astral = self._current_body()
+        py_spans = [(m.start(), m.end()) for m in rx.finditer(body)] if rx else []
+        self._spans = self._to_qt_spans(py_spans, astral)
         self._idx = -1
         self._highlight()
         self._update_label()
@@ -75,6 +88,28 @@ class FindNavigator:
             self.goto(self._idx - 1)
 
     # ── internals ───────────────────────────────────────────────────────────
+    def _current_body(self) -> tuple[str, list[int]]:
+        """(plain text, sorted indices of chars > U+FFFF), cached per document edit."""
+        doc = self._viewer.document()
+        rev = doc.revision()
+        if rev != self._body_rev:
+            self._body_rev = rev
+            self._body = self._viewer.toPlainText()
+            self._astral = (
+                [] if self._body.isascii()
+                else [i for i, ch in enumerate(self._body) if ord(ch) > 0xFFFF]
+            )
+        return self._body, self._astral
+
+    @staticmethod
+    def _to_qt_spans(py_spans, astral):
+        if not py_spans or not astral:
+            return list(py_spans)
+        return [
+            (a + bisect.bisect_left(astral, a), b + bisect.bisect_left(astral, b))
+            for a, b in py_spans
+        ]
+
     def _highlight(self) -> None:
         sels = []
         if self._spans:
