@@ -15,13 +15,16 @@ from datetime import datetime
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextBrowser, QPushButton,
-    QTabWidget, QSplitter, QTextEdit, QTreeWidget, QTreeWidgetItem,
-    QListWidget, QListWidgetItem, QHeaderView, QLineEdit, QApplication,
+    QTabWidget, QSplitter, QTextEdit, QPlainTextEdit, QTreeWidget, QTreeWidgetItem,
+    QListWidget, QListWidgetItem, QHeaderView, QLineEdit, QCheckBox, QApplication,
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor
+from PyQt6.QtGui import QFont, QColor, QShortcut, QKeySequence
 
 from utils import theme
+from utils import session_cache
+from utils.transcript_search import build_regex
+from utils.find_navigator import FindNavigator
 from utils.ui_state_manager import UIStateManager
 
 
@@ -133,6 +136,26 @@ def _parse_conversation(path, fs=None, text: str | None = None, full: bool = Fal
     return messages
 
 
+def render_transcript(path, fs=None, text: str | None = None) -> str:
+    """Full readable transcript for a session (tool I/O + thinking expanded).
+
+    Single renderer shared by both conversation views so the hit count a
+    search reports for a session is the count the in-conversation find bar
+    then shows when the session is opened. Empty string = nothing readable.
+    """
+    messages = _parse_conversation(path, fs, text=text, full=True)
+    if not messages:
+        return ""
+    stem = Path(str(path)).stem
+    size = f"   ({len(text)//1024} KB)" if text is not None else ""
+    parts = [f"Session: {stem}\nMessages: {len(messages)}{size}\n{'─'*60}\n"]
+    for m in messages:
+        role = "You" if m["role"] == "user" else "Claude"
+        ts = f"  [{m['time']}]" if m["time"] else ""
+        parts.append(f"\n{'─'*40}\n{role}{ts}\n{'─'*40}\n{m['text']}\n")
+    return "".join(parts)
+
+
 # ─── Path helpers ─────────────────────────────────────────────────────────────
 
 def _decode_project_path(folder_name: str) -> str:
@@ -167,31 +190,6 @@ def _get_snippet(text: str, term: str, context: int = 80) -> str:
     end = min(len(text), lo + len(term) + context // 2)
     snippet = text[start:end].replace("\n", " ")
     return ("…" if start > 0 else "") + snippet + ("…" if end < len(text) else "")
-
-
-def _highlight_in_viewer(viewer: QTextEdit, term: str) -> None:
-    """Highlight all occurrences of term in a QTextEdit via extra selections."""
-    if not term:
-        viewer.setExtraSelections([])
-        return
-    fmt = QTextCharFormat()
-    fmt.setBackground(QColor("#E8B000"))
-    fmt.setForeground(QColor("#000000"))
-    doc = viewer.document()
-    cursor = QTextCursor(doc)
-    selections = []
-    while True:
-        cursor = doc.find(term, cursor)
-        if cursor.isNull():
-            break
-        sel = QTextEdit.ExtraSelection()
-        sel.cursor = cursor
-        sel.format = fmt
-        selections.append(sel)
-    viewer.setExtraSelections(selections)
-    if selections:
-        viewer.setTextCursor(selections[0].cursor)
-        viewer.ensureCursorVisible()
 
 
 # ─── Main Tab ─────────────────────────────────────────────────────────────────
@@ -251,6 +249,10 @@ class MemoryTab(QWidget):
         self._conv_search_bar = QLineEdit()
         self._conv_search_bar.setPlaceholderText("Search all conversations…")
         self._conv_search_bar.returnPressed.connect(self._search_conversations)
+        self._conv_cb_word = QCheckBox("Whole word")
+        self._conv_cb_case = QCheckBox("Match case")
+        self._conv_cb_word.toggled.connect(self._apply_conv_find)
+        self._conv_cb_case.toggled.connect(self._apply_conv_find)
         search_btn = QPushButton("🔍 Search")
         search_btn.clicked.connect(self._search_conversations)
         clear_btn = QPushButton("✕ Clear")
@@ -260,6 +262,8 @@ class MemoryTab(QWidget):
             f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px;"
         )
         search_row.addWidget(self._conv_search_bar, 1)
+        search_row.addWidget(self._conv_cb_word)
+        search_row.addWidget(self._conv_cb_case)
         search_row.addWidget(search_btn)
         search_row.addWidget(clear_btn)
         search_row.addWidget(self._conv_search_status)
@@ -272,16 +276,45 @@ class MemoryTab(QWidget):
         self.conv_tree = QTreeWidget()
         self.conv_tree.setHeaderLabel("Projects & Sessions")
         self.conv_tree.setColumnCount(1)
-        self.conv_tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.conv_tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.conv_tree.itemClicked.connect(self._load_conversation)
 
-        # Right: conversation viewer
-        self.conv_viewer = QTextEdit()
+        # Right: conversation viewer + in-conversation find bar
+        right = QWidget()
+        rl = QVBoxLayout(right)
+        rl.setContentsMargins(0, 0, 0, 0)
+        rl.setSpacing(4)
+        self.conv_viewer = QPlainTextEdit()
         self.conv_viewer.setReadOnly(True)
         self.conv_viewer.setFont(QFont(theme.FONT_MONOSPACE, theme.FONT_SIZE_SMALL))
+        rl.addWidget(self.conv_viewer, 1)
+
+        frow = QHBoxLayout()
+        frow.setSpacing(4)
+        frow.addWidget(QLabel("Find:"))
+        self._conv_find_bar = QLineEdit()
+        self._conv_find_bar.setPlaceholderText("find in this conversation  (Ctrl+F)")
+        self._conv_prev_btn = QPushButton("◀ Prev")
+        self._conv_next_btn = QPushButton("Next ▶")
+        self._conv_match_lbl = QLabel("")
+        self._conv_match_lbl.setStyleSheet(
+            f"color: {theme.FG_DIM}; font-size: {theme.FONT_SIZE_SMALL}px;"
+        )
+        frow.addWidget(self._conv_find_bar, 1)
+        frow.addWidget(self._conv_prev_btn)
+        frow.addWidget(self._conv_next_btn)
+        frow.addWidget(self._conv_match_lbl)
+        rl.addLayout(frow)
+
+        self._conv_find = FindNavigator(self.conv_viewer, self._conv_match_lbl,
+                                        self._conv_prev_btn, self._conv_next_btn)
+        self._conv_find_bar.textChanged.connect(self._apply_conv_find)
+        self._conv_find_bar.returnPressed.connect(self._conv_find.next)
+        self._conv_prev_btn.clicked.connect(self._conv_find.prev)
+        self._conv_next_btn.clicked.connect(self._conv_find.next)
 
         splitter.addWidget(self.conv_tree)
-        splitter.addWidget(self.conv_viewer)
+        splitter.addWidget(right)
         splitter.setSizes([350, 650])
 
         mgr = UIStateManager.instance()
@@ -289,7 +322,26 @@ class MemoryTab(QWidget):
         mgr.connect_splitter("memory.conv_splitter", splitter)
 
         layout.addWidget(splitter, 1)
+
+        for keyseq, slot in (
+            (QKeySequence.StandardKey.Find, self._focus_conv_find),
+            (QKeySequence(Qt.Key.Key_F3), self._conv_find.next),
+            (QKeySequence("Shift+F3"), self._conv_find.prev),
+        ):
+            sc = QShortcut(keyseq, widget, activated=slot)
+            sc.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         return widget
+
+    def _focus_conv_find(self):
+        self._conv_find_bar.setFocus()
+        self._conv_find_bar.selectAll()
+
+    def _apply_conv_find(self):
+        self._conv_find.search(
+            self._conv_find_bar.text(),
+            self._conv_cb_word.isChecked(),
+            self._conv_cb_case.isChecked(),
+        )
 
     def _refresh_conversations(self):
         if self._conv_active_search:
@@ -346,28 +398,31 @@ class MemoryTab(QWidget):
         if not path:
             return
         fs = self.config_manager.fs
-        if not fs.exists(path):
-            self.conv_viewer.setPlainText("File not found")
+
+        self.conv_viewer.setPlainText("Loading…")
+        QApplication.processEvents()
+        try:
+            text = session_cache.get_text(path, fs)
+        except Exception as e:
+            self.conv_viewer.setPlainText(f"Could not read session:\n{path}\n\n{e}")
+            self._conv_find.clear()
             return
 
-        messages = _parse_conversation(path, fs)
-        if not messages:
+        body = render_transcript(path, fs, text)
+        if not body:
             self.conv_viewer.setPlainText(
                 f"No readable messages found in:\n{path}\n\n"
                 "(All entries may be progress/tool/snapshot records.)"
             )
+            self._conv_find.clear()
             return
 
-        stem = Path(str(path)).stem
-        lines = [f"Session: {stem}\nMessages: {len(messages)}\n{'─'*60}\n"]
-        for m in messages:
-            role_label = "You" if m["role"] == "user" else "Claude"
-            time_str = f"  [{m['time']}]" if m["time"] else ""
-            lines.append(f"\n{'─'*40}\n{role_label}{time_str}\n{'─'*40}\n{m['text']}\n")
-
-        self.conv_viewer.setPlainText("".join(lines))
-        if self._conv_active_search:
-            _highlight_in_viewer(self.conv_viewer, self._conv_active_search)
+        self.conv_viewer.setPlainText(body)
+        if self._conv_active_search and not self._conv_find_bar.text():
+            self._conv_find_bar.blockSignals(True)
+            self._conv_find_bar.setText(self._conv_active_search)
+            self._conv_find_bar.blockSignals(False)
+        self._apply_conv_find()
 
     # ── Conversation search ───────────────────────────────────────────────────
 
@@ -378,12 +433,13 @@ class MemoryTab(QWidget):
             return
 
         self._conv_active_search = term
+        rx = build_regex(term, self._conv_cb_word.isChecked(), self._conv_cb_case.isChecked())
         self._conv_search_status.setText("Searching…")
         QApplication.processEvents()
 
         self.conv_tree.clear()
         self.conv_viewer.clear()
-        self.conv_viewer.setExtraSelections([])
+        self._conv_find.clear()
 
         fs = self.config_manager.fs
         projects_dir = self.config_manager.claude_dir / "projects"
@@ -391,8 +447,8 @@ class MemoryTab(QWidget):
             self._conv_search_status.setText("No projects directory found")
             return
 
-        term_lower = term.lower()
         by_project: dict[str, list[dict]] = {}
+        scanned = 0
 
         try:
             for pdir in fs.iterdir(projects_dir):
@@ -401,19 +457,32 @@ class MemoryTab(QWidget):
                 readable = _decode_project_path(pdir.name)
                 project_matches = []
                 for jf in fs.glob(pdir, "*.jsonl"):
-                    messages = _parse_conversation(jf, fs)
-                    snippet = ""
-                    for m in messages:
-                        if term_lower in m["text"].lower():
-                            snippet = _get_snippet(m["text"], term)
-                            break
-                    if snippet:
-                        project_matches.append({
-                            "path": jf,
-                            "uuid": jf.stem,
-                            "mtime": fs.stat(jf).st_mtime,
-                            "snippet": snippet,
-                        })
+                    scanned += 1
+                    self._conv_search_status.setText(f"Searching… {scanned} session(s)")
+                    QApplication.processEvents()
+                    try:
+                        text = session_cache.get_text(jf, fs)
+                    except Exception:
+                        continue
+                    body = render_transcript(jf, fs, text)
+                    hits = len(rx.findall(body)) if body else 0
+                    if not hits:
+                        continue
+                    m = rx.search(body)
+                    snippet = _get_snippet(
+                        body[max(0, m.start() - 200):m.start() + 200], term
+                    ) if m else ""
+                    try:
+                        mtime = fs.stat(jf).st_mtime
+                    except Exception:
+                        mtime = 0
+                    project_matches.append({
+                        "path": jf,
+                        "uuid": jf.stem,
+                        "mtime": mtime,
+                        "snippet": snippet,
+                        "hits": hits,
+                    })
                 if project_matches:
                     by_project[readable] = sorted(
                         project_matches, key=lambda x: x["mtime"], reverse=True
@@ -424,14 +493,15 @@ class MemoryTab(QWidget):
 
         total = sum(len(v) for v in by_project.values())
         if total == 0:
-            self._conv_search_status.setText("No matches found")
+            self._conv_search_status.setText(f"No sessions contain '{term}'")
             self.conv_tree.addTopLevelItem(
                 QTreeWidgetItem([f"No sessions contain '{term}'"])
             )
             return
 
+        total_hits = sum(x["hits"] for v in by_project.values() for x in v)
         self._conv_search_status.setText(
-            f"{total} session(s) in {len(by_project)} project(s)"
+            f"{total} session(s) in {len(by_project)} project(s) — {total_hits} hits"
         )
 
         sorted_projects = sorted(
@@ -446,7 +516,9 @@ class MemoryTab(QWidget):
 
             for s in sessions:
                 mod = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
-                sess_item = QTreeWidgetItem(proj_item, [f"{mod}  {s['uuid'][:16]}…"])
+                sess_item = QTreeWidgetItem(
+                    proj_item, [f"{mod}  {s['uuid'][:16]}…   ({s['hits']} hits)"]
+                )
                 sess_item.setData(0, Qt.ItemDataRole.UserRole, str(s["path"]))
                 sess_item.setForeground(0, QColor(theme.FG_SECONDARY))
 
@@ -458,9 +530,10 @@ class MemoryTab(QWidget):
     def _clear_conv_search(self):
         self._conv_active_search = ""
         self._conv_search_bar.clear()
+        self._conv_find_bar.clear()
         self._conv_search_status.setText("")
         self.conv_viewer.clear()
-        self.conv_viewer.setExtraSelections([])
+        self._conv_find.clear()
         self._refresh_conversations()
 
     # ── Project Memories ──────────────────────────────────────────────────────

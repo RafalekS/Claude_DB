@@ -8,35 +8,25 @@ cached on local disk for ~15 min (utils.session_cache) so repeated searches
 don't re-download over SFTP.
 """
 
-import re
-from pathlib import Path
 from datetime import datetime
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QSplitter, QPlainTextEdit, QTextEdit, QTreeWidget, QTreeWidgetItem, QHeaderView,
+    QSplitter, QPlainTextEdit, QTreeWidget, QTreeWidgetItem, QHeaderView,
     QLineEdit, QCheckBox, QApplication,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import (
-    QColor, QFont, QTextCharFormat, QTextCursor, QShortcut,
-    QKeySequence,
+    QColor, QFont, QShortcut, QKeySequence,
 )
 
 from utils import theme
 from utils import session_cache
 from utils.project_scanner import get_project_sessions
+from utils.transcript_search import build_regex as _build_regex
+from utils.find_navigator import FindNavigator
 from utils.ui_state_manager import UIStateManager
-from tabs.memory_tab import _parse_conversation, _get_snippet
-
-
-def _build_regex(term: str, whole_word: bool, match_case: bool) -> "re.Pattern | None":
-    if not term:
-        return None
-    pat = re.escape(term)
-    if whole_word:
-        pat = rf"(?<!\w){pat}(?!\w)"
-    return re.compile(pat, 0 if match_case else re.IGNORECASE)
+from tabs.memory_tab import render_transcript, _get_snippet
 
 
 class ProjectConversationsSubTab(QWidget):
@@ -47,8 +37,6 @@ class ProjectConversationsSubTab(QWidget):
         self.project_context = project_context
         self.config_manager = config_manager
         self._active_search = ""
-        self._match_spans: list[tuple[int, int]] = []
-        self._match_idx = -1
         self._init_ui()
         self.project_context.project_changed.connect(self._on_project_changed)
         if self.project_context.has_project():
@@ -125,12 +113,8 @@ class ProjectConversationsSubTab(QWidget):
         frow.addWidget(QLabel("Find:"))
         self._find_bar = QLineEdit()
         self._find_bar.setPlaceholderText("find in this conversation  (Ctrl+F)")
-        self._find_bar.textChanged.connect(self._recompute_matches)
-        self._find_bar.returnPressed.connect(self._find_next)
         self._prev_btn = QPushButton("◀ Prev")
         self._next_btn = QPushButton("Next ▶")
-        self._prev_btn.clicked.connect(self._find_prev)
-        self._next_btn.clicked.connect(self._find_next)
         self._match_lbl = QLabel("")
         self._match_lbl.setStyleSheet(theme.get_label_style("small", "dim"))
         frow.addWidget(self._find_bar, 1)
@@ -138,6 +122,13 @@ class ProjectConversationsSubTab(QWidget):
         frow.addWidget(self._next_btn)
         frow.addWidget(self._match_lbl)
         rl.addLayout(frow)
+
+        self._find = FindNavigator(self._viewer, self._match_lbl,
+                                   self._prev_btn, self._next_btn)
+        self._find_bar.textChanged.connect(self._apply_find)
+        self._find_bar.returnPressed.connect(self._find.next)
+        self._prev_btn.clicked.connect(self._find.prev)
+        self._next_btn.clicked.connect(self._find.next)
 
         splitter.addWidget(self._tree)
         splitter.addWidget(right)
@@ -148,9 +139,13 @@ class ProjectConversationsSubTab(QWidget):
         mgr.connect_splitter("proj_config.conv_splitter", splitter)
         layout.addWidget(splitter, 1)
 
-        QShortcut(QKeySequence.StandardKey.Find, self, activated=self._focus_find)
-        QShortcut(QKeySequence(Qt.Key.Key_F3), self, activated=self._find_next)
-        QShortcut(QKeySequence("Shift+F3"), self, activated=self._find_prev)
+        for keyseq, slot in (
+            (QKeySequence.StandardKey.Find, self._focus_find),
+            (QKeySequence(Qt.Key.Key_F3), self._find.next),
+            (QKeySequence("Shift+F3"), self._find.prev),
+        ):
+            sc = QShortcut(keyseq, self, activated=slot)
+            sc.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
 
     # ── Slots ─────────────────────────────────────────────────────────────────
 
@@ -172,7 +167,7 @@ class ProjectConversationsSubTab(QWidget):
             return
         self._tree.clear()
         self._viewer.clear()
-        self._set_matches([])
+        self._find.clear()
 
         if not self.project_context.has_project():
             self._project_label.setText("No project selected")
@@ -210,24 +205,6 @@ class ProjectConversationsSubTab(QWidget):
 
     # ── Load + render a conversation ─────────────────────────────────────────
 
-    @staticmethod
-    def _render_body(path, fs, text: str) -> str:
-        """Build the display transcript from raw session text.
-
-        Used by both the viewer and the session-search hit count so the count
-        shown in the tree matches the count the find bar reports.
-        """
-        messages = _parse_conversation(path, fs, text=text, full=True)
-        if not messages:
-            return ""
-        stem = Path(str(path)).stem
-        parts = [f"Session: {stem}\nMessages: {len(messages)}   ({len(text)//1024} KB)\n{'─'*60}\n"]
-        for m in messages:
-            role = "You" if m["role"] == "user" else "Claude"
-            ts = f"  [{m['time']}]" if m["time"] else ""
-            parts.append(f"\n{'─'*40}\n{role}{ts}\n{'─'*40}\n{m['text']}\n")
-        return "".join(parts)
-
     def _load_conversation(self, item: QTreeWidgetItem, _col: int = 0):
         if item is None:
             return
@@ -242,16 +219,16 @@ class ProjectConversationsSubTab(QWidget):
             text = session_cache.get_text(path, fs)
         except Exception as e:
             self._viewer.setPlainText(f"Could not read session:\n{path}\n\n{e}")
-            self._set_matches([])
+            self._find.clear()
             return
 
-        body = self._render_body(path, fs, text)
+        body = render_transcript(path, fs, text)
         if not body:
             self._viewer.setPlainText(
                 f"No readable messages in:\n{path}\n\n"
                 "(All entries are progress / tool / snapshot records.)"
             )
-            self._set_matches([])
+            self._find.clear()
             return
         self._viewer.setPlainText(body)
 
@@ -260,7 +237,7 @@ class ProjectConversationsSubTab(QWidget):
             self._find_bar.blockSignals(True)
             self._find_bar.setText(self._active_search)
             self._find_bar.blockSignals(False)
-        self._recompute_matches()
+        self._apply_find()
 
     # ── In-conversation find ────────────────────────────────────────────────
 
@@ -269,72 +246,14 @@ class ProjectConversationsSubTab(QWidget):
         self._find_bar.selectAll()
 
     def _reapply_options(self):
-        self._recompute_matches()
+        self._apply_find()
 
-    def _recompute_matches(self):
-        term = self._find_bar.text()
-        rx = _build_regex(term, self._cb_word.isChecked(), self._cb_case.isChecked())
-        spans: list[tuple[int, int]] = []
-        if rx:
-            body = self._viewer.toPlainText()
-            spans = [(m.start(), m.end()) for m in rx.finditer(body)]
-        self._set_matches(spans)
-        if spans:
-            self._goto_match(0)
-
-    def _set_matches(self, spans: list[tuple[int, int]]):
-        self._match_spans = spans
-        self._match_idx = -1
-        self._highlight_all(spans)
-        self._update_match_label()
-        enabled = bool(spans)
-        self._prev_btn.setEnabled(enabled)
-        self._next_btn.setEnabled(enabled)
-
-    def _update_match_label(self):
-        n = len(self._match_spans)
-        if n == 0:
-            self._match_lbl.setText("no matches" if self._find_bar.text() else "")
-        else:
-            cur = self._match_idx + 1 if self._match_idx >= 0 else 0
-            self._match_lbl.setText(f"{cur} / {n}")
-
-    def _highlight_all(self, spans):
-        sels = []
-        if spans:
-            fmt = QTextCharFormat()
-            fmt.setBackground(QColor(theme.WARNING_COLOR))
-            fmt.setForeground(QColor(theme.BG_DARK))
-            doc = self._viewer.document()
-            for a, b in spans:
-                cur = QTextCursor(doc)
-                cur.setPosition(a)
-                cur.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
-                sel = QTextEdit.ExtraSelection()
-                sel.cursor = cur
-                sel.format = fmt
-                sels.append(sel)
-        self._viewer.setExtraSelections(sels)
-
-    def _goto_match(self, idx: int):
-        if not self._match_spans:
-            return
-        self._match_idx = idx % len(self._match_spans)
-        a, b = self._match_spans[self._match_idx]
-        cur = self._viewer.textCursor()
-        cur.setPosition(a)
-        cur.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
-        self._viewer.setTextCursor(cur)
-        self._viewer.centerCursor()
-        self._update_match_label()
-
-    def _find_next(self):
-        if self._match_spans:
-            self._goto_match(self._match_idx + 1)
-
-    def _find_prev(self):
-        if self._match_spans:
-            self._goto_match(self._match_idx - 1)
+    def _apply_find(self):
+        self._find.search(
+            self._find_bar.text(),
+            self._cb_word.isChecked(),
+            self._cb_case.isChecked(),
+        )
 
     # ── Session search ──────────────────────────────────────────────────────
 
@@ -354,7 +273,7 @@ class ProjectConversationsSubTab(QWidget):
 
         self._tree.clear()
         self._viewer.clear()
-        self._set_matches([])
+        self._find.clear()
 
         project_path = self.project_context.get_project()
         fs, projects_dir = self._get_fs_and_projects_dir()
@@ -371,7 +290,7 @@ class ProjectConversationsSubTab(QWidget):
                 text = session_cache.get_text(s["path"], fs)
             except Exception:
                 continue
-            body = self._render_body(s["path"], fs, text)
+            body = render_transcript(s["path"], fs, text)
             hits = len(rx.findall(body))
             if not hits:
                 continue
@@ -404,5 +323,5 @@ class ProjectConversationsSubTab(QWidget):
         self._search_status.setText("")
         self._find_bar.clear()
         self._viewer.clear()
-        self._set_matches([])
+        self._find.clear()
         self._refresh()
