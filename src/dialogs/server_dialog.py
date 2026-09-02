@@ -14,9 +14,9 @@ from utils import theme
 class ServerDialog(QDialog):
     """Form dialog for adding or editing a remote server entry."""
 
-    def __init__(self, parent=None, server: dict | None = None):
+    def __init__(self, parent=None, server: dict | None = None, title: str | None = None):
         super().__init__(parent)
-        self.setWindowTitle("Add Server" if server is None else "Edit Server")
+        self.setWindowTitle(title or ("Add Server" if server is None else "Edit Server"))
         self.setMinimumWidth(480)
         self._init_ui(server or {})
 

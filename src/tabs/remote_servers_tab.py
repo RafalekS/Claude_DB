@@ -80,12 +80,16 @@ class RemoteServersTab(QWidget):
         crud_row = QHBoxLayout()
         self._add_btn = QPushButton("Add Server")
         self._edit_btn = QPushButton("Edit")
+        self._duplicate_btn = QPushButton("Duplicate")
+        self._duplicate_btn.setToolTip("Create a new server pre-filled from the selected one")
         self._remove_btn = QPushButton("Remove")
         self._add_btn.clicked.connect(self._add_server)
         self._edit_btn.clicked.connect(self._edit_server)
+        self._duplicate_btn.clicked.connect(self._duplicate_server)
         self._remove_btn.clicked.connect(self._remove_server)
         crud_row.addWidget(self._add_btn)
         crud_row.addWidget(self._edit_btn)
+        crud_row.addWidget(self._duplicate_btn)
         crud_row.addWidget(self._remove_btn)
         crud_row.addStretch()
         layout.addLayout(crud_row)
@@ -163,6 +167,7 @@ class RemoteServersTab(QWidget):
         )
 
         self._edit_btn.setEnabled(has_selection and not is_busy)
+        self._duplicate_btn.setEnabled(has_selection and not is_busy)
         self._remove_btn.setEnabled(has_selection and not selected_is_active and not is_busy)
         self._connect_btn.setEnabled(has_selection and not is_busy and not selected_is_active)
         self._disconnect_btn.setEnabled(active is not None and not is_busy)
@@ -191,6 +196,29 @@ class RemoteServersTab(QWidget):
                 updated = self._registry.get_server(srv["id"])
                 self._ctx.set_active(updated)
             self._refresh_table()
+
+    def _duplicate_server(self) -> None:
+        srv = self._selected_server()
+        if srv is None:
+            return
+        from dialogs.server_dialog import ServerDialog
+        # everything except the id; nudge the name so the copy is obvious
+        prefill = {k: v for k, v in srv.items() if k != "id"}
+        prefill["name"] = f"{srv.get('name', 'server')} (copy)"
+        dlg = ServerDialog(self, server=prefill, title="Duplicate Server")
+        if dlg.exec() == ServerDialog.DialogCode.Accepted:
+            new_srv = self._registry.add_server(dlg.get_server())   # fresh id assigned
+            self._refresh_table()
+            self._select_server(new_srv.get("id"))
+
+    def _select_server(self, sid: str | None) -> None:
+        if not sid:
+            return
+        for row in range(self._table.rowCount()):
+            item = self._table.item(row, 0)
+            if item is not None and item.data(Qt.ItemDataRole.UserRole) == sid:
+                self._table.selectRow(row)
+                return
 
     def _remove_server(self) -> None:
         srv = self._selected_server()
