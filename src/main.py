@@ -371,18 +371,15 @@ class ClaudeDBApp(QMainWindow):
         return Path(__file__).parent.parent / "config" / "config.json"
 
     def _save_last_server(self, server_id: str | None) -> None:
-        try:
-            cfg_path = self._config_file_path()
-            data: dict = {}
-            if cfg_path.exists():
-                with open(cfg_path, encoding="utf-8") as f:
-                    data = json.load(f)
+        from utils import app_config
+
+        def _mut(d: dict):
             if server_id:
-                data["last_server_id"] = server_id
+                d["last_server_id"] = server_id
             else:
-                data.pop("last_server_id", None)
-            with open(cfg_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+                d.pop("last_server_id", None)
+        try:
+            app_config.update(_mut, self._config_file_path())
         except Exception as exc:
             logger.warning("Could not save last_server_id: %s", exc)
 

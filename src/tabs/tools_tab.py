@@ -139,18 +139,23 @@ class ToolsConfigDialog(QDialog):
         self.init_ui()
 
     def load_config(self):
-        """Load configuration from file"""
+        """Load the whole config.json. On a parse error, refuse to let Save run
+        (so we never overwrite a corrupt or briefly-unreadable file with a
+        partial document that drops remote_servers / tabs / preferences)."""
+        from utils import app_config
         try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
+            self._config_ok = True
+            return app_config.load(self.config_path)
+        except app_config.ConfigError as e:
             logger.error("Failed to load config: %s", e)
+            self._config_ok = False
             QMessageBox.critical(
-                self,
-                "Load Error",
-                f"Failed to load config:\n{str(e)}"
+                self, "Load Error",
+                f"config.json could not be read, so saving is disabled to "
+                f"protect the rest of it:\n{e}\n\nA copy was kept as "
+                f"config.json.corrupt-*. Fix or delete config.json, then reopen."
             )
-            return {"external_tools": {}}
+            return {}
 
     def init_ui(self):
         layout = QVBoxLayout(self)
@@ -713,9 +718,21 @@ class ToolsConfigDialog(QDialog):
 
     def save_config(self):
         """Save configuration back to config.json"""
+        from utils import app_config
+        if not getattr(self, "_config_ok", True):
+            QMessageBox.warning(
+                self, "Save disabled",
+                "config.json didn't load cleanly — fix it first so this "
+                "doesn't overwrite the rest of your settings.")
+            return
         try:
-            with open(self.config_path, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, indent=2)
+            # Merge only external_tools into the real file — atomic, and keeps
+            # remote_servers / tabs / preferences / everything else intact.
+            app_config.update(
+                lambda d: d.__setitem__(
+                    "external_tools", self.config.get("external_tools", {})),
+                self.config_path,
+            )
 
             # Ask user if they want to restart now
             msg_box = QMessageBox(self)
