@@ -20,6 +20,18 @@ logger = logging.getLogger(__name__)
 _CONFIG_FILE = Path(__file__).parent.parent.parent / "config" / "config.json"
 
 
+def _powershell_quote(s: str) -> str:
+    """Quote *s* as a single PowerShell string literal (embedded ' doubled).
+
+    PowerShell's single-quote escaping is NOT the POSIX '"'"' trick — reusing
+    shlex.quote() output here corrupts the string the moment PowerShell
+    reparses it (this is what broke the SSH command when Claude_DB itself
+    runs under pwsh: the remote host got a mangled, unbalanced-quote command
+    and bash there failed with "unexpected EOF while looking for matching '").
+    """
+    return "'" + s.replace("'", "''") + "'"
+
+
 def build_ssh_shell_command(server: dict, remote_cwd: str, remote_command: str) -> str:
     """Build a single `ssh ...` shell command that cd's into *remote_cwd* on
     *server* and runs *remote_command* — for handing to run_in_terminal().
@@ -32,6 +44,13 @@ def build_ssh_shell_command(server: dict, remote_cwd: str, remote_command: str) 
     them fine. Run the remote command through `bash -lc` (a login shell) so
     it gets the same PATH an interactive login would.
 
+    The returned string is handed, verbatim, to whichever local shell
+    run_in_terminal() ends up using to launch it (bash -c on Linux/macOS,
+    pwsh -Command on Windows) — that local shell re-parses it as ITS OWN
+    source to reconstruct ssh's argv, so the quoting convention must match
+    that shell, not the remote (always POSIX/bash) side. We quote for
+    PowerShell on Windows and POSIX (shlex) everywhere else.
+
     server: a server dict as stored by ServerRegistry (host, port, user,
     key_path, password). Password-only servers still work — ssh -t prompts
     for the password interactively in the opened terminal, same as a normal
@@ -41,15 +60,18 @@ def build_ssh_shell_command(server: dict, remote_cwd: str, remote_command: str) 
     port = server.get("port", 22)
     user = server.get("user", "")
     key_path = server.get("key_path", "")
+    target = f"{user}@{host}" if user else host
+
+    # The remote side is always a POSIX shell — this part never changes.
+    inner = f"cd {shlex.quote(remote_cwd)} && {remote_command}"
+    login_shell_cmd = f"bash -lc {shlex.quote(inner)}"
+
+    quote = _powershell_quote if platform.system() == "Windows" else shlex.quote
 
     ssh_args = ["ssh", "-t", "-p", str(port)]
     if key_path:
-        ssh_args += ["-i", shlex.quote(key_path)]
-    target = f"{user}@{host}" if user else host
-
-    inner = f"cd {shlex.quote(remote_cwd)} && {remote_command}"
-    login_shell_cmd = f"bash -lc {shlex.quote(inner)}"
-    ssh_args += [shlex.quote(target), shlex.quote(login_shell_cmd)]
+        ssh_args += ["-i", quote(key_path)]
+    ssh_args += [quote(target), quote(login_shell_cmd)]
     return " ".join(ssh_args)
 
 def _get_terminal_command() -> str:
@@ -97,19 +119,27 @@ def _build_launch_args(command: str, title: str, cwd: str = None) -> list:
         return ["osascript", "-e", osa_cmd]
 
     # ── Linux ──────────────────────────────────────────────────────────────
+    # subprocess.Popen(argv_list) execs the terminal binary directly — no shell
+    # sits in between, so `command` must reach it as its OWN argv item, not
+    # folded into a single "bash -c '...'" string. xterm/konsole/xfce4-terminal
+    # do their own whitespace-only (not quote-aware) tokenizing of a combined
+    # -e string, which silently shreds any command containing spaces or quotes
+    # (as an `ssh ... 'bash -lc ...'` command always does). Pass bash, -c, and
+    # the command as separate argv items instead — same safe shape kitty and
+    # alacritty already use below — so no re-parsing of quotes happens at all.
     candidates = [
         ("gnome-terminal", ["gnome-terminal", "--title", title or "Terminal", "--", "bash", "-c",
                             f"{command}; exec bash"]),
         ("xterm",          ["xterm", "-title", title or "Terminal", "-e",
-                            f"bash -c '{command}; exec bash'"]),
+                            "bash", "-c", f"{command}; exec bash"]),
         ("konsole",        ["konsole", "--new-tab", "--title", title or "Terminal", "-e",
-                            f"bash -c '{command}; exec bash'"]),
+                            "bash", "-c", f"{command}; exec bash"]),
         ("kitty",          ["kitty", "--title", title or "Terminal",
                             "bash", "-c", f"{command}; exec bash"]),
         ("alacritty",      ["alacritty", "--title", title or "Terminal", "-e",
                             "bash", "-c", f"{command}; exec bash"]),
         ("xfce4-terminal", ["xfce4-terminal", "--title", title or "Terminal", "-e",
-                            f"bash -c '{command}; exec bash'"]),
+                            "bash", "-c", f"{command}; exec bash"]),
     ]
     for binary, args in candidates:
         if shutil.which(binary):
