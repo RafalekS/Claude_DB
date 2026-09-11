@@ -1,45 +1,69 @@
 """
-Local disk cache for session/transcript text pulled from a remote server.
+Local disk cache for large remote files pulled over SFTP — session
+transcripts, file-history backup snapshots, shell snapshots.
 
-Searching the Conversations tab in remote mode re-reads every *.jsonl over
-SFTP — a single long session can be 50-70 MB and take 30-45 s. These files
-barely change once a session is idle, so we keep a copy on local disk for a
-while (default 15 min) and serve reads from it.
+Several tabs (Conversations, File History, Shell Snapshots) each
+independently re-read the SAME remote session .jsonl on every open/search,
+even though it hasn't changed — a single long session can be 50-70 MB and
+take real time over SFTP. This module caches by content identity instead of
+by a time window:
 
-Local mode reads straight from disk (no caching needed).
+  get_text(path, fs, mtime=...)  — for files that CAN change (session
+      transcripts, memory .md). The cache filename embeds the remote mtime,
+      so a changed file lands in a new cache entry, and every OTHER cached
+      version of that same file is deleted right after — no TTL, no
+      needless re-download of an unchanged file, no risk of serving stale
+      content, and no unbounded growth from repeatedly-edited sessions.
+
+  get_text_immutable(path, fs)   — for files that never change once written
+      (a File History backup carries its version in the filename; a shell
+      snapshot is a timestamped one-off). Cached by path alone — no mtime
+      round trip needed since the content can't change.
+
+Local mode (fs=None or a local fs) always reads straight from disk — no
+caching needed there.
 """
 
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
+import os
+import tempfile
 import time
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# cache/ is gitignored at the project root.
-_CACHE_DIR = Path(__file__).resolve().parent.parent.parent / "cache" / "sessions"
+_DEFAULT_CACHE_DIR = Path(__file__).resolve().parent.parent.parent / "cache" / "remote_files"
+_ENV_VAR = "CLAUDE_DB_CACHE_DIR"
 
-_DEFAULT_MINUTES = 15
-_CONFIG_KEY = "session_cache_minutes"
+_DEFAULT_PRUNE_DAYS = 30
+_CONFIG_KEY = "session_cache_prune_days"
 
 
-def ttl_minutes() -> int:
-    """Cache lifetime in minutes — configurable via config.json `session_cache_minutes`
-    (Preferences tab). 0 disables the disk cache."""
+def cache_dir() -> Path:
+    override = os.environ.get(_ENV_VAR)
+    base = Path(override).expanduser() if override else _DEFAULT_CACHE_DIR
+    base.mkdir(parents=True, exist_ok=True)
+    return base
+
+
+def prune_days() -> int:
+    """Days a cache entry may sit unread before prune_stale() removes it
+    (default 30; configurable via config.json `session_cache_prune_days`,
+    Preferences tab). 0 disables pruning."""
     try:
         from utils import app_config
-        v = app_config.load().get(_CONFIG_KEY, _DEFAULT_MINUTES)
+        v = app_config.load().get(_CONFIG_KEY, _DEFAULT_PRUNE_DAYS)
         return max(0, int(v))
     except Exception:
-        return _DEFAULT_MINUTES
+        return _DEFAULT_PRUNE_DAYS
 
 
-def set_ttl_minutes(minutes: int) -> None:
+def set_prune_days(days: int) -> None:
     from utils import app_config
-    app_config.update(lambda d: d.__setitem__(_CONFIG_KEY, max(0, int(minutes))))
+    app_config.update(lambda d: d.__setitem__(_CONFIG_KEY, max(0, int(days))))
 
 
 def _is_remote(fs) -> bool:
@@ -52,89 +76,186 @@ def identity_for(fs) -> str:
     return getattr(client, "label", "") or "remote"
 
 
-def _paths(identity: str, remote_path: str) -> tuple[Path, Path]:
-    key = hashlib.sha1(f"{identity}\x00{remote_path}".encode("utf-8")).hexdigest()
-    return _CACHE_DIR / f"{key}.txt", _CACHE_DIR / f"{key}.json"
+def _ident_prefix(identity: str) -> str:
+    """Short, filename-safe prefix identifying the server — lets clear()
+    scope to one server without needing a sidecar metadata file per entry."""
+    return hashlib.sha1(identity.encode("utf-8")).hexdigest()[:10]
 
 
-def get_text(path, fs=None, *, ttl: int | None = None, force: bool = False) -> str:
-    """Return the text of *path*.
+def _stable_stem(identity: str, remote_path: str) -> str:
+    """Hash of (identity, path) alone — stable across edits, so every
+    cached version of the same file shares this stem and differs only by
+    the mtime suffix, making stale versions trivial to find and sweep."""
+    body = hashlib.sha1(f"{identity}\x00{remote_path}".encode("utf-8")).hexdigest()
+    return f"{_ident_prefix(identity)}_{body}"
 
-    Remote fs: served from the local cache while it's fresh; otherwise
-    downloaded once and cached. Local fs (or fs=None): read directly.
-    ttl — seconds; None uses the configured ttl_minutes(). 0 disables caching.
+
+def _versioned_path(identity: str, remote_path: str, mtime) -> Path:
+    stem = _stable_stem(identity, remote_path)
+    return cache_dir() / f"{stem}.{int(mtime or 0)}.cache"
+
+
+def _immutable_path(identity: str, remote_path: str) -> Path:
+    stem = _stable_stem(identity, remote_path)
+    return cache_dir() / f"{stem}.immutable"
+
+
+def _atomic_download(fs, path, dest: Path) -> bool:
+    """Download *path* via *fs* straight to *dest*, atomically. Returns False
+    (dest left untouched) on any failure so the caller can fall back."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(dir=dest.parent, prefix=dest.stem + ".", suffix=".part")
+    os.close(fd)
+    tmp = Path(tmp_name)
+    try:
+        if hasattr(fs, "download_to"):
+            fs.download_to(path, tmp)
+        else:
+            tmp.write_text(fs.read_text(path), encoding="utf-8")
+        os.replace(tmp, dest)
+        return True
+    except Exception as e:
+        logger.warning("cache download failed for %s: %s", path, e)
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+        return False
+
+
+def _touch(dest: Path) -> None:
+    try:
+        os.utime(dest, None)
+    except OSError:
+        pass
+
+
+# ── Versioned (mtime-keyed) cache — for files that can change ─────────────────
+
+def get_text(path, fs=None, *, mtime=None, force: bool = False) -> str:
+    """Return the text of *path*, cached locally by (server, path, mtime)
+    when remote. mtime should come from wherever the caller already listed
+    this file (session scan, etc.) — no extra stat call is made here.
     """
     if not _is_remote(fs):
         if fs is not None:
             return fs.read_text(path)
         return Path(path).read_text(encoding="utf-8", errors="replace")
 
-    if ttl is None:
-        ttl = ttl_minutes() * 60
-    if ttl <= 0:
-        return fs.read_text(path)
-
     ident = identity_for(fs)
-    blob, meta = _paths(ident, str(path))
+    dest = _versioned_path(ident, str(path), mtime)
 
-    if not force and blob.exists() and meta.exists():
-        try:
-            m = json.loads(meta.read_text(encoding="utf-8"))
-            if m.get("expires", 0) > time.time():
-                return blob.read_text(encoding="utf-8", errors="replace")
-        except Exception:
-            pass  # fall through and re-fetch
+    if not force and dest.exists() and dest.stat().st_size > 0:
+        _touch(dest)
+        return dest.read_text(encoding="utf-8", errors="replace")
 
-    text = fs.read_text(path)
-    try:
-        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        blob.write_text(text, encoding="utf-8")
-        meta.write_text(json.dumps({
-            "identity": ident,
-            "path": str(path),
-            "fetched": time.time(),
-            "expires": time.time() + ttl,
-            "bytes": len(text.encode("utf-8")),
-        }), encoding="utf-8")
-    except Exception as e:
-        logger.warning("session cache write failed for %s: %s", path, e)
-    return text
+    if _atomic_download(fs, path, dest):
+        _sweep_stale_versions(ident, str(path), keep=dest)
+        return dest.read_text(encoding="utf-8", errors="replace")
+
+    # Download failed — fall back to a direct (uncached) read.
+    return fs.read_text(path)
 
 
-def is_cached_fresh(path, fs) -> bool:
+def is_cached(path, fs, mtime) -> bool:
     if not _is_remote(fs):
         return False
-    _blob, meta = _paths(identity_for(fs), str(path))
+    dest = _versioned_path(identity_for(fs), str(path), mtime)
     try:
-        return meta.exists() and json.loads(meta.read_text())["expires"] > time.time()
-    except Exception:
+        return dest.exists() and dest.stat().st_size > 0
+    except OSError:
         return False
 
 
-def clear(identity: str | None = None) -> int:
-    """Delete cached sessions (all, or one server's). Returns files removed."""
-    if not _CACHE_DIR.exists():
-        return 0
-    removed = 0
-    for meta in list(_CACHE_DIR.glob("*.json")):
-        try:
-            keep = identity is not None and json.loads(meta.read_text()).get("identity") != identity
-        except Exception:
-            keep = False
-        if keep:
-            continue
-        blob = meta.with_suffix(".txt")
-        for f in (meta, blob):
+def _sweep_stale_versions(identity: str, remote_path: str, keep: Path) -> None:
+    """Delete other cached versions of this same (identity, path) at a
+    different (stale) mtime, so repeatedly editing a session doesn't grow
+    the cache unboundedly."""
+    stem = _stable_stem(identity, remote_path)
+    for f in cache_dir().glob(f"{stem}.*.cache"):
+        if f != keep:
             try:
                 f.unlink()
-                removed += 1
             except OSError:
                 pass
+
+
+# ── Immutable cache — for files that never change once written ────────────────
+
+def get_text_immutable(path, fs=None) -> str:
+    """Return the text of *path*, cached locally forever (no freshness
+    check — for files that are write-once by construction, e.g. a File
+    History backup or a timestamped shell snapshot)."""
+    if not _is_remote(fs):
+        if fs is not None:
+            return fs.read_text(path)
+        return Path(path).read_text(encoding="utf-8", errors="replace")
+
+    ident = identity_for(fs)
+    dest = _immutable_path(ident, str(path))
+
+    if dest.exists() and dest.stat().st_size > 0:
+        _touch(dest)
+        return dest.read_text(encoding="utf-8", errors="replace")
+
+    if _atomic_download(fs, path, dest):
+        return dest.read_text(encoding="utf-8", errors="replace")
+
+    return fs.read_text(path)
+
+
+# ── Maintenance ────────────────────────────────────────────────────────────────
+
+def clear(identity: str | None = None) -> int:
+    """Delete cached files — all of them, or just one server's (matched by
+    its filename prefix). Returns files removed."""
+    d = cache_dir()
+    if not d.exists():
+        return 0
+    prefix = _ident_prefix(identity) + "_" if identity is not None else None
+    removed = 0
+    for f in d.iterdir():
+        if not f.is_file():
+            continue
+        if prefix is not None and not f.name.startswith(prefix):
+            continue
+        try:
+            f.unlink()
+            removed += 1
+        except OSError:
+            pass
+    return removed
+
+
+def prune_stale(days: int | None = None) -> int:
+    """Remove cache files not read (mtime, refreshed on every hit) in over
+    *days* days. Disk hygiene, independent of the versioned cache's
+    correctness — a session that's never reopened would otherwise sit
+    cached forever. 0 disables pruning."""
+    if days is None:
+        days = prune_days()
+    if days <= 0:
+        return 0
+    d = cache_dir()
+    if not d.exists():
+        return 0
+    cutoff = time.time() - days * 86400
+    removed = 0
+    for f in d.iterdir():
+        if not f.is_file():
+            continue
+        try:
+            if f.stat().st_mtime < cutoff:
+                f.unlink()
+                removed += 1
+        except OSError:
+            pass
     return removed
 
 
 def stats() -> dict:
-    if not _CACHE_DIR.exists():
+    d = cache_dir()
+    if not d.exists():
         return {"files": 0, "bytes": 0}
-    blobs = list(_CACHE_DIR.glob("*.txt"))
-    return {"files": len(blobs), "bytes": sum(f.stat().st_size for f in blobs)}
+    files = [f for f in d.iterdir() if f.is_file()]
+    return {"files": len(files), "bytes": sum(f.stat().st_size for f in files)}

@@ -20,6 +20,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor
 
 from utils import theme
+from utils import session_cache
 from utils.project_scanner import get_project_sessions
 from utils.ui_state_manager import UIStateManager
 
@@ -28,7 +29,12 @@ _TS_RE = re.compile(r"snapshot-bash-(\d+)-")
 
 
 def _session_time_windows(sessions: list[dict], fs=None) -> list[tuple[float, float]]:
-    """Return (start_ts, end_ts) pairs in Unix seconds for each session."""
+    """Return (start_ts, end_ts) pairs in Unix seconds for each session.
+
+    Remote reads go through session_cache (mtime-keyed) — this reads the
+    same .jsonl the Conversations and File History tabs also read, so it's
+    never re-downloaded here if either of those already cached it.
+    """
     windows = []
     for s in sessions:
         path = s["path"]
@@ -36,7 +42,7 @@ def _session_time_windows(sessions: list[dict], fs=None) -> list[tuple[float, fl
         last_ts: float | None = None
         try:
             if fs is not None:
-                lines = fs.read_text(path).splitlines()
+                lines = session_cache.get_text(path, fs, mtime=s.get("mtime")).splitlines()
             else:
                 with open(path, encoding="utf-8", errors="replace") as fh:
                     lines = fh.readlines()
@@ -240,11 +246,10 @@ class ProjectShellSnapshotsSubTab(QWidget):
 
         fs, _ = self._get_fs_and_projects_dir()
         if fs is not None:
-            if not fs.exists(path):
-                self._viewer.setPlainText("Snapshot file not found.")
-                return
+            # Shell snapshots are timestamped one-offs — never modified after
+            # being written, so cache by path alone (no freshness check needed).
             try:
-                self._viewer.setPlainText(fs.read_text(path))
+                self._viewer.setPlainText(session_cache.get_text_immutable(path, fs))
             except Exception as e:
                 self._viewer.setPlainText(f"Error reading snapshot: {e}")
         else:

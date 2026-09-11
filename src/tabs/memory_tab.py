@@ -27,6 +27,12 @@ from utils.transcript_search import build_regex
 from utils.find_navigator import FindNavigator
 from utils.ui_state_manager import UIStateManager
 
+# Second UserRole slot on session tree items — carries the remote mtime
+# (already known from wherever the session was listed) so session_cache can
+# key its disk cache on it without an extra stat round trip. Shared with
+# tabs/project_conversations_subtab.py, which imports this constant.
+_MTIME_ROLE = int(Qt.ItemDataRole.UserRole) + 1
+
 
 # ─── JSONL helpers ────────────────────────────────────────────────────────────
 
@@ -391,18 +397,20 @@ class MemoryTab(QWidget):
                     [f"{mod_time}  {s['uuid'][:16]}…"]
                 )
                 sess_item.setData(0, Qt.ItemDataRole.UserRole, str(s["path"]))
+                sess_item.setData(0, _MTIME_ROLE, s["mtime"])
                 sess_item.setForeground(0, QColor(theme.FG_SECONDARY))
 
     def _load_conversation(self, item: QTreeWidgetItem, _col: int = 0):
         path = item.data(0, Qt.ItemDataRole.UserRole)
         if not path:
             return
+        mtime = item.data(0, _MTIME_ROLE)
         fs = self.config_manager.fs
 
         self.conv_viewer.setPlainText("Loading…")
         QApplication.processEvents()
         try:
-            text = session_cache.get_text(path, fs)
+            text = session_cache.get_text(path, fs, mtime=mtime)
         except Exception as e:
             self.conv_viewer.setPlainText(f"Could not read session:\n{path}\n\n{e}")
             self._conv_find.clear()
@@ -461,7 +469,13 @@ class MemoryTab(QWidget):
                     self._conv_search_status.setText(f"Searching… {scanned} session(s)")
                     QApplication.processEvents()
                     try:
-                        text = session_cache.get_text(jf, fs)
+                        # glob() just populated the stat cache for every entry
+                        # in this dir, so this is a cache hit — no extra round trip.
+                        mtime = fs.stat(jf).st_mtime
+                    except Exception:
+                        mtime = 0
+                    try:
+                        text = session_cache.get_text(jf, fs, mtime=mtime)
                     except Exception:
                         continue
                     body = render_transcript(jf, fs, text)
@@ -472,10 +486,6 @@ class MemoryTab(QWidget):
                     snippet = _get_snippet(
                         body[max(0, m.start() - 200):m.start() + 200], term
                     ) if m else ""
-                    try:
-                        mtime = fs.stat(jf).st_mtime
-                    except Exception:
-                        mtime = 0
                     project_matches.append({
                         "path": jf,
                         "uuid": jf.stem,
@@ -520,6 +530,7 @@ class MemoryTab(QWidget):
                     proj_item, [f"{mod}  {s['uuid'][:16]}…   ({s['hits']} hits)"]
                 )
                 sess_item.setData(0, Qt.ItemDataRole.UserRole, str(s["path"]))
+                sess_item.setData(0, _MTIME_ROLE, s["mtime"])
                 sess_item.setForeground(0, QColor(theme.FG_SECONDARY))
 
                 snip_item = QTreeWidgetItem(sess_item, [f"  ↳ {s['snippet']}"])
@@ -685,11 +696,10 @@ class MemoryTab(QWidget):
         if not path:
             return
         fs = self.config_manager.fs
-        if not fs.exists(path):
-            self.file_history_viewer.setPlainText("File not found")
-            return
         try:
-            content = fs.read_text(path)
+            # A backup snapshot never changes once written — cache by path
+            # alone, no freshness check needed.
+            content = session_cache.get_text_immutable(path, fs)
             name = Path(str(path)).name
             self.file_history_viewer.setPlainText(
                 f"File: {name}\nPath: {path}\n{'─'*60}\n\n{content}"
@@ -756,11 +766,9 @@ class MemoryTab(QWidget):
         if not path:
             return
         fs = self.config_manager.fs
-        if not fs.exists(path):
-            self.shell_viewer.setPlainText("File not found")
-            return
         try:
-            self.shell_viewer.setPlainText(fs.read_text(path))
+            # Timestamped one-off, never modified after being written.
+            self.shell_viewer.setPlainText(session_cache.get_text_immutable(path, fs))
         except Exception as e:
             self.shell_viewer.setPlainText(f"Error: {e}")
 

@@ -270,6 +270,10 @@ class ClaudeDBApp(QMainWindow):
         # Auto-reconnect to last-used server (deferred so all tabs are ready)
         QTimer.singleShot(500, self._try_reconnect_last_server)
 
+        # Prune remote-file-cache entries no tab has touched in a while
+        # (disk hygiene only — never affects correctness, see utils.session_cache)
+        QTimer.singleShot(1000, self._prune_remote_file_cache)
+
         # Connect preferences signals → MainWindow handlers
         prefs_widget = self.all_tabs.get("preferences")
         if prefs_widget:
@@ -406,6 +410,17 @@ class ClaudeDBApp(QMainWindow):
                     self._auto_connect_server(remote_tab, server)
         except Exception as exc:
             logger.warning("Auto-reconnect skipped: %s", exc)
+
+    def _prune_remote_file_cache(self) -> None:
+        """Best-effort disk-hygiene sweep of utils.session_cache — never
+        blocks or affects correctness if it fails."""
+        try:
+            from utils import session_cache
+            n = session_cache.prune_stale()
+            if n:
+                logger.info("Pruned %d stale remote-file-cache entr%s", n, "y" if n == 1 else "ies")
+        except Exception as exc:
+            logger.warning("Remote file cache prune skipped: %s", exc)
 
     def _auto_connect_server(self, remote_tab, server_cfg: dict) -> None:
         """Select server in the table and trigger the connect flow."""

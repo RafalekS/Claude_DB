@@ -1064,27 +1064,32 @@ class PreferencesTab(QWidget):
         mcp_layout.addLayout(mcp_cache_row)
         layout.addWidget(mcp_group)
 
-        # ── Remote session cache ─────────────────────────────────────────
-        sc_group = QGroupBox("Remote Session Cache")
+        # ── Remote file cache ──────────────────────────────────────────────
+        sc_group = QGroupBox("Remote File Cache")
         sc_layout = QVBoxLayout(sc_group)
         sc_layout.setSpacing(6)
         sc_hint = QLabel(
-            "In remote mode, Conversation-tab session files are cached on local disk "
-            "so repeated searches don't re-download them over SSH. 0 = disable."
+            "In remote mode, session transcripts, file-history backups, and shell "
+            "snapshots (Conversations / File History / Shell Snapshots tabs) are "
+            "cached on local disk keyed by remote modified time — an unchanged file "
+            "is never re-downloaded, and an edited one is re-fetched automatically."
         )
         sc_hint.setWordWrap(True)
         sc_hint.setStyleSheet(f"color: {theme.FG_SECONDARY};")
         sc_layout.addWidget(sc_hint)
 
         sc_row = QHBoxLayout()
-        sc_label = QLabel("Keep cached for:")
+        sc_label = QLabel("Remove entries unread for:")
         sc_label.setStyleSheet(f"color: {theme.FG_SECONDARY};")
         sc_row.addWidget(sc_label)
-        self._session_cache_spin = QSpinBox()
-        self._session_cache_spin.setRange(0, 1440)
-        self._session_cache_spin.setSuffix(" min")
-        sc_row.addWidget(self._session_cache_spin)
-        sc_clear_btn = QPushButton("Clear Session Cache")
+        self._session_cache_prune_spin = QSpinBox()
+        self._session_cache_prune_spin.setRange(0, 3650)
+        self._session_cache_prune_spin.setSuffix(" days")
+        self._session_cache_prune_spin.setToolTip("Disk hygiene only — 0 disables pruning. "
+                                                    "Has no effect on correctness: a changed "
+                                                    "file is always re-fetched regardless of this.")
+        sc_row.addWidget(self._session_cache_prune_spin)
+        sc_clear_btn = QPushButton("Clear Cache")
         sc_clear_btn.clicked.connect(self._clear_session_cache)
         sc_row.addWidget(sc_clear_btn)
         self._session_cache_stats = QLabel("")
@@ -1146,9 +1151,9 @@ class PreferencesTab(QWidget):
             n = session_cache.clear()
             self._update_session_cache_stats()
             QMessageBox.information(self, "Cache Cleared",
-                                    f"Cleared {n // 2} cached session file(s).")
+                                    f"Cleared {n} cached file(s).")
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to clear session cache:\n{e}")
+            QMessageBox.critical(self, "Error", f"Failed to clear cache:\n{e}")
 
     def _update_session_cache_stats(self):
         try:
@@ -1180,7 +1185,7 @@ class PreferencesTab(QWidget):
             ]
             config_data["mcp_search"]["cache_hours"] = self._mcp_cache_spin.value()
 
-            config_data["session_cache_minutes"] = self._session_cache_spin.value()
+            config_data["session_cache_prune_days"] = self._session_cache_prune_spin.value()
 
             _atomic_json_write(self.config_file, config_data)
 
@@ -1397,8 +1402,8 @@ class PreferencesTab(QWidget):
             self._mcp_cache_spin.setValue(mcp.get("cache_hours", 24))
 
             from utils import session_cache
-            self._session_cache_spin.setValue(
-                int(config_data.get("session_cache_minutes", session_cache._DEFAULT_MINUTES))
+            self._session_cache_prune_spin.setValue(
+                int(config_data.get("session_cache_prune_days", session_cache._DEFAULT_PRUNE_DAYS))
             )
             self._update_session_cache_stats()
         except Exception as e:

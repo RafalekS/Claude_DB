@@ -26,19 +26,24 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont
 
 from utils import theme
+from utils import session_cache
 from utils.project_scanner import get_project_sessions
 from utils.ui_state_manager import UIStateManager
 
 _LOCAL_FH_BASE = Path.home() / ".claude" / "file-history"
 
 
-def _parse_file_history(session_uuid: str, jsonl_path, fh_base, fs=None) -> list[dict]:
+def _parse_file_history(session_uuid: str, jsonl_path, fh_base, fs=None, mtime=None) -> list[dict]:
     """
     Parse a session JSONL and return snapshot records for files that exist in file-history.
 
     Returns list of:
         {"file_path": str, "backup_name": str, "version": int, "backup_time": str,
          "backup_file": path, "session_uuid": str}
+
+    Remote reads go through session_cache — this reads the SAME .jsonl the
+    Conversations tab does, so a session already cached there (or here) is
+    never re-downloaded just because a different tab opened it.
     """
     fh_dir = fh_base / session_uuid
 
@@ -61,7 +66,7 @@ def _parse_file_history(session_uuid: str, jsonl_path, fh_base, fs=None) -> list
         records = []
         seen_backups: set[str] = set()
         try:
-            text = fs.read_text(jsonl_path)
+            text = session_cache.get_text(jsonl_path, fs, mtime=mtime)
             for raw in text.splitlines():
                 raw = raw.strip()
                 if not raw:
@@ -252,7 +257,7 @@ class ProjectFileHistorySubTab(QWidget):
         # Collect all snapshot records across all sessions
         by_file: dict[str, list[dict]] = defaultdict(list)
         for s in sessions:
-            for rec in _parse_file_history(s["uuid"], s["path"], fh_base, fs):
+            for rec in _parse_file_history(s["uuid"], s["path"], fh_base, fs, mtime=s.get("mtime")):
                 by_file[rec["file_path"]].append(rec)
 
         if not by_file:
@@ -287,11 +292,11 @@ class ProjectFileHistorySubTab(QWidget):
 
         fs, _ = self._get_fs_and_projects_dir()
         if fs is not None:
-            if not fs.exists(path):
-                self._viewer.setPlainText("Snapshot file not found.")
-                return
+            # A backup snapshot never changes once written (its filename
+            # already carries the version) — cache by path alone, no stat
+            # round trip needed to check freshness.
             try:
-                content = fs.read_text(path)
+                content = session_cache.get_text_immutable(path, fs)
                 fname = str(path).rsplit("/", 1)[-1]
                 self._viewer.setPlainText(
                     f"Backup: {fname}\nFull path: {path}\n{'─'*60}\n\n{content}"

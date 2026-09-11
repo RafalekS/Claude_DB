@@ -4,8 +4,9 @@ Project Conversations SubTab — sessions for the currently selected project.
 Session search finds sessions containing a term; opening one then runs an
 in-conversation find (Prev / Next / count, Ctrl+F) so you never scroll a
 50-70 MB transcript looking for a highlight. In remote mode session text is
-cached on local disk for ~15 min (utils.session_cache) so repeated searches
-don't re-download over SFTP.
+cached on local disk, keyed by remote mtime (utils.session_cache) — an
+unchanged session is never re-downloaded, and an edited one is re-fetched
+automatically because its mtime (carried on the tree item) changed.
 """
 
 from datetime import datetime
@@ -26,7 +27,7 @@ from utils.project_scanner import get_project_sessions
 from utils.transcript_search import build_regex as _build_regex
 from utils.find_navigator import FindNavigator
 from utils.ui_state_manager import UIStateManager
-from tabs.memory_tab import render_transcript, _get_snippet
+from tabs.memory_tab import render_transcript, _get_snippet, _MTIME_ROLE
 
 
 class ProjectConversationsSubTab(QWidget):
@@ -190,9 +191,11 @@ class ProjectConversationsSubTab(QWidget):
 
     def _session_item(self, s: dict) -> QTreeWidgetItem:
         mod = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
-        cached = " ⇩" if session_cache.is_cached_fresh(s["path"], self._get_fs_and_projects_dir()[0]) else ""
+        fs, _ = self._get_fs_and_projects_dir()
+        cached = " ⇩" if session_cache.is_cached(s["path"], fs, s["mtime"]) else ""
         item = QTreeWidgetItem([f"{mod}   {s['uuid'][:24]}…{cached}"])
         item.setData(0, Qt.ItemDataRole.UserRole, str(s["path"]))
+        item.setData(0, _MTIME_ROLE, s["mtime"])
         item.setForeground(0, QColor(theme.FG_SECONDARY))
         return item
 
@@ -211,12 +214,13 @@ class ProjectConversationsSubTab(QWidget):
         path = item.data(0, Qt.ItemDataRole.UserRole)
         if not path:
             return
+        mtime = item.data(0, _MTIME_ROLE)
         fs, _ = self._get_fs_and_projects_dir()
 
         self._viewer.setPlainText("Loading…")
         QApplication.processEvents()
         try:
-            text = session_cache.get_text(path, fs)
+            text = session_cache.get_text(path, fs, mtime=mtime)
         except Exception as e:
             self._viewer.setPlainText(f"Could not read session:\n{path}\n\n{e}")
             self._find.clear()
@@ -287,7 +291,7 @@ class ProjectConversationsSubTab(QWidget):
             self._search_status.setText(f"Searching… {i + 1}/{len(sessions)}")
             QApplication.processEvents()
             try:
-                text = session_cache.get_text(s["path"], fs)
+                text = session_cache.get_text(s["path"], fs, mtime=s["mtime"])
             except Exception:
                 continue
             body = render_transcript(s["path"], fs, text)

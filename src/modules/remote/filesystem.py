@@ -205,6 +205,13 @@ class RemoteFileSystem:
         if hit:
             return cached
         with self._sftp().open(p, "rb") as f:
+            # prefetch() pulls the whole file in parallel blocks instead of
+            # the default one-request-per-32KB-then-wait — a large difference
+            # for multi-MB files like session transcripts.
+            try:
+                f.prefetch()
+            except Exception:
+                pass
             content = f.read().decode("utf-8", errors="replace")
         self._cache.set(("text", p), content)
         return content
@@ -212,7 +219,19 @@ class RemoteFileSystem:
     def read_bytes(self, path) -> bytes:
         p = self._s(path)
         with self._sftp().open(p, "rb") as f:
+            try:
+                f.prefetch()
+            except Exception:
+                pass
             return f.read()
+
+    def download_to(self, path, local_path) -> None:
+        """Download *path* straight to a local file via SFTP get() (which
+        prefetches internally) — for caching large remote files, where
+        streaming to disk beats materializing the whole thing in memory
+        first via read_text()/read_bytes()."""
+        p = self._s(path)
+        self._sftp().get(p, str(local_path))
 
     def head_lines(self, path, n: int) -> str:
         """Efficient remote head via exec — avoids downloading the whole file."""
