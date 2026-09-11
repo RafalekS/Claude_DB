@@ -10,16 +10,17 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from utils import theme
-from utils.terminal_utils import run_in_terminal
+from utils.terminal_utils import run_in_terminal, build_ssh_shell_command
 
 class ProjectsTab(QWidget):
     """Tab for managing Claude Code projects"""
 
-    def __init__(self, config_manager, backup_manager, project_context=None):
+    def __init__(self, config_manager, backup_manager, project_context=None, server_context=None):
         super().__init__()
         self.config_manager = config_manager
         self.backup_manager = backup_manager
         self.project_context = project_context
+        self.server_context = server_context
 
         # Current selection — synced from project_context if provided
         self.current_project_path = None
@@ -191,7 +192,8 @@ class ProjectsTab(QWidget):
         self.info_viewer.clear()
 
     def execute_command(self, command):
-        """Execute Claude command in project directory"""
+        """Execute Claude command in project directory (locally, or over SSH
+        when a remote server is active — the project path only exists there)."""
         if not self.current_project_path:
             QMessageBox.warning(self, "No Project", "Please select a project first.")
             return
@@ -203,12 +205,19 @@ class ProjectsTab(QWidget):
         if self.dangerous_checkbox.isChecked():
             cmd += " --dangerously-skip-permissions"
 
-        # Execute in terminal
-        run_in_terminal(
-            cmd,
-            cwd=str(self.current_project_path),
-            title=f"Claude {command} - {self.current_project_path.name}"
-        )
+        title = f"Claude {command} - {self.current_project_path.name}"
+
+        if self.server_context is not None and self.server_context.has_server():
+            server = self.server_context.get_active()
+            ssh_cmd = build_ssh_shell_command(server, str(self.current_project_path), cmd)
+            run_in_terminal(ssh_cmd, title=title, parent_widget=self)
+        else:
+            run_in_terminal(
+                cmd,
+                cwd=str(self.current_project_path),
+                title=title,
+                parent_widget=self,
+            )
 
     def on_dangerous_checkbox_changed(self, state):
         """Handle dangerous checkbox state change"""
@@ -234,14 +243,25 @@ class ProjectsTab(QWidget):
                 self.dangerous_checkbox.setChecked(False)
 
     def open_in_terminal(self):
-        """Open project directory in terminal"""
+        """Open project directory in terminal (locally, or an SSH session on
+        the remote server when one is active)."""
         if not self.current_project_path:
             QMessageBox.warning(self, "No Project", "Please select a project first.")
             return
 
-        # Open terminal in project directory with a simple command to keep it open
-        run_in_terminal(
-            "Write-Host 'Ready'",  # Simple command to keep terminal open
-            cwd=str(self.current_project_path),
-            title=f"Project: {self.current_project_path.name}"
-        )
+        title = f"Project: {self.current_project_path.name}"
+
+        if self.server_context is not None and self.server_context.has_server():
+            server = self.server_context.get_active()
+            # No remote_command needed — `cd ... && $SHELL -l` lands in an
+            # interactive shell in the project directory and stays open.
+            ssh_cmd = build_ssh_shell_command(server, str(self.current_project_path), "$SHELL -l")
+            run_in_terminal(ssh_cmd, title=title, parent_widget=self)
+        else:
+            # Open terminal in project directory with a simple command to keep it open
+            run_in_terminal(
+                "Write-Host 'Ready'",  # Simple command to keep terminal open
+                cwd=str(self.current_project_path),
+                title=title,
+                parent_widget=self,
+            )

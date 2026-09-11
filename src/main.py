@@ -187,7 +187,7 @@ class ClaudeDBApp(QMainWindow):
         # Store as instance variable so preferences_tab can access it
         self.all_tabs = {
             "userconfig": ("👤 User Config", UserConfigTab(self.config_manager, self.backup_manager, self.settings_manager)),
-            "projectconfig": ("📁 Project Config", ProjectConfigTab(self.config_manager, self.backup_manager, self.settings_manager, self.project_context)),
+            "projectconfig": ("📁 Project Config", ProjectConfigTab(self.config_manager, self.backup_manager, self.settings_manager, self.project_context, self.server_context)),
             "prompts": ("💬 Prompts", PromptsTab(self.config_manager, self.backup_manager)),
             "plugins": ("🧩 Plugins", PluginsTab(self.config_manager, self.backup_manager)),
             "memory": ("📁 Files", MemoryTab(self.config_manager, self.backup_manager)),

@@ -223,12 +223,13 @@ class ProjectPromptSubTab(QWidget):
 class ProjectConfigTab(QWidget):
     """Container tab for all project-level configuration with centralized folder picker"""
 
-    def __init__(self, config_manager, backup_manager, settings_manager, project_context):
+    def __init__(self, config_manager, backup_manager, settings_manager, project_context, server_context=None):
         super().__init__()
         self.config_manager = config_manager
         self.backup_manager = backup_manager
         self.settings_manager = settings_manager
         self.project_context = project_context
+        self.server_context = server_context
         self.init_ui()
 
         # Connect to project context changes
@@ -381,7 +382,7 @@ class ProjectConfigTab(QWidget):
         self.sub_tabs.addTab(mcp_tab, "🔌 MCP Servers")
 
         # Projects sub-tab (projects management - reads project from central project_context)
-        projects_tab = ProjectsTab(self.config_manager, self.backup_manager, self.project_context)
+        projects_tab = ProjectsTab(self.config_manager, self.backup_manager, self.project_context, self.server_context)
         self.sub_tabs.addTab(projects_tab, "📂 Projects")
 
         # Conversations sub-tab (sessions for current project)
@@ -586,7 +587,13 @@ class ProjectConfigTab(QWidget):
 
     def update_status(self, project_path: Path):
         """Update status label with project info"""
-        has_claude = self.project_context.validate_claude_folder()
+        # Remote-aware: validate_claude_folder() uses plain pathlib.Path and is
+        # always wrong for remote projects (checks the local machine). Use the
+        # fs abstraction instead, same as ProjectsTab.load_project_info().
+        try:
+            has_claude = self.config_manager.fs.exists(project_path / ".claude")
+        except Exception:
+            has_claude = False
 
         if has_claude:
             self.status_label.setText(f"✅ Project loaded: .claude folder exists")
