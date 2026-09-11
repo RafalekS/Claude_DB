@@ -24,6 +24,14 @@ def build_ssh_shell_command(server: dict, remote_cwd: str, remote_command: str) 
     """Build a single `ssh ...` shell command that cd's into *remote_cwd* on
     *server* and runs *remote_command* — for handing to run_in_terminal().
 
+    `ssh host 'cmd'` runs cmd in a non-interactive, non-login remote shell,
+    which never sources ~/.bashrc or ~/.profile (bash's own interactive-only
+    guard skips them) — so PATH additions like ~/.local/bin, ~/.cargo/bin,
+    nvm, etc. are missing and tools installed there (claude included) come
+    back "command not found" even though a normal `ssh host` login finds
+    them fine. Run the remote command through `bash -lc` (a login shell) so
+    it gets the same PATH an interactive login would.
+
     server: a server dict as stored by ServerRegistry (host, port, user,
     key_path, password). Password-only servers still work — ssh -t prompts
     for the password interactively in the opened terminal, same as a normal
@@ -39,8 +47,9 @@ def build_ssh_shell_command(server: dict, remote_cwd: str, remote_command: str) 
         ssh_args += ["-i", shlex.quote(key_path)]
     target = f"{user}@{host}" if user else host
 
-    remote = f"cd {shlex.quote(remote_cwd)} && {remote_command}"
-    ssh_args += [shlex.quote(target), shlex.quote(remote)]
+    inner = f"cd {shlex.quote(remote_cwd)} && {remote_command}"
+    login_shell_cmd = f"bash -lc {shlex.quote(inner)}"
+    ssh_args += [shlex.quote(target), shlex.quote(login_shell_cmd)]
     return " ".join(ssh_args)
 
 def _get_terminal_command() -> str:
